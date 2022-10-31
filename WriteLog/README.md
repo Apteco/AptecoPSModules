@@ -1,5 +1,5 @@
 
-# Apteco Customs - PowerShell logging script
+# Apteco PS Modules - PowerShell logging script
 
 Execute commands like
 

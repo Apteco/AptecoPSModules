@@ -56,6 +56,9 @@ At the first encryption or when calling Export-Keyfile a new random keyfile will
 The key ist saved per default in your users profile, but can be exported into any other folder and use it from there.
 Be aware that the encrypted strings are only valid for the executing machine as it uses SecureStrings that cannot be
 copied over to other machines.
+
+You can use `Import-Keyfile` to use a keyfile that has been exported before.
+
 '
 
 # Minimum version of the PowerShell engine required by this module
