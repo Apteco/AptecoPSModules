@@ -80,4 +80,4 @@ Export-ModuleMember -Function $Public.Basename
 # SET SOME VARIABLES ONLY VISIBLE TO MODULE AND FUNCTIONS
 #-----------------------------------------------
 
-# ...
+New-Variable -Name logfile  -Value $null -Scope Script -Force

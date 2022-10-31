@@ -65,19 +65,19 @@ Function Write-Log {
     Begin {
     
         # If the variable is not present, it will create a temporary file
-        If ( $null -eq $logfile ) {
+        If ( $null -eq $Script:logfile ) {
             $f = New-TemporaryFile
             $Script:logfile = $f.FullName
             Write-Warning -Message "There is no variable '`$logfile' present on 'Script' scope. Created one at '$( $Script:logfile )'"
         }
 
         # Testing the path
-        If ( ( Test-Path -Path $logfile -IsValid ) -eq $false ) {
-            Write-Error -Message "Invalid variable '`$logfile'. The path '$( $logfile )' is invalid."
+        If ( ( Test-Path -Path $Script:logfile -IsValid ) -eq $false ) {
+            Write-Error -Message "Invalid variable '`$logfile'. The path '$( $Script:logfile )' is invalid."
         }
 
         # If a process id (to identify this session by a guid) it will be set automatically here
-        If ( $null -eq $processId ) {
+        If ( $null -eq $Script:processId ) {
             $Script:processId = [guid]::NewGuid().ToString()
             Write-Warning -Message "There is no variable '`$processId' present on 'Script' scope. Created one with '$( $Script:processId )'"
         }
@@ -116,10 +116,10 @@ Function Write-Log {
             Switch ( $Severity ) {
                 ( [LogSeverity]::VERBOSE ) {
                     #Write-Verbose $message $message -Verbose # To always show the logmessage without verbose flag, execute    $VerbosePreference = "Continue"
-                    Write-Output -InputObject $Message
+                    Write-Verbose Message $Message -InformationAction Continue -Verbose
                 }
                 ( [LogSeverity]::INFO ) {
-                    Write-Information -MessageData $Message -InformationAction Continue
+                    Write-Information -MessageData $Message -InformationAction Continue -Tags @("Info")
                 }
                 ( [LogSeverity]::WARNING ) {
                     Write-Warning -Message $Message
@@ -129,7 +129,7 @@ Function Write-Log {
                 }
                 Default {
                     #Write-Verbose -Message $message -Verbose
-                    Write-Output -InputObject $Message
+                    Write-Verbose Message $Message -InformationAction Continue -Verbose
                 }
             }
         }

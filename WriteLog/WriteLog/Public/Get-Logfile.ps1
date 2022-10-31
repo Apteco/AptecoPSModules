@@ -6,6 +6,7 @@ Function Get-Logfile {
     )
 
     $item = $null
+    $logfile = $Script:logfile
 
     # If the variable is not present, it will create a temporary file
     If ( $null -eq $logfile ) {
@@ -19,7 +20,7 @@ Function Get-Logfile {
         If ( ( Test-Path -Path $logfile -IsValid ) -eq $false ) {
             Write-Error -Message "Invalid variable '`$logfile'. The path '$( $logfile )' is invalid."
         } else {
-            $item = Get-Item -Path $Script:logfile
+            $item = Get-Item -Path $logfile
         }
 
     }

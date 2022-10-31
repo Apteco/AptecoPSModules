@@ -5,21 +5,35 @@ Function Set-Logfile {
         [Parameter(Mandatory=$true)][string]$Path
     )
 
-    try {
-        
-        If ( (Test-Path -Path $Path -IsValid) -eq $true) {
-            # Create the item if not existing
-            If (( Test-Path -Path $Path ) -eq $false) {
-                $item = New-Item -Path $Path -ItemType File
-            }
-            $Script:logfile = $item.FullName
-        } else {
-            Write-Error -Message "The path '$( $Path )' is invalid."
-        }
-    } catch {
-        Write-Error -Message "The path '$( $Path )' is invalid."
-    }
+    Process {
+        try {
+            
+            If ( (Test-Path -Path $Path -IsValid) -eq $true) {
 
-    $item.FullName
+                # Create the item if not existing
+                If (( Test-Path -Path $Path ) -eq $false) {
+                    Write-Host "Create the item"
+                    $item = New-Item -Path $Path -ItemType File
+                }
+
+                $resolvedPath = Resolve-Path -Path $Path
+                $Script:logfile = $resolvedPath.Path
+
+            } else {
+
+                Write-Error -Message "The path '$( $Path )' is invalid."
+
+            }
+
+        } catch {
+
+            Write-Error -Message "The path '$( $Path )' is invalid."
+
+        }
+
+        # Return
+        $Script:logfile
+
+    }
 
 }
