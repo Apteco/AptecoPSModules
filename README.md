@@ -6,6 +6,7 @@ Name|Module|Script
 -|-|-
 [WriteLog](WriteLog/)|x
 [SyncExtractOptions](SyncExtractOptions/)||x
+[ExtendFunction](ExtendFunction/)|x
 [EncryptCredential](EncryptCredential/)|x|
 [ConverUnixTimestamp](ConverUnixTimestamp/)|x
 [MeasureRows](MeasureRows/)|x
@@ -123,3 +124,25 @@ or even
 ```
 
 to count the rows in a csv file. It uses a .NET streamreader and is extremly fast.
+
+# ExtendFunction
+
+This module can be used to extend existing functions/cmdlets with more scripting and possibly additional parameters like
+
+```PowerShell
+function Invoke-CoreWebRequest {
+    
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true)][string]$AdditionalString
+    )
+    DynamicParam { Get-BaseParameters "Invoke-WebRequest" }
+
+    Process {
+        Write-Host $AdditionalString
+        $updatedParameters = Skip-UnallowedBaseParameters -Base "Invoke-WebRequest" -Parameters $PSBoundParameters
+        Invoke-WebRequest @updatedParameters
+    }
+
+}
+```
