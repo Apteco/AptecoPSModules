@@ -35,7 +35,7 @@ $Public  = @( Get-ChildItem -Path "$( $PSScriptRoot )/Public/*.ps1" -ErrorAction
 $Private = @( Get-ChildItem -Path "$( $PSScriptRoot )/Private/*.ps1" -ErrorAction SilentlyContinue )
 
 # dot source the files
-@( $Public + $Private ) | ForEach {
+@( $Public + $Private ) | ForEach-Object {
     $import = $_
     Try {
         . $import.fullname
@@ -65,8 +65,8 @@ If ( $null -eq $processId ) {
     Write-Warning -Message "There is no variable '`$processId' present on 'Script' scope. Please define it or it will automatically created as a [GUID]."
 }
 #>
-Write-Warning -Message "Please setup the logfile with 'Set-Logfile -Path' or it will automatically created as a temporary file."
-Write-Warning -Message "Please setup the process id with 'Set-ProcessId -Id'or it will automatically created as a [GUID]."
+Write-Verbose -Message "Please setup the logfile with 'Set-Logfile -Path' or it will automatically created as a temporary file." -InformationAction Continue -Verbose
+Write-Verbose -Message "Please setup the process id with 'Set-ProcessId -Id'or it will automatically created as a [GUID]." -InformationAction Continue -Verbose
 
 
 #-----------------------------------------------

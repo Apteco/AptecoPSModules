@@ -25,6 +25,7 @@ Function Resize-Logfile {
 
 #>
 
+    [cmdletbinding()]
     param(
        [Parameter(Mandatory=$true)][int]$RowsToKeep #= 200000
     )

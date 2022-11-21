@@ -68,7 +68,7 @@ Function Write-Log {
         If ( $null -eq $Script:logfile ) {
             $f = New-TemporaryFile
             $Script:logfile = $f.FullName
-            Write-Warning -Message "There is no variable '`$logfile' present on 'Script' scope. Created one at '$( $Script:logfile )'"
+            Write-Verbose -Message "There is no variable '`$logfile' present on 'Script' scope. Created one at '$( $Script:logfile )'" -InformationAction Continue -Verbose
         }
 
         # Testing the path
@@ -79,7 +79,7 @@ Function Write-Log {
         # If a process id (to identify this session by a guid) it will be set automatically here
         If ( $null -eq $Script:processId ) {
             $Script:processId = [guid]::NewGuid().ToString()
-            Write-Warning -Message "There is no variable '`$processId' present on 'Script' scope. Created one with '$( $Script:processId )'"
+            Write-Verbose -Message "There is no variable '`$processId' present on 'Script' scope. Created one with '$( $Script:processId )'" -InformationAction Continue -Verbose
         }
 
     }
@@ -116,10 +116,10 @@ Function Write-Log {
             Switch ( $Severity ) {
                 ( [LogSeverity]::VERBOSE ) {
                     #Write-Verbose $message $message -Verbose # To always show the logmessage without verbose flag, execute    $VerbosePreference = "Continue"
-                    Write-Verbose Message $Message -InformationAction Continue -Verbose
+                    Write-Verbose -Message $Message -InformationAction Continue -Verbose
                 }
                 ( [LogSeverity]::INFO ) {
-                    Write-Information -MessageData $Message -InformationAction Continue -Tags @("Info")
+                    Write-Information -MessageData "INFO: $( $Message )" -InformationAction Continue -Tags @("Info")
                 }
                 ( [LogSeverity]::WARNING ) {
                     Write-Warning -Message $Message
@@ -129,7 +129,7 @@ Function Write-Log {
                 }
                 Default {
                     #Write-Verbose -Message $message -Verbose
-                    Write-Verbose Message $Message -InformationAction Continue -Verbose
+                    Write-Verbose -Message $Message -InformationAction Continue -Verbose
                 }
             }
         }
