@@ -76,7 +76,7 @@ and get back
 Hello World
 ```
 
-## ConverUnixTimestamp
+## ConvertUnixTimestamp
 
 Converts a `[DateTime]` into a numeric unix timestamp as `[UInt64]` and vice versa.
 
@@ -125,7 +125,7 @@ or even
 
 to count the rows in a csv file. It uses a .NET streamreader and is extremly fast.
 
-# ExtendFunction
+## ExtendFunction
 
 This module can be used to extend existing functions/cmdlets with more scripting and possibly additional parameters like
 
