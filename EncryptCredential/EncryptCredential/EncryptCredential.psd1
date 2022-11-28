@@ -12,7 +12,7 @@
 RootModule = 'EncryptCredential.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.0.1'
+ModuleVersion = '0.0.2'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -137,6 +137,7 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = "
+0.0.2 Fixed a bug regarding output if a keyfile does not exist
 0.0.1 Initial release through PSGallery
 "
 

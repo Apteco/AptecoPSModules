@@ -36,7 +36,7 @@ This function creates a new keyfile
         # Checking the path validity
         If ( (Test-Path -Path $Path -IsValid) -eq $true ) {
 
-            Write-Output -InputObject "Path is valid. Creating a new keyfile at '$( $Path )'"
+            Write-Verbose -Message "Path is valid. Creating a new keyfile at '$( $Path )'" -Verbose
 
             $Key = New-Object Byte[] $ByteLength   # You can use 16, 24, or 32 for AES
             [Security.Cryptography.RNGCryptoServiceProvider]::Create().GetBytes($Key)
