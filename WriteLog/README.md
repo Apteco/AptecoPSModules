@@ -63,6 +63,18 @@ Register-PSRepository -Name "LocalRepo" -SourceLocation "$( $env:USERPROFILE )\D
 Get-PSRepository
 ```
 
+To trust a local repository, use
+
+```PowerShell
+Set-PSRepository -Name LocalRepo  -InstallationPolicy Trusted
+```
+
+To remove the trust, just put it back to `Untrusted`
+
+```PowerShell
+Set-PSRepository -Name LocalRepo  -InstallationPolicy Untrusted
+```
+
 Then put your downloaded `.nupkg` file into the new created `PSRepo` folder and you should see the module via 
 
 ```PowerShell
