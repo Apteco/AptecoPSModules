@@ -1,3 +1,4 @@
 
 *.log
 *publish.ps1
+*.json
