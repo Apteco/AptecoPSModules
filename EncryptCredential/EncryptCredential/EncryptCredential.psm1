@@ -56,8 +56,8 @@ If ( (Test-Path -Path $localTargetFolder -IsValid) -eq $true ) {
 
 # Some verbose information
 Write-Verbose -Message "Default path for keyfile:$( $defaultKeyfile )" -Verbose
-Write-Verbose -Message "If you want to use another path, use 'Save-Keyfile -Path' to save it." -Verbose
-Write-Verbose -Message "Use 'Load-Keyfile -Path' for loading that file" -Verbose
+Write-Verbose -Message "If you want to use another path, use 'Export-Keyfile -Path' to save it." -Verbose
+Write-Verbose -Message "Use 'Import-Keyfile -Path' for loading that file" -Verbose
 
 # Setting it to null for now
 $Script:keyfile = $null
