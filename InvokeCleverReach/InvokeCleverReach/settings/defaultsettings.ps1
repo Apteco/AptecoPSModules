@@ -23,7 +23,8 @@
         #"Proxy" = "http://proxy.example.com"
         #"SkipHeaderValidation" = $true
     }                                                       # additional parameter for the Invoke-RestMethod call like Proxy or ProxyCredential, see https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/invoke-restmethod
-
+    "logAPIrequests" = $true                                # log information like 'GET https://rest.cleverreach.com:443/v3/groups.json/1158984/stats'
+    
     # Token refreshment
     "token" = [PSCustomObject]@{
 

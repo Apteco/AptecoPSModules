@@ -218,7 +218,9 @@ function Invoke-CR {
                     Write-Host "REST: $( Convertto-json -InputObject $updatedParameters -Depth 99 )"
                 }
 
-                Write-Log -Message "$( $updatedParameters.Method.ToString().ToUpper() ) $( $updatedParameters.Uri )"
+                If ( $Script:logAPIrequests -eq $true ) {
+                    Write-Log -Message "$( $updatedParameters.Method.ToString().ToUpper() ) $( $updatedParameters.Uri )"
+                }
                 $wr = Invoke-RestMethod @updatedParameters
                 
             }
