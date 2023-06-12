@@ -67,6 +67,9 @@ function Invoke-CR {
         ,[Parameter(Mandatory=$false)][ValidateScript({
             If ($_ -is [PSCustomObject]) {
                 [PSCustomObject]$_
+            # } elseif ($_ -is [System.Collections.Specialized.OrderedDictionary]) {
+            #     [System.Collections.Specialized.OrderedDictionary]$_
+            # }
             } ElseIf ($_ -is [System.Collections.ArrayList] -or $_ -is [Array]) {
                 [System.Collections.ArrayList]$_
             }
@@ -174,8 +177,13 @@ function Invoke-CR {
                 }
 
                 "POST" {
-                    $Body | Add-Member -MemberType NoteProperty -Name "pagesize" -Value $Script:settings.pageSize
-                    $Body | Add-Member -MemberType NoteProperty -Name "page" -Value 0
+                    If ( $Body -is [PSCustomObject] ) {
+                        $Body | Add-Member -MemberType NoteProperty -Name "pagesize" -Value $Script:settings.pageSize
+                        $Body | Add-Member -MemberType NoteProperty -Name "page" -Value 0
+                    # } elseif ( $Body -is [System.Collections.Specialized.OrderedDictionary] ) {
+                    #     $Body.add("pagesize", $Script:settings.pageSize)
+                    #     $Body.add("page", 0)
+                    }
                 }
 
             }

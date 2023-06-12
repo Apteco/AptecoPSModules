@@ -48,19 +48,8 @@ function Invoke-Upload{
 
 
         #-----------------------------------------------
-        # DEPENDENCIES
-        #-----------------------------------------------
-
-        # Import-Module MeasureRows
-        # Import-Module SqlServer
-        # Import-Module ConvertUnixTimestamp
-        # Import-Lib -IgnorePackageStructure
-
-
-        #-----------------------------------------------
         # PARSE MESSAGE
         #-----------------------------------------------
-        #Write-Log "Hello"
 
         #$script:debug = $InputHashtable
         $uploadOnly = $false
@@ -78,30 +67,10 @@ function Invoke-Upload{
             $mailing = [Mailing]::new($InputHashtable.MessageName)
             Write-Log "Got chosen message entry with id '$( $mailing.mailingId )' and name '$( $mailing.mailingName )'"
         }
-        #Write-Log "World"
 
         #-----------------------------------------------
         # DEFAULT VALUES
         #-----------------------------------------------
-        <#
-        # If there is a setting in the channel, use this as default, otherwise from the defaultsettings
-        If ( $null -ne $InputHashtable.defaultLimitRedeem ) {
-            $defaultLimitRedeem = $InputHashtable.defaultLimitRedeem
-        } else {
-            $defaultLimitRedeem = $Script:settings.defaultLimitRedeem
-            #$defaultLimitRedeem = $Script:defaultLimitRedeem # producing an error
-        }
-        Write-Log "Using default limit redeem: $( $defaultLimitRedeem )"
-
-        If ( $null -ne $InputHashtable.defaultValidDays ) {
-            $defaultValidDays = $InputHashtable.defaultValidDays
-        } else {
-            $defaultValidDays = $Script:settings.defaultValidDays
-            #$defaultValidDays = $Script:defaultValidDays # producing an error
-
-        }
-        Write-Log "Using default valid days: $( $defaultValidDays )"
-        #>
 
         $uploadSize = $Script:settings.upload.uploadSize
         Write-Log "Got UploadSize of $( $uploadSize ) rows/objects" #-Severity WARNING
@@ -146,14 +115,6 @@ function Invoke-Upload{
 
         try {
 
-            # $ttl = Invoke-CR -Object "debug" -Path "/ttl.json" -Method "GET" -Verbose 
-
-            # Write-Log "Token is still valid for $( [math]::floor( $ttl.ttl/60/60 ) ) hours"
-
-            # If ( $ttl.ttl -le $Script:settings.login.refreshTtl ) {
-            #     Write-Log "Token is less seconds valid than the defined threshold of $( $Script:settings.login.refreshTtl ) seconds!" -Severity WARNING
-            # }
-
             Test-CleverReachConnection         
             
         } catch {
@@ -164,11 +125,9 @@ function Invoke-Upload{
             throw [System.IO.InvalidDataException] $msg
             exit 0
 
-            # TODO is exit needed here?
-
         }
 
-        Write-Log -Message "Debug Mode: $( $Script:debugMode )"
+        #Write-Log -Message "Debug Mode: $( $Script:debugMode )"
 
         
     }
@@ -493,7 +452,7 @@ function Invoke-Upload{
 
                 "taggingOnly" {
                     #$tags = ,$params.MessageName -split ","
-                    $tags = [Array]@(,$mailing.mailingName)
+                    $tags = [Array]@(,$mailing.mailingName) # TODO only allow one tag for the moment, but can easily be extended to multiple ones
                 }
 
                 Default {
@@ -507,7 +466,7 @@ function Invoke-Upload{
                     [void]$tag.Append( "_" )
                     [void]$tag.Append( $processStart.toString("yyyyMMddHHmmss") )
 
-                    If ( $uploadOnly -eq $true -and $Script:settings.upload.useTagForUploadOnly -eq $true ) {
+                    If ( ($uploadOnly -eq $true -and $Script:settings.upload.useTagForUploadOnly -eq $true) -or $uploadOnly -eq $false ) {
                         $tags = [Array]@(, $tag.ToString() )
                     } else {
                         $tags = [Array]@()
@@ -842,9 +801,6 @@ function Invoke-Upload{
         }
 
 
-        
-
-        
         #-----------------------------------------------
         # RETURN VALUES TO PEOPLESTAGE
         #-----------------------------------------------
@@ -867,8 +823,8 @@ function Invoke-Upload{
             "ProcessId" = $Script:processId
 
             # More values for broadcast
-            "tag" = $tags
-            "groupId" = $groupId
+            "Tag" = ( $tags -join ", " )
+            "GroupId" = $groupId
         
             # Some more information for the broadcasts script
             #"EmailFieldName"= $params.EmailFieldName

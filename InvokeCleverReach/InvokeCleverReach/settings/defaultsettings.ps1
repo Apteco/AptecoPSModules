@@ -74,12 +74,24 @@
         "uploadSize" = 3                                  # Max no of rows per batch upload call, max of 1000
         "tagSource" = "Apteco"                              # Prefix of the tag, that will be used automatically, when doing mailings (not tagging)
         "useTagForUploadOnly" = $true
-
     }
 
     # Broadcast settings
     "broadcast" = [PSCustomObject]@{
+        
+        # Settings for the copy of the mailing
+        "defaultContentType" = "html/text"                             # "html", "text" or "html/text"
+        "defaultEditor" = "wizard"
+        "defaultOpenTracking" = $true
+        "defaultClickTracking" = $true
+
+        # Release/sending
         "defaultReleaseOffset" = 120                        # Default amount of seconds that are added to the current unix timestamp to release the mailing
+
+    }
+
+    "preview" =  [PSCustomObject]@{
+        "previewGroupName" = "Apteco_Preview"
     }
 
 }
