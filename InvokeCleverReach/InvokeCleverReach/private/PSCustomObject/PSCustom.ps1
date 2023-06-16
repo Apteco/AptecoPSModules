@@ -6,7 +6,8 @@ Loaded from https://gist.github.com/ksumrall/3b7010a9fbc9c5cb19e9dc8b9ee32fb1
 
 #>
 
-
+# This one only joins values, but does not create new members
+# So the result contains all members of source and changed values from extend
 function Join-Objects($source, $extend){
     if($source.GetType().Name -eq "PSCustomObject" -and $extend.GetType().Name -eq "PSCustomObject"){
         foreach($Property in $source | Get-Member -type NoteProperty, Property){
@@ -25,6 +26,9 @@ function Join-Objects($source, $extend){
         return $source
     }
 }
+
+
+# This one extends toExtend with all members of source
 function AddPropertyRecurse($source, $toExtend){
     if($source.GetType().Name -eq "PSCustomObject"){
         foreach($Property in $source | Get-Member -type NoteProperty, Property){
@@ -38,6 +42,8 @@ function AddPropertyRecurse($source, $toExtend){
     }
     return $toExtend
 }
+
+
 function Json-Merge($source, $extend){
     $merged = Join-Objects $source $extend
     # this is causing a problem with arrays.
