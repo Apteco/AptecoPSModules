@@ -108,7 +108,7 @@ Import-Module AptecoPSFramework -Verbose
 
 If you get error messages during the import, that is normal, because there are modules missing yet. They need to be installed with `Install-AptecoPSFramework`
 
-Then you can now start the installation
+Please go ahead to a directory where the script files should be placed like `D:\Scripts\AptecoPSFramework`. Then you can now start the installation
 
 ```PowerShell
 Install-AptecoPSFramework
@@ -182,7 +182,7 @@ Import-Plugin -guid $plugin.guid
 #-----------------------------------------------
 
 $settings = Get-settings
-$settings.pluginGuid = $plugin.guid
+#$settings.pluginGuid = $plugin.guid
 
 
 #-----------------------------------------------

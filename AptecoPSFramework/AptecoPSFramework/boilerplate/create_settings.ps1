@@ -20,7 +20,7 @@
 #
 ################################################
 
-Import-Module "D:\Scripts\PSModules\AptecoPSFramework" -Verbose # TODO change later to plain module name
+Import-Module "AptecoPSFramework" -Verbose # TODO change later to plain module name
 
 # TODO Is this step still needed?
 #Set-ExecutionDirectory -Path "."
@@ -48,7 +48,6 @@ If ($plugin.count -gt 1) {
 }
 
 
-
 #-----------------------------------------------
 # LOAD THE PLUGIN
 #-----------------------------------------------
@@ -61,7 +60,7 @@ Import-Plugin -guid $plugin.guid
 #-----------------------------------------------
 
 $settings = Get-settings
-$settings.pluginGuid = $plugin.guid
+#$settings.pluginGuid = $plugin.guid
 
 
 ################################################

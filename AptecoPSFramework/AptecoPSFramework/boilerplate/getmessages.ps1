@@ -14,7 +14,7 @@ Param(
 # DEBUG SWITCH
 #-----------------------------------------------
 
-$debug = $true
+$debug = $false
 
 
 

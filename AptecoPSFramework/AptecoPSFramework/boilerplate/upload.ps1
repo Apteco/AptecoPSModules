@@ -94,7 +94,7 @@ Set-Location $dir
 
 Import-Module "AptecoPSFramework" -Verbose
 #Import-Module EncryptCredential # Not needed later, if we don't encrypt here
-Set-ExecutionDirectory -Path $dir
+#Set-ExecutionDirectory -Path $dir
 
 
 #-----------------------------------------------

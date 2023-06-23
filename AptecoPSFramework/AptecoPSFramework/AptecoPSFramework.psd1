@@ -12,7 +12,7 @@
 RootModule = 'AptecoPSFramework.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.0.1'
+ModuleVersion = '0.0.2'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -85,7 +85,7 @@ FunctionsToExport = @(
     "Get-Plugin"
     "Get-PluginFolders"
     "Get-Plugins"
-    "Get-ProcessId"
+    "Get-ProcessIdentifier"
     "Get-Settings"
     "Import-Plugin"
     "Import-Settings"
@@ -134,6 +134,7 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.0.2 Small fixes after testing
 0.0.1 Initial release of Apteco PS module through psgallery
 '
 

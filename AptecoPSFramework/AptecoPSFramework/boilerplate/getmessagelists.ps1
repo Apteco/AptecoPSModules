@@ -81,7 +81,7 @@ Set-Location $dir
 #-----------------------------------------------
 
 Import-Module "AptecoPSFramework" -Verbose
-Set-ExecutionDirectory -Path $dir
+#Set-ExecutionDirectory -Path $dir
 
 
 #-----------------------------------------------

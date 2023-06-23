@@ -496,6 +496,7 @@ function Invoke-Upload{
             $i = 0  # row counter
             $v = 0  # valid counter
             $j = 0  # uploaded entries counter
+            $k = 0  # upload batches counter
             $checkObject = [System.Collections.ArrayList]@()
             $uploadObject = [System.Collections.ArrayList]@()
             while ($reader.Peek() -ge 0) {
@@ -692,10 +693,11 @@ function Invoke-Upload{
                         }
                         
                         # As a response we get the full profiles of the receivers back
-                        $upload = @(, ( Invoke-CR -Object "groups" -Path "/$( $groupId )/receivers/upsertplus" -Method POST -Verbose -Body $uploadBody ))
+                        $upload = @( Invoke-CR -Object "groups" -Path "/$( $groupId )/receivers/upsertplus" -Method POST -Verbose -Body $uploadBody )
                         
                         # Count the successful upserted profiles
                         $j += $upload.count
+                        $k += 1
 
                         # Output the response body for debug purposes
                         #If ( $Script:debugMode -eq $true ) {
@@ -724,7 +726,8 @@ function Invoke-Upload{
             Write-Log "Stats for upload"
             Write-Log "  checked $( $i ) rows"
             Write-Log "  $( $v ) valid rows"
-            Write-Log "  $( $j ) uploaded rows"
+            Write-Log "  $( $j ) uploaded records"
+            Write-Log "  $( $k ) uploaded batches"
 
 
             #-----------------------------------------------

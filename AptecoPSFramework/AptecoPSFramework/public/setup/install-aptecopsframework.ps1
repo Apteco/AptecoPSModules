@@ -363,33 +363,33 @@ Calling with one of the Flags, just does this part
             Copy-Item -Path "$( $Script:moduleRoot )\boilerplate\*" -Destination "." -Confirm
             
             $currentPath = ( resolve-path -Path "." ).Path
-            Write-Verbose "Please have a look at your PeopleStage channels and create a new email channel:"
-            Write-Verbose "  GENERAL"
-            Write-Verbose "    Broadcaster: PowerShell"
-            Write-Verbose "    Username: dummy"
-            Write-Verbose "    Password: dummy"
-            Write-Verbose "    Email Variable: Please choose your email variable"
-            Write-Verbose "    Email Variable Description Override: email"
-            Write-Verbose "  PARAMETER"
-            Write-Verbose "    URL: https://rest.cleverreach.com/v3/"
-            Write-Verbose "    GetMessagesScript: $( $currentPath )\getmessages.ps1"
-            Write-Verbose "    GetListsScript: $( $currentPath )\getmessagelists.ps1"
-            Write-Verbose "    UploadScript: $( $currentPath )\upload.ps1"
-            Write-Verbose "    BroadcastScript: $( $currentPath )\broadcast.ps1"
-            Write-Verbose "    PreviewMessageScript: $( $currentPath )\preview.ps1"
-            Write-Verbose "    IntegrationParameters: settingsFile=D:\Scripts\CleverReach\PSCleverReachModule\settings.json;deactivate=true;mode=taggingOnly"
-            Write-Verbose "    Encoding: UTF8"
-            Write-Verbose "  OUTPUT SETTINGS"
-            Write-Verbose "    Append To List: false"
-            Write-Verbose "    Number of retries: 1"
-            Write-Verbose "    Response File Key Type: Email with Broadcast Id"
-            Write-Verbose "    Message Content Type: Broadcaster Template"
-            Write-Verbose "    Retrieve Existing List Names: true"
-            Write-Verbose "  FILE SETTINGS"
-            Write-Verbose "    Encoding: UTF-8"
-            Write-Verbose "  ADDITIONAL VARIABLES"
-            Write-Verbose "    Add all variables that you would like to always upload"
-            Write-Verbose "Please consider to ask Apteco to look at your settings when you have done your first setup"
+            Write-Verbose "Please have a look at your PeopleStage channels and create a new email channel:" -Verbose
+            Write-Verbose "  GENERAL" -Verbose
+            Write-Verbose "    Broadcaster: PowerShell" -Verbose
+            Write-Verbose "    Username: dummy" -Verbose
+            Write-Verbose "    Password: dummy" -Verbose
+            Write-Verbose "    Email Variable: Please choose your email variable" -Verbose
+            Write-Verbose "    Email Variable Description Override: email" -Verbose
+            Write-Verbose "  PARAMETER" -Verbose
+            Write-Verbose "    URL: https://rest.cleverreach.com/v3/" -Verbose
+            Write-Verbose "    GetMessagesScript: $( $currentPath )\getmessages.ps1" -Verbose
+            Write-Verbose "    GetListsScript: $( $currentPath )\getmessagelists.ps1" -Verbose
+            Write-Verbose "    UploadScript: $( $currentPath )\upload.ps1" -Verbose
+            Write-Verbose "    BroadcastScript: $( $currentPath )\broadcast.ps1" -Verbose
+            Write-Verbose "    PreviewMessageScript: $( $currentPath )\preview.ps1" -Verbose
+            Write-Verbose "    IntegrationParameters: settingsFile=D:\Scripts\CleverReach\PSCleverReachModule\settings.json;deactivate=true;mode=taggingOnly" -Verbose
+            Write-Verbose "    Encoding: UTF8" -Verbose
+            Write-Verbose "  OUTPUT SETTINGS" -Verbose
+            Write-Verbose "    Append To List: false" -Verbose
+            Write-Verbose "    Number of retries: 1" -Verbose
+            Write-Verbose "    Response File Key Type: Email with Broadcast Id" -Verbose
+            Write-Verbose "    Message Content Type: Broadcaster Template" -Verbose
+            Write-Verbose "    Retrieve Existing List Names: true" -Verbose
+            Write-Verbose "  FILE SETTINGS" -Verbose
+            Write-Verbose "    Encoding: UTF-8" -Verbose
+            Write-Verbose "  ADDITIONAL VARIABLES" -Verbose
+            Write-Verbose "    Add all variables that you would like to always upload" -Verbose
+            Write-Verbose "Please consider to ask Apteco to look at your settings when you have done your first setup" -Verbose
    
 
 
