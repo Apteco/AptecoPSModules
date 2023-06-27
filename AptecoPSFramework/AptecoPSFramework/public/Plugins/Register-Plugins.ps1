@@ -41,6 +41,10 @@ function Register-Plugins {
 
             }
         }
+
+        # Save all plugin folders except the first one, because that's gonna be this modules directory
+        #$Script:debug = $Script:settings.pluginFolders
+        $Script:settings.pluginFolders = $Script:pluginFolders[1..($Script:pluginFolders.count -1)]
         
         # Checks - If there is more than one plugin with the same guid
         $groupPlugins = $Script:plugins.guid | Group-Object

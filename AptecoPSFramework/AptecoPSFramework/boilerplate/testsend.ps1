@@ -93,6 +93,13 @@ Import-Module "AptecoPSFramework" -Verbose
 
 
 #-----------------------------------------------
+# ADD MORE PLUGINS
+#-----------------------------------------------
+
+#Add-PluginFolder "D:\Scripts\CleverReach\Plugins"
+
+
+#-----------------------------------------------
 # SET SETTINGS
 #-----------------------------------------------
 

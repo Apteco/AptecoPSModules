@@ -138,7 +138,7 @@ try {
 
 # Add default plugins folder
 Add-PluginFolder -Folder ( join-path -Path $PSScriptRoot.ToString() -ChildPath "plugins" )
-Register-Plugins
+$plugins = Register-Plugins
 
 
 #-----------------------------------------------

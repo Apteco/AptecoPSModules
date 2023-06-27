@@ -32,6 +32,12 @@ Import-Module "AptecoPSFramework" -Verbose # TODO change later to plain module n
 #
 ################################################
 
+#-----------------------------------------------
+# ADD MORE PLUGINS
+#-----------------------------------------------
+
+#Add-PluginFolder "D:\Scripts\CleverReach\Plugins"
+#Register-Plugins   # Not needed later on since 0.0.3
 
 #-----------------------------------------------
 # CHOOSE A PLUGIN

@@ -15,23 +15,47 @@ Function Import-Settings {
                 If (( Test-Path -Path $Path ) -eq $true) {
 
                     # Load the new settings file
-                    $settings = Get-Content -Path $Path -Encoding utf8 -Raw | ConvertFrom-Json
+                    try {
+                        $settings = Get-Content -Path $Path -Encoding utf8 -Raw | ConvertFrom-Json
+                    } catch {
+                        Write-Error "There is a problem loading the settings file"
+                    }
                     #Write-verbose ( Convertto-json $settings ) -verbose
                     
+                    # Register all plugins
+                    try {
+                        $settings.pluginFolders | ForEach-Object {
+                            Add-PluginFolder $_
+                        }
+                    } catch {
+                        Write-Error "There is a problem registering plugins"
+                    }
                     # First extend the default settings with the settings file
-                    $defaultSettings = $Script:defaultSettings.psobject.copy()
-                    $extendedSettings = Add-PropertyRecurse -source $settings -toExtend $defaultSettings
-                    #Write-verbose ( Convertto-json $extendedSettings ) -verbose
+                    try {
+                        $defaultSettings = $Script:defaultSettings.psobject.copy()
+                        $extendedSettings = Add-PropertyRecurse -source $settings -toExtend $defaultSettings
+                        #Write-verbose ( Convertto-json $extendedSettings ) -verbose
+                    } catch {
+                        Write-Error -Message "Settings cannot be added"
 
+                    }
                     # Then make sure to overwrite existing values that are matching
-                    $joinedSettings = Join-Objects -source $extendedSettings -extend $settings
+                    try {
+                        $joinedSettings = Join-Objects -source $extendedSettings -extend $settings
+                    } catch {
+                        Write-Error -Message "Settings cannot be joined"
+                    }
                     #$script:debug = $joinedSettings
 
                     # Set the settings into the module (modules defaultsettings + imported settings)
                     Set-Settings -PSCustom $joinedSettings
 
                     # TODO [x] load the plugins from the settings file, if present
-                    Import-Plugin -guid $settings.plugin.guid
+                    try {
+                        Import-Plugin -guid $settings.plugin.guid
+                    } catch {
+                        Write-Error -Message "Plugin cannot be imported"
+                    }
                     
                     # Set the settings into the module (settings + plugin settings)
                     Set-Settings -PSCustom $joinedSettings
@@ -40,7 +64,7 @@ Function Import-Settings {
     
             } else {
 
-                Write-Error -Message "The path '$( $Path )' is invalid."
+                Write-Error -Message "The settings file '$( $Path )' cannot be loaded."
 
             }
 

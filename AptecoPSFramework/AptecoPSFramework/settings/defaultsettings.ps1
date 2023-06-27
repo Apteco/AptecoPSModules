@@ -15,6 +15,7 @@
         "version" = "0.0.1"
         "lastUpdate" = "2023-06-15"
     }
+    "pluginFolders" = [Array]@()
 
     # Network and Security
     "changeTLS" = $true                                     # change TLS automatically to a newer version

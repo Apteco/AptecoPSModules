@@ -31,6 +31,9 @@ function Add-PluginFolder {
         # Add this folder
         [void]$Script:pluginFolders.add($resolvedPath.Path)
 
+        # Register all plugins automatically
+        $plugins = Register-Plugins
+
         # Switch return value
         $return = $true
 

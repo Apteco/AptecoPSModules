@@ -134,6 +134,7 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.0.3 Automatically load new plugin folders and save them in the settings
 0.0.2 Small fixes after testing
 0.0.1 Initial release of Apteco PS module through psgallery
 '

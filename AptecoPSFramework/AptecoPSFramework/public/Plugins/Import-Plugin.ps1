@@ -23,9 +23,11 @@ function Import-Plugin {
 
         # Check the plugin
         If ( $plugin.count -eq 0 ) {
+            Write-Error "Plugin couldn't be found. Please check your guid"
             throw "Plugin couldn't be found. Please check your guid"
             Exit 1
         } elseif ( $plugin.count -gt 1 ) {
+            Write-Error "There are more than 1 plugins with the guid, please check your guids!"
             throw "There are more than 1 plugins with the guid, please check your guids!"
             Exit 1
         }
@@ -174,6 +176,7 @@ function Import-Plugin {
             #-----------------------------------------------
 
             New-Variable -Name settings -Value $Input.settings -Scope Script -Force       # Path of the calling script
+            New-Variable -Name pluginDebug -Value $null -Scope Script -Force              # Debug variable for the scripts
 
             #Write-verbose ( Convertto-json $Script:settings -dept 99 ) -Verbose
 
