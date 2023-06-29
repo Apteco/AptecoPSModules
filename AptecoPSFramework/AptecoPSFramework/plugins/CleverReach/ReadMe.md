@@ -56,6 +56,27 @@ To use the same user, just do it like
 start-process powershell.exe -WorkingDirectory "C:\faststats\scripts\cleverreach"
 ```
 
+You can save variables and values into the variable `$Script:pluginDebug` and output it with `Get-PluginDebug`.
+
+If you don't have this function, you can just put this file in your `Public` folder and it will be dot sourced the next time:
+
+```PowerShell
+function Get-PluginDebug {
+
+    [CmdletBinding()]
+    param ()
+    
+    process {
+
+        $Script:pluginDebug
+
+    }
+
+}
+```
+
+
+
 # CleverReach Settings
 
 Please review [DefaultSettings.ps1](AptecoPSFramework/settings/defaultssettings.ps1) in the modules folder AND [the plugins folder](AptecoPSFramework/plugins/settings/defaultssettings.ps1) for more information. Some of the settings are explained here in detail.
@@ -73,7 +94,62 @@ Path|Setting|Default|Explanation
 
 # Response Gathering
 
+
+
+This plugin has a functionality builtin to load responses with a command.
+
+## Configuration
+
+There are three important requisites:
+
+1. Install the `FastStats Email Response Gatherer` from Apteco on the same machine
+1. Create a configuration xml file when executing the configurator at `C:\Program Files\Apteco\FastStats Email Response Gatherer x64\EmailResponseConfig.exe`. Please fill out and then save the file where you like it:
+  - Connection String: Your email response database connection string, usually something like `Data Source=localhost;Initial Catalog=RS_Handel;User Id=serviceuser;Password=password123;`
+  - Bulk Insert Folder: A folder that is temporarily needed for inserting the data. This path needs to be accessible by the SQL-Server as if the SQL-Server would enter this path
+  - PeoplStage connection string: Your PeopleStage database connection string, usually something like `Data Source=localhost;Initial Catalog=PS_Handel;User Id=serviceuser;Password=password123;`
+  - Broadcaster: `PowerShell`
+  - Username: Could be any dummy value
+  - Password: Could be any dummy value
+  - Broadcast Parameters: Please have a look at the following table and check each parameter, especially `FTPURL` which points to your folder where you are saving your response files:
+
+Parameter|Value
+-|-
+CLICKDATECOLUMNNAME|timestamp
+CLICKURLCOLUMNNAME|link
+DELIVERYDATECOLUMNNAME|timestamp
+EMAILCOLUMNNAME|email
+EVENTTRIGGEREDDATECOLUMNNAME|timestamp
+TYPECOLUMNNAME|MessageType
+URNCOLUMNNAME|urn
+DATEFORMAT|UnixTimeStamp
+RemoveFiles|true
+MESSAGENAMECOLUMNNAME|mailingName
+FILEPATTERN|responses_*
+FTPURL|File://D:\Scripts\CleverReach\PSCleverReachModule\r
+DELIMITER|TAB
+ENCLOSER|DOUBLEQUOTE
+
+3. Check your settings json file
+  - So please check your settings json file that you have configured this section. Is it important you have checked at minimum the following settings:
+    - fergePath: The path to your response gatherer, usually something like `C:\Program Files\Apteco\FastStats Email Response Gatherer x64\EmailResponseGatherer64.exe`
+    - fergeConfigurationXml The path to your xml file that you have created in the previous step
+
+## Gather Responses
+
+Just execute these commands which can also be used for a scheduled task. Please change to the directory where you wish to save the response files to.
+
+```PowerShell
+Set-Path -Path "D:\Scripts\CleverReach\PSCleverReachModule\r"
+Import-Module "AptecoPSFramework" -Verbose
+Import-Settings -Path "D:\Scripts\CleverReach\PSCleverReachModule\settings.json"
+Get-Response
+```
+
+As per default, FERGE should be automatically triggered after downloading and parsing the response data.
+
 # Automatic Token Refreshment
+
+Still needs to be implemented here. In the meantime have a look here: https://github.com/Apteco/HelperScripts/tree/master/scripts/cleverreach/check-token
 
 # FAQ
 
@@ -85,9 +161,8 @@ cleanup of lists
 
 ## Usage of multiple settings files
 
-test reserverd fields
-check the processid
-manually expire a token and test the stacktrace
+It is supported to have as many settings json files as you wish. Just enter a different filename when you do `Export-Settings -Path ".\settings_new.json` and put the absolute file name into your channel editor integration parameters.
+
 
 
 
@@ -108,3 +183,6 @@ manually expire a token and test the stacktrace
 - [ ] exception for api call
 - [ ] dependencies
 - [ ] Differentiate between new lists and existing lists
+- [ ] test reserverd fields
+- [ ] check the processid
+- [ ] manually expire a token and test the stacktrace
