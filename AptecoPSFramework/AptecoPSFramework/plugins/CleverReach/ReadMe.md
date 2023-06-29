@@ -36,6 +36,23 @@ Upload your data and tag your receivers with a specific tag you can choose of. P
 
 Please be aware, that you still need to choose a mailing template, but that does not have an effect for the upload.
 
+## Commands
+
+Besides the default commands for PeopleStage functionalities you have additional command you can use straight away after you have imported the module with
+
+```PowerShell
+Import-Module "AptecoPSFramework" -Verbose
+Import-Settings -Path "D:\Scripts\CleverReach\PSCleverReachModule\settings.json"
+```
+
+There are commands available for
+
+```PowerShell
+Get-Bounces
+Get-Blocklist
+Get-LocalDeactivated -GroupId 123456
+Get-GlobalDeactivated
+```
 
 ## Debugging
 
@@ -128,6 +145,7 @@ FILEPATTERN|responses_*
 FTPURL|File://D:\Scripts\CleverReach\PSCleverReachModule\r
 DELIMITER|TAB
 ENCLOSER|DOUBLEQUOTE
+SENDIDCOLUMNNAME|mailingId
 
 3. Check your settings json file
   - So please check your settings json file that you have configured this section. Is it important you have checked at minimum the following settings:
@@ -186,3 +204,4 @@ It is supported to have as many settings json files as you wish. Just enter a di
 - [ ] test reserverd fields
 - [ ] check the processid
 - [ ] manually expire a token and test the stacktrace
+- [ ] test on multiple table levels and their dependency with URN

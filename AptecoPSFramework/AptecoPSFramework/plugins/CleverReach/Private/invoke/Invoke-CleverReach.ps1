@@ -65,6 +65,7 @@ function Invoke-CR {
         ,[Parameter(Mandatory=$false)][String]$Path = ""                            # The path in the url after the object
         ,[Parameter(Mandatory=$false)][PSCustomObject]$Query = [PSCustomObject]@{}  # Query parameters for the url
         ,[Parameter(Mandatory=$false)][Switch]$Paging = $false                      # Automatic paging through the result, only needed for a few calls
+        ,[Parameter(Mandatory=$false)][Int]$Pagesize = 0                          # Pagesize, if not defined in settings. For reports the max is 100.
         ,[Parameter(Mandatory=$false)][ValidateScript({
             If ($_ -is [PSCustomObject]) {
                 [PSCustomObject]$_
@@ -167,19 +168,27 @@ function Invoke-CR {
             }
         }
 
+        # set the pagesize
+        If ( $Pagesize -gt 0 ) {
+            $currentPagesize = $Pagesize
+        } else {
+            $currentPagesize = $Script:settings.pageSize
+        }
+
+        # set paging parameters
         If ( $Paging -eq $true ) {
 
             Switch ( $updatedParameters.Method ) {
             
                 "GET"{
                     #Write-Host "get"
-                    $Query | Add-Member -MemberType NoteProperty -Name "pagesize" -Value $Script:settings.pageSize
+                    $Query | Add-Member -MemberType NoteProperty -Name "pagesize" -Value $currentPagesize  #$Script:settings.pageSize
                     $Query | Add-Member -MemberType NoteProperty -Name "page" -Value 0
                 }
 
                 "POST" {
                     If ( $Body -is [PSCustomObject] ) {
-                        $Body | Add-Member -MemberType NoteProperty -Name "pagesize" -Value $Script:settings.pageSize
+                        $Body | Add-Member -MemberType NoteProperty -Name "pagesize" -Value $currentPagesize # $Script:settings.pageSize
                         $Body | Add-Member -MemberType NoteProperty -Name "page" -Value 0
                     # } elseif ( $Body -is [System.Collections.Specialized.OrderedDictionary] ) {
                     #     $Body.add("pagesize", $Script:settings.pageSize)
@@ -242,7 +251,7 @@ function Invoke-CR {
             If ( $Paging -eq $true ) {
 
                 # If the result equals the pagesize, try it one more time with the next page
-                If ( $wr.count -eq $Script:settings.pageSize ) {
+                If ( $wr.count -eq $currentPagesize ) {
 
                     Switch ( $updatedParameters.Method ) {
                 

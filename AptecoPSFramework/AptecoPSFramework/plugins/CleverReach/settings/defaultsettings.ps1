@@ -52,7 +52,7 @@
     }
 
     # Upload settings
-    "upload" = [PSCustomObject]@{
+    "upload" = [PSCustomObject]@{        
         "reservedFields" = [Array]@(,"tags")                       # If one of these fields are used, the whole process will pause
         "countRowsInputFile" = $true
         "validateReceivers" = $true
@@ -79,8 +79,48 @@
 
     }
 
-    "preview" =  [PSCustomObject]@{
+    "preview" = [PSCustomObject]@{
         "previewGroupName" = "Apteco_Preview"
     }
 
+    "responses" = [PSCustomObject]@{
+
+        # TODO rename this column
+        "urnFieldName" = "Kunden_ID" #"urn"                             # Primary key field name, which should be global and is needed for matching
+        "communicationKeyAttributeName" = "communication_key"           # The local group attribute that will be loaded from the group, not used yet
+
+        # File export settings
+        "filePrefix" = "responses_"                         # Prefix for the response files that are generated
+
+        # Periods to ask the API for
+        "messagePeriod" = 60                                # How many days do you want to go backwards for loading mailing reports?
+        "responsePeriod" = 180                               # How many days to you want to go backwards for response data per message? Normally this numbers is smaller than the messagePeriod
+
+        # This mechanism can enhance the performance massively and will override "responsePeriod" as the last saved timestamp will be used as a start date
+        "saveLastTimestamp" = $true                        # TODO set this to true later
+        "saveLastTimestampFile" = "$( (resolve-path ".").path )\lastresponsedownload.json"
+
+        # Decide, which responses should be donwloaded
+        "loadSent" = $true
+        "loadOpens" = $true
+        "loadClicks" = $true
+        "loadBounces" = $true
+        "loadUnsubscribes" = $true
+        #"loadBlocklistAsUnsubscribes" = $true
+
+        # Settings for FERGE
+        "triggerFerge" = $true
+        "fergePath" = "$( $Env:ProgramFiles )\Apteco\FastStats Email Response Gatherer x64\EmailResponseGatherer64.exe"
+        "fergeConfigurationXml" = "D:\Scripts\CleverReach\PSCleverReachModule\responses.xml"
+
+    }
+
+    # Create the binary value for loading the cleverreach details for each receiver
+    loadDetails = @{
+        events = $true
+        orders = $false
+        tags = $true
+    }
+
 }
+

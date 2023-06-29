@@ -106,7 +106,7 @@ function Invoke-Upload{
         }
         #throw [System.IO.InvalidDataException] $msg
         
-        Write-Log -Message "Debug Mode: $( $Script:debugMode )"
+        #Write-Log -Message "Debug Mode: $( $Script:debugMode )"
 
 
         #-----------------------------------------------
@@ -155,15 +155,18 @@ function Invoke-Upload{
                 $groupId = $list.mailingListId
                 Write-Log "Got chosen list/group entry with id '$( $list.mailingListId )' and name '$( $list.mailingListName )'"        
 
+                # Asking for details and possibly throw an exception
+                $g = Invoke-CR -Object "groups" -Path "/$( $groupId )" -Method GET -Verbose
+
             } catch {
 
                 # Listname is the same as the message means nothing was entered -> check the name
-                if ( $InputHashtable.ListName -ne $InputHashtable.MessageName ) {
+                if ( $InputHashtable.ListName -eq $InputHashtable.MessageName ) {
 
                     # Try to search for that group and select the first matching entry or throw exception
                     $object = "groups"    
                     $endpoint = "$( $apiRoot )$( $object )"
-                    $groups = Invoke-RestMethod -Method Get -Uri $endpoint -Headers $header -Verbose -ContentType $contentType
+                    $groups =  Invoke-CR -Object "groups" -Body $body -Method "GET" -Verbose
                     
                     # Check how many matches are available
                     $matchingGroups = @( $groups | where-object { $_.name -eq $InputHashtable.ListName } ) # put an array around because when the return is one object, it will become a pscustomobject
@@ -261,6 +264,7 @@ function Invoke-Upload{
                 [void]$sqliteDeliveryCreateFields.Add( """$( $header )"" TEXT" )
 
             }#>
+            
             $reservedFieldsCheck = Compare-Object -ReferenceObject $headers -DifferenceObject $Script:settings.upload.reservedFields -IncludeEqual
             If ( ( $reservedFieldsCheck | Where-Object { $_.SideIndicator -eq "==" } ).count -gt 0 ) {
 
@@ -280,8 +284,8 @@ function Invoke-Upload{
             #-----------------------------------------------
             # CHECK ATTRIBUTES
             #-----------------------------------------------
-
-            $requiredFields = @(,$InputHashtable.EmailFieldName)
+            
+            $requiredFields = @( $InputHashtable.EmailFieldName, $InputHashtable.UrnFieldName )
             $reservedFields = @("tags")
 
             Write-Log -message "Required fields: $( $requiredFields -join ", " )"
@@ -290,12 +294,12 @@ function Invoke-Upload{
 
             # Load online attributes
             $object = "attributes"
-            $globalAttributes = @(, (Invoke-CR -Object $object -Method "GET" -Verbose ))
-            $localAttributes = @(, (Invoke-CR -Object $object -Method "GET" -Verbose -Query ( [PSCustomObject]@{ "group_id" = $groupId } )))
+            $globalAttributes = @( (Invoke-CR -Object $object -Method "GET" -Verbose ) )
+            $localAttributes = @( (Invoke-CR -Object $object -Method "GET" -Verbose -Query ( [PSCustomObject]@{ "group_id" = $groupId } )) )
             $attributes = $globalAttributes + $localAttributes
             
-            Write-Log -message "Loaded global attributes $( $globalAttributes.name -join ", " )"
-            Write-Log -message "Loaded local attributes $( $localAttributes.name -join ", " )"
+            Write-Log -message "Loaded global attributes: $( $globalAttributes.name -join ", " )"
+            Write-Log -message "Loaded local attributes: $( $localAttributes.name -join ", " )"
             Write-Log -Message "You have $( $attributes.count )/$( $maxAttributesCount ) attributes now"
             If ( $attributes.count/$maxAttributesCount -gt 0.7 ) {
                 Write-Log -Message "You have used more than 70% of your attributes" -Severity WARNING
@@ -333,6 +337,15 @@ function Invoke-Upload{
                 Write-Log -Message "The max amount of attributes would be exceeded with this job. Canceling now!" -Severity ERROR
                 throw [System.IO.InvalidDataException] "Too many attributes!"  
                 exit 0
+            }
+
+
+            #-----------------------------------------------
+            # CHECK GLOBAL ATTRIBUTES
+            #-----------------------------------------------
+
+            If ( $InputHashtable.UrnFieldName -ne $Script:settings.responses.urnFieldName ) {
+                Write-Log "Be aware, that the response matching won't work if the urn fieldnames are not matching" -severity WARNING
             }
 
 
