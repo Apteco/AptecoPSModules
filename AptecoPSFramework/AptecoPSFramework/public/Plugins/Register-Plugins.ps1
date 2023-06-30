@@ -44,8 +44,11 @@ function Register-Plugins {
 
         # Save all plugin folders except the first one, because that's gonna be this modules directory
         #$Script:debug = $Script:settings.pluginFolders
-        $Script:settings.pluginFolders = $Script:pluginFolders[1..($Script:pluginFolders.count -1)]
-        
+        $Script:settings.pluginFolders = $Script:pluginFolders | where { $_ -ne ( ( join-path -Path $Script:moduleRoot -ChildPath "plugins" ) ) } #$Script:pluginFolders[1..($Script:pluginFolders.count -1)]
+        If ( $Script:settings.pluginFolders -eq $null ) {
+            $Script:settings.pluginFolders = [System.Collections.ArrayList]::new()
+        }
+
         # Checks - If there is more than one plugin with the same guid
         $groupPlugins = $Script:plugins.guid | Group-Object
         If ( ( $groupPlugins | Where-Object { $_.Count -gt 1 } ).Count -gt 0 ) {
