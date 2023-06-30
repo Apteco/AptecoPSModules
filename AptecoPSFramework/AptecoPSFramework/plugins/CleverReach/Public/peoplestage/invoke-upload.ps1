@@ -68,6 +68,7 @@ function Invoke-Upload{
             Write-Log "Got chosen message entry with id '$( $mailing.mailingId )' and name '$( $mailing.mailingName )'"
         }
 
+
         #-----------------------------------------------
         # DEFAULT VALUES
         #-----------------------------------------------
@@ -153,7 +154,7 @@ function Invoke-Upload{
                 $list = [MailingList]::new($InputHashtable.ListName)
                 $listName = $list.mailingListName
                 $groupId = $list.mailingListId
-                Write-Log "Got chosen list/group entry with id '$( $list.mailingListId )' and name '$( $list.mailingListName )'"        
+                Write-Log "Got chosen list/group entry with id '$( $list.mailingListId )' and name '$( $list.mailingListName )'"
 
                 # Asking for details and possibly throw an exception
                 $g = Invoke-CR -Object "groups" -Path "/$( $groupId )" -Method GET -Verbose
@@ -161,12 +162,10 @@ function Invoke-Upload{
             } catch {
 
                 # Listname is the same as the message means nothing was entered -> check the name
-                if ( $InputHashtable.ListName -eq $InputHashtable.MessageName ) {
+                if ( $InputHashtable.ListName -ne $InputHashtable.MessageName ) {
 
                     # Try to search for that group and select the first matching entry or throw exception
-                    $object = "groups"    
-                    $endpoint = "$( $apiRoot )$( $object )"
-                    $groups =  Invoke-CR -Object "groups" -Body $body -Method "GET" -Verbose
+                    $groups =  Invoke-CR -Object "groups" -Method "GET" -Verbose
                     
                     # Check how many matches are available
                     $matchingGroups = @( $groups | where-object { $_.name -eq $InputHashtable.ListName } ) # put an array around because when the return is one object, it will become a pscustomobject
@@ -176,7 +175,7 @@ function Invoke-Upload{
                         0 { 
                             $createNewGroup = $true                
                             $listName = $InputHashtable.ListName
-                            Write-Log -message "No matched group -> create a new one"
+                            Write-Log -message "No matched group -> create a new one" -severity INFO
                         }
                         
                         # One match -> use that one!
@@ -184,13 +183,13 @@ function Invoke-Upload{
                             $createNewGroup = $false # No need for the group creation now
                             $listName = $matchingGroups.name
                             $groupId = $matchingGroups.id
-                            Write-Log -message "Matched one group -> use that one"
+                            Write-Log -message "Matched one group -> use that one" -severity INFO
                         }
 
                         # More than one match -> throw exception
                         Default {
                             $createNewGroup = $false # No need for the group creation now
-                            Write-Log -message "More than one match -> throw exception"
+                            Write-Log -message "More than one match -> throw exception" -severity ERROR
                             throw [System.IO.InvalidDataException] "More than two groups with that name. Please choose a unique list."              
                         }
                     }
@@ -199,7 +198,7 @@ function Invoke-Upload{
                 } else {
                     $createNewGroup = $true
                     $listName = [datetime]::Now.ToString("yyyyMMdd_HHmmss")
-                    Write-Log -message "Create a new group with a timestamp"
+                    Write-Log -message "Create a new group with a timestamp" -severity INFO
                 }
 
             }
@@ -212,7 +211,7 @@ function Invoke-Upload{
                 }
                 $newGroup = Invoke-CR -Object "groups" -Body $body -Method "POST" -Verbose
                 $groupId = $newGroup.id
-                Write-Log -message "Created a new group with id $( $groupId )"
+                Write-Log -message "Created a new group with id $( $groupId )" -severity INFO
 
             }
 
@@ -287,102 +286,25 @@ function Invoke-Upload{
             
             $requiredFields = @( $InputHashtable.EmailFieldName, $InputHashtable.UrnFieldName )
             $reservedFields = @("tags")
-
             Write-Log -message "Required fields: $( $requiredFields -join ", " )"
             Write-Log -message "Reserved fields: $( $reservedFields -join ", " )"
 
-
-            # Load online attributes
-            $object = "attributes"
-            $globalAttributes = @( (Invoke-CR -Object $object -Method "GET" -Verbose ) )
-            $localAttributes = @( (Invoke-CR -Object $object -Method "GET" -Verbose -Query ( [PSCustomObject]@{ "group_id" = $groupId } )) )
-            $attributes = $globalAttributes + $localAttributes
-            
-            Write-Log -message "Loaded global attributes: $( $globalAttributes.name -join ", " )"
-            Write-Log -message "Loaded local attributes: $( $localAttributes.name -join ", " )"
-            Write-Log -Message "You have $( $attributes.count )/$( $maxAttributesCount ) attributes now"
-            If ( $attributes.count/$maxAttributesCount -gt 0.7 ) {
-                Write-Log -Message "You have used more than 70% of your attributes" -Severity WARNING
-            } 
-
-
-            $attributesNames = @(, $attributes | Where-Object { $_.name -notin $requiredFields } )
-            
-            #$csvAttributesNames = Get-Member -InputObject $dataCsv[0] -MemberType NoteProperty | where { $_.Name -notin $reservedFields }
             $csvAttributesNames = $headers | Where-Object { $_ -notin $reservedFields }
+            #$csvAttributesNames = Get-Member -InputObject $dataCsv[0] -MemberType NoteProperty | where { $_.Name -notin $reservedFields }
             Write-Log -message "Loaded csv attributes $( $csvAttributesNames -join ", " )"
 
-            # Check if email field is present
-            $equalWithRequirements = Compare-Object -ReferenceObject $csvAttributesNames -DifferenceObject $requiredFields -IncludeEqual -PassThru | Where-Object { $_.SideIndicator -eq "==" }
-
-            if ( $equalWithRequirements.count -eq $requiredFields.Count ) {
-                # Required fields are all included
-
-            } else {
-                # Required fields not equal -> error!
-                throw [System.IO.InvalidDataException] "No email field present!"  
-            }
-
-            # Compare columns
-            # TODO [x] Now the csv column headers are checked against the description of the cleverreach attributes and not the (technical name). Maybe put this comparation in here, too. E.g. description "Communication Key" get the name "communication_key"
-            #$differences = Compare-Object -ReferenceObject $attributesNames.description -DifferenceObject ( $csvAttributesNames  | where { $_.name -notin $requiredFields } ).name -IncludeEqual #-Property Name 
-            $differences = Compare-Object -ReferenceObject ( $attributesNames.name + $attributesNames.description ) -DifferenceObject ( $csvAttributesNames  | Where-Object { $_ -notin $requiredFields } ) -IncludeEqual #-Property Name 
-            
-            #$differences = Compare-Object -ReferenceObject $attributesNames.name -DifferenceObject ( $csvAttributesNames  | where { $_.name -notin $requiredFields } ).name -IncludeEqual #-Property Name 
-            #$colsEqual = $differences | Where-Object { $_.SideIndicator -eq "==" } 
-            #$colsInAttrButNotCsv = $differences | Where-Object { $_.SideIndicator -eq "<=" } 
-            $colsInCsvButNotAttr = $differences | Where-Object { $_.SideIndicator -eq "=>" }
-
-            If ( ($attributes.count + $colsInCsvButNotAttr.count) -gt $maxAttributesCount ) {
-                Write-Log -Message "The max amount of attributes would be exceeded with this job. Canceling now!" -Severity ERROR
-                throw [System.IO.InvalidDataException] "Too many attributes!"  
-                exit 0
-            }
-
-
-            #-----------------------------------------------
-            # CHECK GLOBAL ATTRIBUTES
-            #-----------------------------------------------
-
-            If ( $InputHashtable.UrnFieldName -ne $Script:settings.responses.urnFieldName ) {
-                Write-Log "Be aware, that the response matching won't work if the urn fieldnames are not matching" -severity WARNING
-            }
-
-
-            #-----------------------------------------------
-            # CREATE LOCAL ATTRIBUTES
-            #-----------------------------------------------
-
-            $newAttributes = [Array]@()
-            #$Script:debug = $colsInCsvButNotAttr
-
-            Write-Log -Message "Create new local attributes: $(( $colsInCsvButNotAttr.InputObject -join ", " ))"
-            
-            $colsInCsvButNotAttr | ForEach-Object {
-
-                $newAttributeName = $_.InputObject.toString()
-
-                $body = [PSCustomObject]@{
-                    "name" = $newAttributeName
-                    "type" = "text"                     # text|number|gender|date
-                    "description" = $newAttributeName   # optional 
-                    #"preview_value" = "real name"       # optional
-                    #"default_value" = "Bruce Wayne"     # optional
-                }
-
-                $newAttributes += Invoke-CR -Object "groups" -Method "POST" -Path "/$( $groupId )/attributes" -Body $body -Verbose
-                #$newAttributes += Invoke-RestMethod -Uri $endpoint -Method Post -Headers $header -Body $bodyJson -ContentType $contentType -Verbose 
-
-            }
-
-            If ( $newAttributes.count -gt 0 ) {
-                Write-Log -message "Created new local attributes in CleverReach: $( $newAttributes.name -join ", " )" -Severity WARNING
-            } else {
-                Write-Log -Message "No new local attributes needed to be created"
+            $attributeParam = [Hashtable]@{
+                "reservedFields" = $reservedFields
+                "requiredFields" = $requiredFields
+                "csvAttributesNames" = $csvAttributesNames
+                "csvUrnFieldname" = $InputHashtable.UrnFieldName
+                "responseUrnFieldname" = $Script:settings.responses.urnFieldName
+                "groupId" = $groupId 
             }
             
+            $attributes = Sync-Attributes @attributeParam
             
-
+            
             #-----------------------------------------------
             # BEGIN AN EXCLUSION LIST
             #-----------------------------------------------
@@ -411,11 +333,12 @@ function Invoke-Upload{
 
             # Load global inactive receivers (unsubscribed)
             If ( $Script:settings.upload.excludeGlobalDeactivated -eq $true ) {
-                $globalDeactivated = @(, (Invoke-CR -Object "receivers" -Path "filter.json" -Method POST -Verbose -Paging -Body $deactivatedGlobalFilterBody.PsObject.Copy()) ) # use a copy so the reference is not changed because it will used a second time
+
+                $globalDeactivated = @( (Invoke-CR -Object "receivers" -Path "filter.json" -Method POST -Verbose -Paging -Body $deactivatedGlobalFilterBody.PsObject.Copy()) ) # use a copy so the reference is not changed because it will used a second time
                 $script:debug = $globalDeactivated
                 Write-Log -Message "Adding $( $globalDeactivated.count ) global inactive receivers to exclusion list"
                 If ( $globalDeactivated.Count -gt 0 ) {
-                    $exclusionList.AddRange( @(, $globalDeactivated.email ) )
+                    $exclusionList.AddRange( @( $globalDeactivated.email ) )
                 }
                 # TODO use this list for exclusions
             }
@@ -427,10 +350,10 @@ function Invoke-Upload{
             # Runtime filter with paging
             If ( $Script:settings.upload.excludeLocalDeactivated -eq $true ) {
 
-                $localDeactivated = @(, (Invoke-CR -Object "receivers" -Path "filter.json" -Method POST -Verbose -Paging -Body $deactivatedLocalFilterBody) )
+                $localDeactivated = @( (Invoke-CR -Object "receivers" -Path "filter.json" -Method POST -Verbose -Paging -Body $deactivatedLocalFilterBody) )
                 Write-Log -Message "Adding $( $localDeactivated.count ) local inactive receivers to exclusion list"
                 If ( $localDeactivated.count ) {
-                    $exclusionList.AddRange( @(, $localDeactivated.email ) )
+                    $exclusionList.AddRange( @( $localDeactivated.email ) )
                 }
             }
 
@@ -440,7 +363,7 @@ function Invoke-Upload{
             #-----------------------------------------------
             
             # Load global bounces as a list
-            $bounced = Invoke-CR -Object "bounces" -Method GET -Verbose -Paging
+            $bounced = @( Invoke-CR -Object "bounces" -Method GET -Verbose -Paging )
 
             # Log
             Write-Log -Message "There are currently $( $bounced.count ) bounces in your account"
@@ -502,7 +425,7 @@ function Invoke-Upload{
             
             #$Script:debug = $reader
 
-            $globalAtts = $globalAttributes | Where-Object { $_.name -in $headers }
+            $globalAtts = $attributes.global | Where-Object { $_.name -in $headers }
             
             #$localAtts = $localAttributes | where { $_.name -in $headers }
 
@@ -584,7 +507,7 @@ function Invoke-Upload{
                 }
 
                 # New local attributes
-                $newAttributes | ForEach-Object {
+                $attributes.new | ForEach-Object {
 
                     $attrName = $_.name # using description now rather than name, because the comparison is made on descriptions
                     $attrDescription = $_.description
@@ -605,7 +528,7 @@ function Invoke-Upload{
                 }
 
                 # Existing local attributes
-                $localAttributes | ForEach-Object {
+                $attributes.local | ForEach-Object {
 
                     $attrName = $_.name # using description now rather than name, because the comparison is made on descriptions
                     $attrDescription = $_.description

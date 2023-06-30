@@ -252,7 +252,7 @@ function Invoke-Broadcast{
             ))
 
             $filterBody = [PSCustomObject]@{
-                "name" = $newMailingName
+                "name" = "$( $Script:settings.upload.tagSource ).$( $newMailingName )"
                 #"operator" = "AND"
                 "rules" = $rules
             }
