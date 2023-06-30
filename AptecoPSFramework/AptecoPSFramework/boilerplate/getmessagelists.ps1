@@ -17,6 +17,20 @@ Param(
 $debug = $false
 
 
+#-----------------------------------------------
+# ADD MODULE PATH, IF NOT PRESENT
+#-----------------------------------------------
+
+#$envVariables = [System.Environment]::GetEnvironmentVariables()
+$modulePath = @( $Env:PSModulePath -split ";" ) + @( 
+    "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles") )\WindowsPowerShell\Modules"
+    #"C:\Program Files\WindowsPowerShell\Modules"
+    "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles(x86)") )\WindowsPowerShell\Modules"
+    "$( [System.Environment]::GetEnvironmentVariable("USERPROFILE") )\Documents\WindowsPowerShell\Modules"
+    #"$( $Env:windir )\system32\WindowsPowerShell\v1.0\Modules"
+)
+$Env:PSModulePath = ( $modulepath | select -unique ) -join ";"
+
 
 #-----------------------------------------------
 # INPUT PARAMETERS, IF DEBUG IS TRUE
