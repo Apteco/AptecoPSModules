@@ -835,7 +835,7 @@ function Invoke-Upload{
             "TransactionId"=$transactionId
         
             # General return value to identify this custom channel in the broadcasts detail tables
-            "CustomProvider"= $moduleName
+            "CustomProvider"= $Script:settings.providername
             "ProcessId" = $Script:processId
 
             # More values for broadcast

@@ -401,7 +401,7 @@ function Invoke-Broadcast{
             "TransactionId"=$transactionId
         
             # General return value to identify this custom channel in the broadcasts detail tables
-            "CustomProvider"= $moduleName
+            "CustomProvider"=  $Script:settings.providername
             "ProcessId" = $Script:processId
         
             # Some more information for the broadcasts script

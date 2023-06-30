@@ -12,7 +12,7 @@
 RootModule = 'AptecoPSFramework.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.0.2'
+ModuleVersion = '0.0.4'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -127,14 +127,18 @@ PrivateData = @{
         LicenseUri = 'https://gist.github.com/gitfvb/58930387ee8677b5ccef93ffc115d836'
 
         # Eine URL zur Hauptwebsite für dieses Projekt.
-        ProjectUri = 'https://github.com/Apteco/AptecoPSModules/tree/main/WriteLog'
+        ProjectUri = 'https://github.com/Apteco/AptecoPSModules/tree/dev/AptecoPSFramework'
 
         # Eine URL zu einem Symbol, das das Modul darstellt.
         IconUri = 'https://www.apteco.de/sites/default/files/favicon_3.ico'
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.0.4 Changed URLs
+      Many improvements and fixes for the CleverReach plugin
+      Boilerplate fixes for loading psmodulepath environment variable
 0.0.3 Automatically load new plugin folders and save them in the settings
+      Support response gathering for CleverReach Plugin
 0.0.2 Small fixes after testing
 0.0.1 Initial release of Apteco PS module through psgallery
 '

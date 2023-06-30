@@ -39,7 +39,7 @@
         "tokenUsage" = "consume"                            # consume|generate -> please have only one setting where you generate the token
         "encryptTokenFile" = $false                         # only used, if the token usage is on 'generate', when 'consume' then the tokenfile will be decrypted
                                                             # be careful, that the encryption is user dependent so cannot be shared between multiple users
-        "tokenFilePath" = ""                             # path for the file that should be consumed or generated
+        "tokenFilePath" = ""                             # path for the file containing the token that should be consumed or generated
 
     }
 
@@ -56,7 +56,7 @@
         "reservedFields" = [Array]@(,"tags")                       # If one of these fields are used, the whole process will pause
         "countRowsInputFile" = $true
         "validateReceivers" = $true
-        "excludeNotValidReceivers" = $false
+        "excludeNotValidReceivers" = $false                 # !!! IMPORTANT SETTING $false allows new records to be uploaded to CleverReach, $true means only activated receivers in CleverReach on that list will be updated and tagged
         "excludeBounces" = $true
         "excludeGlobalDeactivated" = $true
         "excludeLocalDeactivated" = $true

@@ -166,7 +166,7 @@ function Import-Plugin {
                     Import-Module -Name $mod -ErrorAction Stop
                 }
             } catch {
-                Write-Error "Error loading dependencies. Please execute 'Install-CleverReach' now"
+                Write-Error "Error loading dependencies. Please execute 'Install-AptecoPSFramework' now"
                 Exit 0
             }
 

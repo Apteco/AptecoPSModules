@@ -8,8 +8,8 @@ Mode|Upload Data|Tag Receivers|Copy Mailing|Trigger Broadcast|Setup
 -|-|-|-|-|-
 Upload and Broadcast|x|x|x|x|Upload and Broadcast<br/>abc
 Prepare|x|x|x||Upload and Broadcast<br/>Integration parameter `mode=prepare`
-Tagging|x|x|||Append To List = True<br/>Retrieve Existing List Names=True<br/>mode=taggingOnly
-Upload only|x||||Upload only
+Tagging|x|x|||Retrieve Existing List Names=True<br/>`mode=taggingOnly`
+Upload only|x|x|||Upload only
 
 
 ## Modes
@@ -25,11 +25,11 @@ During the process the module will create new local attributes to the new/existi
 The whole process from uploading data up to the preparation of a copied mailing. The difference to the broadcast is the not scheduled mailing. Response data will still be able to be mapped as all IDs are already created and saved for matching.
 
 Set to "Upload and Broadcast"
-Integration parameters like `scriptPath=D:\Scripts\CleverReach\PSCleverReachModule;settingsFile=.\settings.json;mode=prepare`
+Integration parameters like `settingsFile=D:\Scripts\CleverReach\PSCleverReachModule\settings.json;mode=prepare`
 
 ### Tagging
 
-Upload your data and tag your receivers with a specific tag you can choose of. Please make sure you dont setup Upload Only, otherwise the MessageName will not be transferred by PeopleStage.
+Upload your data and tag your receivers with a specific tag you can choose of. Please make sure you dont setup Upload Only, otherwise the MessageName/Tagname will not be transferred by PeopleStage.
 
 
 ### Upload Only
@@ -48,10 +48,15 @@ Import-Settings -Path "D:\Scripts\CleverReach\PSCleverReachModule\settings.json"
 There are commands available for
 
 ```PowerShell
-Get-Bounces
+Get-LocalDeactivated
+Get-ReceiversWithTag
+Get-Tags
 Get-Blocklist
-Get-LocalDeactivated -GroupId 123456
+Get-Bounces
 Get-GlobalDeactivated
+Get-Groups
+Get-GroupSegments
+Remove-TagsAtReceivers
 ```
 
 ## Debugging
@@ -104,10 +109,26 @@ Please review [DefaultSettings.ps1](AptecoPSFramework/settings/defaultssettings.
 Path|Setting|Default|Explanation
 -|-|-|-
 /|base|https://rest.cleverreach.com/v3/|The default API address for CleverReach
+/|contentType|application/json; charset=utf-8|Default content type that will be used for API requests
 /|pageSize|500|If paging is used to read information, this is the default pagesize that will be used automatically
+/|mailinglimit|999|No of mailings that will be loaded
+/|additionalHeaders||additional headers that should automatically be included in the API requests
+/|additionalParameters||additional parameters for the Invoke-RestMethod e.g. proxy parameters
+/|logAPIrequests|true|Output GET and POST requests in the console window
+/token/|tokenUsage|consume|`consume` or `generate`, depending on the mode you are wishing
+/token/|tokenFilePath||path for the file containing the token that should be consumed or generated
 /upload/|countRowsInputFile|true|Automatically count the number of rows in the input file. This uses streaming and does not parse anything, so it is extremly fast.
 /upload/|validateReceivers|true|Uses a CleverReach API call to validate receivers. It removes blacklisted, not active and not in the list contained emails addresses.
 /upload/|excludeNotValidReceivers|false|If this is set to true, only active email addresses of the specific list will be used. This does only have an effect when using existing lists. So new contacts will not be uploaded, only existing ones in CleverReach will be used instead.
+/upload/|excludeBounces|true|Exclude bounces from upload
+/upload/|excludeGlobalDeactivated|true|Exclude deactivated (unsubscribed) receivers from global list (groupid=0)
+/upload/|excludeLocalDeactivated|true|Exclude deactivated  (unsubscribed) receivers for the chosen list
+/upload/|uploadSize|300|Max no of rows per batch upload call, max of 1000
+/upload/|tagSource|Apteco|Default tag source that will be used like `Apteco.a1qhvh3_20230607201732`
+/upload/|useTagForUploadOnly|true|adds a tag to receivers, even if no email gets prepared or send out
+/upload/|reservedFields|["tags"]|field names that should not be used in uploads
+/broadcast/|defaultReleaseOffset|120|Seconds offset that will added to the current time when broadcasting a mailing
+
 
 # Response Gathering
 
@@ -181,8 +202,23 @@ cleanup of lists
 
 It is supported to have as many settings json files as you wish. Just enter a different filename when you do `Export-Settings -Path ".\settings_new.json` and put the absolute file name into your channel editor integration parameters.
 
+## Remove multiple tags at once
 
+It is easy to combine multiple commands like
 
+```PowerShell
+Get-Tags | where { $_.origin -eq "Apteco" } | % { Remove-TagsAtReceivers -Source $_.origin -Tag $_.tag }
+```
+This command gets all tags, filters it by the first part of the tag and removes this tag from all receivers
+
+## Listing of all segments
+
+This can be easily done with
+
+```PowerShell
+$segments = Get-Groups | % { Get-GroupSegments -GroupId $_.id }
+$segments
+```
 
 
 # TODO

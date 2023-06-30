@@ -377,7 +377,9 @@ Calling with one of the Flags, just does this part
             Write-Verbose "    UploadScript: $( $currentPath )\upload.ps1" -Verbose
             Write-Verbose "    BroadcastScript: $( $currentPath )\broadcast.ps1" -Verbose
             Write-Verbose "    PreviewMessageScript: $( $currentPath )\preview.ps1" -Verbose
-            Write-Verbose "    IntegrationParameters: settingsFile=D:\Scripts\CleverReach\PSCleverReachModule\settings.json;deactivate=true;mode=taggingOnly" -Verbose
+            Write-Verbose "    TestScript: $( $currentPath )\test.ps1" -Verbose
+            Write-Verbose "    SendTestEmailScript: $( $currentPath )\testsend.ps1" -Verbose
+            Write-Verbose "    IntegrationParameters: settingsFile=D:\Scripts\CleverReach\PSCleverReachModule\settings.json;mode=taggingOnly" -Verbose
             Write-Verbose "    Encoding: UTF8" -Verbose
             Write-Verbose "  OUTPUT SETTINGS" -Verbose
             Write-Verbose "    Append To List: false" -Verbose

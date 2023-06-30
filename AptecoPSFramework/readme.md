@@ -74,7 +74,7 @@ If you want to update this module and dependencies, just update it and check the
 ```PowerShell
 Install-Module AptecoPSFramework -Force
 Import-Module AptecoPSFramework -Verbose
-Install-CleverReach -ModulesOnly
+Install-AptecoPSFramework -ModulesOnly
 ```
 
 More information about the update is in the installation section above.
