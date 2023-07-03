@@ -20,6 +20,15 @@ The whole process from uploading data up to the automatic trigger of a copied ma
 
 During the process the module will create new local attributes to the new/existing list, upsert data to it, give the receivers a new tag, create a filter/segment, copy a mailing and schedule it a few seconds later.
 
+To create a new list, just enter a name you would like:
+
+![grafik](https://github.com/Apteco/AptecoPSModules/assets/14135678/1fcca69f-1df5-485c-a74e-ee189197f1fa)
+
+To use an existing list, just open the dropdown and optionally filter it and choose a list:
+
+![grafik](https://github.com/Apteco/AptecoPSModules/assets/14135678/b4177f8c-deee-4f47-b4e1-5b8175bdaf4e)
+
+
 ### Prepare
 
 The whole process from uploading data up to the preparation of a copied mailing. The difference to the broadcast is the not scheduled mailing. Response data will still be able to be mapped as all IDs are already created and saved for matching.
@@ -27,14 +36,19 @@ The whole process from uploading data up to the preparation of a copied mailing.
 Set to "Upload and Broadcast"
 Integration parameters like `settingsFile=D:\Scripts\CleverReach\PSCleverReachModule\settings.json;mode=prepare`
 
+The mechanism for lists is the same as in "Upload and Broadcast"
+
 ### Tagging
 
 Upload your data and tag your receivers with a specific tag you can choose of. Please make sure you dont setup Upload Only, otherwise the MessageName/Tagname will not be transferred by PeopleStage.
 
+The mechanism for lists is the same as in "Upload and Broadcast"
 
 ### Upload Only
 
 Please be aware, that you still need to choose a mailing template, but that does not have an effect for the upload.
+
+The mechanism for lists is the same as in "Upload and Broadcast"
 
 ## Commands
 
