@@ -76,7 +76,7 @@ function Sync-Attributes {
 
             #$differences = Compare-Object -ReferenceObject $attributesNames.name -DifferenceObject ( $csvAttributesNames  | where { $_.name -notin $requiredFields } ).name -IncludeEqual #-Property Name 
             #$colsEqual = $differences | Where-Object { $_.SideIndicator -eq "==" } 
-            #$colsInAttrButNotCsv = $differences | Where-Object { $_.SideIndicator -eq "<=" } 
+            $colsInAttrButNotCsv = $differences | Where-Object { $_.SideIndicator -eq "<=" } 
             $colsInCsvButNotAttr = $differences | Where-Object { $_.SideIndicator -eq "=>" }
 
 
@@ -138,6 +138,7 @@ function Sync-Attributes {
                 "global" = $globalAttributes
                 "local" = $localAttributes
                 "new" = $newAttributes
+                "notneeded" = $colsInAttrButNotCsv.InputObject
             }
             
 

@@ -63,9 +63,13 @@ function Invoke-Upload{
             $mailing = [Mailing]::new(999, "UploadOnly")
         } else {
             #Write-Log "B"
-
+            
+            Write-Log "Parsing message: '$( $InputHashtable.MessageName )' with '$( $Script:settings.nameConcatChar )'"
             $mailing = [Mailing]::new($InputHashtable.MessageName)
             Write-Log "Got chosen message entry with id '$( $mailing.mailingId )' and name '$( $mailing.mailingName )'"
+    
+            #$mailing = [Mailing]::new($InputHashtable.MessageName)
+            #Write-Log "Got chosen message entry with id '$( $mailing.mailingId )' and name '$( $mailing.mailingName )'"
         }
 
 
@@ -285,7 +289,7 @@ function Invoke-Upload{
             #-----------------------------------------------
             
             $requiredFields = @( $InputHashtable.EmailFieldName, $InputHashtable.UrnFieldName )
-            $reservedFields = @("tags")
+            $reservedFields = @( $Script:settings.upload.reservedFields ) #@("tags")
             Write-Log -message "Required fields: $( $requiredFields -join ", " )"
             Write-Log -message "Reserved fields: $( $reservedFields -join ", " )"
 

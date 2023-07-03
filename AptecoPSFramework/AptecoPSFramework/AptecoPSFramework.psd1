@@ -12,7 +12,7 @@
 RootModule = 'AptecoPSFramework.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.0.4'
+ModuleVersion = '0.0.5'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -134,6 +134,7 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.0.5 Added CleverReach Email Preview
 0.0.4 Changed URLs
       Many improvements and fixes for the CleverReach plugin
       Boilerplate fixes for loading psmodulepath environment variable
