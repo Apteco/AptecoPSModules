@@ -28,6 +28,13 @@ To use an existing list, just open the dropdown and optionally filter it and cho
 
 ![grafik](https://github.com/Apteco/AptecoPSModules/assets/14135678/b4177f8c-deee-4f47-b4e1-5b8175bdaf4e)
 
+With this mode and the prepare mode you are able to use the preview functionalities. So you can interactively enter data and get a rendered personalised email preview back from CleverReach. It looks like this:
+
+
+
+https://github.com/Apteco/AptecoPSModules/assets/14135678/0321edc1-43d3-4af4-a813-e64160cba92a
+
+
 
 ### Prepare
 
