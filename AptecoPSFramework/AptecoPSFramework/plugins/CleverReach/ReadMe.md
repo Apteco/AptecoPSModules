@@ -244,14 +244,15 @@ $segments
 - [ ] cleanup job of lists and tags
 - [ ] put token in a separate file (or give the option for it to use multiple settings). Or maybe have a "main" settings file and give an option to export the token and in the other settings file use that one like PeopleStage, too
 * [ ] check the validations about bounces
+* [ ] implement and test tags in a field, especially for preview
 
 # Test
 
 - [ ] additionalParameters and additionalHeaders
-- [ ] exception for api call
-- [ ] dependencies
-- [ ] Differentiate between new lists and existing lists
-- [ ] test reserverd fields
-- [ ] check the processid
+- [x] exception for api call
+- [x] dependencies
+- [x] Differentiate between new lists and existing lists
+- [ ] test reserverd fields, tags
+- [x] check the processid
 - [ ] manually expire a token and test the stacktrace
 - [ ] test on multiple table levels and their dependency with URN
