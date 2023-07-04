@@ -285,6 +285,17 @@ function Invoke-Upload{
 
 
             #-----------------------------------------------
+            # CHECK ADDITIONAL TAGS
+            #-----------------------------------------------
+
+            $additionalTagging = $false
+            If ( $headers.toLower() -contains "tags") {
+                $additionalTagging = $true
+                $tagsIndex = $headers.toLower().IndexOf("tags")
+            }
+
+
+            #-----------------------------------------------
             # CHECK ATTRIBUTES
             #-----------------------------------------------
             
@@ -342,7 +353,7 @@ function Invoke-Upload{
                 $script:debug = $globalDeactivated
                 Write-Log -Message "Adding $( $globalDeactivated.count ) global inactive receivers to exclusion list"
                 If ( $globalDeactivated.Count -gt 0 ) {
-                    $exclusionList.AddRange( @( $globalDeactivated.email ) )
+                    $exclusionList.AddRange( @( $globalDeactivated.email.toLower() ) )
                 }
                 # TODO use this list for exclusions
             }
@@ -357,7 +368,7 @@ function Invoke-Upload{
                 $localDeactivated = @( (Invoke-CR -Object "receivers" -Path "filter.json" -Method POST -Verbose -Paging -Body $deactivatedLocalFilterBody) )
                 Write-Log -Message "Adding $( $localDeactivated.count ) local inactive receivers to exclusion list"
                 If ( $localDeactivated.count ) {
-                    $exclusionList.AddRange( @( $localDeactivated.email ) )
+                    $exclusionList.AddRange( @( $localDeactivated.email.toLower() ) )
                 }
             }
 
@@ -379,7 +390,7 @@ function Invoke-Upload{
             If ( $Script:settings.upload.excludeBounces -eq $true ) {
                 Write-Log -Message "Adding $( $bounced.count ) bounced receivers to exclusion list"
                 If ( $bounced.count -gt 0 ) {
-                    [void]$exclusionList.AddRange( $bounced.email )
+                    [void]$exclusionList.AddRange( @( $bounced.email.toLower() ) )
                 }
             }
 
@@ -457,7 +468,7 @@ function Invoke-Upload{
 
                 # put in email address
                 $emailIndex = $headers.IndexOf($InputHashtable.EmailFieldName)
-                $uploadEntry.email = $values[$emailIndex]
+                $uploadEntry.email = ($values[$emailIndex]).ToLower()
 
                 # go through every header and fill it into the object
                 <#
@@ -558,7 +569,13 @@ function Invoke-Upload{
                 In the array of tags, prepend a "-" to the tag you want to be removed.
                 To remove all tags with a specific origin, simply specify "*" instead of any tag name.
                 #>
-                $uploadEntry.tags = $tags
+                If ( $additionalTagging -eq $true ) {
+                    $additionalTags = @( $values[$tagsIndex] -split "," ).trim()
+                    $uploadEntry.tags = @( $additionalTags + $tags )
+                } else {
+                    $uploadEntry.tags = $tags
+                }
+                
                
                 # Add entry to the check object
                 [void]$checkObject.Add( $uploadEntry )
@@ -577,7 +594,7 @@ function Invoke-Upload{
                         Write-Log "  $( $checkObject.count ) rows"
                         
                         $validateObj = [PSCustomObject]@{
-                            "emails" = [Array]@( $checkObject.email )
+                            "emails" = [Array]@( $checkObject.email ).toLower()
                             "group_id" = $groupId
                             "invert" = $false
                         }

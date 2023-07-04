@@ -133,16 +133,6 @@ function Show-Preview {
 
 
             #-----------------------------------------------
-            # CLEAR THAT GROUP
-            #-----------------------------------------------
-
-            #delete /v3/groups.json/{id}/clear 
-            $clearedGroup = Invoke-CR -Object "groups" -Path "/$( $group.id )/clear" -Method DELETE
-
-            Write-Log "Cleared the group '$( $group.name )' with id '$( $group.id )'"
-
-
-            #-----------------------------------------------
             # PARSE RECEIVER
             #-----------------------------------------------
 
@@ -163,7 +153,7 @@ function Show-Preview {
 
             $requiredFields = @( "Email" , $urnFieldName) # not sure how to handle urn like $InputHashtable.UrnFieldName
             $reservedFields = @( $Script:settings.upload.reservedFields ) #@("tags")
-            $headers = @( $requiredFields + $testRecipient.Personalisation.PsObject.Properties.Name )
+            $headers = @( $requiredFields + $testRecipient.Personalisation.PsObject.Properties.Name ) | Where-Object { $_ -notin $reservedFields }
 
             $attributeParam = [Hashtable]@{
                 "reservedFields" = $reservedFields
@@ -188,6 +178,7 @@ function Show-Preview {
                 "tags" = [Array]@()
             }
 
+            # Adding global attributes
             $attributes.global | Where-Object { $_.name -in $headers } | ForEach-Object {
 
                 $attrName = $_.name # using description now rather than name, because the comparison is made on descriptions
@@ -210,6 +201,7 @@ function Show-Preview {
             }
 
             # New local attributes
+            $usedAttributes = [System.Collections.ArrayList]@()
             $attributes.new | ForEach-Object {
 
                 $attrName = $_.name # using description now rather than name, because the comparison is made on descriptions
@@ -226,12 +218,12 @@ function Show-Preview {
                 }
 
                 If( $null -ne $value ) {
+                    [void]$usedAttributes.add($attrName)
                     $uploadEntry.attributes | Add-Member -MemberType NoteProperty -Name $attrName -Value $value
                 }
             }
 
-            # Existing local attributes
-            $usedAttributes = [System.Collections.ArrayList]@()
+            # Existing local attributes            
             $attributes.local | ForEach-Object {
 
                 $attrName = $_.name # using description now rather than name, because the comparison is made on descriptions
@@ -253,9 +245,21 @@ function Show-Preview {
                 }
 
             }
+
+            # Tags
+            <#
+            In the array of tags, prepend a "-" to the tag you want to be removed.
+            To remove all tags with a specific origin, simply specify "*" instead of any tag name.
+            #>
+            If ( ( $testRecipient.Personalisation.PSObject.Properties | where { $_.name -contains "tags" } ).count -eq 1 ) {
+                $additionalTags = @( $testRecipient.Personalisation.tags -split "," ).trim()
+                $uploadEntry.tags = @( $additionalTags )
+            }
+
+            
             
             #-----------------------------------------------
-            # REMOVE ATTRIBUTES THAT ARE NOT NEEDED
+            # REMOVE ATTRIBUTES ON GROUP THAT ARE NOT NEEDED
             #-----------------------------------------------
 
             $localAttributes = @( (Invoke-CR -Object "attributes" -Method "GET" -Verbose -Query ( [PSCustomObject]@{ "group_id" = $group.id } )) )

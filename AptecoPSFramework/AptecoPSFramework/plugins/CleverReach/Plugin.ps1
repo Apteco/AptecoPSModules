@@ -6,8 +6,8 @@ function Get-CurrentPluginInfos {
         
         # general information about this plugin
         "name" = "CleverReach"
-        "version" = "0.0.4"
-        "lastUpdate" = "2023-07-03"
+        "version" = "0.0.5"
+        "lastUpdate" = "2023-07-04"
         "category" = "channel"
         "type" = "email"
 
