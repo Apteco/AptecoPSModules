@@ -34,6 +34,12 @@ With this mode and the prepare mode you are able to use the preview functionalit
 
 https://github.com/Apteco/AptecoPSModules/assets/14135678/0321edc1-43d3-4af4-a813-e64160cba92a
 
+Added support for tagging for all modes. It works in upload and preview and works like in this video:
+
+
+https://github.com/Apteco/AptecoPSModules/assets/14135678/6e3dcab8-1fcb-48d3-9628-b83ca7c00579
+
+
 
 
 ### Prepare
