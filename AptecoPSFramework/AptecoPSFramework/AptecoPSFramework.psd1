@@ -134,6 +134,9 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.0.7 Removing not needed zip files
+      Fixing a problem with the pluginsfolder in the settings
+      Complete rewriting of the settings part for joining PSCustomObjects and Hashtables
 0.0.6 Added tags support for uploading data and preview
       Fixed a bug in the CleverReach Preview regarding new attributes
 0.0.5 Added CleverReach Email Preview

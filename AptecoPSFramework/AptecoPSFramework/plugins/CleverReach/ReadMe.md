@@ -257,7 +257,9 @@ $segments
 - [ ] cleanup job of lists and tags
 - [ ] put token in a separate file (or give the option for it to use multiple settings). Or maybe have a "main" settings file and give an option to export the token and in the other settings file use that one like PeopleStage, too
 * [ ] check the validations about bounces
-* [ ] implement and test tags in a field, especially for preview
+* [x] implement and test tags in a field, especially for preview
+* [ ] Try an overlay in preview to edit mailing
+* [ ] Try to use regex to identify used variables in mailing html and show in preview
 
 # Test
 

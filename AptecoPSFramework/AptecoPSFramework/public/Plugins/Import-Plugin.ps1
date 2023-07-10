@@ -47,8 +47,9 @@ function Import-Plugin {
         #$Script:debug = $Script:settings
         # Add more settings from plugin, e.g. if there are new properties due to an update
         #$Script:debug = $Script:settings
-        $scriptSettings = $Script:settings.psobject.copy()
-        $extendedSettings = Add-PropertyRecurse -source $pluginSettings -toExtend $scriptSettings
+        #$scriptSettings = $Script:settings.psobject.copy()
+        #$extendedSettings = Add-PropertyRecurse -source $pluginSettings -toExtend $scriptSettings
+        $extendedSettings = Join-PSCustomObject -Left $pluginSettings -Right $Script:settings -AddPropertiesFromRight -MergePSCustomObjects -MergeArrays -MergeHashtables
 
         # Now harmonise them if there are the same attributes with different values
         #$joinedSettings = Join-Objects -source $extendedSettings -extend $pluginSettings
