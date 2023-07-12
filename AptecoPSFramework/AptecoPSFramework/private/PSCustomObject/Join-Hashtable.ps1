@@ -67,7 +67,7 @@ function Join-Hashtable {
 
                 $propEqual = $_.InputObject
 
-                If ( $MergePSCustomObjects -eq $true -and $Left.($propEqual) -is [PSCustomObject] -and $Right.($propEqual) -is [PSCustomObject] -and @( $Right.($propEqual).psobject.properties ).Count -gt 0 ) {
+                If ( $MergePSCustomObjects -eq $true -and $Left.($propEqual) -is [PSCustomObject] -and $Right.($propEqual) -is [PSCustomObject] -and @( $Right.($propEqual).psobject.properties ).Count -gt 0) {
 
                     Write-Verbose "Going recursively into '$( $propEqual )'"
 
@@ -89,7 +89,7 @@ function Join-Hashtable {
                     Write-Verbose "Merging arrays from '$( $propEqual )'"
 
                     # Merge array
-                    $newArr = [Array]@( $Left.($propEqual) + $Right.($propEqual) )
+                    $newArr = [Array]@( $Left.($propEqual) + $Right.($propEqual) ) | Sort-Object -unique
                     $joined.Add($propEqual, $newArr)                   
 
                 } elseif ( $MergeArrays -eq $true -and $Left.($propEqual) -is [System.Collections.ArrayList] -and $Right.($propEqual) -is [System.Collections.ArrayList] ) {
@@ -100,9 +100,10 @@ function Join-Hashtable {
                     $newArr = [System.Collections.ArrayList]@()
                     $newArr.AddRange($Left.($propEqual))
                     $newArr.AddRange($Right.($propEqual))
-                    $joined.Add($propEqual, $newArr)                   
+                    $newArrSorted = [System.Collections.ArrayList]@( $newArr | Sort-Object -Unique )
+                    $joined | Add-Member -MemberType NoteProperty -Name $propEqual -Value $newArrSorted                 
 
-                } elseif ( $MergeHashtables -eq $true -and $Left.($propEqual) -is [hashtable] -and $Right.($propEqual) -is [hashtable] -and @( $Right.($propEqual).Keys ).Count -gt 0 ) {
+                } elseif ( $MergeHashtables -eq $true -and $Left.($propEqual) -is [hashtable] -and $Right.($propEqual) -is [hashtable] -and @( $Right.($propEqual).Keys ).Count -gt 0) {
 
                     # Recursively call this function, if it is nested hashtable
                     $params = [Hashtable]@{

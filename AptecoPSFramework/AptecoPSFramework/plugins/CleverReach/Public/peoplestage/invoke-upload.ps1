@@ -304,9 +304,9 @@ function Invoke-Upload{
             Write-Log -message "Required fields: $( $requiredFields -join ", " )"
             Write-Log -message "Reserved fields: $( $reservedFields -join ", " )"
 
-            $csvAttributesNames = $headers | Where-Object { $_ -notin $reservedFields }
+            $csvAttributesNames = $headers | Where-Object { $_.toLower() -notin $reservedFields }
             #$csvAttributesNames = Get-Member -InputObject $dataCsv[0] -MemberType NoteProperty | where { $_.Name -notin $reservedFields }
-            Write-Log -message "Loaded csv attributes $( $csvAttributesNames -join ", " )"
+            Write-Log -message "Loaded csv attributes: $( $csvAttributesNames -join ", " )"
 
             $attributeParam = [Hashtable]@{
                 "reservedFields" = $reservedFields
@@ -314,7 +314,7 @@ function Invoke-Upload{
                 "csvAttributesNames" = $csvAttributesNames
                 "csvUrnFieldname" = $InputHashtable.UrnFieldName
                 "responseUrnFieldname" = $Script:settings.responses.urnFieldName
-                "groupId" = $groupId 
+                "groupId" = $groupId
             }
             
             $attributes = Sync-Attributes @attributeParam
@@ -331,45 +331,27 @@ function Invoke-Upload{
             # LOAD DEACTIVATED/UNSUBSCRIBES
             #-----------------------------------------------
             
-            # Prepare inactives query as security net
-            $deactivatedGlobalFilterBody = [PSCustomObject]@{
-                "groups" = [Array]@()
-                "operator" = "AND"
-                "rules" = [Array]@(,
-                    [PSCustomObject]@{
-                        "field" = "deactivated"
-                        "logic" = "bg"
-                        "condition" = "1"
-                    }
-                )
-                "orderby" = "activated desc"
-                "detail" = 0
-            }
-
             # Load global inactive receivers (unsubscribed)
             If ( $Script:settings.upload.excludeGlobalDeactivated -eq $true ) {
 
-                $globalDeactivated = @( (Invoke-CR -Object "receivers" -Path "filter.json" -Method POST -Verbose -Paging -Body $deactivatedGlobalFilterBody.PsObject.Copy()) ) # use a copy so the reference is not changed because it will used a second time
-                $script:debug = $globalDeactivated
+                $globalDeactivated = @( Get-GlobalDeactivated ) # use a copy so the reference is not changed because it will used a second time
+                #$script:debug = $globalDeactivated
                 Write-Log -Message "Adding $( $globalDeactivated.count ) global inactive receivers to exclusion list"
                 If ( $globalDeactivated.Count -gt 0 ) {
                     $exclusionList.AddRange( @( $globalDeactivated.email.toLower() ) )
                 }
-                # TODO use this list for exclusions
+                                
             }
-
-            # Prepare local inactives query as security net
-            $deactivatedLocalFilterBody = $deactivatedGlobalFilterBody.PsObject.Copy()
-            $deactivatedGlobalFilterBody.groups = [Array]@(,$groupId)
 
             # Runtime filter with paging
             If ( $Script:settings.upload.excludeLocalDeactivated -eq $true ) {
 
-                $localDeactivated = @( (Invoke-CR -Object "receivers" -Path "filter.json" -Method POST -Verbose -Paging -Body $deactivatedLocalFilterBody) )
+                $localDeactivated = @( (Get-LocalDeactivated -GroupId $groupId) )
                 Write-Log -Message "Adding $( $localDeactivated.count ) local inactive receivers to exclusion list"
-                If ( $localDeactivated.count ) {
+                If ( $localDeactivated.count -gt 0 ) {
                     $exclusionList.AddRange( @( $localDeactivated.email.toLower() ) )
                 }
+
             }
 
 
@@ -378,7 +360,7 @@ function Invoke-Upload{
             #-----------------------------------------------
             
             # Load global bounces as a list
-            $bounced = @( Invoke-CR -Object "bounces" -Method GET -Verbose -Paging )
+            $bounced = @( Get-Bounces )
 
             # Log
             Write-Log -Message "There are currently $( $bounced.count ) bounces in your account"
@@ -394,6 +376,13 @@ function Invoke-Upload{
                 }
             }
 
+
+            #-----------------------------------------------
+            # CHECK EXCLUSION LIST
+            #-----------------------------------------------
+
+            Write-Log "There are $( $exclusionList.count ) entries on the exclusion list now"
+            
 
             #-----------------------------------------------
             # BUILDING THE TAG TO USE
@@ -571,9 +560,9 @@ function Invoke-Upload{
                 #>
                 If ( $additionalTagging -eq $true ) {
                     $additionalTags = @( $values[$tagsIndex] -split "," ).trim()
-                    $uploadEntry.tags = @( $additionalTags + $tags )
+                    $uploadEntry.tags = @( @( $additionalTags ) + @( $tags ) )
                 } else {
-                    $uploadEntry.tags = $tags
+                    $uploadEntry.tags = @( $tags )
                 }
                 
                
@@ -601,15 +590,18 @@ function Invoke-Upload{
                         $validatedAddresses = @(, (Invoke-CR -Object "receivers" -Path "/isvalid" -Method POST -Verbose -Body $validateObj ))
                         #$Script:debug = $validatedAddresses
                         $v += $validatedAddresses.count
-                        Write-Log "  $( $validatedAddresses.count ) returned valid addresses"
-                    
-                        If ( $Script:settings.upload.excludeNotValidReceivers -eq $true) {
-                            # TODO remove invalid receivers
-                            Write-Log "  Removing invalid addresses"
-                            $checkObject = [System.Collections.ArrayList]@( $checkObject | Where-Object { $_.email -in $validatedAddresses } )
-                        } else {
-                            Write-Log "  Not removing invalid addresses"
 
+                        # Message for log
+                        If ( $Script:settings.upload.excludeNotValidReceivers -eq $true) {
+                            $strRemovingInvalid = "Removing invalid addresses"
+                        } else {
+                            $strRemovingInvalid = "Not removing invalid addresses"
+                        }
+                        Write-Log "  $( $validatedAddresses.count ) returned valid addresses ( $strRemovingInvalid )"
+                        
+                        # Remove invalid addresses, when turned on
+                        If ( $Script:settings.upload.excludeNotValidReceivers -eq $true) {
+                            $checkObject = [System.Collections.ArrayList]@( $checkObject | Where-Object { $_.email -in $validatedAddresses } )                            
                         }
                     
                     }
@@ -643,7 +635,7 @@ function Invoke-Upload{
                         $uploadBody = $uploadObject[0..( $uploadSize - 1 )]
                         
                         # Output the request body for debug purposes
-                        Write-Log -Message "Debug Mode: $( $Script:debugMode )"
+                        #Write-Log -Message "Debug Mode: $( $Script:debugMode )"
                         If ( $Script:debugMode -eq $true ) {
                             $tempFile = ".\$( $i )_$( [guid]::NewGuid().tostring() )_request.txt"
                             Set-Content -Value ( ConvertTo-Json $uploadBody -Depth 99 ) -Encoding UTF8 -Path $tempFile
@@ -769,7 +761,7 @@ function Invoke-Upload{
         $recipients = $j #$dataCsv.Count # TODO work out what to be saved
         
         # put in the source id as the listname
-        $transactionId = $groupId #$Script:processId #$targetGroup.targetGroupId # TODO or try to log the used tag?
+        $transactionId = "$( $groupId ) => $( $tags )" #$Script:processId #$targetGroup.targetGroupId # TODO or try to log the used tag?
         
         # return object
         $return = [Hashtable]@{

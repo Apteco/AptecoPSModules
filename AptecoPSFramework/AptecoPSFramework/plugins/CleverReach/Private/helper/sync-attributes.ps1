@@ -28,7 +28,7 @@ function Sync-Attributes {
             #-----------------------------------------------
 
             # Check if email field is present
-            $equalWithRequirements = Compare-Object -ReferenceObject $csvAttributesNames -DifferenceObject $requiredFields -IncludeEqual -PassThru | Where-Object { $_.SideIndicator -eq "==" }
+            $equalWithRequirements = Compare-Object -ReferenceObject $csvAttributesNames.Tolower() -DifferenceObject $requiredFields.Tolower() -IncludeEqual -PassThru | Where-Object { $_.SideIndicator -eq "==" }
 
             if ( $equalWithRequirements.count -eq $requiredFields.Count ) {
                 # Required fields are all included
@@ -58,7 +58,7 @@ function Sync-Attributes {
             } 
 
             # Use attributes names
-            $attributesNames = @( $attributes | Where-Object { $_.name -notin $requiredFields } )
+            $attributesNames = @( $attributes | Where-Object { $_.name.Tolower() -notin $requiredFields.Tolower() } )
 
 
             #-----------------------------------------------
@@ -67,7 +67,7 @@ function Sync-Attributes {
 
             # TODO [x] Now the csv column headers are checked against the description of the cleverreach attributes and not the (technical name). Maybe put this comparation in here, too. E.g. description "Communication Key" get the name "communication_key"
             #$differences = Compare-Object -ReferenceObject $attributesNames.description -DifferenceObject ( $csvAttributesNames  | where { $_.name -notin $requiredFields } ).name -IncludeEqual #-Property Name 
-            $differences = Compare-Object -ReferenceObject ( $attributesNames.name + $attributesNames.description ) -DifferenceObject ( $csvAttributesNames  | Where-Object { $_ -notin $requiredFields } ) -IncludeEqual #-Property Name 
+            $differences = Compare-Object -ReferenceObject ( $attributesNames.name.Tolower() + $attributesNames.description.Tolower() ) -DifferenceObject ( $csvAttributesNames.Tolower()  | Where-Object { $_.toLower() -notin $requiredFields.Tolower() } ) -IncludeEqual #-Property Name 
             
 
             #-----------------------------------------------
@@ -95,7 +95,7 @@ function Sync-Attributes {
             # CHECK GLOBAL ATTRIBUTES
             #-----------------------------------------------
 
-            If ( $csvUrnFieldname -ne $responseUrnFieldname ) {
+            If ( $csvUrnFieldname.Tolower() -ne $responseUrnFieldname.Tolower() ) {
                 Write-Log "Be aware, that the response matching won't work if the urn fieldnames are not matching" -severity WARNING
             }
 
@@ -107,11 +107,17 @@ function Sync-Attributes {
             $newAttributes = [Array]@()
             #$Script:debug = $colsInCsvButNotAttr
 
-            Write-Log -Message "Create new local attributes: $(( $colsInCsvButNotAttr.InputObject -join ", " ))"
+            If ( $colsInCsvButNotAttr.Count -gt 0 ) {
+                Write-Log -Message "Creating new local attributes"
+            }
             
             $colsInCsvButNotAttr | ForEach-Object {
 
-                $newAttributeName = $_.InputObject.toString()
+                #$newAttributeName = $_.InputObject.toString()
+                $att = $_.InputObject.toString()
+
+                # Getting the right attribute regarding lower/uppercase
+                $newAttributeName = $csvAttributesNames | Where-Object { $_.toLower() -eq $att }
 
                 $body = [PSCustomObject]@{
                     "name" = $newAttributeName
@@ -127,12 +133,15 @@ function Sync-Attributes {
             }
 
             If ( $newAttributes.count -gt 0 ) {
-                Write-Log -message "Created new local attributes in CleverReach: $( $newAttributes.name -join ", " )" -Severity WARNING
+                Write-Log -message "Created new local attributes in CleverReach: $( $newAttributes.name.Tolower() -join ", " )" -Severity WARNING
             } else {
                 Write-Log -Message "No new local attributes needed to be created"
             }
 
-            # return
+
+            #-----------------------------------------------
+            # RETURN
+            #-----------------------------------------------
 
             [Hashtable]@{
                 "global" = $globalAttributes
@@ -140,8 +149,6 @@ function Sync-Attributes {
                 "new" = $newAttributes
                 "notneeded" = $colsInAttrButNotCsv.InputObject
             }
-            
-
             
             
         } catch {

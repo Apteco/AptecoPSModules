@@ -66,11 +66,11 @@ function Join-PSCustomObject {
 
                 $propEqual = $_.InputObject
 
-                If ( $MergePSCustomObjects -eq $true -and $Left.($propEqual) -is [PSCustomObject] -and $Right.($propEqual) -is [PSCustomObject] -and @( $Right.($propEqual).psobject.properties ).Count -gt 0) {
+                If ( $MergePSCustomObjects -eq $true -and $Left.($propEqual) -is [PSCustomObject] -and $Right.($propEqual) -is [PSCustomObject] -and @( $Right.($propEqual).psobject.properties ).Count -gt 0 ) {
 
                     Write-Verbose "Going recursively into '$( $propEqual )'"
 
-                    # Recursively call this function, if it is nested ps custom and the right side has nested properties
+                    # Recursively call this function, if it is nested ps custom
                     $params = [Hashtable]@{
                         "Left" = $Left.($propEqual)
                         "Right" = $Right.($propEqual)
@@ -87,7 +87,7 @@ function Join-PSCustomObject {
                     Write-Verbose "Merging arrays from '$( $propEqual )'"
 
                     # Merge array
-                    $newArr = [Array]@( $Left.($propEqual) + $Right.($propEqual) )
+                    $newArr = [Array]@( $Left.($propEqual) + $Right.($propEqual) ) | Sort-Object -unique
                     $joined | Add-Member -MemberType NoteProperty -Name $propEqual -Value $newArr
 
                 } elseif ( $MergeArrays -eq $true -and $Left.($propEqual) -is [System.Collections.ArrayList] -and $Right.($propEqual) -is [System.Collections.ArrayList] ) {
@@ -98,7 +98,8 @@ function Join-PSCustomObject {
                     $newArr = [System.Collections.ArrayList]@()
                     $newArr.AddRange($Left.($propEqual))
                     $newArr.AddRange($Right.($propEqual))
-                    $joined | Add-Member -MemberType NoteProperty -Name $propEqual -Value $newArr
+                    $newArrSorted = [System.Collections.ArrayList]@( $newArr | Sort-Object -Unique )
+                    $joined | Add-Member -MemberType NoteProperty -Name $propEqual -Value $newArrSorted
 
                 } elseif ( $MergeHashtables -eq $true -and $Left.($propEqual) -is [hashtable] -and $Right.($propEqual) -is [hashtable] -and @( $Right.($propEqual).Keys ).Count -gt 0) {
 

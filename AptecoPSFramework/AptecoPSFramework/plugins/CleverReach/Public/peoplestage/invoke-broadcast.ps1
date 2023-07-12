@@ -151,7 +151,7 @@ function Invoke-Broadcast{
 
                 $t = $_
 
-                Write-Log "Getting tag stats for tag $( $t ) for group $( $groupId ):"
+                Write-Log "Getting tag stats for tag $( $t ) for group $( $groupId )"
 
                 $tagQuery = [PSCustomObject]@{
                     "tag" = $t
@@ -314,7 +314,7 @@ function Invoke-Broadcast{
                     campaign_id = "52"
                     #>
                 }
-                "tags" = [Array]@(, ($templateSource.tags | Where-Object { $_ -notin [Array]@( "cr-mailing-envelope" ) }))
+                "tags" = [Array]@( $templateSource.tags ) #[Array]@(, ($templateSource.tags | Where-Object { $_ -notin [Array]@( "cr-mailing-envelope" ) }))
             }
 
             # Category
@@ -347,10 +347,17 @@ function Invoke-Broadcast{
 
             If ( $doRelease -eq $true ) {
 
+                $releaseTimestamp = (Get-Unixtime) + $Script:settings.broadcast.defaultReleaseOffset
                 $releaseBody = [PSCustomObject]@{
-                    time  = [int]( Get-Unixtime + $Script:settings.broadcast.defaultReleaseOffset )
+                    time  = [int]$releaseTimestamp
                 }
                 Invoke-CR -Object "mailings" -Path "/$( $copiedMailing.id )/release" -Method POST -Verbose -body $releaseBody
+
+                Write-Log "Released mailing for unix timestamp at $( $releaseTimestamp )"
+
+            } else {
+
+                Write-Log "Mailing not released"
 
             }
 
@@ -362,7 +369,7 @@ function Invoke-Broadcast{
             #Write-Log -Message $_.Exception -Severity ERROR
             #throw [System.IO.InvalidDataException] $msg
 
-            $msg = "Error during broadvasting data. Abort!"
+            $msg = "Error during broadcasting data. Abort!"
             Write-Log -Message $msg -Severity ERROR -WriteToHostToo $false
             Write-Log -Message $_.Exception -Severity ERROR
             throw $_.Exception
