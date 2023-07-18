@@ -11,13 +11,14 @@ function Get-CurrentPluginInfos {
         "category" = "channel"
         "type" = "email"
 
-
         # have a look at ./bin/dependencies if you need more information about how to define this
         "dependencies" = [PSCustomObject]@{
             "psScripts" = @()
             "psModules" = @()
             "psPackages" = @()
         }
+
+        # Supported functions
         "functions" = [PSCustomObject]@{
             "mailings" = $true
             "lists" = $true
@@ -25,5 +26,6 @@ function Get-CurrentPluginInfos {
             "upload" = $true
             "broadcast" = $true    
         }
+        
     }
 }
