@@ -69,10 +69,14 @@
     "broadcast" = [PSCustomObject]@{
         
         # Settings for the copy of the mailing
-        "defaultContentType" = "html/text"                             # "html", "text" or "html/text"
-        "defaultEditor" = "wizard"
+        "defaultContentType" = "html/text"                  # "html", "text" or "html/text"
+        "defaultEditor" = "eddytor"                          # "eddytor", "wizard", "freeform", "advanced", "plaintext"
         "defaultOpenTracking" = $true
         "defaultClickTracking" = $true
+
+        # Further options
+        "addPreheaderAfterBody" = $true
+        "removeNativePreheader" = $true             # If a custom header gets added, you can also set this option to remove the native CR preheader
 
         # Release/sending
         "defaultReleaseOffset" = 120                        # Default amount of seconds that are added to the current unix timestamp to release the mailing
@@ -86,7 +90,7 @@
     "responses" = [PSCustomObject]@{
 
         # TODO rename this column
-        "urnFieldName" = "Kunden_ID" #"urn"                             # Primary key field name, which should be global and is needed for matching
+        "urnFieldName" = "urn"                                          # Primary key field name, which should be global and is needed for matching
         "communicationKeyAttributeName" = "communication_key"           # The local group attribute that will be loaded from the group, not used yet
 
         # File export settings

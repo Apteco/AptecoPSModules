@@ -280,7 +280,77 @@ function Invoke-Broadcast{
             } else {
                 throw "Not able to count segment '$( $segment.id )'. Stopping here!"
             }
-            
+
+
+            #-----------------------------------------------
+            # ADDING A PREHEADER IF DEFINED
+            #-----------------------------------------------
+
+            # The cleverreach preheader looks like
+            # <div id="CR-PRHEADER" style="display:none;font-size:1px;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;mso-hide:all;">...</div>
+
+            # This needs to be the first element after the body of 
+            # $templateSource.body_html
+            # So doing a replace after the body tag
+            # This will just place a variable that needs to be defined in the receivers entry with "preheader"
+
+            # TODO Think about putting this into the settings
+            $preheaderTemplate = '<div style="font-size:0px;line-height:1px;mso-line-height-rule:exactly;display:none;max-width:0px;max-height:0px;opacity:0;overflow:hidden;mso-hide:all;">[PREHEADER]</div>'
+
+            # Find the right place to insert
+            $bodyRegex = "<body[^\>]*>"
+
+            # Regex to find the native cleverreach preheader
+            $crPreheaderRegex = '<div.*id="CR-PRHEADER".*?/div>'
+
+            <#
+            $htmlText = @"
+            <html>
+            <header>
+            </header>
+            <body jay jay jay test="hello">
+            Hello world
+            </body>
+            </html>          
+            "@
+
+            $htmlText -replace $bodyRegex, "$( $matches[0] )$( $preheaderTemplate )"
+            #>
+
+            # This is the html of the mailing
+            $htmlTemplate = $templateSource.body_html
+
+            # Add the preheader, if wished
+            If ( $Script:settings.broadcast.addPreheaderAfterBody -eq $true ) {
+
+                #$Script:plugindebug = $templateSource.body_html
+
+                # Replace the existing body tag with the body tag and the new preheader
+                $regexMatch = $htmlTemplate -match $bodyRegex
+                If ( $regexMatch -eq $true ) {
+                    $matchedBodyTag = $matches[0]
+                    $html = $htmlTemplate -replace $bodyRegex, "$( $matchedBodyTag )$( $preheaderTemplate )"
+                    Write-Log "Added custom PreHeader with [PREHEADER] variable/field"
+                } else {
+                    Write-Log "Body tag for inserting PreHeader not found"
+                }
+
+                # Remove CR preheader, if needed
+                $nativePreheaderRegexMatch = $html -match $crPreheaderRegex
+                If ( $Script:settings.broadcast.removeNativePreheader -eq $true -and $nativePreheaderRegexMatch) {
+                    $html = $html -replace $crPreheaderRegex, ""
+                    Write-Log "Removed native CleverReach PreHeader"
+                } else {
+                    Write-Log "No native CleverReach PreHeader found"
+                }
+                
+            } else {
+
+                Write-Log "No replacement of preheader"
+                $html = $htmlTemplate
+
+            }
+
 
             #-----------------------------------------------
             # COPY/DUPLICATE THE MAILING AND USE SEGMENT
@@ -295,7 +365,7 @@ function Invoke-Broadcast{
                 "sender_email" = $templateSource.sender_email 
                 "content" = [PSCustomObject]@{
                     "type" = $Script:settings.broadcast.defaultContentType
-                    "html" = $templateSource.body_html
+                    "html" = $html
                     "text" = $templateSource.body_text
                 }
                 "receivers" = [PSCustomObject]@{

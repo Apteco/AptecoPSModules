@@ -6,8 +6,8 @@ function Get-CurrentPluginInfos {
         
         # general information about this plugin
         "name" = "CleverReach"
-        "version" = "0.0.4"
-        "lastUpdate" = "2023-07-12"
+        "version" = "0.0.6"
+        "lastUpdate" = "2023-07-18"
         "category" = "channel"
         "type" = "email"
 
@@ -17,6 +17,8 @@ function Get-CurrentPluginInfos {
             "psModules" = @()
             "psPackages" = @()
         }
+
+        # Supported functions
         "functions" = [PSCustomObject]@{
             "mailings" = $true
             "lists" = $true
@@ -25,5 +27,6 @@ function Get-CurrentPluginInfos {
             "broadcast" = $true
             "responses" = $true
         }
+        
     }
 }

@@ -43,7 +43,7 @@ Import-Module "AptecoPSFramework" -Verbose # TODO change later to plain module n
 # CHOOSE A PLUGIN
 #-----------------------------------------------
 
-$plugin = @(, (get-plugins | Select guid, name, version, update, path | Out-GridView -PassThru ))
+$plugin = @(, (get-plugins | Select guid, name, version, lastUpdate, category, type, path | Out-GridView -PassThru ))
 
 If ($plugin.count -gt 1) {
     Write-Host "Sorry, you have chosen more than 1 plugin"

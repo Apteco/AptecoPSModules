@@ -12,7 +12,7 @@
 RootModule = 'AptecoPSFramework.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.0.7'
+ModuleVersion = '0.0.8'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -134,6 +134,8 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.0.8 Preheader Support for CleverReach, just needs a "Preheader" variable
+      Fixed a visual problem after the mailing was sent. Needed the "eddytor" for this
 0.0.7 Removing not needed zip files
       Fixing a problem with the pluginsfolder in the settings
       Complete rewriting of the settings part for joining PSCustomObjects and Hashtables
