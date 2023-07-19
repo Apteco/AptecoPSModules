@@ -14,7 +14,7 @@ function Get-GlobalDeactivated {
 
         # Prepare inactives query as security net
         $deactivatedGlobalFilterBody = [PSCustomObject]@{
-            "groups" = [Array]@()
+            "groups" = [Array]@(0)
             "operator" = "AND"
             "rules" = [Array]@(,
                 [PSCustomObject]@{

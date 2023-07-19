@@ -117,31 +117,6 @@ function Invoke-Broadcast{
             
             }
 
-            #-----------------------------------------------
-            # GET GENERAL STATISTICS FOR LIST
-            #-----------------------------------------------
-
-            Write-Log "Getting stats for group $( $groupId ):"
-
-            $groupStats = Invoke-CR -Object "groups" -Path "/$( $groupId )/stats" -Method GET -Verbose 
-
-            <#
-            {
-                "total_count": 4,
-                "inactive_count": 0,
-                "active_count": 4,
-                "bounce_count": 0,
-                "avg_points": 69.5,
-                "quality": 3,
-                "time": 1685545449,
-                "order_count": 0
-            }
-            #>
-
-            $groupStats.psobject.properties | ForEach-Object {
-                Write-Log "  $( $_.Name ): $( $_.Value )"
-            }
-
 
             #-----------------------------------------------
             # GET STATISTICS FOR TAGS
@@ -428,10 +403,64 @@ function Invoke-Broadcast{
 
                 Write-Log "Released mailing for unix timestamp at $( $releaseTimestamp )"
 
+                # Wait until finished
+                If ( $Script:settings.broadcast.waitUntilFinished -eq $true ) {
+
+                    $maxWaitTime = [int]$Script:settings.broadcast.defaultReleaseOffset + [int]$Script:settings.broadcast.maxWaitForFinishedAfterOffset
+                    $secondsToWait = 5
+                    $i = 0
+                    Do {
+
+                        # Wait and count
+                        Start-Sleep -Seconds $secondsToWait
+                        $i += $secondsToWait
+
+                        # Ask for the current status
+                        $mailingStatus = Invoke-CR -Object "mailings" -Path "/$( $copiedMailing.id )" -Method GET -Verbose
+
+                    } Until ( $i -gt $maxWaitTime -or $mailingStatus.state -eq "finished" )
+                    
+                    # Log the exit of the loop
+                    If ( $mailingStatus.state -eq "finished" ) {
+                        # All good
+                        Write-Log "Mailing finished successfully after $( $i ) seconds (Offset: $( [int]$Script:settings.broadcast.defaultReleaseOffset ))" -Severity INFO
+                    } else {
+                        # Something went wrong
+                        Write-Log "Mailing exceeded the maximum wait time of $( $maxWaitTime ) seconds" -Severity WARNING
+                    }
+
+                }
+
             } else {
 
                 Write-Log "Mailing not released"
 
+            }
+
+            
+            #-----------------------------------------------
+            # GET GENERAL STATISTICS FOR LIST AT THE END
+            #-----------------------------------------------
+
+            Write-Log "Getting stats for group $( $groupId ):"
+
+            $groupStats = Invoke-CR -Object "groups" -Path "/$( $groupId )/stats" -Method GET -Verbose 
+
+            <#
+            {
+                "total_count": 4,
+                "inactive_count": 0,
+                "active_count": 4,
+                "bounce_count": 0,
+                "avg_points": 69.5,
+                "quality": 3,
+                "time": 1685545449,
+                "order_count": 0
+            }
+            #>
+
+            $groupStats.psobject.properties | ForEach-Object {
+                Write-Log "  $( $_.Name ): $( $_.Value )"
             }
 
 

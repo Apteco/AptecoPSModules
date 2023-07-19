@@ -80,6 +80,8 @@
 
         # Release/sending
         "defaultReleaseOffset" = 120                        # Default amount of seconds that are added to the current unix timestamp to release the mailing
+        "waitUntilFinished" = $false
+        "maxWaitForFinishedAfterOffset" = 120           # Wait for another 120 seconds (or more or less) until it is confirmed of send off 
 
     }
 

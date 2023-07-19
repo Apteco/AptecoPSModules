@@ -134,6 +134,9 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.0.9 Support for waiting until the mailing is released for CleverReach
+      Fixed a query for global deactivated receivers
+      Fixed a request for group stats to be at the end of the broadcast for CleverReach
 0.0.8 Preheader Support for CleverReach, just needs a "Preheader" variable
       Fixed a visual problem after the mailing was sent. Needed the "eddytor" for this
 0.0.7 Removing not needed zip files
