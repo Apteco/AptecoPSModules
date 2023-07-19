@@ -295,7 +295,8 @@ function Invoke-Broadcast{
             # This will just place a variable that needs to be defined in the receivers entry with "preheader"
 
             # TODO Think about putting this into the settings
-            $preheaderTemplate = '<div style="font-size:0px;line-height:1px;mso-line-height-rule:exactly;display:none;max-width:0px;max-height:0px;opacity:0;overflow:hidden;mso-hide:all;">[PREHEADER]</div>'
+            #$preheaderTemplate = '<div style="font-size:0px;line-height:1px;mso-line-height-rule:exactly;display:none;max-width:0px;max-height:0px;opacity:0;overflow:hidden;mso-hide:all;">[PREHEADER]</div>'
+            $preheaderTemplate = '<div style="display:none;font-size:1px;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;mso-hide:all;">{PREHEADER}&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;</div>'
 
             # Find the right place to insert
             $bodyRegex = "<body[^\>]*>"
@@ -325,24 +326,26 @@ function Invoke-Broadcast{
 
                 #$Script:plugindebug = $templateSource.body_html
 
+                # Remove CR preheader, if needed
+                $nativePreheaderRegexMatch = $htmlTemplate -match $crPreheaderRegex
+                If ( $Script:settings.broadcast.removeNativePreheader -eq $true -and $nativePreheaderRegexMatch) {
+                    $html = $htmlTemplate -replace $crPreheaderRegex, ""
+                    Write-Log "Removed native CleverReach PreHeader"
+                } else {
+                    Write-Log "No native CleverReach PreHeader found"
+                }
+
                 # Replace the existing body tag with the body tag and the new preheader
-                $regexMatch = $htmlTemplate -match $bodyRegex
+                $regexMatch = $html -match $bodyRegex
                 If ( $regexMatch -eq $true ) {
                     $matchedBodyTag = $matches[0]
-                    $html = $htmlTemplate -replace $bodyRegex, "$( $matchedBodyTag )$( $preheaderTemplate )"
+                    $html = $html -replace $bodyRegex, "$( $matchedBodyTag )$( $preheaderTemplate )"
                     Write-Log "Added custom PreHeader with [PREHEADER] variable/field"
                 } else {
                     Write-Log "Body tag for inserting PreHeader not found"
                 }
 
-                # Remove CR preheader, if needed
-                $nativePreheaderRegexMatch = $html -match $crPreheaderRegex
-                If ( $Script:settings.broadcast.removeNativePreheader -eq $true -and $nativePreheaderRegexMatch) {
-                    $html = $html -replace $crPreheaderRegex, ""
-                    Write-Log "Removed native CleverReach PreHeader"
-                } else {
-                    Write-Log "No native CleverReach PreHeader found"
-                }
+                $Script:plugindebug = $html
                 
             } else {
 
