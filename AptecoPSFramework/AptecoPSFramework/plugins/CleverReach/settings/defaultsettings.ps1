@@ -73,6 +73,11 @@
         "defaultEditor" = "eddytor"                          # "eddytor", "wizard", "freeform", "advanced", "plaintext"
         "defaultOpenTracking" = $true
         "defaultClickTracking" = $true
+        "defaultLinkTrackingUrl" = "" # "link_tracking_url": "27.wayne.cleverreach.com",
+        "defaultLinkTrackingType" = "" # "link_tracking_type": "google",  // "google", "intelliad", "crconnect"
+        "defaultGoogleCampaignName" = "" # "google_campaign_name": "My Campaign",  // in case of link_tracking_type == "google"
+
+        # TODO The google campaign name may need to be more flexible in future
 
         # Further options
         "addPreheaderAfterBody" = $true

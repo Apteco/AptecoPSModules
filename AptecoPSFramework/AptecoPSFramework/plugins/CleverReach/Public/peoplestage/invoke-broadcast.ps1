@@ -375,6 +375,15 @@ function Invoke-Broadcast{
                 $mailingSettings.settings | Add-Member -MemberType NoteProperty -Name "open_tracking" -Value $Script:settings.broadcast.defaultOpenTracking
                 $mailingSettings.settings | Add-Member -MemberType NoteProperty -Name "click_tracking" -Value $Script:settings.broadcast.defaultClickTracking
             }
+            If ( $Script:settings.broadcast.defaultLinkTrackingUrl -ne "" ) {
+                $mailingSettings.settings | Add-Member -MemberType NoteProperty -Name "link_tracking_url" -Value $Script:settings.broadcast.defaultLinkTrackingUrl
+            }
+            If ( $Script:settings.broadcast.defaultLinkTrackingType -ne "" ) {
+                $mailingSettings.settings | Add-Member -MemberType NoteProperty -Name "link_tracking_type" -Value $Script:settings.broadcast.defaultLinkTrackingType
+            }
+            If ( $Script:settings.broadcast.defaultGoogleCampaignName -ne "" ) {
+                $mailingSettings.settings | Add-Member -MemberType NoteProperty -Name "google_campaign_name" -Value $Script:settings.broadcast.defaultGoogleCampaignName
+            }
 
             # Unsubscribe
             If ( $templateSource.unsubscribe_form_id -gt 0 ) {
