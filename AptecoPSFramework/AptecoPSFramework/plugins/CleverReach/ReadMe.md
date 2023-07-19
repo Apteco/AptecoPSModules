@@ -155,7 +155,8 @@ Path|Setting|Default|Explanation
 /upload/|useTagForUploadOnly|true|adds a tag to receivers, even if no email gets prepared or send out
 /upload/|reservedFields|["tags"]|field names that should not be used in uploads
 /broadcast/|defaultReleaseOffset|120|Seconds offset that will added to the current time when broadcasting a mailing
-
+/broadcast/|addPreheaderAfterBody|true|Adding a default preheader after the `<body>`
+/broadcast/|removeNativePreheader|true|Sometimes CleverReach already inserts a preheader into the template. This command removes the CleverReach Preheader
 
 # Response Gathering
 
@@ -247,6 +248,19 @@ $segments = Get-Groups | % { Get-GroupSegments -GroupId $_.id }
 $segments
 ```
 
+## Support of Preheader
+
+Yes, this plugin allows the support of Preheaders. This is not possible to gather from CleverReach API at the moment, so we are using regular expressions to cut out existing preheaders and set a personalised one, which can also use Variables. So you see Apteco on the left hand side and my inbox on the right hand side:
+
+![grafik](https://github.com/Apteco/AptecoPSModules/assets/14135678/4382812a-96fa-4c84-8bef-109a86c1bb40)
+
+This behaviour is dependent on the broadcast settings named `addPreheaderAfterBody` and `removeNativePreheader`
+
+The preheader html is defined as
+
+```HTML
+<div style="display:none;font-size:1px;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;mso-hide:all;">{PREHEADER}&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;</div>
+```
 
 # TODO
 
