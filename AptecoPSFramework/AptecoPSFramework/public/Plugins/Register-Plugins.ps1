@@ -28,7 +28,7 @@ function Register-Plugins {
                 . $plugin
 
                 # Load the plugin info
-                $pluginInfo = ( Get-CurrentPluginInfos ).psobject.copy()
+                $pluginInfo = ( Get-CurrentPluginInfo ).psobject.copy()
                 #Write-Host $pluginInfo
 
                 # Add the path to the pluginInfo

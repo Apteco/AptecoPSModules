@@ -1,6 +1,4 @@
-﻿
-
-function Remove-TagsAtReceivers {
+﻿function Remove-TagsAtReceivers {
 
     [CmdletBinding()]
     param (
@@ -54,7 +52,7 @@ function Remove-TagsAtReceivers {
                 #$upsertBody = @( $groupReceivers[$start..$end] | Select email, @{ name="tags";expression={ [Array]@(,"-$( $Source ).$( $Tag )") }} )
                 #Write-Verbose ( ConvertTo-Json $upsertBody ) -Verbose
                 $upsertBody = @( $groupReceivers[$start..$end] | ForEach-Object { $rec =$_;[PSCustomObject]@{"email"=$rec.email;"tags"=[array]@("-$( $Source ).$( $Tag )")} } )
-                $upload = @( Invoke-CR -Object "groups" -Path "/$( $groupId )/receivers/upsertplus" -Method POST -Verbose -Body $upsertBody )
+                $upload = @( Invoke-CR -Object "groups" -Path "/$( $groupId )/receivers/upsertplus" -Method POST -Body $upsertBody )
                 $uploads.addrange($upload)
             }
 
@@ -62,6 +60,32 @@ function Remove-TagsAtReceivers {
             Write-Log "  Confirmed changes on $( $upload.count ) receivers for group $( $groupId )"
 
         }
+
+
+        #-----------------------------------------------
+        # WAIT UNTIL REMOVED TAG
+        #-----------------------------------------------
+
+        $maxSeconds = 120 # TODO put this into settings
+        $start = Get-Date
+        $allDone = $false
+        Do {
+            $receivers = @( Get-ReceiversWithTag -Source $Source -Tag $Tag )            
+            $ts = New-TimeSpan -Start $start -end ( Get-Date )
+            Start-Sleep -Seconds 10
+            Write-Log "  $( $receivers.count ) receivers left for this tag" -Severity VERBOSE
+            If ( $receivers.count -eq 0 ) {
+                $allDone = $true
+            }
+        } until ( $allDone -eq $true -or $ts.TotalSeconds -gt $maxSeconds)
+        
+        $ts = New-TimeSpan -Start $start -end ( Get-Date )
+        Write-Log "Needed $( $ts.TotalSeconds ) for changes to take effect. There are $( $receivers.count ) receivers left with that tag"
+
+
+        #-----------------------------------------------
+        # END MESSAGE
+        #-----------------------------------------------
 
         Write-Log "Confirmed changes on $( $uploads.count ) receivers"
 
