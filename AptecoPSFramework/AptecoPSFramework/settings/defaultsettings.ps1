@@ -9,9 +9,9 @@
     "currentDate" = [datetime]::Now.ToString("yyyy-MM-dd HH:mm:ss")
 
     # Chosen plugin
-    "plugin" = [PSCustomObject]@{                           # This will be filled with the plugin that you need to choose 
+    "plugin" = [PSCustomObject]@{                           # This will be filled with the plugin that you need to choose
         "guid" = ""                                         # The guid of the plugin that will be used with this settings file
-        "name" = ""  
+        "name" = ""
         "version" = "0.0.1"
         "lastUpdate" = "2023-06-15"
     }

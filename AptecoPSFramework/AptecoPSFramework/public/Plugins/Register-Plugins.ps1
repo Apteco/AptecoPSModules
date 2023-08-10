@@ -1,13 +1,11 @@
 function Register-Plugins {
     [CmdletBinding()]
     param (
-        
     )
-    
+
     begin {
-        
     }
-    
+
     process {
 
         # TODO Load also a separate external folder for another plugin
@@ -19,8 +17,8 @@ function Register-Plugins {
 
         $Script:pluginFolders | ForEach-Object {
             $pluginFolder = $_
-            Get-ChildItem -Path $pluginFolder -Filter "Plugin.ps1" -Recurse | ForEach {
-                
+            Get-ChildItem -Path $pluginFolder -Filter "Plugin.ps1" -Recurse | ForEach-Object {
+
                 $pluginItem = $_
                 $plugin = $_.FullName
 
@@ -28,7 +26,7 @@ function Register-Plugins {
 
                 # dot source the plugin file / overwrite the existing functions
                 . $plugin
-                
+
                 # Load the plugin info
                 $pluginInfo = ( Get-CurrentPluginInfos ).psobject.copy()
                 #Write-Host $pluginInfo
@@ -44,8 +42,8 @@ function Register-Plugins {
 
         # Save all plugin folders except the first one, because that's gonna be this modules directory
         #$Script:debug = $Script:settings.pluginFolders
-        $Script:settings.pluginFolders = $Script:pluginFolders | where { $_ -ne ( ( join-path -Path $Script:moduleRoot -ChildPath "plugins" ) ) } #$Script:pluginFolders[1..($Script:pluginFolders.count -1)]
-        If ( $Script:settings.pluginFolders -eq $null ) {
+        $Script:settings.pluginFolders = $Script:pluginFolders | where-Object { $_ -ne ( ( join-path -Path $Script:moduleRoot -ChildPath "plugins" ) ) } #$Script:pluginFolders[1..($Script:pluginFolders.count -1)]
+        If ( $null -eq $Script:settings.pluginFolders ) {
             $Script:settings.pluginFolders = [System.Collections.ArrayList]::new()
         }
 
@@ -56,13 +54,12 @@ function Register-Plugins {
             throw "There are more than 1 plugins with the same guid. Please check this!"
         }
 
-        # return 
+        # return
         #$script:debug = $Script:plugins
         $Script:plugins
 
     }
-    
+
     end {
-        
     }
 }

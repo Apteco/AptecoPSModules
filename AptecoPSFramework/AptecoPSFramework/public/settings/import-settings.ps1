@@ -9,7 +9,7 @@ Function Import-Settings {
     Process {
 
         try {
-            
+
             If ( ( Test-Path -Path $Path -IsValid ) -eq $true ) {
 
                 If (( Test-Path -Path $Path ) -eq $true) {
@@ -21,7 +21,7 @@ Function Import-Settings {
                         Write-Error "There is a problem loading the settings file"
                     }
                     #Write-verbose ( Convertto-json $settings ) -verbose
-                    
+
                     # Register all plugins
                     try {
                         $settings.pluginFolders | ForEach-Object {
@@ -65,14 +65,14 @@ Function Import-Settings {
                     } catch {
                         Write-Error -Message "Settings cannot be loaded - Round 1"
                     }
-                    
+
                     # TODO [x] load the plugins from the settings file, if present
                     try {
                         Import-Plugin -guid $settings.plugin.guid
                     } catch {
                         Write-Error -Message "Plugin cannot be imported"
                     }
-                    
+
                     # Set the settings into the module (settings + plugin settings)
                     try {
                         Set-Settings -PSCustom $joinedSettings
@@ -81,7 +81,7 @@ Function Import-Settings {
                     }
 
                 }
-    
+
             } else {
 
                 Write-Error -Message "The settings file '$( $Path )' cannot be loaded."

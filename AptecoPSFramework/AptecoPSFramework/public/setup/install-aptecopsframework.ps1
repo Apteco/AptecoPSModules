@@ -66,7 +66,7 @@ Calling with one of the Flags, just does this part
     }
 
     Process {
-        
+
         $success = $true
 
         #-----------------------------------------------
@@ -89,7 +89,7 @@ Calling with one of the Flags, just does this part
 
         #>
 
-        # Set-ExecutionPolicy -ExecutionPolicy Unrestricted   
+        # Set-ExecutionPolicy -ExecutionPolicy Unrestricted
         $executionPolicy = Get-ExecutionPolicy
         Write-Verbose -Message "Your execution policy is currently: $( $executionPolicy )"  -Verbose #-severity INFO
 
@@ -169,11 +169,11 @@ Calling with one of the Flags, just does this part
                     $packageSource = $packageSources[$packageSourceChoice -1]
 
                 } elseif ( $sources.count -eq 1 ) {
-                    
+
                     $packageSource = $sources[0]
 
                 } else {
-                    
+
                     Write-Verbose -Message "There is no $( $packageSourceProviderName ) repository available" -Verbose
 
                 }
@@ -226,7 +226,7 @@ Calling with one of the Flags, just does this part
 
                     # SCRIPTS
                     $installedScripts = Get-InstalledScript
-                    $psScripts | ForEach {
+                    $psScripts | ForEach-Object {
 
                         Write-Verbose "Checking script: $( $_ )" -Verbose
 
@@ -234,7 +234,7 @@ Calling with one of the Flags, just does this part
                         # This is using -force to allow updates
                         $psScript = $_
                         $psScriptDependencies = Find-Script -Name $psScript -IncludeDependencies
-                        $psScriptDependencies | where { $_.Name -notin $installedScripts.Name } | Install-Script -Scope AllUsers -Verbose -Force
+                        $psScriptDependencies | Where-Object { $_.Name -notin $installedScripts.Name } | Install-Script -Scope AllUsers -Verbose -Force
 
                     }
 
@@ -244,7 +244,7 @@ Calling with one of the Flags, just does this part
 
                 Write-Warning -Message "Cannot install scripts!" #-Severity WARNING
                 $success = $false
-                
+
             }
 
         } else {
@@ -252,7 +252,7 @@ Calling with one of the Flags, just does this part
             Write-Verbose "There is no script to install"
 
         }
-        
+
 
         #-----------------------------------------------
         # CHECK MODULES DEPENDENCIES FOR INSTALLATION AND UPDATE
@@ -269,8 +269,8 @@ Calling with one of the Flags, just does this part
                     Write-Verbose "Checking Module dependencies" -Verbose
 
                     $installedModules = Get-InstalledModule
-                    $psModules | ForEach {
-                        
+                    $psModules | ForEach-Object {
+
                         Write-Verbose "Checking module: $( $_ )" -Verbose
 
                         # TODO [ ] possibly add dependencies on version number
@@ -290,7 +290,7 @@ Calling with one of the Flags, just does this part
                 $success = $false
 
                 Write-Error -Message $_.Exception.Message #-Severity ERROR
-                
+
             }
 
         } else {
@@ -313,9 +313,9 @@ Calling with one of the Flags, just does this part
                     Write-Verbose "Checking package dependencies" -Verbose
 
                     $localPackages = Get-package -Destination .\lib
-                    $globalPackages = Get-package 
+                    $globalPackages = Get-package
                     $installedPackages = $localPackages + $globalPackages
-                    $psPackages | ForEach {
+                    $psPackages | ForEach-Object {
 
                         Write-Verbose "Checking package: $( $_ )" -Verbose
 
@@ -326,7 +326,7 @@ Calling with one of the Flags, just does this part
                         } else {
                             $pkg = Find-Package $psPackage -IncludeDependencies -Verbose
                         }
-                        $pkg | where { $_.Name -notin $installedPackages.Name } | Select Name, Version -Unique | ForEach {
+                        $pkg | Where-object { $_.Name -notin $installedPackages.Name } | Select-Object Name, Version -Unique | ForEach-Object {
                             Install-Package -Name $_.Name -Scope CurrentUser -Source NuGet -Verbose -RequiredVersion $_.Version -SkipDependencies -Destination ".\lib" -Force # "$( $script:execPath )\lib"
                         }
 
@@ -359,9 +359,9 @@ Calling with one of the Flags, just does this part
             #try {
 
             Write-Verbose "This script is copying the boilerplate (needed for installation ) to your current directory" -Verbose
-            
+
             Copy-Item -Path "$( $Script:moduleRoot )\boilerplate\*" -Destination "." -Confirm
-            
+
             $currentPath = ( resolve-path -Path "." ).Path
             Write-Verbose "Please have a look at your PeopleStage channels and create a new email channel:" -Verbose
             Write-Verbose "  GENERAL" -Verbose
@@ -392,19 +392,17 @@ Calling with one of the Flags, just does this part
             Write-Verbose "  ADDITIONAL VARIABLES" -Verbose
             Write-Verbose "    Add all variables that you would like to always upload" -Verbose
             Write-Verbose "Please consider to ask Apteco to look at your settings when you have done your first setup" -Verbose
-   
+
 
 
             # } catch {
-
             #     Write-Verbose -Message "Cannot copy boilerplate!" -Severity WARNING
             #     $success = $false
-                
             # }
 
             # TODO Add hints on how to create the channel in PeopleStage
 
-            
+
             <#
             Write-Verbose "Please create the function [Custom].[vModelElementLatest] on the PeopleStage Database by executing this command"
 
@@ -420,7 +418,7 @@ Calling with one of the Flags, just does this part
 
         }
 
-        
+
     }
 
     End {

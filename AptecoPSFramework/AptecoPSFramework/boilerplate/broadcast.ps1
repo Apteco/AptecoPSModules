@@ -16,12 +16,13 @@ Param(
 
 $debug = $false
 
+
 #-----------------------------------------------
 # ADD MODULE PATH, IF NOT PRESENT
 #-----------------------------------------------
 
 #$envVariables = [System.Environment]::GetEnvironmentVariables()
-$modulePath = @( $Env:PSModulePath -split ";" ) + @( 
+$modulePath = @( $Env:PSModulePath -split ";" ) + @(
     "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles") )\WindowsPowerShell\Modules"
     #"C:\Program Files\WindowsPowerShell\Modules"
     "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles(x86)") )\WindowsPowerShell\Modules"
@@ -96,11 +97,13 @@ $dir = $params.scriptPath
 Set-Location $dir
 #>
 
+
 ################################################
 #
 # SETTINGS
 #
 ################################################
+
 
 #-----------------------------------------------
 # IMPORT MODULE

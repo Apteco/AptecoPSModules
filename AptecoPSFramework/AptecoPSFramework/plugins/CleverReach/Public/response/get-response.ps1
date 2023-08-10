@@ -235,7 +235,7 @@ function Get-Response {
 
             $globalUrnAttribute = $false
             $globalAttributes = @( (Invoke-CR -Object "attributes" -Method "GET" -Verbose ) )
-            $urnField = @( $globalAttributes | where { $_.name -eq $Script:settings.responses.urnFieldName } )
+            $urnField = @( $globalAttributes | Where-Object { $_.name -eq $Script:settings.responses.urnFieldName } )
             If ( $urnField.count -eq 0 ) {
                 Write-Log -message "Looks like the urn is not on global level. It tries to load it from local attributes"
             } elseif ( $urnField.count -eq 1 ) {
@@ -293,7 +293,7 @@ function Get-Response {
             # Going through all response types like opens and clicks
             $responseCounts = [PSCustomObject]@{}
             $allLinks = [System.Collections.ArrayList]@()
-            $responseTypes.Keys | ForEach {
+            $responseTypes.Keys | ForEach-Object {
 
                 # response type like sent, opened, ...
                 $responseType = $_
@@ -377,7 +377,7 @@ function Get-Response {
                             "urn" = $urn # TODO think about urn column in $Script:settings.responses.urnFieldName
                             "email" = $r.email
                             "mailingId" = $r.report
-                            "mailingName" = ($reports | where { $_.id -eq $r.report }).name
+                            "mailingName" = ($reports | Where-Object { $_.id -eq $r.report }).name
                             "timestamp" = 0 # default value that can be overriden
                             #"communicationkey" = $r.attributes."$( $Script:setttings.responses.communicationKeyAttributeName )" # not used now as the matching should be done through email address and broadcast id
                         }
@@ -397,8 +397,8 @@ function Get-Response {
                                 }
                                 #>
                                 $type = "Send" #Open, Click, Bounce, Unsubscription, Send
-                                $events = @( $r.events | where { $_.type -eq "mail_send" -and $_.mailing_id -eq $r.report } )
-                                $responseObj.timestamp = ( $reports | where { $_.id -eq $r.report } ).finished # TODO maybe convert into other datetime format
+                                $events = @( $r.events | Where-Object { $_.type -eq "mail_send" -and $_.mailing_id -eq $r.report } )
+                                $responseObj.timestamp = ( $reports | Where-Object { $_.id -eq $r.report } ).finished # TODO maybe convert into other datetime format
                             }
 
                             "opened" {
@@ -413,7 +413,7 @@ function Get-Response {
                                 }
                                 #>
                                 $type = "Open" #Open, Click, Bounce, Unsubscription, Send
-                                $events = @( $r.events | where { $_.type -eq "mail_open" -and $_.mailing_id -eq $r.report } )
+                                $events = @( $r.events | Where-Object { $_.type -eq "mail_open" -and $_.mailing_id -eq $r.report } )
                                 
                             }
 
@@ -429,7 +429,7 @@ function Get-Response {
                                 }
                                 #>
                                 $type = "Click" #Open, Click, Bounce, Unsubscription, Send
-                                $events = @( $r.events | where { $_.type -eq "mail_click" -and $_.mailing_id -eq $r.report -and $_.type_id -eq $r.linkid } ) # possibly filter on stamp -gt $responsestartdate 
+                                $events = @( $r.events | Where-Object { $_.type -eq "mail_click" -and $_.mailing_id -eq $r.report -and $_.type_id -eq $r.linkid } ) # possibly filter on stamp -gt $responsestartdate 
                                 $responseObj | Add-Member -MemberType NoteProperty -Name "link" -Value ( $allLinks | where { $_.id -eq $r.linkid } ).link
                             }
 
@@ -446,7 +446,7 @@ function Get-Response {
                                 #>
 
                                 $type = "Bounce" #Open, Click, Bounce, Unsubscription, Send
-                                $events = @( $r.events | where { $_.type -eq "mail_bounce" -and $_.mailing_id -eq $r.report } ) # possibly filter on stamp -gt $responsestartdate                                
+                                $events = @( $r.events | Where-Object { $_.type -eq "mail_bounce" -and $_.mailing_id -eq $r.report } ) # possibly filter on stamp -gt $responsestartdate                                
 
                             }
 
@@ -462,7 +462,7 @@ function Get-Response {
                                 }
                                 #>
                                 $type = "Unsubscription" #Open, Click, Bounce, Unsubscription, Send
-                                $events = @( $r.events | where { $_.type -eq "user_unsubscribe" -and $_.mailing_id -eq $r.report } ) # possibly filter on stamp -gt $responsestartdate                                
+                                $events = @( $r.events | Where-Object { $_.type -eq "user_unsubscribe" -and $_.mailing_id -eq $r.report } ) # possibly filter on stamp -gt $responsestartdate                                
                             }
 
                         }

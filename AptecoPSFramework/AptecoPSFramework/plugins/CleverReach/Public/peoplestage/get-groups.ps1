@@ -74,7 +74,7 @@ function Get-Groups {
         )
 
         $lists = [System.Collections.ArrayList]@()
-        [void]$lists.AddRange(@( $groupsList | Select $columns ))
+        [void]$lists.AddRange(@( $groupsList | Select-Object $columns ))
         
         If ( $lists.count -gt 0 ) {
 
