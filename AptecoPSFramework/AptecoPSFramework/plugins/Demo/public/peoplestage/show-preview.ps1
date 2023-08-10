@@ -1,4 +1,4 @@
-
+﻿
 
 
 
@@ -8,7 +8,7 @@ function Show-Preview {
     param (
         [Parameter(Mandatory=$false)][Hashtable] $InputHashtable
     )
-    
+
     begin {
 
 
@@ -53,7 +53,7 @@ function Show-Preview {
         # CHECK INPUT RECEIVER
         #-----------------------------------------------
 
-        
+
 
         #-----------------------------------------------
         # CHECK CLEVERREACH CONNECTION
@@ -61,10 +61,10 @@ function Show-Preview {
 
         try {
 
-            Test-CleverReachConnection         
-            
+            Test-CleverReachConnection
+
         } catch {
-            
+
             #$msg = "Failed to connect to CleverReach, unauthorized or token is expired"
             #Write-Log -Message $msg -Severity ERROR
             Write-Log -Message $_.Exception -Severity ERROR
@@ -76,9 +76,9 @@ function Show-Preview {
 
 
 
-        
+
     }
-    
+
     process {
 
 
@@ -98,7 +98,7 @@ function Show-Preview {
 
             If ( $previewGroups.count -eq 1 ) {
                 # Use that group
-                $previewGroup = $previewGroups | select -first 1
+                $previewGroup = $previewGroups | Select-Object -first 1
                 Write-log -message "Using existing group '$( $previewGroup.mame )' with id '$( $previewGroup.id )'"
             } elseif ( $previewGroups.count -eq 0 ) {
                 # Create a new group
@@ -123,7 +123,7 @@ function Show-Preview {
             # CLEAR THAT GROUP
             #-----------------------------------------------
 
-            #delete /v3/groups.json/{id}/clear 
+            #delete /v3/groups.json/{id}/clear
             $clearedGroup = Invoke-CR -Object "groups" -Path "/$( $previewGroup.id )/clear" -Method DELETE
 
             Write-Log "Cleared the group '$( $group.name )' with id '$( $group.id )'"
@@ -162,7 +162,7 @@ function Show-Preview {
             #-----------------------------------------------
             # CREATE A RENDERED PREVIEW
             #-----------------------------------------------
-            
+
 
             # NOT DOCUMENTED, but works
 
@@ -224,7 +224,7 @@ function Show-Preview {
             Write-Log -Message $_.Exception -Severity ERROR
             throw [System.IO.InvalidDataException] $msg
 
-        } finally {          
+        } finally {
 
         }
 
@@ -237,16 +237,16 @@ function Show-Preview {
         $processDuration = New-TimeSpan -Start $processStart -End $processEnd
         Write-Log -Message "Needed $( [int]$processDuration.TotalSeconds ) seconds in total"
 
-        
+
         #-----------------------------------------------
         # RETURN VALUES TO PEOPLESTAGE
         #-----------------------------------------------
-        
+
         # return object
         $return = [Hashtable]@{
 
             "Type" = "Email" #Email|Sms
-            "FromAddress"=$templateSource.sender_email 
+            "FromAddress"=$templateSource.sender_email
             "FromName"=$templateSource.sender_name
             "Html"=$renderedPreview.html
             "ReplyTo"=""
@@ -265,13 +265,13 @@ function Show-Preview {
             $param = $_
             Write-Log -message "    $( $param ) = '$( $return[$param] )'" -writeToHostToo $false
         }
-        
+
         # return the results
         $return
-        
+
 
     }
-    
+
     end {
 
     }

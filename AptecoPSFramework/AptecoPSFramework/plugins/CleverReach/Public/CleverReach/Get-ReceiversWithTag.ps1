@@ -9,9 +9,9 @@ function Get-ReceiversWithTag {
         ,[Parameter(Mandatory=$true)][String] $Tag
         ,[Parameter(Mandatory=$false)][String] $Detail = 0
     )
-    
+
     begin {
-    
+
     }
     process {
 

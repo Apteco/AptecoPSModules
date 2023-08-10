@@ -1,4 +1,4 @@
-
+﻿
 Function Set-DebugMode {
 
     [cmdletbinding()]
@@ -7,7 +7,7 @@ Function Set-DebugMode {
     )
 
     Process {
-       
+
         $Script:debugMode = $DebugMode
 
         If ( $Script:settings.logfile -ne "") {

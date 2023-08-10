@@ -1,4 +1,4 @@
-
+﻿
 # TODO Put this into separate module and publish it
 
 # The function uses the "Left" one as the kind of master and extends it with "Right"
@@ -15,7 +15,7 @@ function Join-PSCustomObject {
         ,[Parameter(Mandatory=$false)][Switch]$MergeArrays = $false
         ,[Parameter(Mandatory=$false)][Switch]$MergeHashtables = $false
     )
-    
+
     begin {
 
         if ( $null -eq $Left ) {
@@ -29,7 +29,7 @@ function Join-PSCustomObject {
         }
 
     }
-    
+
     process {
 
         # Create an empty object
@@ -46,7 +46,7 @@ function Join-PSCustomObject {
             $compare = Compare-Object -ReferenceObject $leftProps -DifferenceObject $rightProps -IncludeEqual
 
             # Go through all properties
-            $compare | where { $_.SideIndicator -eq "<=" } | ForEach-Object {
+            $compare | Where-Object { $_.SideIndicator -eq "<=" } | ForEach-Object {
                 $propLeft = $_.InputObject
                 $joined | Add-Member -MemberType NoteProperty -Name $propLeft -Value $Left.($propLeft)
                 Write-Verbose "Add '$( $propLeft )' from left side"
@@ -54,7 +54,7 @@ function Join-PSCustomObject {
 
             # Now check if we can add more properties
             If ( $AddPropertiesFromRight -eq $true ) {
-                $compare | where { $_.SideIndicator -eq "=>" } | ForEach-Object {
+                $compare | Where-Object { $_.SideIndicator -eq "=>" } | ForEach-Object {
                     $propRight = $_.InputObject
                     $joined | Add-Member -MemberType NoteProperty -Name $propRight -Value $Right.($propRight)
                     Write-Verbose "Add '$( $propRight )' from right side"
@@ -62,7 +62,7 @@ function Join-PSCustomObject {
             }
 
             # Now overwrite existing values or check to go deeper if needed
-            $compare | where { $_.SideIndicator -eq "==" } | ForEach-Object {
+            $compare | Where-Object { $_.SideIndicator -eq "==" } | ForEach-Object {
 
                 $propEqual = $_.InputObject
 
@@ -83,7 +83,7 @@ function Join-PSCustomObject {
                     $joined | Add-Member -MemberType NoteProperty -Name $propEqual -Value $recursive
 
                 } elseif ( $MergeArrays -eq $true -and $Left.($propEqual) -is [Array] -and $Right.($propEqual) -is [Array] ) {
-                
+
                     Write-Verbose "Merging arrays from '$( $propEqual )'"
 
                     # Merge array
@@ -133,9 +133,9 @@ function Join-PSCustomObject {
         $joined
 
     }
-    
+
     end {
-        
+
     }
 }
 

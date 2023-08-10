@@ -1,4 +1,4 @@
-
+﻿
 # TODO Put this into separate module and publish it
 
 # The function uses the "Left" one as the kind of master and extends it with "Right"
@@ -15,7 +15,7 @@ function Join-Hashtable {
         ,[Parameter(Mandatory=$false)][Switch]$MergeArrays = $false
         ,[Parameter(Mandatory=$false)][Switch]$MergeHashtables = $false
     )
-    
+
     begin {
 
         if ( $null -eq $Left ) {
@@ -29,7 +29,7 @@ function Join-Hashtable {
         }
 
     }
-    
+
     process {
 
         # Create an empty object
@@ -46,7 +46,7 @@ function Join-Hashtable {
             $compare = Compare-Object -ReferenceObject $leftProps -DifferenceObject $rightProps -IncludeEqual
 
             # Go through all properties
-            $compare | where { $_.SideIndicator -eq "<=" } | ForEach-Object {
+            $compare | Where-Object { $_.SideIndicator -eq "<=" } | ForEach-Object {
                 $propLeft = $_.InputObject
                 $joined.Add($propLeft, $Left.($propLeft))
                 Write-Verbose "Add '$( $propLeft )' from left side"
@@ -54,16 +54,16 @@ function Join-Hashtable {
 
             # Now check if we can add more properties
             If ( $AddKeysFromRight -eq $true ) {
-                $compare | where { $_.SideIndicator -eq "=>" } | ForEach-Object {
+                $compare | Where-Object { $_.SideIndicator -eq "=>" } | ForEach-Object {
                     $propRight = $_.InputObject
                     $joined.Add($propRight, $Right.($propRight))
                     Write-Verbose "Add '$( $propRight )' from right side"
                 }
-                
+
             }
 
             # Now overwrite existing values or check to go deeper if needed
-            $compare | where { $_.SideIndicator -eq "==" } | ForEach-Object {
+            $compare | Where-Object { $_.SideIndicator -eq "==" } | ForEach-Object {
 
                 $propEqual = $_.InputObject
 
@@ -81,16 +81,16 @@ function Join-Hashtable {
                         "MergeHashtables" = $MergeHashtables
                     }
                     $recursive = Join-PSCustomObject @params
-                    $joined.Add($propEqual, $recursive)                   
+                    $joined.Add($propEqual, $recursive)
 
 
                 } elseif ( $MergeArrays -eq $true -and $Left.($propEqual) -is [Array] -and $Right.($propEqual) -is [Array] ) {
-                
+
                     Write-Verbose "Merging arrays from '$( $propEqual )'"
 
                     # Merge array
                     $newArr = [Array]@( $Left.($propEqual) + $Right.($propEqual) ) | Sort-Object -unique
-                    $joined.Add($propEqual, $newArr)                   
+                    $joined.Add($propEqual, $newArr)
 
                 } elseif ( $MergeArrays -eq $true -and $Left.($propEqual) -is [System.Collections.ArrayList] -and $Right.($propEqual) -is [System.Collections.ArrayList] ) {
 
@@ -101,7 +101,7 @@ function Join-Hashtable {
                     $newArr.AddRange($Left.($propEqual))
                     $newArr.AddRange($Right.($propEqual))
                     $newArrSorted = [System.Collections.ArrayList]@( $newArr | Sort-Object -Unique )
-                    $joined | Add-Member -MemberType NoteProperty -Name $propEqual -Value $newArrSorted                 
+                    $joined | Add-Member -MemberType NoteProperty -Name $propEqual -Value $newArrSorted
 
                 } elseif ( $MergeHashtables -eq $true -and $Left.($propEqual) -is [hashtable] -and $Right.($propEqual) -is [hashtable] -and @( $Right.($propEqual).Keys ).Count -gt 0) {
 
@@ -115,12 +115,12 @@ function Join-Hashtable {
                         "MergeHashtables" = $MergeHashtables
                     }
                     $recursive = Join-Hashtable @params
-                    $joined.Add($propEqual, $recursive)                   
+                    $joined.Add($propEqual, $recursive)
 
                 } else {
 
                     # just overwrite existing values if datatypes of attribute are different or no merging is wished
-                    $joined.Add($propEqual, $Right.($propEqual))                   
+                    $joined.Add($propEqual, $Right.($propEqual))
                     Write-Verbose "Overwrite '$( $propEqual )' with value from right side"
                     #Write-Verbose "Datatypes of '$( $propEqual )' are not the same on left and right"
 
@@ -135,9 +135,9 @@ function Join-Hashtable {
         $joined
 
     }
-    
+
     end {
-        
+
     }
 }
 

@@ -1,4 +1,4 @@
-[PSCustomObject]@{
+﻿[PSCustomObject]@{
 
     # General
     "providername" = "PSCleverReach"
@@ -16,7 +16,7 @@
         #"SkipHeaderValidation" = $true
     }                                                       # additional parameter for the Invoke-RestMethod call like Proxy or ProxyCredential, see https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/invoke-restmethod
     "logAPIrequests" = $true                                # log information like 'GET https://rest.cleverreach.com:443/v3/groups.json/1158984/stats'
-    
+
     # Token refreshment
     "token" = [PSCustomObject]@{
 
@@ -29,12 +29,12 @@
         # Refreshing task
         "taskDefaultName" =  "Apteco CleverReach Token Refresher"
         "dailyTaskSchedule" =  6
-        
+
 
         #"tokenfile" =  "C:\Test\cr.token"
         #"createTokenFile" = $true
 
-        # Not implemented yet, but settings for the token file        
+        # Not implemented yet, but settings for the token file
         "exportTokenToFile" = $true                         # only used, if the token usage is on 'generate'
         "tokenUsage" = "consume"                            # consume|generate -> please have only one setting where you generate the token
         "encryptTokenFile" = $false                         # only used, if the token usage is on 'generate', when 'consume' then the tokenfile will be decrypted
@@ -43,7 +43,7 @@
 
     }
 
-    # API Authentication 
+    # API Authentication
     "login" = [PSCustomObject]@{
         "refreshTtl" = 604800                               # 7 days in seconds
         "refreshtoken" = ""
@@ -52,7 +52,7 @@
     }
 
     # Upload settings
-    "upload" = [PSCustomObject]@{        
+    "upload" = [PSCustomObject]@{
         "reservedFields" = [Array]@(,"tags")                # If one of these fields are used, the whole process will pause
         "countRowsInputFile" = $true
         "validateReceivers" = $true
@@ -68,7 +68,7 @@
 
     # Broadcast settings
     "broadcast" = [PSCustomObject]@{
-        
+
         # Settings for the copy of the mailing
         "defaultContentType" = "html/text"                  # "html", "text" or "html/text"
         "defaultEditor" = "eddytor"                         # "eddytor", "wizard", "freeform", "advanced", "plaintext"
@@ -88,7 +88,7 @@
         # Release/sending
         "defaultReleaseOffset" = 120                        # Default amount of seconds that are added to the current unix timestamp to release the mailing
         "waitUntilFinished" = $false
-        "maxWaitForFinishedAfterOffset" = 120           # Wait for another 120 seconds (or more or less) until it is confirmed of send off 
+        "maxWaitForFinishedAfterOffset" = 120           # Wait for another 120 seconds (or more or less) until it is confirmed of send off
 
     }
 

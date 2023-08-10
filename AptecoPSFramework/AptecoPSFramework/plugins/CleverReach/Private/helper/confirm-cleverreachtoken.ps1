@@ -1,19 +1,19 @@
-
+﻿
 
 function Confirm-CleverReachToken {
     [CmdletBinding()]
     param (
     )
-    
+
     begin {
-        
+
     }
-    
+
     process {
-        
+
         try {
 
-            
+
             #-----------------------------------------------
             # VALIDATE
             #-----------------------------------------------
@@ -29,7 +29,7 @@ function Confirm-CleverReachToken {
 
             $success = $false
             try {
-                
+
                 # Check via REST API
                 $valid = Invoke-RestMethod @validateParameters
                 $success = $true
@@ -39,7 +39,7 @@ function Confirm-CleverReachToken {
 
             # Token not valid anymore
             } catch {
-                
+
                 # Log
                 Write-Log "Test was not successful, closing the script"
 
@@ -50,12 +50,12 @@ function Confirm-CleverReachToken {
                         "subject" = "[CLEVERREACH] Token is invalid, please check"
                         "body" = "Refreshment failed, please check if you can create a valid token"
                     }
-                    Send-Mail @splattedArguments # note the @ instead of $    
+                    Send-Mail @splattedArguments # note the @ instead of $
                 }
-                
+
                 # Exception
-                throw [System.IO.InvalidDataException] "Test was not successful"  
-                
+                throw [System.IO.InvalidDataException] "Test was not successful"
+
             }
 
 
@@ -72,7 +72,7 @@ function Confirm-CleverReachToken {
 
             # Logging of whoami
             Write-Log -message "Entries of WhoAmI"
-            $whoAmI | Get-Member -MemberType NoteProperty | ForEach {
+            $whoAmI | Get-Member -MemberType NoteProperty | ForEach-Object {
                 $propName = $_.Name
                 Write-Log "    $( $propName ) = $( $whoAmI.$propName )"
             }
@@ -100,7 +100,7 @@ function Confirm-CleverReachToken {
                     "subject" = "[CLEVERREACH] Token is still valid"
                     "body" = "Token is still valid until $( $ttl.date )"
                 }
-                Send-Mail @splattedArguments # note the @ instead of $    
+                Send-Mail @splattedArguments # note the @ instead of $
             }
 
 
@@ -109,7 +109,7 @@ function Confirm-CleverReachToken {
             #-----------------------------------------------
 
             if ( $settings.login.refreshTokenAutomatically -and $ttl.ttl -lt $settings.login.refreshTtl ) {
-                
+
                 # Log
                 Write-Log -message "Creating new token, it will expire in $( $ttl.ttl ) seconds"
 
@@ -149,7 +149,7 @@ function Confirm-CleverReachToken {
                 }
                 $ttl = Invoke-RestMethod @validateParameters
                 Write-Log -message "New token is valid for $( $ttl.ttl ) seconds until $( $ttl.date )"
-                    
+
                 # Mail for valid token
                 if ( $settings.sendMailOnSuccess ) {
 
@@ -164,7 +164,7 @@ function Confirm-CleverReachToken {
                         To = $settings.notificationReceiver
                         Subject = "[CLEVERREACH] Token is refreshed now"
                         Body = "New token is created and valid until $( $ttl.date )"
-                        SmtpServer = $settings.mail.smtpServer 
+                        SmtpServer = $settings.mail.smtpServer
                         From = $settings.mail.from
                         UseSsl = $settings.mail.useSsl
                         Port = $settings.mail.port
@@ -176,15 +176,15 @@ function Confirm-CleverReachToken {
                         $cred = New-Object System.Management.Automation.PSCredential $settings.mail.username, ( Get-SecureToPlaintext $settings.mail.password | ConvertTo-SecureString -asplaintext -force  )
                         $mailParams.Add("Credential", $cred)
                     }
-            
-                    Send-MailMessage @mailParams 
+
+                    Send-MailMessage @mailParams
 
                     # $splattedArguments = @{
                     #     "to" = $settings.notificationReceiver
                     #     "subject" = "[CLEVERREACH] Token is refreshed now"
                     #     "body" = "New token is created and valid until $( $ttl.date )"
                     # }
-                    # Send-Mail @splattedArguments # note the @ instead of $    
+                    # Send-Mail @splattedArguments # note the @ instead of $
 
                 }
 
@@ -192,14 +192,14 @@ function Confirm-CleverReachToken {
                 Write-Log -message "Creating new token, it will expire in $( $ttl.ttl ) seconds"
 
             } else {
-            
+
                 Write-Log -message "No new token creation needed, still valid for $( $ttl.ttl ) seconds"
-                
+
             }
-            
-            
+
+
         } catch {
-            
+
             $msg = "Failed to connect to CleverReach, unauthorized or token is expired"
             Write-Log -Message $msg -Severity ERROR
             #Write-Log -Message $_.Exception -Severity ERROR
@@ -210,10 +210,10 @@ function Confirm-CleverReachToken {
         }
 
     }
-    
+
     end {
-        
+
     }
-    
+
 }
 

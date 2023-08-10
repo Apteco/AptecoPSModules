@@ -1,4 +1,4 @@
-
+﻿
 Function Get-ProcessIdentifier {
 <#
 
@@ -8,11 +8,11 @@ Can be used to debug the whole thing
 #>
     [cmdletbinding()]
     param(
-        
+
     )
 
     Process {
-       
+
         $Script:processId
 
     }

@@ -1,4 +1,4 @@
-
+﻿
 ################################################
 #
 # INPUT
@@ -29,7 +29,7 @@ $modulePath = @( $Env:PSModulePath -split ";" ) + @(
     "$( [System.Environment]::GetEnvironmentVariable("USERPROFILE") )\Documents\WindowsPowerShell\Modules"
     #"$( $Env:windir )\system32\WindowsPowerShell\v1.0\Modules"
 )
-$Env:PSModulePath = ( $modulepath | select -unique ) -join ";"
+$Env:PSModulePath = ( $modulepath | Select-Object -unique ) -join ";"
 
 
 #-----------------------------------------------
@@ -145,7 +145,7 @@ Set-DebugMode -DebugMode $debug
 # TODO [x] check if we need to make a try catch here -> not needed, if we use a combination like
 
 <#
-            $msg = "Temporary count of $( $mssqlResult ) is less than $( $rowsCount ) in the original export. Please check!" 
+            $msg = "Temporary count of $( $mssqlResult ) is less than $( $rowsCount ) in the original export. Please check!"
             Write-Log -Message $msg -Severity ERROR
             throw [System.IO.InvalidDataException] $msg
 

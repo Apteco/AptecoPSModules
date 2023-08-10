@@ -1,4 +1,4 @@
-
+﻿
 
 function Get-Messages {
     [CmdletBinding()]
@@ -6,9 +6,9 @@ function Get-Messages {
         [Parameter(Mandatory=$false)][Hashtable] $InputHashtable
         #[Parameter(Mandatory=$false)][Switch] $DebugMode = $false
     )
-    
+
     begin {
-        
+
 
         #-----------------------------------------------
         # LOG
@@ -39,7 +39,7 @@ function Get-Messages {
         #Import-Lib -IgnorePackageStructure
 
     }
-    
+
     process {
 
 Switch ( $InputHashtable.mode ) {
@@ -97,9 +97,9 @@ Switch ( $InputHashtable.mode ) {
 
 }
 
-        
 
-        
+
+
 
         # Transform the mailings array into the needed output format
         $columns = @(
@@ -114,12 +114,12 @@ Switch ( $InputHashtable.mode ) {
         )
 
         $messages = [System.Collections.ArrayList]@()
-        [void]$messages.AddRange(@( $mailingsList | Select $columns ))
-        
+        [void]$messages.AddRange(@( $mailingsList | Select-Object $columns ))
+
         If ( $messages.count -gt 0 ) {
 
             Write-Log "Loaded $( $messages.Count ) messages" -severity INFO #-WriteToHostToo $false
-            
+
         } else {
 
             $msg = "No messages loaded -> please check!"
@@ -127,14 +127,14 @@ Switch ( $InputHashtable.mode ) {
             throw [System.IO.InvalidDataException] $msg
 
         }
-        
+
         # Return
         $messages
 
     }
-    
+
     end {
-        
+
     }
 
 }

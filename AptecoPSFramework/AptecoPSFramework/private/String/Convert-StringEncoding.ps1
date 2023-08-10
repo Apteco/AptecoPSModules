@@ -1,4 +1,4 @@
-
+﻿
 <#
 
 Use one of these encodings header names for input and output
@@ -20,7 +20,7 @@ Function Convert-StringEncoding {
          [Parameter(Mandatory=$true)][String]$string
         ,[Parameter(Mandatory=$true)][String]$inputEncoding
         ,[Parameter(Mandatory=$true)][String]$outputEncoding
-    )    
+    )
 
     # Check input encoding, if wrong it throws an exception
     [System.Text.Encoding]::GetEncoding($inputEncoding) | Out-Null

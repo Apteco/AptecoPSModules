@@ -1,9 +1,9 @@
-function Get-CurrentPluginInfos {
+﻿function Get-CurrentPluginInfo {
     [PSCustomObject]@{
 
         # identifier for this plugin - please do not change or use this twice
         "guid" = "83be4a7b-9ab9-4bb7-be20-80a78d691609"
-        
+
         # general information about this plugin
         "name" = "Inxmail Professional"
         "version" = "0.0.1"

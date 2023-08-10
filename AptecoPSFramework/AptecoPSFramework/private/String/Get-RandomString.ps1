@@ -1,4 +1,4 @@
-
+﻿
 # TODO Exchange this function with the officially published module
 
 <#
@@ -37,7 +37,7 @@ Function Get-RandomString() {
         You can exclude the different sets individually like with -ExcludeSpecialChars
 
         With the parameter -AllowedCharacters you can define an array with only valid characters, so only they will be used to
-        create the random string. 
+        create the random string.
 
     .PARAMETER Length
         Amount of characters you want to get as final string
@@ -63,7 +63,7 @@ Function Get-RandomString() {
 
     .EXAMPLE
         Get-RandomString -length 32 -ExcludeSpecialChars -ExcludeNumbers -ExcludeLowerCase
-    
+
     .EXAMPLE
         Get-RandomString -length 32 -AllowedCharacters @("a","b","c","*")
 
@@ -99,7 +99,7 @@ Function Get-RandomString() {
         ,[Parameter(Mandatory=$false)][Switch]$ExcludeUpperCase
         ,[Parameter(Mandatory=$false)][Switch]$ExcludeSpecialChars
     )
-   
+
     begin {
 
         # Add characters to use
@@ -116,7 +116,7 @@ Function Get-RandomString() {
             $chars += @("a", "b", "c", "d", "e", "f", "g", "h", "j", "k", "m", "n", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z")
         }
 
-        If ( $ExcludeUpperCase -eq $false ) {    
+        If ( $ExcludeUpperCase -eq $false ) {
             $chars += @("A", "B", "C", "D", "E", "F", "G", "H", "J", "K", "M", "N", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z")
         }
 
@@ -129,7 +129,7 @@ Function Get-RandomString() {
         }
 
     }
-    
+
     process {
 
         # Create a new random variable
@@ -145,6 +145,6 @@ Function Get-RandomString() {
         return $stringBuilder.ToString()
 
     }
-    
+
 
 }

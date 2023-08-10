@@ -14,9 +14,9 @@ function Get-GlobalDeactivated {
     param (
         #[Parameter(Mandatory=$false)][Hashtable] $InputHashtable
     )
-    
+
     begin {
-    
+
     }
     process {
 

@@ -1,5 +1,5 @@
-
 Function Export-Settings {
+﻿
 
     [cmdletbinding()]
     param(
@@ -27,7 +27,7 @@ Function Export-Settings {
                 # Resolve the path now to an absolute path
                 $resolvedPath = Resolve-Path -Path $absolutePath
 
-    
+
             } else {
 
                 Write-Error -Message "The path '$( $Path )' is invalid."

@@ -1,19 +1,19 @@
-function Import-Plugin {
+﻿function Import-Plugin {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory=$true)][String] $Guid
     )
-    
+
     begin {
-        
+
     }
-    
+
     process {
 
 
         $success = $false
-        
-        
+
+
         #-----------------------------------------------
         # CHECK THE PLUGIN
         #-----------------------------------------------
@@ -83,14 +83,14 @@ function Import-Plugin {
         #-----------------------------------------------
 
         <#
-        
+
         This creates a complety dynamic created module which has some default functions that should always be available,
         but can also be extended by custom functions for specific integrations. This dynamic module can be shown via
         Get-Module
 
         #>
 
-        $pluginParam = [PSCustomObject]@{            
+        $pluginParam = [PSCustomObject]@{
             "plugin" = $plugin
             "settings" = $Script:settings
             "variables" = [PSCustomObject]@{
@@ -104,7 +104,7 @@ function Import-Plugin {
         }
 
         New-Module -Name "Invoke $( $plugin.Name )" -ArgumentList $pluginParam -ScriptBlock {
-            
+
             # argument input object
             param(
                 [PSCustomObject]$Input
@@ -115,7 +115,7 @@ function Import-Plugin {
             #-----------------------------------------------
             # CHECK
             #-----------------------------------------------
-            
+
             # TODO is the extension of the module path needed here, too? The parent module changes the $Env variable => NO, that works!
             # TODO is the change of the service protocol (TLS) needed here, too? The parent module changes [System.Net.ServicePointManager]::SecurityProtocol
 
@@ -141,7 +141,7 @@ function Import-Plugin {
             $PublicPlugin = @( Get-ChildItem -Path "$( $plugin.path )/public/*.ps1" -Recurse -ErrorAction SilentlyContinue )
 
             # dot source the files
-            @( $PrivateParent + $PrivatePlugin + $PublicPlugin ) | ForEach {
+            @( $PrivateParent + $PrivatePlugin + $PublicPlugin ) | ForEach-Object {
                 $import = $_
                 #Write-Host "Load $( $import.fullname )"
                 Try {
@@ -182,7 +182,7 @@ function Import-Plugin {
             #Write-verbose ( Convertto-json $Script:settings -dept 99 ) -Verbose
 
             #-----------------------------------------------
-            # EXPORT PUBLIC FUNCTIONS            
+            # EXPORT PUBLIC FUNCTIONS
             #-----------------------------------------------
 
             Export-ModuleMember -Function $PublicPlugin.Basename #-verbose  #+ "Set-Logfile"
@@ -211,8 +211,8 @@ function Import-Plugin {
 
 
     }
-    
+
     end {
-        
+
     }
 }

@@ -1,5 +1,5 @@
-
 Function Import-Settings {
+﻿
 
     [cmdletbinding()]
     param(

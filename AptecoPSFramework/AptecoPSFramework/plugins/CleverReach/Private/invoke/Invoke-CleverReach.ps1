@@ -1,4 +1,4 @@
-
+﻿
 
 
 # These functions inherit the parameters of the original functions/cmdlets
@@ -23,13 +23,13 @@ $choice = $list | Out-GridView -PassThru
 
 # e.g. 1158799
 $listDetails = Invoke-CR -Object "groups" -Method "GET" -Verbose -Path "$( $choice.id )/stats"
-$listDetails 
+$listDetails
 
 $param = [PSCustomObject]@{
     type = "all"
     detail = 4
 }
-$receivers = Invoke-CR -Object "groups" -Query $param -Method "GET" -Verbose -Path "$( $choice.id )/receivers" -Paging #-Body ([PSCustomObject]@{"test"="Balloon"}) 
+$receivers = Invoke-CR -Object "groups" -Query $param -Method "GET" -Verbose -Path "$( $choice.id )/receivers" -Paging #-Body ([PSCustomObject]@{"test"="Balloon"})
 
 
 $filterBody = [PSCustomObject]@{
@@ -84,7 +84,7 @@ function Invoke-CR {
         [void]$p.remove("Body")
         $p
     }
-    
+
     Begin {
 
         # check type of body, if present
@@ -95,7 +95,7 @@ function Invoke-CR {
             Write-Host "ArrayList"
         } else {
             Throw 'Body datatype not valid'
-        } 
+        }
         #>
 
         # check url, if it ends with a slash
@@ -112,7 +112,7 @@ function Invoke-CR {
         If ( $Script:debugMode -eq $true ) {
             Write-Host "INPUT: $( Convertto-json -InputObject $PSBoundParameters -Depth 99 )"
         }
-        
+
         # Prepare Authentication
         If ( $Script:settings.token.tokenUsage -eq "consume" ) {
             $rawToken = Get-Content -Path $Script:settings.token.tokenFilePath -Encoding UTF8 -Raw
@@ -155,7 +155,7 @@ function Invoke-CR {
 
         # Set content type, if not present yet
         If ( $updatedParameters.ContainsKey("ContentType") -eq $false) {
-            $updatedParameters.add("ContentType",$Script:settings.contentType) 
+            $updatedParameters.add("ContentType",$Script:settings.contentType)
         }
 
         # normalize the path, remove leading and trailing slashes
@@ -179,7 +179,7 @@ function Invoke-CR {
         If ( $Paging -eq $true ) {
 
             Switch ( $updatedParameters.Method ) {
-            
+
                 "GET"{
                     #Write-Host "get"
                     $Query | Add-Member -MemberType NoteProperty -Name "pagesize" -Value $currentPagesize  #$Script:settings.pageSize
@@ -240,13 +240,13 @@ function Invoke-CR {
                     Write-Log -Message "$( $updatedParameters.Method.ToString().ToUpper() ) $( $updatedParameters.Uri )" -severity verbose
                 }
                 $wr = Invoke-RestMethod @updatedParameters
-                
+
             }
             catch {
                 Write-Log -Message $_.Exception.Message -Severity ERROR
                 throw $_.Exception
             }
-            
+
             # Increase page and add results to the collection
             If ( $Paging -eq $true ) {
 
@@ -254,11 +254,11 @@ function Invoke-CR {
                 If ( $wr.count -eq $currentPagesize ) {
 
                     Switch ( $updatedParameters.Method ) {
-                
+
                         "GET"{
                             $Query.page += 1
                         }
-        
+
                         "POST" {
                             $Body.page += 1
                         }
@@ -282,7 +282,7 @@ function Invoke-CR {
             }
 
         } Until ( $finished -eq $true )
- 
+
     }
 
     End {
@@ -294,8 +294,8 @@ function Invoke-CR {
         }
 
     }
- 
- } 
+
+ }
 
 
  <#
@@ -304,7 +304,7 @@ $script:settings = [PSCustomObject]@{
     "contentType" = "application/json; charset=utf-8"
     "pageSize" = 2
     "token"= [PSCustomObject]@{
-                  
+
                   "tokenUsage" =  "consume"
                   "encryptTokenFile"=  $false
                   "tokenFilePath"=  "C:\temp\cr.token"
@@ -325,7 +325,7 @@ $script:settings = [PSCustomObject]@{
 $body = [PSCustomObject]@{
     "name" = $newAttributeName
     "type" = "text"                     # text|number|gender|date
-    "description" = $newAttributeName   # optional 
+    "description" = $newAttributeName   # optional
     #"preview_value" = "real name"       # optional
     #"default_value" = "Bruce Wayne"     # optional
 }
@@ -349,7 +349,7 @@ $choice = $list | Out-GridView -PassThru
 
 # e.g. 1158799
 $listDetails = Invoke-CR -Object "groups" -Method "GET" -Verbose -Path "$( $choice.id )/stats"
-$listDetails 
+$listDetails
 
 $filterBody = [PSCustomObject]@{
     "groups" = [Array]@(,$choice.id)
@@ -390,7 +390,7 @@ $param = [PSCustomObject]@{
     type = "all"
     detail = 4
 }
-$receivers = Invoke-CR -Object "groups" -Query $param -Method "GET" -Verbose -Path "$( $choice.id )/receivers" -Paging #-Body ([PSCustomObject]@{"test"="Balloon"}) 
+$receivers = Invoke-CR -Object "groups" -Query $param -Method "GET" -Verbose -Path "$( $choice.id )/receivers" -Paging #-Body ([PSCustomObject]@{"test"="Balloon"})
 
 
 

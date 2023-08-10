@@ -1,4 +1,4 @@
-# TODO [ ] implement settings the settings
+﻿# TODO [ ] implement settings the settings
 
 
 Function Set-Settings {
@@ -28,7 +28,7 @@ Function Set-Settings {
         If ( $Script:settings.logfile -ne "" ) {
             Set-Logfile -Path $Script:settings.logfile
         }
-        
+
     }
 
 }

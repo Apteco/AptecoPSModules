@@ -1,4 +1,4 @@
-
+﻿
 
 function Get-Response {
 
@@ -6,7 +6,7 @@ function Get-Response {
     param (
         #[Parameter(Mandatory=$false)][Hashtable] $InputHashtable
     )
-    
+
     begin {
 
 
@@ -41,7 +41,7 @@ function Get-Response {
         #-----------------------------------------------
         # DEBUG MODE
         #-----------------------------------------------
-        
+
         Write-Log "Debug Mode: $( $Script:debugMode )"
 
 
@@ -51,7 +51,7 @@ function Get-Response {
         <#
         #$script:debug = $InputHashtable
         $uploadOnly = $false
-        
+
         # TODO add an option to turn off tagging for upload only
 
         If ( "" -eq $InputHashtable.MessageName ) {
@@ -71,7 +71,7 @@ function Get-Response {
         #-----------------------------------------------
         # DEFAULT VALUES
         #-----------------------------------------------
-        
+
         <#
         $uploadSize = $Script:settings.upload.uploadSize
         Write-Log "Got UploadSize of $( $uploadSize ) rows/objects" #-Severity WARNING
@@ -102,13 +102,13 @@ function Get-Response {
         # Count the rows
         # [ ] if this needs to much performance, this is not needed
         If ( $Script:settings.upload.countRowsInputFile -eq $true ) {
-            $rowsCount = Measure-Rows -Path $file.FullName -SkipFirstRow 
+            $rowsCount = Measure-Rows -Path $file.FullName -SkipFirstRow
             Write-Log -Message "Got a file with $( $rowsCount ) rows"
         } else {
             Write-Log -Message "RowCount of input file not activated"
         }
         #throw [System.IO.InvalidDataException] $msg
-        
+
         Write-Log -Message "Debug Mode: $( $Script:debugMode )"
         #>
 
@@ -154,10 +154,10 @@ function Get-Response {
 
         try {
 
-            Test-CleverReachConnection         
-            
+            Test-CleverReachConnection
+
         } catch {
-            
+
             #$msg = "Failed to connect to CleverReach, unauthorized or token is expired"
             #Write-Log -Message $msg -Severity ERROR
             Write-Log -Message $_.Exception -Severity ERROR
@@ -168,21 +168,21 @@ function Get-Response {
 
         #Write-Log -Message "Debug Mode: $( $Script:debugMode )"
 
-        
+
     }
-    
+
     process {
 
 
         try {
-            
+
 
             #-----------------------------------------------
             # WORKOUT THE NEEDED DETAIL BINARY VALUE FOR RECEIVERS
             #-----------------------------------------------
 
             $cleverReachDetailsBinary = 0
-            $cleverreachDetailsBinaryValues.Keys | ForEach {
+            $cleverreachDetailsBinaryValues.Keys | ForEach-Object {
                 if ( $Script:settings.loadDetails.($_) -eq $true ) {
                     $cleverReachDetailsBinary += $cleverreachDetailsBinaryValues[$_]
                 }
@@ -228,7 +228,7 @@ function Get-Response {
             # we can work out the bounces for specific mailings with: get-bounces | where { $_.type -eq "mailing" } and then read type_id with mailing/report id and then read expires_by as timestamp
             Write-Log -message "Found $( $bounced.Count ) bounces"
             #>
-            
+
             #-----------------------------------------------
             # DOWNLOAD GLOBAL ATTRIBUTES
             #-----------------------------------------------
@@ -260,7 +260,7 @@ function Get-Response {
 
             Write-Log -message "Found $( $reports.Count ) reports for the last $( $Script:settings.responses.messagePeriod ) days"
 
-    
+
             ################################################
             #
             # DOWNLOAD ALL REPORTS RECEIVERS
@@ -274,7 +274,7 @@ function Get-Response {
             The events attached to a receiver are only the last 250 entries... this is the reason why we need for every state, every mailing and every link
 
             #>
-            
+
             $responseTypes = [Hashtable]@{
                 sent = $Script:settings.responses.loadSent
                 opened = $Script:settings.responses.loadOpens
@@ -285,7 +285,7 @@ function Get-Response {
                 unsubscribed = $Script:settings.responses.loadUnsubscribes
             }
 
-            
+
             #$from = Get-Unixtime $currentTimestampDateTime.AddDays(-30)
             #$to = Get-Unixtime $currentTimestampDateTime
             #$allResponses = [System.Collections.ArrayList]@()
@@ -300,7 +300,7 @@ function Get-Response {
 
                 # check if this response type should be downloaded
                 if ( $responseTypes[$responseType] -eq $true ) {
-                    
+
                     # create an array to put the results in
                     $responses = [System.Collections.ArrayList]@()
 
@@ -315,10 +315,10 @@ function Get-Response {
                         $iLink = 0
                         if ( $responseType -eq "clicked" ) {
                             #https://rest.cleverreach.com/v3/reports.json/8148376/stats/links
-                            $links = @( (Invoke-CR -Object "reports" -Path "/$( $reportId )/stats/links" | where { $_.links.total_clicks -gt 0 }).links )
+                            $links = @( (Invoke-CR -Object "reports" -Path "/$( $reportId )/stats/links" | Where-Object { $_.links.total_clicks -gt 0 }).links )
                             #$links = @( Invoke-CR -Object "mailings" -Path "/$( $reportId )/links" -Method "GET" -Verbose ) #Invoke-RestMethod -Method Get -Uri "$( $settings.base)mailings.json/$( $reportId )/links" -Headers $header
                             $allLinks.AddRange($links)
-                        }            
+                        }
 
                         Do {
 
@@ -328,9 +328,9 @@ function Get-Response {
                                 "from" = $responseStartTimestamp
                                 "to" = $endTimestamp
                             }
-                            
+
                             # Ask for a specific link id
-                            if ( $responseType -eq "clicked" ) {                                    
+                            if ( $responseType -eq "clicked" ) {
                                 $linkId = $links[$iLink].id
                                 #$attachLink = "&linkid=$( $linkId )"
                                 $query | Add-Member -MemberType NoteProperty -Name "linkid" -Value $linkId
@@ -341,11 +341,11 @@ function Get-Response {
                             $result = @( Invoke-CR -Object "reports" -Path "/$( $reportId )/receivers/$( $responseType )" -Query $query -Method "GET" -Verbose -Paging )
                             #$script:pluginDebug = $result
                             If ( $result.count -gt 0 ) {
-                                $responses.AddRange(@( $result | Select @{name="state";expression={ $responseType }},@{name="report";expression={ $reportId }},@{name="linkid";expression={ $linkId }}, * ))
+                                $responses.AddRange(@( $result | Select-Object @{name="state";expression={ $responseType }},@{name="report";expression={ $reportId }},@{name="linkid";expression={ $linkId }}, * ))
                                 #$allResponses.AddRange(@( $result | Select @{name="state";expression={ $responseType }},@{name="report";expression={ $reportId }},@{name="linkid";expression={ $linkId }}, * ))
                             }
                             Write-Log -message "  Got $( $result.count ) results"
-                            
+
                         # Do another round if there are links left because we need to ask for every link
                         } while ( $iLink -lt ( $links.count ) -and $responseType -eq "clicked" )
 
@@ -367,7 +367,7 @@ function Get-Response {
                         }
 
                         # Fallback for id
-                        If ($urn -eq $null -or $urn.length -eq 0) {
+                        If ($null -eq $urn -or $urn.length -eq 0) {
                             $urn = $r.id
                         }
 
@@ -382,7 +382,7 @@ function Get-Response {
                             #"communicationkey" = $r.attributes."$( $Script:setttings.responses.communicationKeyAttributeName )" # not used now as the matching should be done through email address and broadcast id
                         }
 
-                        # work out the filter for the events of this receiver                        
+                        # work out the filter for the events of this receiver
                         Switch ( $responseType ) {
 
                             "sent" {
@@ -414,7 +414,7 @@ function Get-Response {
                                 #>
                                 $type = "Open" #Open, Click, Bounce, Unsubscription, Send
                                 $events = @( $r.events | Where-Object { $_.type -eq "mail_open" -and $_.mailing_id -eq $r.report } )
-                                
+
                             }
 
                             "clicked" {
@@ -429,8 +429,8 @@ function Get-Response {
                                 }
                                 #>
                                 $type = "Click" #Open, Click, Bounce, Unsubscription, Send
-                                $events = @( $r.events | Where-Object { $_.type -eq "mail_click" -and $_.mailing_id -eq $r.report -and $_.type_id -eq $r.linkid } ) # possibly filter on stamp -gt $responsestartdate 
-                                $responseObj | Add-Member -MemberType NoteProperty -Name "link" -Value ( $allLinks | where { $_.id -eq $r.linkid } ).link
+                                $events = @( $r.events | Where-Object { $_.type -eq "mail_click" -and $_.mailing_id -eq $r.report -and $_.type_id -eq $r.linkid } ) # possibly filter on stamp -gt $responsestartdate
+                                $responseObj | Add-Member -MemberType NoteProperty -Name "link" -Value ( $allLinks | Where-Object { $_.id -eq $r.linkid } ).link
                             }
 
                             "bounced" {
@@ -446,7 +446,7 @@ function Get-Response {
                                 #>
 
                                 $type = "Bounce" #Open, Click, Bounce, Unsubscription, Send
-                                $events = @( $r.events | Where-Object { $_.type -eq "mail_bounce" -and $_.mailing_id -eq $r.report } ) # possibly filter on stamp -gt $responsestartdate                                
+                                $events = @( $r.events | Where-Object { $_.type -eq "mail_bounce" -and $_.mailing_id -eq $r.report } ) # possibly filter on stamp -gt $responsestartdate
 
                             }
 
@@ -462,7 +462,7 @@ function Get-Response {
                                 }
                                 #>
                                 $type = "Unsubscription" #Open, Click, Bounce, Unsubscription, Send
-                                $events = @( $r.events | Where-Object { $_.type -eq "user_unsubscribe" -and $_.mailing_id -eq $r.report } ) # possibly filter on stamp -gt $responsestartdate                                
+                                $events = @( $r.events | Where-Object { $_.type -eq "user_unsubscribe" -and $_.mailing_id -eq $r.report } ) # possibly filter on stamp -gt $responsestartdate
                             }
 
                         }
@@ -573,10 +573,10 @@ function Get-Response {
             #Write-Host "Uploaded $( $j ) record. Confirmed $( $tagcount ) receivers with tag '$( $tags )'"
 
         }
-        
+
 
     }
-    
+
     end {
 
     }

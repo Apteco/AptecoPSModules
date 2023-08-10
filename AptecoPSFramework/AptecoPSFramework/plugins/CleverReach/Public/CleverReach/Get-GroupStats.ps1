@@ -1,4 +1,4 @@
-
+﻿
 <#
 
 This call gets the group stats by runtime filter as the normal group stats are cached
@@ -11,9 +11,9 @@ function Get-GroupStats {
     param (
         [Parameter(Mandatory=$true)][String] $GroupId
     )
-    
+
     begin {
-    
+
     }
 
     process {

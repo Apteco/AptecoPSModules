@@ -1,4 +1,4 @@
-
+﻿
 
 
 
@@ -8,7 +8,7 @@ function Test-Login {
     param (
         [Parameter(Mandatory=$false)][Hashtable] $InputHashtable
     )
-    
+
     begin {
 
 
@@ -45,10 +45,10 @@ function Test-Login {
 
         try {
 
-            Test-CleverReachConnection         
-            
+            Test-CleverReachConnection
+
         } catch {
-            
+
             #$msg = "Failed to connect to CleverReach, unauthorized or token is expired"
             #Write-Log -Message $msg -Severity ERROR
             Write-Log -Message $_.Exception -Severity ERROR
@@ -60,15 +60,15 @@ function Test-Login {
 
 
 
-        
+
     }
-    
+
     process {
 
 
         try {
 
-            
+
 
         } catch {
 
@@ -77,7 +77,7 @@ function Test-Login {
             Write-Log -Message $_.Exception -Severity ERROR
             throw [System.IO.InvalidDataException] $msg
 
-        } finally {          
+        } finally {
 
         }
 
@@ -90,11 +90,11 @@ function Test-Login {
         $processDuration = New-TimeSpan -Start $processStart -End $processEnd
         Write-Log -Message "Needed $( [int]$processDuration.TotalSeconds ) seconds in total"
 
-        
+
         #-----------------------------------------------
         # RETURN VALUES TO PEOPLESTAGE
         #-----------------------------------------------
-        
+
         # return object
         $return = [Hashtable]@{
 
@@ -110,13 +110,13 @@ function Test-Login {
             $param = $_
             Write-Log -message "    $( $param ) = '$( $return[$param] )'" -writeToHostToo $false
         }
-        
+
         # return the results
         $return
-        
+
 
     }
-    
+
     end {
 
     }

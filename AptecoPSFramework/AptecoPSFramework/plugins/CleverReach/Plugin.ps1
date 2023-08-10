@@ -1,9 +1,9 @@
-function Get-CurrentPluginInfos {
+﻿function Get-CurrentPluginInfo {
     [PSCustomObject]@{
 
         # identifier for this plugin - please do not change or use this twice
         "guid" = "3adb8696-c219-49c7-906b-92680727a1c1"
-        
+
         # general information about this plugin
         "name" = "CleverReach"
         "version" = "0.0.8"
@@ -27,6 +27,6 @@ function Get-CurrentPluginInfos {
             "broadcast" = $true
             "responses" = $true
         }
-        
+
     }
 }

@@ -18,7 +18,7 @@ Function Install-CleverReach {
     }
 
     Process {
-        
+
         $success = $true
 
 
@@ -114,14 +114,14 @@ Function Install-CleverReach {
         #-----------------------------------------------
         # LOAD LOGGING MODULE NOW
         #-----------------------------------------------
-        
+
         $settings = @{
             "logfile" = $logfile
         }
 
         # Setup the log and do the initial logging e.g. for input parameters
         . ".\bin\startup_logging.ps1"
-        
+
 
         #-----------------------------------------------
         # LOG THE NEW SETTINGS CREATION
@@ -198,7 +198,7 @@ Function Install-CleverReach {
         Set-Location -Path ".\$( $customProtocol )"
         New-Item -Path ".\DefaultIcon"
         New-Item -Path ".\shell\open\command" -force # Creates the items recursively
-        New-ItemProperty -Path ".\shell\open\command" -Name "(Default)" -PropertyType String -Value """powershell.exe"" -File ""$( $scriptPath )\bin\callback.ps1"" ""%1"""  
+        New-ItemProperty -Path ".\shell\open\command" -Name "(Default)" -PropertyType String -Value """powershell.exe"" -File ""$( $scriptPath )\bin\callback.ps1"" ""%1"""
 
         # Go back to original path
         Set-Location -path $currentLocation.Path
@@ -287,11 +287,11 @@ Function Install-CleverReach {
                 "Authorization" = "Bearer $( $response.access_token )"
             }
             $ttl = Invoke-RestMethod -Uri "https://rest.cleverreach.com/v3/debug/ttl.json" -Method Get -ContentType "application/json; charset=utf-8" -Headers $headers
-            
+
             Write-Log -message "Used token for API call successfully. Token expires at '$( $ttl.date.toString() )'"
-            
+
         } catch {
-            
+
             Write-Log -message "API call was not successful. Aborting the whole script now!" -severity ( [Logseverity]::WARNING )
             throw $_.Exception
 
@@ -345,7 +345,7 @@ Function Install-CleverReach {
             password = $smtpPassEncrypted
             deactivateServerCertificateValidation = $true # $true|$false
             useSsl = $true  # $true|$false
-            useCredentials = $true # $true|$false -> sometimes you have mailservers without user/pass 
+            useCredentials = $true # $true|$false -> sometimes you have mailservers without user/pass
         }
 
 
@@ -354,14 +354,14 @@ Function Install-CleverReach {
         #-----------------------------------------------
 
         $settings = @{
-            
+
             # general
             "base" = "https://rest.cleverreach.com/v3/"
             "connectionTestUrl" = "https://rest.cleverreach.com/v3/debug/validate.json"
             "providername" = "CleverReach"
             "logfile" = $logfile
             "contentType" = "application/json; charset=utf-8"
-            
+
             # Token specific
             "tokenfile" = "$( $scriptPath )\cr.token"
             "sendMailOnCheck" = $true
@@ -379,10 +379,10 @@ Function Install-CleverReach {
 
             # authentication
             "login" = $login
-            
+
             # network
             "changeTLS" = $true
-            
+
         }
 
 
@@ -444,7 +444,7 @@ Function Install-CleverReach {
             $replaceTask = $Host.UI.PromptForChoice("Replace Task", "Do you want to replace the existing task if it exists?", @('&Yes'; '&No'), 0)
 
             If ( $replaceTask -eq 0 ) {
-                
+
                 # Check if the task already exists
                 $matchingTasks = Get-ScheduledTask | where { $_.TaskName -eq $taskName }
 
@@ -453,7 +453,7 @@ Function Install-CleverReach {
                     # To replace the task, remove it without confirmation
                     Unregister-ScheduledTask -TaskName $taskNameDefault -Confirm:$false
                 }
-                
+
                 # Set the task name to default
                 $taskName = $taskNameDefault
 
@@ -506,7 +506,7 @@ Function Install-CleverReach {
             Write-Host "Next run '$( $taskInfo.NextRunTime.ToLocalTime().ToString() )' local time"
             # The task will only be created if valid. Make sure it was created successfully
 
-        } 
+        }
 
         Write-Log -message "Done with settings creation"
 

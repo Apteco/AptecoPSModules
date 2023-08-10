@@ -1,4 +1,4 @@
-<#
+﻿<#
 $m = [Mailing]@{mailingId=123;mailingName="MailingName"}
 $m.toString()
 
@@ -48,7 +48,7 @@ class Mailing {
         }
 
     } # empty default constructor needed to support hashtable constructor
-    
+
     Mailing ( [String]$mailingId, [String]$mailingName ) {
 
         $this.mailingId = $mailingId
@@ -61,8 +61,8 @@ class Mailing {
 
     }
 
-    Mailing ( [String]$mailingString ) {        
-        
+    Mailing ( [String]$mailingString ) {
+
         # If we have a nameconcat char in the settings variable, just use it
         if ( $script:settings.nameConcatChar ) {
             $this.nameConcatChar = $script:settings.nameConcatChar
@@ -72,7 +72,7 @@ class Mailing {
         $stringParts = $mailingString -split $this.nameConcatChar.trim(),2,"simplematch"
         $this.mailingId = $stringParts[0].trim()
         $this.mailingName = $stringParts[1].trim()
-        
+
     }
 
     #-----------------------------------------------
@@ -86,6 +86,6 @@ class Mailing {
         #     $this.nameConcatChar = $script:settings.nameConcatChar
         # }
         return $this.mailingId, $this.mailingName -join $this.nameConcatChar
-    }    
+    }
 
 }

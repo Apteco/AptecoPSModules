@@ -1,19 +1,19 @@
-function Add-PluginFolder {
+﻿function Add-PluginFolder {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory=$true)][String] $Folder
     )
-    
+
     begin {
-        
+
     }
-    
+
     process {
-        
+
         $return = $false
 
         # Check if this needs to be declared first
-        If ( $Script:pluginFolders -eq $null ) {
+        If ( $null -eq $Script:pluginFolders ) {
             $Script:pluginFolders = [System.Collections.ArrayList]::new()
         }
 
@@ -21,7 +21,7 @@ function Add-PluginFolder {
         #Write-Host "$( $Folder )"
         $resolvedPath = Resolve-Path -Path $Folder
         #Write-Host "$( $resolvedPath )"
-        
+
         # Check the path
         If ( ( Test-Path -Path $resolvedPath ) -eq $false ) {
             Write-Error -Message "There is a problem with '$( $resolvedPath.Path )'"
@@ -41,8 +41,8 @@ function Add-PluginFolder {
         $return
 
     }
-    
+
     end {
-        
+
     }
 }

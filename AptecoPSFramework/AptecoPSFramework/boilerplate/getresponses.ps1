@@ -1,4 +1,4 @@
-
+﻿
 ################################################
 #
 # INPUT
@@ -121,7 +121,7 @@ Import-Settings -Path ".\settings.json"
 # TODO [x] check if we need to make a try catch here -> not needed, if we use a combination like
 
 <#
-            $msg = "Temporary count of $( $mssqlResult ) is less than $( $rowsCount ) in the original export. Please check!" 
+            $msg = "Temporary count of $( $mssqlResult ) is less than $( $rowsCount ) in the original export. Please check!"
             Write-Log -Message $msg -Severity ERROR
             throw [System.IO.InvalidDataException] $msg
 

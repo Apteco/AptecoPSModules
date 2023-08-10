@@ -1,4 +1,4 @@
-
+﻿
 
 
 
@@ -8,7 +8,7 @@ function Invoke-Upload{
     param (
         [Parameter(Mandatory=$false)][Hashtable] $InputHashtable
     )
-    
+
     begin {
 
 
@@ -43,7 +43,7 @@ function Invoke-Upload{
         #-----------------------------------------------
         # DEBUG MODE
         #-----------------------------------------------
-        
+
         Write-Log "Debug Mode: $( $Script:debugMode )"
 
 
@@ -53,7 +53,7 @@ function Invoke-Upload{
 
         #$script:debug = $InputHashtable
         $uploadOnly = $false
-        
+
         # TODO add an option to turn off tagging for upload only
 
         If ( "" -eq $InputHashtable.MessageName ) {
@@ -64,11 +64,11 @@ function Invoke-Upload{
 
         } else {
             #Write-Log "B"
-            
+
             Write-Log "Parsing message: '$( $InputHashtable.MessageName )' with '$( $Script:settings.nameConcatChar )' as separator"
             $mailing = [Mailing]::new($InputHashtable.MessageName)
             Write-Log "Got chosen message entry with id '$( $mailing.mailingId )' and name '$( $mailing.mailingName )'"
-    
+
             #$mailing = [Mailing]::new($InputHashtable.MessageName)
             #Write-Log "Got chosen message entry with id '$( $mailing.mailingId )' and name '$( $mailing.mailingName )'"
 
@@ -106,13 +106,13 @@ function Invoke-Upload{
         # Count the rows
         # [ ] if this needs to much performance, this is not needed
         If ( $Script:settings.upload.countRowsInputFile -eq $true ) {
-            $rowsCount = Measure-Rows -Path $file.FullName -SkipFirstRow 
+            $rowsCount = Measure-Rows -Path $file.FullName -SkipFirstRow
             Write-Log -Message "Got a file with $( $rowsCount ) rows"
         } else {
             Write-Log -Message "RowCount of input file not activated"
         }
         #throw [System.IO.InvalidDataException] $msg
-        
+
         #Write-Log -Message "Debug Mode: $( $Script:debugMode )"
 
 
@@ -122,10 +122,10 @@ function Invoke-Upload{
 
         try {
 
-            Test-CleverReachConnection         
-            
+            Test-CleverReachConnection
+
         } catch {
-            
+
             #$msg = "Failed to connect to CleverReach, unauthorized or token is expired"
             #Write-Log -Message $msg -Severity ERROR
             Write-Log -Message $_.Exception -Severity ERROR
@@ -136,9 +136,9 @@ function Invoke-Upload{
 
         #Write-Log -Message "Debug Mode: $( $Script:debugMode )"
 
-        
+
     }
-    
+
     process {
 
 
@@ -155,7 +155,7 @@ function Invoke-Upload{
 
             # If listname is valid -> contains an id, concatenation character and and a name -> use the id
             try {
-                
+
                 $createNewGroup = $false # No need for the group creation now
                 $list = [MailingList]::new($InputHashtable.ListName)
                 $listName = $list.mailingListName
@@ -172,20 +172,20 @@ function Invoke-Upload{
 
                     # Try to search for that group and select the first matching entry or throw exception
                     $groups =  Invoke-CR -Object "groups" -Method "GET" -Verbose
-                    
+
                     # Check how many matches are available
                     $matchingGroups = @( $groups | where-object { $_.name -eq $InputHashtable.ListName } ) # put an array around because when the return is one object, it will become a pscustomobject
                     switch ( $matchingGroups.Count ) {
 
                         # No match -> new group
-                        0 { 
-                            $createNewGroup = $true                
+                        0 {
+                            $createNewGroup = $true
                             $listName = $InputHashtable.ListName
                             Write-Log -message "No matched group -> create a new one" -severity INFO
                         }
-                        
+
                         # One match -> use that one!
-                        1 { 
+                        1 {
                             $createNewGroup = $false # No need for the group creation now
                             $listName = $matchingGroups.name
                             $groupId = $matchingGroups.id
@@ -196,7 +196,7 @@ function Invoke-Upload{
                         Default {
                             $createNewGroup = $false # No need for the group creation now
                             Write-Log -message "More than one match -> throw exception" -severity ERROR
-                            throw [System.IO.InvalidDataException] "More than two groups with that name. Please choose a unique list."              
+                            throw [System.IO.InvalidDataException] "More than two groups with that name. Please choose a unique list."
                         }
                     }
 
@@ -228,7 +228,7 @@ function Invoke-Upload{
 
             Write-Log "Getting stats for group $( $groupId )"
 
-            #$groupStats = Invoke-CR -Object "groups" -Path "/$( $groupId )/stats" -Method GET -Verbose 
+            #$groupStats = Invoke-CR -Object "groups" -Path "/$( $groupId )/stats" -Method GET -Verbose
             $groupStats = Get-GroupStats -GroupId $groupId
 
             <#
@@ -252,7 +252,7 @@ function Invoke-Upload{
             #-----------------------------------------------
             # LOAD HEADER AND FIRST ROWS
             #-----------------------------------------------
-            
+
             # Read first 100 rows
             $deliveryFileHead = Get-Content -Path $file.FullName -ReadCount 100 -TotalCount 201 -Encoding utf8
             $deliveryFileCsv =  ConvertFrom-Csv $deliveryFileHead -Delimiter "`t"
@@ -270,13 +270,13 @@ function Invoke-Upload{
                 [void]$sqliteDeliveryCreateFields.Add( """$( $header )"" TEXT" )
 
             }#>
-            
+
             $reservedFieldsCheck = Compare-Object -ReferenceObject $headers -DifferenceObject $Script:settings.upload.reservedFields -IncludeEqual
             If ( ( $reservedFieldsCheck | Where-Object { $_.SideIndicator -eq "==" } ).count -gt 0 ) {
 
                 $msg = "You have used reserved fields:"
                 Write-Log -Message $msg -Severity ERROR
-                
+
                 $reservedFieldsCheck | Where-Object { $_.SideIndicator -eq "==" } | ForEach-Object {
                     Write-Log -Message "  $( $_.InputObject )"
                 }
@@ -301,7 +301,7 @@ function Invoke-Upload{
             #-----------------------------------------------
             # CHECK ATTRIBUTES
             #-----------------------------------------------
-            
+
             $requiredFields = @( $InputHashtable.EmailFieldName, $InputHashtable.UrnFieldName )
             $reservedFields = @( $Script:settings.upload.reservedFields ) #@("tags")
             Write-Log -message "Required fields: $( $requiredFields -join ", " )"
@@ -320,10 +320,10 @@ function Invoke-Upload{
                 "responseUrnFieldname" = $Script:settings.responses.urnFieldName
                 "groupId" = $groupId
             }
-            
-            $attributes = Sync-Attributes @attributeParam
 
-            
+            $attributes = Sync-Attribute @attributeParam
+
+
             #-----------------------------------------------
             # CHECK ATTRIBUTES FOR PREHEADER FIELD
             #-----------------------------------------------
@@ -334,7 +334,7 @@ function Invoke-Upload{
                 $preheaderIsSet = $false
             }
 
-            
+
             #-----------------------------------------------
             # BEGIN AN EXCLUSION LIST
             #-----------------------------------------------
@@ -345,7 +345,7 @@ function Invoke-Upload{
             #-----------------------------------------------
             # LOAD DEACTIVATED/UNSUBSCRIBES
             #-----------------------------------------------
-            
+
             # Load global inactive receivers (unsubscribed)
             If ( $Script:settings.upload.excludeGlobalDeactivated -eq $true ) {
 
@@ -355,7 +355,7 @@ function Invoke-Upload{
                 If ( $globalDeactivated.Count -gt 0 ) {
                     $exclusionList.AddRange( @( $globalDeactivated.email.toLower() ) )
                 }
-                                
+
             }
 
             # Runtime filter with paging
@@ -373,9 +373,9 @@ function Invoke-Upload{
             #-----------------------------------------------
             # LOAD BOUNCES
             #-----------------------------------------------
-            
+
             # Load global bounces as a list
-            $bounced = @( Get-Bounces )
+            $bounced = [Array]@( Get-Bounces )
 
             # Log
             Write-Log -Message "There are currently $( $bounced.count ) bounces in your account"
@@ -397,7 +397,7 @@ function Invoke-Upload{
             #-----------------------------------------------
 
             Write-Log "There are $( $exclusionList.count ) entries on the exclusion list now"
-            
+
 
             #-----------------------------------------------
             # BUILDING THE TAG TO USE
@@ -428,7 +428,7 @@ function Invoke-Upload{
                     }
 
                 }
-            
+
             }
 
             Write-Log -Message "Using the tag: $( $tags -join ", " )"
@@ -441,11 +441,11 @@ function Invoke-Upload{
             # Start stream reader
             $reader = [System.IO.StreamReader]::new($file.FullName, [System.Text.Encoding]::UTF8)
             [void]$reader.ReadLine() # Skip first line.
-            
+
             #$Script:debug = $reader
 
             $globalAtts = $attributes.global | Where-Object { $_.name -in $headers }
-            
+
             #$localAtts = $localAttributes | where { $_.name -in $headers }
 
             $i = 0  # row counter
@@ -478,7 +478,7 @@ function Invoke-Upload{
                 <#
                 For ( $x = 0; $x -lt $values.Count; $x++ ) {
                     Switch ( $header[$x] ) {
-                        
+
                         # Email address, normally email
                         $InputHashtable.EmailFieldName {
                             $uploadEntry."email" = $values[$x]
@@ -577,7 +577,7 @@ function Invoke-Upload{
                 $uploadProperties = [Array]@()
                 $uploadProperties = [Array]@( $uploadEntry.attributes.psobject.properties.name )
                 $normalisedCommkeyName = $InputHashtable.CommunicationKeyFieldName.toLower().replace(" ","_")
-                If ( $uploadProperties -notcontains $InputHashtable.CommunicationKeyFieldName -or $uploadProperties -notcontains $normalisedCommkeyName) {                    
+                If ( $uploadProperties -notcontains $InputHashtable.CommunicationKeyFieldName -or $uploadProperties -notcontains $normalisedCommkeyName) {
                     If ( $attributes.local.description -contains $normalisedCommkeyName) {
                         $attrName = $normalisedCommkeyName
                     } else {
@@ -599,8 +599,8 @@ function Invoke-Upload{
                 } else {
                     $uploadEntry.tags = @( $tags )
                 }
-                
-               
+
+
                 # Add entry to the check object
                 [void]$checkObject.Add( $uploadEntry )
 
@@ -616,7 +616,7 @@ function Invoke-Upload{
 
                         Write-Log "Validate email addresses"
                         Write-Log "  $( $checkObject.count ) rows"
-                        
+
                         $validateObj = [PSCustomObject]@{
                             "emails" = [Array]@( $checkObject.email ).toLower()
                             "group_id" = $groupId
@@ -633,16 +633,16 @@ function Invoke-Upload{
                             $strRemovingInvalid = "Not removing invalid addresses"
                         }
                         Write-Log "  $( $validatedAddresses.count ) returned valid addresses ( $strRemovingInvalid )"
-                        
+
                         # Remove invalid addresses, when turned on
                         If ( $Script:settings.upload.excludeNotValidReceivers -eq $true) {
-                            $checkObject = [System.Collections.ArrayList]@( $checkObject | Where-Object { $_.email -in $validatedAddresses } )                            
+                            $checkObject = [System.Collections.ArrayList]@( $checkObject | Where-Object { $_.email -in $validatedAddresses } )
                         }
-                    
+
                     }
 
                     Write-Log "  $( $checkObject.count ) left rows"
-                    
+
                     $checkObject = [System.Collections.ArrayList]@( $checkObject | Where-Object { $_.email -notin $exclusionList } )
 
                     Write-Log "  $( $checkObject.count ) left rows after using exclusion list"
@@ -666,19 +666,19 @@ function Invoke-Upload{
                     Do {
 
                         Write-Log "  $( ( $uploadObject[0..$uploadSize] ).count ) objects/rows will be uploaded"
-                        
+
                         $uploadBody = $uploadObject[0..( $uploadSize - 1 )]
-                        
+
                         # Output the request body for debug purposes
                         #Write-Log -Message "Debug Mode: $( $Script:debugMode )"
                         If ( $Script:debugMode -eq $true ) {
                             $tempFile = ".\$( $i )_$( [guid]::NewGuid().tostring() )_request.txt"
                             Set-Content -Value ( ConvertTo-Json $uploadBody -Depth 99 ) -Encoding UTF8 -Path $tempFile
                         }
-                        
+
                         # As a response we get the full profiles of the receivers back
                         $upload = @( Invoke-CR -Object "groups" -Path "/$( $groupId )/receivers/upsertplus" -Method POST -Verbose -Body $uploadBody )
-                        
+
                         # Count the successful upserted profiles
                         $j += $upload.count
                         $k += 1
@@ -692,7 +692,7 @@ function Invoke-Upload{
 
                         # TODO check how to log the returned values - please be aware, that the second number is not the final index, it is the amount that should be removed
 
-                        $uploadObject.RemoveRange(0,$uploadBody.Count)                        
+                        $uploadObject.RemoveRange(0,$uploadBody.Count)
 
                         # Do an extra round for remaining records AND if it is the last row
                         If ( $uploadObject.count -gt 0 -and $reader.EndOfStream -eq $true) {
@@ -703,7 +703,7 @@ function Invoke-Upload{
 
                     } Until ( $uploadFinished -eq $true )
 
-                }                
+                }
 
             }
 
@@ -722,9 +722,9 @@ function Invoke-Upload{
 
                 Write-Log "Getting stats for group $( $groupId )"
 
-                #$groupStats = Invoke-CR -Object "groups" -Path "/$( $groupId )/stats" -Method GET -Verbose 
+                #$groupStats = Invoke-CR -Object "groups" -Path "/$( $groupId )/stats" -Method GET -Verbose
                 $groupStats = Get-GroupStatsByRuntime -GroupId $groupId #-IncludeMetrics -IncludeLastChanged -Verbose
-    
+
                 # <#
                 # {
                 #     "total_count": 4,
@@ -736,7 +736,7 @@ function Invoke-Upload{
                 #     "time": 1685545449,
                 # }
                 # #>
-    
+
                 $groupStats.psobject.properties | ForEach-Object {
                     Write-Log "  $( $_.Name ): $( $_.Value )"
                 }
@@ -796,20 +796,20 @@ function Invoke-Upload{
         #-----------------------------------------------
         # RETURN VALUES TO PEOPLESTAGE
         #-----------------------------------------------
-        
+
         # count the number of successful upload rows
         $recipients = $j #$dataCsv.Count # TODO work out what to be saved
-        
+
         # put in the source id as the listname
         $transactionId = "$( $groupId ) => $( $tags )" #$Script:processId #$targetGroup.targetGroupId # TODO or try to log the used tag?
-        
+
         # return object
         $return = [Hashtable]@{
-        
+
             # Mandatory return values
             "Recipients"=$recipients
             "TransactionId"=$transactionId
-        
+
             # General return value to identify this custom channel in the broadcasts detail tables
             "CustomProvider"= $Script:settings.providername
             "ProcessId" = $Script:processId
@@ -818,18 +818,18 @@ function Invoke-Upload{
             "Tag" = ( $tags -join ", " )
             "GroupId" = $groupId
             "PreheaderIsSet" = $preheaderIsSet
-        
+
             # Some more information for the broadcasts script
             #"EmailFieldName"= $params.EmailFieldName
             #"Path"= $params.Path
             #"UrnFieldName"= $params.UrnFieldName
             #"TargetGroupId" = $targetGroup.targetGroupId
-        
+
             # More information about the different status of the import
             #"RecipientsIgnored" = $status.report.total_ignored
             #"RecipientsQueued" = $recipients
             #"RecipientsSent" = $status.report.total_added + $status.report.total_updated
-        
+
         }
 
         # log the return object
@@ -838,13 +838,13 @@ function Invoke-Upload{
             $param = $_
             Write-Log -message "    $( $param ) = '$( $return[$param] )'" -writeToHostToo $false
         }
-        
+
         # return the results
         $return
-        
+
 
     }
-    
+
     end {
 
     }

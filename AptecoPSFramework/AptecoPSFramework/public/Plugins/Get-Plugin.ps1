@@ -1,18 +1,18 @@
-function Get-Plugin {
+﻿function Get-Plugin {
     [CmdletBinding()]
     param (
-        
+
     )
-    
+
     begin {
-        
+
     }
-    
+
     process {
         $Script:plugin
     }
-    
+
     end {
-        
+
     }
 }

@@ -1,4 +1,4 @@
-
+﻿
 
 
 
@@ -8,7 +8,7 @@ function Test-Send {
     param (
         [Parameter(Mandatory=$false)][Hashtable] $InputHashtable
     )
-    
+
     begin {
 
 
@@ -53,7 +53,7 @@ function Test-Send {
         # CHECK INPUT RECEIVER
         #-----------------------------------------------
 
-        
+
 
         #-----------------------------------------------
         # CHECK CLEVERREACH CONNECTION
@@ -61,10 +61,10 @@ function Test-Send {
 
         try {
 
-            Test-CleverReachConnection         
-            
+            Test-CleverReachConnection
+
         } catch {
-            
+
             #$msg = "Failed to connect to CleverReach, unauthorized or token is expired"
             #Write-Log -Message $msg -Severity ERROR
             Write-Log -Message $_.Exception -Severity ERROR
@@ -76,15 +76,15 @@ function Test-Send {
 
 
 
-        
+
     }
-    
+
     process {
 
 
         try {
 
-            
+
 
         } catch {
 
@@ -93,7 +93,7 @@ function Test-Send {
             Write-Log -Message $_.Exception -Severity ERROR
             throw [System.IO.InvalidDataException] $msg
 
-        } finally {          
+        } finally {
 
         }
 
@@ -106,16 +106,16 @@ function Test-Send {
         $processDuration = New-TimeSpan -Start $processStart -End $processEnd
         Write-Log -Message "Needed $( [int]$processDuration.TotalSeconds ) seconds in total"
 
-        
+
         #-----------------------------------------------
         # RETURN VALUES TO PEOPLESTAGE
         #-----------------------------------------------
-        
+
         # return object
         $return = [Hashtable]@{
 
             "Type" = "Email" #Email|Sms
-            "FromAddress"=$templateSource.sender_email 
+            "FromAddress"=$templateSource.sender_email
             "FromName"=$templateSource.sender_name
             "Html"=$renderedPreview.html
             "ReplyTo"=""
@@ -134,13 +134,13 @@ function Test-Send {
             $param = $_
             Write-Log -message "    $( $param ) = '$( $return[$param] )'" -writeToHostToo $false
         }
-        
+
         # return the results
         $return
-        
+
 
     }
-    
+
     end {
 
     }

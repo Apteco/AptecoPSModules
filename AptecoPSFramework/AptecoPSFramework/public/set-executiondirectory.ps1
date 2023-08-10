@@ -1,4 +1,4 @@
-<#
+﻿<#
 Function Set-ExecutionDirectory {
 
     [cmdletbinding()]
@@ -8,16 +8,16 @@ Function Set-ExecutionDirectory {
 
     Process {
         try {
-            
+
             If ( ( Test-Path -Path $Path -IsValid ) -eq $true ) {
                 If (( Test-Path -Path $Path ) -eq $false) {
                     Write-Host "Create the Path"
                     $item = New-Item -Path $Path -ItemType Directory
                 }
-    
+
                 $resolvedPath = Resolve-Path -Path $Path
                 $Script:execPath = $resolvedPath.Path
-    
+
             } else {
 
                 Write-Error -Message "The path '$( $Path )' is invalid."

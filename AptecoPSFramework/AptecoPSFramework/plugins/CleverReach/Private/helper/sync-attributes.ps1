@@ -1,4 +1,4 @@
-function Sync-Attributes {
+﻿function Sync-Attribute {
     [CmdletBinding()]
     param (
 
@@ -13,13 +13,13 @@ function Sync-Attributes {
         ,[Parameter(Mandatory=$false)][int]$maxAttributesCount = 40
 
     )
-    
+
     begin {
-        
+
     }
-    
+
     process {
-        
+
         try {
 
 
@@ -35,7 +35,7 @@ function Sync-Attributes {
 
             } else {
                 # Required fields not equal -> error!
-                throw [System.IO.InvalidDataException] "No email field present!"  
+                throw [System.IO.InvalidDataException] "No email field present!"
             }
 
 
@@ -47,7 +47,7 @@ function Sync-Attributes {
             $object = "attributes"
             $globalAttributes = @( (Invoke-CR -Object $object -Method "GET" -Verbose ) )
             $localAttributes = @( (Invoke-CR -Object $object -Method "GET" -Verbose -Query ( [PSCustomObject]@{ "group_id" = $groupId } )) )
-            
+
             # Log
             Write-Log -message "Loaded global attributes names: $( $globalAttributes.name -join ", " )"
             Write-Log -message "Loaded local attributes names: $( $localAttributes.name -join ", " )"
@@ -57,9 +57,9 @@ function Sync-Attributes {
             $script:pluginDebug = $localAttributes
             # Check if there is any communication key available
             If ( $localAttributes.description.toLower() -notcontains $csvCommunicationKeyFieldName.toLower() ) {
-                
-                # The default name is not present in the attributes description 
-                
+
+                # The default name is not present in the attributes description
+
                 If ( $localAttributes.description.toLower() -notcontains $csvCommunicationKeyFieldName.toLower().replace(" ","_") ) {
 
                     # There is also no equivalent with a technical name in the description -> Proceed with the default creation of communication key variable
@@ -69,7 +69,7 @@ function Sync-Attributes {
                     # There is an equivalent with a technical name in the description -> Removing the communication key from the csv headers here so it won't get created
                     ## Adding a "virtual communication key" for compatibility for already existing integration
 
-                    $csvAttributesNames = [Array]@( $csvAttributesNames | where { $_ -ne $csvCommunicationKeyFieldName } )
+                    $csvAttributesNames = [Array]@( $csvAttributesNames | Where-Object { $_ -ne $csvCommunicationKeyFieldName } )
 
                 }
 
@@ -77,7 +77,7 @@ function Sync-Attributes {
 
 
             # } -or $localAttributes.description.toLower() -notcontains $csvCommunicationKeyFieldName.toLower().replace(" ","_") ) {
-            #     # 
+            #     #
             # } else {
             #     If ( $localAttributes.description.toLower() -notcontains $csvCommunicationKeyFieldName.toLower() ) {
             #         # This means a communication key variable is present, but not with the name of the original communication key (normally with space)
@@ -112,16 +112,16 @@ function Sync-Attributes {
             #-----------------------------------------------
 
             # TODO [x] Now the csv column headers are checked against the description of the cleverreach attributes and not the (technical name). Maybe put this comparation in here, too. E.g. description "Communication Key" get the name "communication_key"
-            #$differences = Compare-Object -ReferenceObject $attributesNames.description -DifferenceObject ( $csvAttributesNames  | where { $_.name -notin $requiredFields } ).name -IncludeEqual #-Property Name 
-            $differences = Compare-Object -ReferenceObject ( $attributesNames.name.Tolower() + $attributesNames.description.Tolower() ) -DifferenceObject ( $csvAttributesNames.Tolower()  | Where-Object { $_.toLower() -notin $requiredFields.Tolower() } ) -IncludeEqual #-Property Name 
-            
+            #$differences = Compare-Object -ReferenceObject $attributesNames.description -DifferenceObject ( $csvAttributesNames  | where { $_.name -notin $requiredFields } ).name -IncludeEqual #-Property Name
+            $differences = Compare-Object -ReferenceObject ( $attributesNames.name.Tolower() + $attributesNames.description.Tolower() ) -DifferenceObject ( $csvAttributesNames.Tolower()  | Where-Object { $_.toLower() -notin $requiredFields.Tolower() } ) -IncludeEqual #-Property Name
+
 
             #-----------------------------------------------
             # WORK OUT ATTRIBUTES TO CREATE
             #-----------------------------------------------
 
-            #$differences = Compare-Object -ReferenceObject $attributesNames.name -DifferenceObject ( $csvAttributesNames  | where { $_.name -notin $requiredFields } ).name -IncludeEqual #-Property Name 
-            #$colsEqual = $differences | Where-Object { $_.SideIndicator -eq "==" } 
+            #$differences = Compare-Object -ReferenceObject $attributesNames.name -DifferenceObject ( $csvAttributesNames  | where { $_.name -notin $requiredFields } ).name -IncludeEqual #-Property Name
+            #$colsEqual = $differences | Where-Object { $_.SideIndicator -eq "==" }
             $colsInAttrButNotCsv = $differences | Where-Object { $_.SideIndicator -eq "<=" }
             $colsInCsvButNotAttr = $differences | Where-Object { $_.SideIndicator -eq "=>" } #-and $_.InputObject.toString() -ne $csvCommunicationKeyFieldName}
 
@@ -132,7 +132,7 @@ function Sync-Attributes {
 
             If ( ($attributes.count + $colsInCsvButNotAttr.count) -gt $maxAttributesCount ) {
                 Write-Log -Message "The max amount of attributes would be exceeded with this job. Canceling now!" -Severity ERROR
-                throw [System.IO.InvalidDataException] "Too many attributes!"  
+                throw [System.IO.InvalidDataException] "Too many attributes!"
                 exit 0
             }
 
@@ -156,7 +156,7 @@ function Sync-Attributes {
             If ( $colsInCsvButNotAttr.Count -gt 0 ) {
                 Write-Log -Message "Creating new local attributes"
             }
-            
+
             $colsInCsvButNotAttr | ForEach-Object {
 
                 #$newAttributeName = $_.InputObject.toString()
@@ -174,7 +174,7 @@ function Sync-Attributes {
                 }
 
                 $newAttributes += Invoke-CR -Object "groups" -Method "POST" -Path "/$( $groupId )/attributes" -Body $body -Verbose
-                #$newAttributes += Invoke-RestMethod -Uri $endpoint -Method Post -Headers $header -Body $bodyJson -ContentType $contentType -Verbose 
+                #$newAttributes += Invoke-RestMethod -Uri $endpoint -Method Post -Headers $header -Body $bodyJson -ContentType $contentType -Verbose
 
             }
 
@@ -195,10 +195,10 @@ function Sync-Attributes {
                 "new" = $newAttributes
                 "notneeded" = $colsInAttrButNotCsv.InputObject
             }
-            
-            
+
+
         } catch {
-            
+
             $msg = "Failed to sync attributes"
             Write-Log -Message $msg -Severity ERROR
             #Write-Log -Message $_.Exception -Severity ERROR
@@ -207,9 +207,9 @@ function Sync-Attributes {
         }
 
     }
-    
+
     end {
-        
+
     }
-    
+
 }

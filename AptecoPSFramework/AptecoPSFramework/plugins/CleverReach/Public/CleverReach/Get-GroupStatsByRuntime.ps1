@@ -1,4 +1,4 @@
-
+﻿
 <#
 
 This call gets the group stats by runtime filter as the normal group stats are cached
@@ -13,9 +13,9 @@ function Get-GroupStatsByRuntime {
         , [Parameter(Mandatory=$false)][Switch] $IncludeMetrics = $false            # Add avg points and quality(stars)
         , [Parameter(Mandatory=$false)][Switch] $IncludeLastChanged = $false        # Add last groups changed date
     )
-    
+
     begin {
-    
+
     }
 
     process {
@@ -129,7 +129,7 @@ function Get-GroupStatsByRuntime {
         # BRING STATS TOGETHER
         #-----------------------------------------------
 
-        $stats = [PSCustomObject]@{            
+        $stats = [PSCustomObject]@{
             "total_count" = $total.count
             "inactive_count" = $deactivated.count
             "active_count" = $activated.count
@@ -138,8 +138,8 @@ function Get-GroupStatsByRuntime {
         }
 
         If ( $IncludeMetrics -eq $true ) {
-            $stats | Add-Member -MemberType NoteProperty -Name "avg_points" -Value ([math]::floor(($total.points | measure -Average).Average))
-            $stats | Add-Member -MemberType NoteProperty -Name "quality" -Value ([math]::floor(($total.stars | measure -Average).Average))
+            $stats | Add-Member -MemberType NoteProperty -Name "avg_points" -Value ([math]::floor(($total.points | Measure-Object -Average).Average))
+            $stats | Add-Member -MemberType NoteProperty -Name "quality" -Value ([math]::floor(($total.stars | Measure-Object -Average).Average))
         }
 
         If ( $IncludeLastChanged -eq $true ) {

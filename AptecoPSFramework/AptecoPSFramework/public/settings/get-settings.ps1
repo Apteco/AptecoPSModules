@@ -1,5 +1,5 @@
-
 Function Get-Settings {
+﻿
 
     Param()
 

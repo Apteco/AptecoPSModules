@@ -12,9 +12,9 @@ function Get-LocalDeactivated {
         #[Parameter(Mandatory=$false)][Hashtable] $InputHashtable
         [Parameter(Mandatory=$true)][String] $GroupId
     )
-    
+
     begin {
-    
+
     }
     process {
 

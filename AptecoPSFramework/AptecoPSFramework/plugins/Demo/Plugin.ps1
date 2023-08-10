@@ -1,4 +1,4 @@
-function Get-CurrentPluginInfos {
+﻿function Get-CurrentPluginInfo {
     [PSCustomObject]@{
 
         # identifier for this plugin - please do not change or use this twice
@@ -24,8 +24,8 @@ function Get-CurrentPluginInfos {
             "lists" = $true
             "preview" = $true
             "upload" = $true
-            "broadcast" = $true    
+            "broadcast" = $true
         }
-        
+
     }
 }

@@ -1,4 +1,4 @@
-
+﻿
 
 function Get-Groups {
     [CmdletBinding()]
@@ -6,9 +6,9 @@ function Get-Groups {
         [Parameter(Mandatory=$false)][Hashtable] $InputHashtable
         #[Parameter(Mandatory=$false)][Switch] $DebugMode = $false
     )
-    
+
     begin {
-        
+
 
         #-----------------------------------------------
         # LOG
@@ -39,7 +39,7 @@ function Get-Groups {
         #Import-Lib -IgnorePackageStructure
 
     }
-    
+
     process {
 
         # Load mailings data from CleverReach
@@ -74,12 +74,12 @@ function Get-Groups {
         )
 
         $lists = [System.Collections.ArrayList]@()
-        [void]$lists.AddRange(@( $groupsList | Select $columns ))
-        
+        [void]$lists.AddRange(@( $groupsList | Select-Object $columns ))
+
         If ( $lists.count -gt 0 ) {
 
             Write-Log "Loaded $( $lists.Count ) lists/groups" -severity INFO #-WriteToHostToo $false
-            
+
         } else {
 
             $msg = "No lists loaded -> please check!"
@@ -87,14 +87,14 @@ function Get-Groups {
             throw [System.IO.InvalidDataException] $msg
 
         }
-        
+
         # Return
         $lists
 
     }
-    
+
     end {
-        
+
     }
 
 }

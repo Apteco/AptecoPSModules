@@ -1,4 +1,4 @@
-
+﻿
 
 
 
@@ -8,7 +8,7 @@ function Show-Preview {
     param (
         [Parameter(Mandatory=$false)][Hashtable] $InputHashtable
     )
-    
+
     begin {
 
 
@@ -55,7 +55,7 @@ function Show-Preview {
         # CHECK INPUT RECEIVER
         #-----------------------------------------------
 
-        
+
 
         #-----------------------------------------------
         # CHECK CLEVERREACH CONNECTION
@@ -63,10 +63,10 @@ function Show-Preview {
 
         try {
 
-            Test-CleverReachConnection         
-            
+            Test-CleverReachConnection
+
         } catch {
-            
+
             #$msg = "Failed to connect to CleverReach, unauthorized or token is expired"
             #Write-Log -Message $msg -Severity ERROR
             Write-Log -Message $_.Exception -Severity ERROR
@@ -78,9 +78,9 @@ function Show-Preview {
 
 
 
-        
+
     }
-    
+
     process {
 
 
@@ -100,7 +100,7 @@ function Show-Preview {
 
             If ( $previewGroups.count -eq 1 ) {
                 # Use that group
-                $previewGroup = $previewGroups | select -first 1
+                $previewGroup = $previewGroups | Select-Object -first 1
                 Write-log -message "Using existing group '$( $previewGroup.mame )' with id '$( $previewGroup.id )'"
             } elseif ( $previewGroups.count -eq 0 ) {
                 # Create a new group
@@ -126,7 +126,7 @@ function Show-Preview {
             # CLEAR THAT GROUP
             #-----------------------------------------------
 
-            #delete /v3/groups.json/{id}/clear 
+            #delete /v3/groups.json/{id}/clear
             $clearedGroup = Invoke-CR -Object "groups" -Path "/$( $group.id )/clear" -Method DELETE
 
             Write-Log "Cleared the group '$( $group.name )' with id '$( $group.id )'"
@@ -141,11 +141,11 @@ function Show-Preview {
 
             # Add dummy urn field, if not avaiable
             $urnFieldName = "urn"
-            $urnFieldCheck = $testRecipient.PsObject.Properties | where { $_.name -contains $urnFieldName }
+            $urnFieldCheck = $testRecipient.PsObject.Properties | Where-Object { $_.name -contains $urnFieldName }
             If ( $urnFieldCheck.Count -eq 0 ) {
                 $testRecipient | Add-Member -MemberType NoteProperty -Name $urnFieldName -Value "123456789"
-            } 
-            
+            }
+
 
             #-----------------------------------------------
             # SYNCHRONISE ATTRIBUTES
@@ -163,8 +163,8 @@ function Show-Preview {
                 "responseUrnFieldname" = $Script:settings.responses.urnFieldName
                 "groupId" = $group.id
             }
-            
-            $attributes = Sync-Attributes @attributeParam
+
+            $attributes = Sync-Attribute @attributeParam
 
 
             #-----------------------------------------------
@@ -223,7 +223,7 @@ function Show-Preview {
                 }
             }
 
-            # Existing local attributes            
+            # Existing local attributes
             $attributes.local | ForEach-Object {
 
                 $attrName = $_.name # using description now rather than name, because the comparison is made on descriptions
@@ -251,19 +251,19 @@ function Show-Preview {
             In the array of tags, prepend a "-" to the tag you want to be removed.
             To remove all tags with a specific origin, simply specify "*" instead of any tag name.
             #>
-            If ( ( $testRecipient.Personalisation.PSObject.Properties | where { $_.name -contains "tags" } ).count -eq 1 ) {
+            If ( ( $testRecipient.Personalisation.PSObject.Properties | Where-Object { $_.name -contains "tags" } ).count -eq 1 ) {
                 $additionalTags = @( $testRecipient.Personalisation.tags -split "," ).trim()
                 $uploadEntry.tags = @( $additionalTags )
             }
 
-            
-            
+
+
             #-----------------------------------------------
             # REMOVE ATTRIBUTES ON GROUP THAT ARE NOT NEEDED
             #-----------------------------------------------
 
             $localAttributes = @( (Invoke-CR -Object "attributes" -Method "GET" -Verbose -Query ( [PSCustomObject]@{ "group_id" = $group.id } )) )
-            $notNeededAttributes = @( $localAttributes | where { $_.name -notin $usedAttributes } )
+            $notNeededAttributes = @( $localAttributes | Where-Object { $_.name -notin $usedAttributes } )
             #$script:plugindebug = $notNeededAttributes.name
 
             If ( $notNeededAttributes.count -gt 0 ) {
@@ -278,9 +278,9 @@ function Show-Preview {
                 }
 
             }
-            
-            
-            
+
+
+
 
             #-----------------------------------------------
             # UP- AND DOWNLOAD RECEIVER
@@ -289,17 +289,17 @@ function Show-Preview {
             # TODO Implement downloading the receiver
             $uploadBody = @( $uploadEntry )
             #$script:plugindebug = $uploadBody
-                        
+
             # Output the request body for debug purposes
             Write-Log -Message "Debug Mode: $( $Script:debugMode )"
             If ( $Script:debugMode -eq $true ) {
                 $tempFile = ".\$( $i )_$( [guid]::NewGuid().tostring() )_request.txt"
                 Set-Content -Value ( ConvertTo-Json $uploadBody -Depth 99 ) -Encoding UTF8 -Path $tempFile
             }
-            
+
             # As a response we get the full profiles of the receiver back
             $upload = @( Invoke-CR -Object "groups" -Path "/$( $group.id )/receivers/upsertplus" -Method POST -Verbose -Body $uploadBody )
-            
+
             # Example
 
             #$InputHashtable.TestRecipient = '{"Email":"reply@apteco.de","Sms":null,"Personalisation":{"Kunden ID":"","email":"florian.von.bracht@apteco.de","Vorname":"","Communication Key":"93d02a55-9dda-4a68-ae5b-e8423d36fc20"}}'
@@ -319,7 +319,7 @@ function Show-Preview {
             #-----------------------------------------------
             # CREATE A RENDERED PREVIEW
             #-----------------------------------------------
-            
+
 
             # NOT DOCUMENTED, but works
 
@@ -373,7 +373,7 @@ function Show-Preview {
             Write-Log -Message $_.Exception -Severity ERROR
             throw [System.IO.InvalidDataException] $msg
 
-        } finally {          
+        } finally {
 
         }
 
@@ -386,16 +386,16 @@ function Show-Preview {
         $processDuration = New-TimeSpan -Start $processStart -End $processEnd
         Write-Log -Message "Needed $( [int]$processDuration.TotalSeconds ) seconds in total"
 
-        
+
         #-----------------------------------------------
         # RETURN VALUES TO PEOPLESTAGE
         #-----------------------------------------------
-        
+
         # return object
         $return = [Hashtable]@{
 
             "Type" = "Email" #Email|Sms
-            "FromAddress"=$templateSource.sender_email 
+            "FromAddress"=$templateSource.sender_email
             "FromName"=$templateSource.sender_name
             "Html"=$renderedPreview.html
             "ReplyTo"=""
@@ -416,13 +416,13 @@ function Show-Preview {
             Write-Log -message "    $( $param ) = '$( $return[$param] )'" -writeToHostToo $false
         }
         #>
-        
+
         # return the results
         $return
-        
+
 
     }
-    
+
     end {
 
     }

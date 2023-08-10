@@ -7,9 +7,9 @@ function Get-Bounces {
         #[Parameter(Mandatory=$false)][Hashtable] $InputHashtable
         #[Parameter(Mandatory=$false)][String] $GroupId
     )
-    
+
     begin {
-    
+
     }
     process {
         <#

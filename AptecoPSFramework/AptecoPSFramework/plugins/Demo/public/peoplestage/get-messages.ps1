@@ -1,4 +1,4 @@
-
+﻿
 
 function Get-Messages {
     [CmdletBinding()]
@@ -6,9 +6,9 @@ function Get-Messages {
         [Parameter(Mandatory=$false)][Hashtable] $InputHashtable
         #[Parameter(Mandatory=$false)][Switch] $DebugMode = $false
     )
-    
+
     begin {
-        
+
 
         #-----------------------------------------------
         # LOG
@@ -31,7 +31,7 @@ function Get-Messages {
 
 
     }
-    
+
     process {
 
 
@@ -80,7 +80,7 @@ function Get-Messages {
             )
         }
 
-    
+
         #-----------------------------------------------
         # FORMAT FOR OUTPUT INTO APTECO
         #-----------------------------------------------
@@ -98,12 +98,12 @@ function Get-Messages {
         )
 
         $messages = [System.Collections.ArrayList]::new()
-        [void]$messages.AddRange(@( $mailingsList | Select $columns ))
-        
+        [void]$messages.AddRange(@( $mailingsList | Select-Object $columns ))
+
         If ( $messages.count -gt 0 ) {
 
             Write-Log "Loaded $( $messages.Count ) messages" -severity INFO #-WriteToHostToo $false
-            
+
         } else {
 
             $msg = "No messages loaded -> please check!"
@@ -111,14 +111,14 @@ function Get-Messages {
             throw [System.IO.InvalidDataException] $msg
 
         }
-        
+
         # Return
         $messages
 
     }
-    
+
     end {
-        
+
     }
 
 }

@@ -7,9 +7,9 @@ function Get-GroupSegments {
         #[Parameter(Mandatory=$false)][Hashtable] $InputHashtable
         [Parameter(Mandatory=$true)][String] $GroupId
     )
-    
+
     begin {
-    
+
     }
     process {
 
