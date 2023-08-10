@@ -337,6 +337,7 @@ function Invoke-Broadcast{
                     $html = $htmlTemplate -replace $crPreheaderRegex, ""
                     Write-Log "Removed native CleverReach PreHeader"
                 } else {
+                    $html = $htmlTemplate
                     Write-Log "No native CleverReach PreHeader found"
                 }
 
@@ -348,6 +349,8 @@ function Invoke-Broadcast{
                     Write-Log "Added custom PreHeader with {$( $preheaderVariable )} variable/field"
                 } else {
                     Write-Log "Body tag for inserting PreHeader not found"
+                    # Trigger an error, because there should be preheader tag found
+                    throw "There was a problem with the html. No body tag found to insert a PreHeader"
                 }
 
                 $Script:plugindebug = $html
@@ -356,6 +359,7 @@ function Invoke-Broadcast{
 
                 Write-Log "No replacement of preheader"
                 $html = $htmlTemplate
+
 
             }
 

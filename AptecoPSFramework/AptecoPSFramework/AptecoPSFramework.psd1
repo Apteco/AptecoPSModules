@@ -12,7 +12,7 @@
 RootModule = 'AptecoPSFramework.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.0.11'
+ModuleVersion = '0.0.12'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -134,6 +134,7 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.0.12 Fixing a problem when there is no preheader html already present
 0.0.11 Fixing updating the settings.json file after an module update
 0.0.10 Enrolling fix for changed function name
        Changed the Tag removal to wait until finished
