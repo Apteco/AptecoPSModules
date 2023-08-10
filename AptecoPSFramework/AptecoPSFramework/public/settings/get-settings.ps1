@@ -1,6 +1,4 @@
 Function Get-Settings {
-﻿
-
     Param()
 
     Process {

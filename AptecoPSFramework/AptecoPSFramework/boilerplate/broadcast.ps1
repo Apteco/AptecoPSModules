@@ -121,18 +121,18 @@ Import-Module "AptecoPSFramework" -Verbose
 
 
 #-----------------------------------------------
+# SET DEBUG MODE
+#-----------------------------------------------
+
+Set-DebugMode -DebugMode $debug
+
+
+#-----------------------------------------------
 # SET SETTINGS
 #-----------------------------------------------
 
 # Set the settings
 Import-Settings -Path $params.settingsFile
-
-
-#-----------------------------------------------
-# SET DEBUG MODE
-#-----------------------------------------------
-
-Set-DebugMode -DebugMode $debug
 
 
 ################################################

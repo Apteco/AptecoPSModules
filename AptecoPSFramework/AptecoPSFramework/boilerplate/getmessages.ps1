@@ -16,6 +16,7 @@ Param(
 
 $debug = $false
 
+
 #-----------------------------------------------
 # ADD MODULE PATH, IF NOT PRESENT
 #-----------------------------------------------
@@ -115,6 +116,13 @@ Import-Module "AptecoPSFramework" -Verbose
 
 
 #-----------------------------------------------
+# SET DEBUG MODE
+#-----------------------------------------------
+
+Set-DebugMode -DebugMode $debug
+
+
+#-----------------------------------------------
 # SETTINGS
 #-----------------------------------------------
 
@@ -125,13 +133,6 @@ $settings.logfile = ".\file.log"
 Set-Settings -PSCustom $settings
 #>
 Import-Settings -Path $params.settingsFile
-
-
-#-----------------------------------------------
-# SET DEBUG MODE
-#-----------------------------------------------
-
-Set-DebugMode -DebugMode $debug
 
 
 ################################################

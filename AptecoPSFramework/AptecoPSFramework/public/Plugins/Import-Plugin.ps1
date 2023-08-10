@@ -107,7 +107,7 @@
 
             # argument input object
             param(
-                [PSCustomObject]$Input
+                [PSCustomObject]$InputPlugin
             )
 
             #Write-Verbose ( $Input | ConvertTo-Json ) -Verbose
@@ -124,11 +124,11 @@
             # CREATE VARIABLES FROM PARENT MODULE
             #-----------------------------------------------
 
-            $Input.variables.PSObject.Properties | ForEach-Object {
+            $InputPlugin.variables.PSObject.Properties | ForEach-Object {
                 New-Variable -Name $_.Name -Value $_.Value -Scope Script -Force
             }
 
-            $plugin = $Input.plugin
+            $plugin = $InputPlugin.plugin
 
 
             #-----------------------------------------------
@@ -176,7 +176,7 @@
             # DEFINE MORE VARIABLES
             #-----------------------------------------------
 
-            New-Variable -Name settings -Value $Input.settings -Scope Script -Force       # Path of the calling script
+            New-Variable -Name settings -Value $InputPlugin.settings -Scope Script -Force       # Path of the calling script
             New-Variable -Name pluginDebug -Value $null -Scope Script -Force              # Debug variable for the scripts
 
             #Write-verbose ( Convertto-json $Script:settings -dept 99 ) -Verbose

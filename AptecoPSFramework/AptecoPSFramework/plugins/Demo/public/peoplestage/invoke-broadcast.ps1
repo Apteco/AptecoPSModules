@@ -1,4 +1,4 @@
-
+﻿
 
 
 
@@ -8,7 +8,7 @@ function Invoke-Broadcast{
     param (
         [Parameter(Mandatory=$false)][Hashtable] $InputHashtable
     )
-    
+
     begin {
 
 
@@ -23,7 +23,7 @@ function Invoke-Broadcast{
         #-----------------------------------------------
         # VALUES FROM UPLOAD
         #-----------------------------------------------
-        
+
         Set-ProcessId -Id $InputHashtable.ProcessId
         $tag = ( $InputHashtable.Tag -split ", " )
         $groupId = $InputHashtable.GroupId
@@ -57,7 +57,7 @@ function Invoke-Broadcast{
         Write-Log "Got chosen message entry with id '$( $mailing.mailingId )' and name '$( $mailing.mailingName )'"
 
         $templateId = $mailing.mailingId
-        
+
 
         #-----------------------------------------------
         # CHECK CLEVERREACH CONNECTION
@@ -67,9 +67,9 @@ function Invoke-Broadcast{
         try {
 
             Test-CleverReachConnection
-            
+
         } catch {
-            
+
             Write-Log -Message $_.Exception -Severity ERROR
             throw [System.IO.InvalidDataException] $msg
             exit 0
@@ -77,9 +77,9 @@ function Invoke-Broadcast{
             # TODO is exit needed here?
 
         }
-        
+
     }
-    
+
     process {
 
 
@@ -97,7 +97,7 @@ function Invoke-Broadcast{
                     # broadcast is not needed
                     Write-Log -Message "Mode 'taggingOnly'. Triggering the broadcast script is not needed. Please change your settings to 'Upload Only'" -Severity WARNING
                     exit 0 # leave the script now
-                    
+
                 }
 
                 "prepare" {
@@ -105,7 +105,7 @@ function Invoke-Broadcast{
                     # broadcast is not needed
                     Write-Log -Message "Mode 'prepare'. Everything gets prepared, but not sending takes place" -Severity WARNING
                     $doRelease = $false
-                    
+
                 }
 
                 Default {
@@ -114,7 +114,7 @@ function Invoke-Broadcast{
                     $doRelease = $true
 
                 }
-            
+
             }
 
             #-----------------------------------------------
@@ -123,7 +123,7 @@ function Invoke-Broadcast{
 
             Write-Log "Getting stats for group $( $groupId ):"
 
-            $groupStats = Invoke-CR -Object "groups" -Path "/$( $groupId )/stats" -Method GET -Verbose 
+            $groupStats = Invoke-CR -Object "groups" -Path "/$( $groupId )/stats" -Method GET -Verbose
 
             <#
             {
@@ -159,7 +159,7 @@ function Invoke-Broadcast{
                     "active" = $true
                 }
                 $tagCount = Invoke-CR -Object "tags" -Path "/count" -Method GET -Verbose -Query $tagQuery
-    
+
                 Write-Log "Got $( $tagCount ) receivers for tag $( $t ) in group $( $groupId )"
 
             }
@@ -256,11 +256,11 @@ function Invoke-Broadcast{
                 #"operator" = "AND"
                 "rules" = $rules
             }
-            
+
             $segment = Invoke-CR -Object "groups" -Path "/$( $groupId )/filters" -Method POST -Verbose -Body $filterBody
 
             #$script:debug = $segment
-            
+
             # We are gettting the 'id' and 'success' back
             If ( $segment.success -eq $true ) {
                 Write-Log "Created a new filter/segment with id '$( $segment.id )' and name '$( $newMailingName )'"
@@ -280,7 +280,7 @@ function Invoke-Broadcast{
             } else {
                 throw "Not able to count segment '$( $segment.id )'. Stopping here!"
             }
-            
+
 
             #-----------------------------------------------
             # COPY/DUPLICATE THE MAILING AND USE SEGMENT
@@ -292,7 +292,7 @@ function Invoke-Broadcast{
                 "name" = $newMailingName
                 "subject" = $templateSource.subject
                 "sender_name" = $templateSource.sender_name
-                "sender_email" = $templateSource.sender_email 
+                "sender_email" = $templateSource.sender_email
                 "content" = [PSCustomObject]@{
                     "type" = $Script:settings.broadcast.defaultContentType
                     "html" = $templateSource.body_html
@@ -306,7 +306,7 @@ function Invoke-Broadcast{
                     "editor" = $Script:settings.broadcast.defaultEditor
                     #"open_tracking" = $settings.broadcast.defaultOpenTracking
                     #"click_tracking" = $settings.broadcast.defaultClickTracking
-                    #"category_id" = $templateSource.category_id               
+                    #"category_id" = $templateSource.category_id
                     <#
                     link_tracking_url = "27.wayne.cleverreach.com"
                     link_tracking_type = "google" # google|intelliad|crconnect
@@ -334,7 +334,7 @@ function Invoke-Broadcast{
             }
 
             $script:debug = $mailingSettings
-            
+
             # put it all together
             $copiedMailing = Invoke-CR -Object "mailings" -Method POST -Verbose -body $mailingSettings
 
@@ -369,7 +369,7 @@ function Invoke-Broadcast{
 
         } finally {
 
-            
+
 
         }
 
@@ -382,39 +382,39 @@ function Invoke-Broadcast{
         $processDuration = New-TimeSpan -Start $processStart -End $processEnd
         Write-Log -Message "Needed $( [int]$processDuration.TotalSeconds ) seconds in total"
 
-        
+
         #-----------------------------------------------
         # RETURN VALUES TO PEOPLESTAGE
         #-----------------------------------------------
-        
+
         # count the number of successful upload rows
         $recipients = $tagCount
-        
+
         # put in the source id as the listname
         $transactionId = $copiedMailing.id
-        
+
         # return object
         $return = [Hashtable]@{
-        
+
             # Mandatory return values
             "Recipients"=$recipients
             "TransactionId"=$transactionId
-        
+
             # General return value to identify this custom channel in the broadcasts detail tables
             "CustomProvider"= $moduleName
             "ProcessId" = $Script:processId
-        
+
             # Some more information for the broadcasts script
             #"EmailFieldName"= $params.EmailFieldName
             #"Path"= $params.Path
             #"UrnFieldName"= $params.UrnFieldName
             #"TargetGroupId" = $targetGroup.targetGroupId
-        
+
             # More information about the different status of the import
             #"RecipientsIgnored" = $status.report.total_ignored
             #"RecipientsQueued" = $recipients
             #"RecipientsSent" = $status.report.total_added + $status.report.total_updated
-        
+
         }
 
         # log the return object
@@ -423,13 +423,13 @@ function Invoke-Broadcast{
             $param = $_
             Write-Log -message "    $( $param ) = '$( $return[$param] )'" -writeToHostToo $false
         }
-        
+
         # return the results
         $return
-        
+
 
     }
-    
+
     end {
 
     }

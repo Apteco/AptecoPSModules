@@ -17,7 +17,6 @@
 $debug = $false
 
 
-
 #-----------------------------------------------
 # INPUT PARAMETERS, IF DEBUG IS TRUE
 #-----------------------------------------------
@@ -93,6 +92,13 @@ Import-Module "AptecoPSFramework" -Verbose
 
 
 #-----------------------------------------------
+# SET DEBUG MODE
+#-----------------------------------------------
+
+# Set-DebugMode -DebugMode $debug
+
+
+#-----------------------------------------------
 # SETTINGS
 #-----------------------------------------------
 
@@ -103,13 +109,6 @@ $settings.logfile = ".\file.log"
 Set-Settings -PSCustom $settings
 #>
 Import-Settings -Path ".\settings.json"
-
-
-#-----------------------------------------------
-# SET DEBUG MODE
-#-----------------------------------------------
-
-# Set-DebugMode -DebugMode $debug
 
 
 ################################################

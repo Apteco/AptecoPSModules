@@ -1,7 +1,5 @@
 Function Export-Settings {
-﻿
-
-    [cmdletbinding()]
+    [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true)][string]$Path
     )
