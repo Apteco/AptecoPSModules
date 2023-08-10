@@ -12,7 +12,7 @@
 RootModule = 'AptecoPSFramework.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.0.8'
+ModuleVersion = '0.0.9'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -137,6 +137,10 @@ PrivateData = @{
 0.0.9 Support for waiting until the mailing is released for CleverReach
       Fixed a query for global deactivated receivers
       Fixed a request for group stats to be at the end of the broadcast for CleverReach
+      Changed a setting for global receiver deactivations
+      Query group stats by runtime filters instead of cached stats
+      Added more documentation and FAQs about this integration
+      Changed the preheader behaviour for CleverReach (now dependent on a variable)
 0.0.8 Preheader Support for CleverReach, just needs a "Preheader" variable
       Fixed a visual problem after the mailing was sent. Needed the "eddytor" for this
 0.0.7 Removing not needed zip files

@@ -63,7 +63,6 @@ function Invoke-Broadcast{
         # CHECK CLEVERREACH CONNECTION
         #-----------------------------------------------
 
-
         try {
 
             Test-CleverReachConnection
@@ -116,6 +115,34 @@ function Invoke-Broadcast{
                 }
             
             }
+
+
+            #-----------------------------------------------
+            # GET GENERAL STATISTICS FOR LIST
+            #-----------------------------------------------
+
+            # Write-Log "Getting stats for group $( $groupId ):"
+
+            # #$groupStats = Invoke-CR -Object "groups" -Path "/$( $groupId )/stats" -Method GET -Verbose
+            # $groupStats = Get-GroupStatsByRuntime -GroupId $groupId #-IncludeMetrics -IncludeLastChanged -Verbose
+
+
+            # <#
+            # {
+            #     "total_count": 4,
+            #     "inactive_count": 0,
+            #     "active_count": 4,
+            #     "bounce_count": 0,
+            #     "avg_points": 69.5,
+            #     "quality": 3,
+            #     "time": 1685545449,
+            #     "order_count": 0
+            # }
+            # #>
+
+            # $groupStats.psobject.properties | ForEach-Object {
+            #     Write-Log "  $( $_.Name ): $( $_.Value )"
+            # }
 
 
             #-----------------------------------------------
@@ -271,9 +298,12 @@ function Invoke-Broadcast{
 
             # TODO Think about putting this into the settings
             #$preheaderTemplate = '<div style="font-size:0px;line-height:1px;mso-line-height-rule:exactly;display:none;max-width:0px;max-height:0px;opacity:0;overflow:hidden;mso-hide:all;">[PREHEADER]</div>'
-            $preheaderTemplate = '<div style="display:none;font-size:1px;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;mso-hide:all;">{PREHEADER}&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;</div>'
+            $preheaderVariable = $Script:settings.broadcast.preheaderFieldname.ToUpper()
+            $preheaderTemplate = @"
+                <div style="display:none;font-size:1px;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;mso-hide:all;">{$( $preheaderVariable )}&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;</div>
+"@
 
-            # Find the right place to insert
+            # Find the right place to insert after
             $bodyRegex = "<body[^\>]*>"
 
             # Regex to find the native cleverreach preheader
@@ -297,7 +327,7 @@ function Invoke-Broadcast{
             $htmlTemplate = $templateSource.body_html
 
             # Add the preheader, if wished
-            If ( $Script:settings.broadcast.addPreheaderAfterBody -eq $true ) {
+            If ( $Script:settings.broadcast.addPreheaderAfterBody -eq $true -and $InputHashtable.PreheaderIsSet -eq $true) {
 
                 #$Script:plugindebug = $templateSource.body_html
 
@@ -315,7 +345,7 @@ function Invoke-Broadcast{
                 If ( $regexMatch -eq $true ) {
                     $matchedBodyTag = $matches[0]
                     $html = $html -replace $bodyRegex, "$( $matchedBodyTag )$( $preheaderTemplate )"
-                    Write-Log "Added custom PreHeader with [PREHEADER] variable/field"
+                    Write-Log "Added custom PreHeader with {$( $preheaderVariable )} variable/field"
                 } else {
                     Write-Log "Body tag for inserting PreHeader not found"
                 }
@@ -444,32 +474,6 @@ function Invoke-Broadcast{
 
                 Write-Log "Mailing not released"
 
-            }
-
-            
-            #-----------------------------------------------
-            # GET GENERAL STATISTICS FOR LIST AT THE END
-            #-----------------------------------------------
-
-            Write-Log "Getting stats for group $( $groupId ):"
-
-            $groupStats = Invoke-CR -Object "groups" -Path "/$( $groupId )/stats" -Method GET -Verbose 
-
-            <#
-            {
-                "total_count": 4,
-                "inactive_count": 0,
-                "active_count": 4,
-                "bounce_count": 0,
-                "avg_points": 69.5,
-                "quality": 3,
-                "time": 1685545449,
-                "order_count": 0
-            }
-            #>
-
-            $groupStats.psobject.properties | ForEach-Object {
-                Write-Log "  $( $_.Name ): $( $_.Value )"
             }
 
 

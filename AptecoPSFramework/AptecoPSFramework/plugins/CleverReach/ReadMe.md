@@ -6,7 +6,7 @@ Create your channel like it is described in the output of the `Install-AptecoPSF
 
 Mode|Upload Data|Tag Receivers|Copy Mailing|Trigger Broadcast|Setup
 -|-|-|-|-|-
-Upload and Broadcast|x|x|x|x|Upload and Broadcast<br/>abc
+Upload and Broadcast|x|x|x|x|Upload and Broadcast
 Prepare|x|x|x||Upload and Broadcast<br/>Integration parameter `mode=prepare`
 Tagging|x|x|||Retrieve Existing List Names=True<br/>`mode=taggingOnly`
 Upload only|x|x|||Upload only
@@ -81,8 +81,10 @@ Get-Tags
 Get-Blocklist
 Get-Bounces
 Get-GlobalDeactivated
-Get-Groups
+Get-CRGroups
 Get-GroupSegments
+Get-GroupStats
+Get-GroupStatsByRuntime
 Remove-TagsAtReceivers
 ```
 
@@ -148,15 +150,27 @@ Path|Setting|Default|Explanation
 /upload/|validateReceivers|true|Uses a CleverReach API call to validate receivers. It removes blacklisted, not active and not in the list contained emails addresses.
 /upload/|excludeNotValidReceivers|false|If this is set to true, only active email addresses of the specific list will be used. This does only have an effect when using existing lists. So new contacts will not be uploaded, only existing ones in CleverReach will be used instead.
 /upload/|excludeBounces|true|Exclude bounces from upload
-/upload/|excludeGlobalDeactivated|true|Exclude deactivated (unsubscribed) receivers from global list (groupid=0)
+/upload/|excludeGlobalDeactivated|false|Exclude deactivated (unsubscribed) receivers from any list (groupid=0)
 /upload/|excludeLocalDeactivated|true|Exclude deactivated  (unsubscribed) receivers for the chosen list
 /upload/|uploadSize|300|Max no of rows per batch upload call, max of 1000
 /upload/|tagSource|Apteco|Default tag source that will be used like `Apteco.a1qhvh3_20230607201732`
 /upload/|useTagForUploadOnly|true|adds a tag to receivers, even if no email gets prepared or send out
 /upload/|reservedFields|["tags"]|field names that should not be used in uploads
+/upload/|loadRuntimeStatistics|true|Loads total, active, inactive, bounced receivers of the group after upserting the data. This loads all receivers on the list, so can need a while and cause many api calls
 /broadcast/|defaultReleaseOffset|120|Seconds offset that will added to the current time when broadcasting a mailing
 /broadcast/|addPreheaderAfterBody|true|Adding a default preheader after the `<body>`
-/broadcast/|removeNativePreheader|true|Sometimes CleverReach already inserts a preheader into the template. This command removes the CleverReach Preheader
+/broadcast/|preheaderFieldname|AptecoPreheader|The variable/field name that will trigger a preheader insertion/replacement.
+/broadcast/|removeNativePreheader|true|Sometimes CleverReach already inserts a preheader into the template. This command removes the native CleverReach Preheader
+/broadcast/|defaultContentType|html/text|We cannot read the content type of the mailing, so we are setting it here. Could be "html", "text" or "html/text"
+/broadcast/|defaultEditor|eddytor|We cannot read the used editor from the template so we are setting it through this entry. Could be "eddytor", "wizard", "freeform", "advanced", "plaintext"
+/broadcast/|defaultOpenTracking|true|We cannot read from the template if the open tracking is active or not. So it will be set through this setting.
+/broadcast/|defaultClickTracking|true|We cannot read from the template if the link/click tracking is active or not. So it will be set through this setting.
+/broadcast/|defaultLinkTrackingUrl||Could something be like "27.wayne.cleverreach.com"
+/broadcast/|defaultLinkTrackingType||Could be "google", "intelliad", "crconnect"
+/broadcast/|defaultGoogleCampaignName||Something like "My Campaign" for tracking reports in Google Analytics
+/broadcast/|waitUntilFinished|false|PS or Orbit are waiting until mailing is confirmed to be sent off
+/broadcast/|maxWaitForFinishedAfterOffset|120|Wait for another 120 seconds (or more or less) until it is confirmed of send off 
+
 
 # Response Gathering
 
@@ -250,17 +264,34 @@ $segments
 
 ## Support of Preheader
 
-Yes, this plugin allows the support of Preheaders. This is not possible to gather from CleverReach API at the moment, so we are using regular expressions to cut out existing preheaders and set a personalised one, which can also use Variables. So you see Apteco on the left hand side and my inbox on the right hand side:
+Yes, this plugin allows the support of Preheaders. This is not possible to gather from CleverReach API at the moment, so we are using regular expressions to cut out existing preheaders and set a personalised one, which can also use Variables. The removal and replacement only takes place, if you define a preheader variable in Apteco with the Name `AptecoPreheader`. So you see Apteco on the left hand side and my inbox on the right hand side:
 
-![grafik](https://github.com/Apteco/AptecoPSModules/assets/14135678/4382812a-96fa-4c84-8bef-109a86c1bb40)
+![grafik](https://github.com/Apteco/AptecoPSModules/assets/14135678/ce9a3038-cc8d-4e4e-a8a6-1b374af9a988)
+
+The email on the right hand side with preheader also shows an example above how it looks like without a defined preheader variable.
 
 This behaviour is dependent on the broadcast settings named `addPreheaderAfterBody` and `removeNativePreheader`
 
 The preheader html is defined as
 
 ```HTML
-<div style="display:none;font-size:1px;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;mso-hide:all;">{PREHEADER}&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;</div>
+<div style="display:none;font-size:1px;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;mso-hide:all;">{APTECOPREHEADER}&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;</div>
 ```
+
+## Deactivated / Unsubscribed receivers
+
+The settings `upload.excludeGlobalDeactivated` (default: `false`) and `upload.excludeLocalDeactivated` (default: `true`) are controlling this behaviour.
+
+If `excludeGlobalDeactivated` is set to `true` and if there is a receiver deactivated on one list and is active on another list, it will be in the result as deactivated.
+
+There is also a setting in CleverReach that puts a deactivation/unsubscription automatically on a Blocklist. This setting causes that those contacts are automatically excluded from uploads in Apteco but also automatically excluded in CleverReach. So it is a double safety net.
+
+## Difference to C# Implementation
+
+There is another already integrated implementation available that uses an older approach where receivers are getting activated and deactivated before the upload when working on existing lists. New lists will be filled with only active receivers. If you already use this implementation, there are two differences:
+
+1. URN field: In the Channel Editor you define the URN field as a parameter. This is not supported yet. So you need to add your URN to the additional variables and give it the label you wish to (like CustomerID).
+1. Communication Key: Beforehand, the communication key was always created in CleverReach with an underscore in the name and the description like `COMMUNICATION_KEY`. Now spaces are allowed and lead to an error in PeopleStage and Orbit that shows: `Error[9001]: Failed to sync attributes`. In the detailed log file you also see an HTTP409 Conflict, because the communication key should be created but is already there. Since version `0.0.9` this module will automatically look for a not existing communication key and `communication key` and `communication_key`, so the parallel use of the existing integration and this framework is possible on the same list (but possibly different impacts as the existing integration deactivates receivers).
 
 # TODO
 
@@ -268,12 +299,14 @@ The preheader html is defined as
 - [x] get mailings
 - [ ] migrate "refresh token with scheduled task" to here
 - [x] setup boilerplate (copy files of a subfolder to somewhere else and hints, that this folder needs to be accessed by a e.g. service and hints to the paths for get-messages etc.)
-- [ ] cleanup job of lists and tags
+- [ ] cleanup job of lists and tags -> cmdlets already implemented
 - [ ] put token in a separate file (or give the option for it to use multiple settings). Or maybe have a "main" settings file and give an option to export the token and in the other settings file use that one like PeopleStage, too
-* [ ] check the validations about bounces
+* [x] check the validations about bounces
 * [x] implement and test tags in a field, especially for preview
 * [ ] Try an overlay in preview to edit mailing
 * [ ] Try to use regex to identify used variables in mailing html and show in preview
+* [ ] Umlaute in filenames in debug mode
+* [ ] debug mode not set in the plugin itself
 
 # Test
 
@@ -281,7 +314,7 @@ The preheader html is defined as
 - [x] exception for api call
 - [x] dependencies
 - [x] Differentiate between new lists and existing lists
-- [ ] test reserverd fields, tags
+- [x] test reserverd fields, tags
 - [x] check the processid
 - [ ] manually expire a token and test the stacktrace
 - [ ] test on multiple table levels and their dependency with URN

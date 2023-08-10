@@ -343,7 +343,7 @@ Path|Setting|Default|Explanation
 
 # TODO / TEST
 
-- [ ] support external plugin folder => done! Test it!
+- [x] support external plugin folder => done! Test it!
 - [ ] implement dependencies
 - [ ] Add more explanations for settings
 - [ ] Add a hint that you should create one channel per table level

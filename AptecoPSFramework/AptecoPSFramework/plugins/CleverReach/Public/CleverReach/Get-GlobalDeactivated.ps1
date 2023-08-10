@@ -1,4 +1,12 @@
 ﻿
+<#
+
+Gives you all receviers that have been deactivated from any list.
+If there is a receiver deactivated on one list and is active on another list, it will be in the result as deactivated.
+If you need deactivated receivers from a specific list, please use Get-LocalDeactivated command
+Please also have a look at the Get-Blocklist command as a setting in CleverReach can cause people land on that list.
+
+#>
 
 function Get-GlobalDeactivated {
 
@@ -14,7 +22,7 @@ function Get-GlobalDeactivated {
 
         # Prepare inactives query as security net
         $deactivatedGlobalFilterBody = [PSCustomObject]@{
-            "groups" = [Array]@(0)
+            "groups" = [Array]@()
             "operator" = "AND"
             "rules" = [Array]@(,
                 [PSCustomObject]@{

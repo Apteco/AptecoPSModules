@@ -6,10 +6,10 @@ function Sync-Attributes {
         ,[Parameter(Mandatory=$true)][String[]]$csvUrnFieldname
         ,[Parameter(Mandatory=$true)][String]$groupId
 
-
-        ,[Parameter(Mandatory=$false)][String[]]$reservedFields = [Array]@()
+        ,[Parameter(Mandatory=$false)][String[]]$reservedFields = [Array]@()    # TODO [] not used yet, tags and communication key and communication_key would be good candidates
         ,[Parameter(Mandatory=$false)][String[]]$requiredFields = [Array]@()
         ,[Parameter(Mandatory=$false)][String]$responseUrnFieldname = "urn"
+        ,[Parameter(Mandatory=$false)][String]$csvCommunicationKeyFieldName = "Communication Key"
         ,[Parameter(Mandatory=$false)][int]$maxAttributesCount = 40
 
     )
@@ -47,15 +47,61 @@ function Sync-Attributes {
             $object = "attributes"
             $globalAttributes = @( (Invoke-CR -Object $object -Method "GET" -Verbose ) )
             $localAttributes = @( (Invoke-CR -Object $object -Method "GET" -Verbose -Query ( [PSCustomObject]@{ "group_id" = $groupId } )) )
-            $attributes = $globalAttributes + $localAttributes
-
+            
             # Log
-            Write-Log -message "Loaded global attributes: $( $globalAttributes.name -join ", " )"
-            Write-Log -message "Loaded local attributes: $( $localAttributes.name -join ", " )"
+            Write-Log -message "Loaded global attributes names: $( $globalAttributes.name -join ", " )"
+            Write-Log -message "Loaded local attributes names: $( $localAttributes.name -join ", " )"
+            Write-Log -message "Loaded global attributes descriptions: $( $globalAttributes.description -join ", " )"
+            Write-Log -message "Loaded local attributes descriptions: $( $localAttributes.description -join ", " )"
+
+            $script:pluginDebug = $localAttributes
+            # Check if there is any communication key available
+            If ( $localAttributes.description.toLower() -notcontains $csvCommunicationKeyFieldName.toLower() ) {
+                
+                # The default name is not present in the attributes description 
+                
+                If ( $localAttributes.description.toLower() -notcontains $csvCommunicationKeyFieldName.toLower().replace(" ","_") ) {
+
+                    # There is also no equivalent with a technical name in the description -> Proceed with the default creation of communication key variable
+
+                } else {
+
+                    # There is an equivalent with a technical name in the description -> Removing the communication key from the csv headers here so it won't get created
+                    ## Adding a "virtual communication key" for compatibility for already existing integration
+
+                    $csvAttributesNames = [Array]@( $csvAttributesNames | where { $_ -ne $csvCommunicationKeyFieldName } )
+
+                }
+
+            }
+
+
+            # } -or $localAttributes.description.toLower() -notcontains $csvCommunicationKeyFieldName.toLower().replace(" ","_") ) {
+            #     # 
+            # } else {
+            #     If ( $localAttributes.description.toLower() -notcontains $csvCommunicationKeyFieldName.toLower() ) {
+            #         # This means a communication key variable is present, but not with the name of the original communication key (normally with space)
+            #         # $localAttributes += [PSCustomObject]@{
+            #         #     name = $csvCommunicationKeyFieldName.ToLower().replace(" ","_")
+            #         #     description = $csvCommunicationKeyFieldName
+            #         # }
+            #         $csvAttributesNames = [Array]@( $csvAttributesNames | where { $_ -ne $csvCommunicationKeyFieldName } )
+            #     }
+            # }
+            # Adding a "virtual communication key" for compatibility for already existing integration
+            # If ( $localAttributes.description.toLower() -notcontains $csvCommunicationKeyFieldName.toLower() ) {
+            #     $localAttributes += [PSCustomObject]@{
+            #         name = $csvCommunicationKeyFieldName
+            #         description = $csvCommunicationKeyFieldName.ToUpper().replace(" ","_")
+            #     }
+            # }
+
+            # Joining attributes
+            $attributes = $globalAttributes + $localAttributes
             Write-Log -Message "You have $( $attributes.count )/$( $maxAttributesCount ) attributes now"
             If ( $attributes.count/$maxAttributesCount -gt 0.7 ) {
                 Write-Log -Message "You have used more than 70% of your attributes" -Severity WARNING
-            } 
+            }
 
             # Use attributes names
             $attributesNames = @( $attributes | Where-Object { $_.name.Tolower() -notin $requiredFields.Tolower() } )
@@ -76,8 +122,8 @@ function Sync-Attributes {
 
             #$differences = Compare-Object -ReferenceObject $attributesNames.name -DifferenceObject ( $csvAttributesNames  | where { $_.name -notin $requiredFields } ).name -IncludeEqual #-Property Name 
             #$colsEqual = $differences | Where-Object { $_.SideIndicator -eq "==" } 
-            $colsInAttrButNotCsv = $differences | Where-Object { $_.SideIndicator -eq "<=" } 
-            $colsInCsvButNotAttr = $differences | Where-Object { $_.SideIndicator -eq "=>" }
+            $colsInAttrButNotCsv = $differences | Where-Object { $_.SideIndicator -eq "<=" }
+            $colsInCsvButNotAttr = $differences | Where-Object { $_.SideIndicator -eq "=>" } #-and $_.InputObject.toString() -ne $csvCommunicationKeyFieldName}
 
 
             #-----------------------------------------------
@@ -122,7 +168,7 @@ function Sync-Attributes {
                 $body = [PSCustomObject]@{
                     "name" = $newAttributeName
                     "type" = "text"                     # text|number|gender|date
-                    "description" = $newAttributeName   # optional 
+                    "description" = $newAttributeName   # optional
                     #"preview_value" = "real name"       # optional
                     #"default_value" = "Bruce Wayne"     # optional
                 }

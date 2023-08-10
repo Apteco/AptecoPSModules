@@ -61,15 +61,17 @@ function Invoke-Upload{
 
             $uploadOnly = $true
             $mailing = [Mailing]::new(999, "UploadOnly")
+
         } else {
             #Write-Log "B"
             
-            Write-Log "Parsing message: '$( $InputHashtable.MessageName )' with '$( $Script:settings.nameConcatChar )'"
+            Write-Log "Parsing message: '$( $InputHashtable.MessageName )' with '$( $Script:settings.nameConcatChar )' as separator"
             $mailing = [Mailing]::new($InputHashtable.MessageName)
             Write-Log "Got chosen message entry with id '$( $mailing.mailingId )' and name '$( $mailing.mailingName )'"
     
             #$mailing = [Mailing]::new($InputHashtable.MessageName)
             #Write-Log "Got chosen message entry with id '$( $mailing.mailingId )' and name '$( $mailing.mailingName )'"
+
         }
 
 
@@ -226,7 +228,8 @@ function Invoke-Upload{
 
             Write-Log "Getting stats for group $( $groupId )"
 
-            $groupStats = Invoke-CR -Object "groups" -Path "/$( $groupId )/stats" -Method GET -Verbose 
+            #$groupStats = Invoke-CR -Object "groups" -Path "/$( $groupId )/stats" -Method GET -Verbose 
+            $groupStats = Get-GroupStats -GroupId $groupId
 
             <#
             {
@@ -309,16 +312,28 @@ function Invoke-Upload{
             Write-Log -message "Loaded csv attributes: $( $csvAttributesNames -join ", " )"
 
             $attributeParam = [Hashtable]@{
-                "reservedFields" = $reservedFields
+                "reservedFields" = $reservedFields  # TODO [ ] not used yet
                 "requiredFields" = $requiredFields
                 "csvAttributesNames" = $csvAttributesNames
                 "csvUrnFieldname" = $InputHashtable.UrnFieldName
+                "csvCommunicationKeyFieldName" = $InputHashtable.CommunicationKeyFieldName
                 "responseUrnFieldname" = $Script:settings.responses.urnFieldName
                 "groupId" = $groupId
             }
             
             $attributes = Sync-Attributes @attributeParam
+
             
+            #-----------------------------------------------
+            # CHECK ATTRIBUTES FOR PREHEADER FIELD
+            #-----------------------------------------------
+
+            If ( $csvAttributesNames.toLower() -contains $Script:settings.broadcast.preheaderFieldname.toLower() ) {
+                $preheaderIsSet = $true
+            } else {
+                $preheaderIsSet = $false
+            }
+
             
             #-----------------------------------------------
             # BEGIN AN EXCLUSION LIST
@@ -534,6 +549,11 @@ function Invoke-Upload{
                 # Existing local attributes
                 $attributes.local | ForEach-Object {
 
+                    # If ( $_.name -eq $InputHashtable.CommunicationKeyFieldName ) {
+                    #     $attrName = $InputHashtable.CommunicationKeyFieldName.ToUpper().replace(" ","_")
+                    # } else {
+                    #     $attrName = $_.name # using description now rather than name, because the comparison is made on descriptions
+                    # }
                     $attrName = $_.name # using description now rather than name, because the comparison is made on descriptions
                     $attrDescription = $_.description
                     $value = $null
@@ -551,6 +571,21 @@ function Invoke-Upload{
                         $uploadEntry.attributes | Add-Member -MemberType NoteProperty -Name $attrName -Value $value
                     }
 
+                }
+
+                # Communication Key if not present yet through local or new attributes
+                $uploadProperties = [Array]@()
+                $uploadProperties = [Array]@( $uploadEntry.attributes.psobject.properties.name )
+                $normalisedCommkeyName = $InputHashtable.CommunicationKeyFieldName.toLower().replace(" ","_")
+                If ( $uploadProperties -notcontains $InputHashtable.CommunicationKeyFieldName -or $uploadProperties -notcontains $normalisedCommkeyName) {                    
+                    If ( $attributes.local.description -contains $normalisedCommkeyName) {
+                        $attrName = $normalisedCommkeyName
+                    } else {
+                        $attrName = $InputHashtable.CommunicationKeyFieldName
+                    }
+                    $nameIndex = $headers.IndexOf($InputHashtable.CommunicationKeyFieldName)
+                    $value = $values[$nameIndex]
+                    $uploadEntry.attributes | Add-Member -MemberType NoteProperty -Name $attrName -Value $value
                 }
 
                 # Tags
@@ -683,25 +718,29 @@ function Invoke-Upload{
             # GET GENERAL STATISTICS FOR LIST
             #-----------------------------------------------
 
-            Write-Log "Getting stats for group $( $groupId )"
+            If ( $Script:settings.upload.loadRuntimeStatistics -eq $true ) {
 
-            $groupStats = Invoke-CR -Object "groups" -Path "/$( $groupId )/stats" -Method GET -Verbose 
+                Write-Log "Getting stats for group $( $groupId )"
 
-            <#
-            {
-                "total_count": 4,
-                "inactive_count": 0,
-                "active_count": 4,
-                "bounce_count": 0,
-                "avg_points": 69.5,
-                "quality": 3,
-                "time": 1685545449,
-                "order_count": 0
-            }
-            #>
+                #$groupStats = Invoke-CR -Object "groups" -Path "/$( $groupId )/stats" -Method GET -Verbose 
+                $groupStats = Get-GroupStatsByRuntime -GroupId $groupId #-IncludeMetrics -IncludeLastChanged -Verbose
+    
+                # <#
+                # {
+                #     "total_count": 4,
+                #     "inactive_count": 0,
+                #     "active_count": 4,
+                #     "bounce_count": 0,
+                #     "avg_points": 69.5,
+                #     "quality": 3,
+                #     "time": 1685545449,
+                # }
+                # #>
+    
+                $groupStats.psobject.properties | ForEach-Object {
+                    Write-Log "  $( $_.Name ): $( $_.Value )"
+                }
 
-            $groupStats.psobject.properties | ForEach-Object {
-                Write-Log "  $( $_.Name ): $( $_.Value )"
             }
 
 
@@ -738,6 +777,7 @@ function Invoke-Upload{
             try {
                 $reader.Close()
             } catch {
+
             }
 
             #-----------------------------------------------
@@ -777,6 +817,7 @@ function Invoke-Upload{
             # More values for broadcast
             "Tag" = ( $tags -join ", " )
             "GroupId" = $groupId
+            "PreheaderIsSet" = $preheaderIsSet
         
             # Some more information for the broadcasts script
             #"EmailFieldName"= $params.EmailFieldName

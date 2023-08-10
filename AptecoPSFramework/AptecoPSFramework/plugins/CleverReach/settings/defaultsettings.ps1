@@ -39,7 +39,7 @@
         "tokenUsage" = "consume"                            # consume|generate -> please have only one setting where you generate the token
         "encryptTokenFile" = $false                         # only used, if the token usage is on 'generate', when 'consume' then the tokenfile will be decrypted
                                                             # be careful, that the encryption is user dependent so cannot be shared between multiple users
-        "tokenFilePath" = ""                             # path for the file containing the token that should be consumed or generated
+        "tokenFilePath" = ""                                # path for the file containing the token that should be consumed or generated
 
     }
 
@@ -53,16 +53,17 @@
 
     # Upload settings
     "upload" = [PSCustomObject]@{        
-        "reservedFields" = [Array]@(,"tags")                       # If one of these fields are used, the whole process will pause
+        "reservedFields" = [Array]@(,"tags")                # If one of these fields are used, the whole process will pause
         "countRowsInputFile" = $true
         "validateReceivers" = $true
         "excludeNotValidReceivers" = $false                 # !!! IMPORTANT SETTING $false allows new records to be uploaded to CleverReach, $true means only activated receivers in CleverReach on that list will be updated and tagged
         "excludeBounces" = $true
-        "excludeGlobalDeactivated" = $true
+        "excludeGlobalDeactivated" = $false                 # Excludes receivers, that are deactivated on any list. So if there is a receiver active on any list, but active on the currently used list, it will be excluded, if this setting is $true
         "excludeLocalDeactivated" = $true
-        "uploadSize" = 3                                  # Max no of rows per batch upload call, max of 1000
+        "uploadSize" = 300                                  # Max no of rows per batch upload call, max of 1000
         "tagSource" = "Apteco"                              # Prefix of the tag, that will be used automatically, when doing mailings (not tagging)
         "useTagForUploadOnly" = $true
+        "loadRuntimeStatistics" = $true                     # Loads total, active, inactive, bounced receivers of the group after upserting the data. This loads all receivers on the list, so can need a while and cause many api calls
     }
 
     # Broadcast settings
@@ -70,7 +71,7 @@
         
         # Settings for the copy of the mailing
         "defaultContentType" = "html/text"                  # "html", "text" or "html/text"
-        "defaultEditor" = "eddytor"                          # "eddytor", "wizard", "freeform", "advanced", "plaintext"
+        "defaultEditor" = "eddytor"                         # "eddytor", "wizard", "freeform", "advanced", "plaintext"
         "defaultOpenTracking" = $true
         "defaultClickTracking" = $true
         "defaultLinkTrackingUrl" = "" # "link_tracking_url": "27.wayne.cleverreach.com",
@@ -79,9 +80,10 @@
 
         # TODO The google campaign name may need to be more flexible in future
 
-        # Further options
+        # Preheader options
+        "preheaderFieldname" = "AptecoPreheader"
         "addPreheaderAfterBody" = $true
-        "removeNativePreheader" = $true             # If a custom header gets added, you can also set this option to remove the native CR preheader
+        "removeNativePreheader" = $true                     # If a custom header gets added, you can also set this option to remove the native CR preheader
 
         # Release/sending
         "defaultReleaseOffset" = 120                        # Default amount of seconds that are added to the current unix timestamp to release the mailing
@@ -97,7 +99,7 @@
     "responses" = [PSCustomObject]@{
 
         # TODO rename this column
-        "urnFieldName" = "urn"                                          # Primary key field name, which should be global and is needed for matching
+        "urnFieldName" = "urn"                              # Primary key field name, which should be global and is needed for matching
         "communicationKeyAttributeName" = "communication_key"           # The local group attribute that will be loaded from the group, not used yet
 
         # File export settings
@@ -105,7 +107,7 @@
 
         # Periods to ask the API for
         "messagePeriod" = 60                                # How many days do you want to go backwards for loading mailing reports?
-        "responsePeriod" = 180                               # How many days to you want to go backwards for response data per message? Normally this numbers is smaller than the messagePeriod
+        "responsePeriod" = 180                              # How many days to you want to go backwards for response data per message? Normally this numbers is smaller than the messagePeriod
 
         # This mechanism can enhance the performance massively and will override "responsePeriod" as the last saved timestamp will be used as a start date
         "saveLastTimestamp" = $true                        # TODO set this to true later

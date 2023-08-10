@@ -237,7 +237,7 @@ function Invoke-CR {
                 }
 
                 If ( $Script:logAPIrequests -eq $true ) {
-                    Write-Log -Message "$( $updatedParameters.Method.ToString().ToUpper() ) $( $updatedParameters.Uri )"
+                    Write-Log -Message "$( $updatedParameters.Method.ToString().ToUpper() ) $( $updatedParameters.Uri )" -severity verbose
                 }
                 $wr = Invoke-RestMethod @updatedParameters
                 

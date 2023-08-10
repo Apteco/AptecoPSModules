@@ -1,11 +1,16 @@
 ﻿
+<#
+
+Gives you all receviers that have been deactivated from a specific list.
+
+#>
 
 function Get-LocalDeactivated {
 
     [CmdletBinding()]
     param (
         #[Parameter(Mandatory=$false)][Hashtable] $InputHashtable
-        [Parameter(Mandatory=$false)][String] $GroupId
+        [Parameter(Mandatory=$true)][String] $GroupId
     )
     
     begin {
