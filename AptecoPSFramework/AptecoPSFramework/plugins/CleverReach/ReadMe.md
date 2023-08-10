@@ -293,6 +293,22 @@ There is another already integrated implementation available that uses an older 
 1. URN field: In the Channel Editor you define the URN field as a parameter. This is not supported yet. So you need to add your URN to the additional variables and give it the label you wish to (like CustomerID).
 1. Communication Key: Beforehand, the communication key was always created in CleverReach with an underscore in the name and the description like `COMMUNICATION_KEY`. Now spaces are allowed and lead to an error in PeopleStage and Orbit that shows: `Error[9001]: Failed to sync attributes`. In the detailed log file you also see an HTTP409 Conflict, because the communication key should be created but is already there. Since version `0.0.9` this module will automatically look for a not existing communication key and `communication key` and `communication_key`, so the parallel use of the existing integration and this framework is possible on the same list (but possibly different impacts as the existing integration deactivates receivers).
 
+## Updating the settings after an module/plugin update
+
+It is pretty simple now. Just update your module with
+
+```PowerShell
+Import-Module AptecoPSFramework -Force
+```
+
+And then execute an import and export. Doing this you are ensuring you get all new settings options into the `settings.json` file. Existing (changed) settings won't be overridden and the existing file will be renamed with an attached timestamp, so it will not be deleted.
+
+```PowerShell
+Import-Settings .\settings.json
+Export-Settings .\settings.json
+```
+
+
 # TODO
 
 - [x] get lists

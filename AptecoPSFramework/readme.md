@@ -277,9 +277,8 @@ There are default functionalities per plugin like `get-messages`, `invoke-upload
 
 ```PowerShell
 Import-Module AptecoPSFramework -Verbose
-#Set-ExecutionDirectory -Path "."
-Import-Settings -Path ".\settings.json" # The plugin gets automatically loaded from the json file
 Set-DebugMode -DebugMode $true          # Not necessarily needed, only for testing purposes
+Import-Settings -Path ".\settings.json" # The plugin gets automatically loaded from the json file
 
 # Now you can execute plugin specific commands you can see with
 Get-Module | Format-List

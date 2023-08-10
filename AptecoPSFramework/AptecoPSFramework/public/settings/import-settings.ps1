@@ -72,11 +72,11 @@ Function Import-Settings {
                     }
 
                     # Set the settings into the module (settings + plugin settings)
-                    try {
-                        Set-Settings -PSCustom $joinedSettings
-                    } catch {
-                        Write-Error -Message "Settings cannot be loaded - Round 2"
-                    }
+                    # try {
+                    #     Set-Settings -PSCustom $joinedSettings
+                    # } catch {
+                    #     Write-Error -Message "Settings cannot be loaded - Round 2"
+                    # }
 
                 }
 
