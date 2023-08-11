@@ -220,7 +220,7 @@ SENDIDCOLUMNNAME|mailingId
 Just execute these commands which can also be used for a scheduled task. Please change to the directory where you wish to save the response files to.
 
 ```PowerShell
-Set-Path -Path "D:\Scripts\CleverReach\PSCleverReachModule\r"
+Set-Location -Path "D:\Scripts\CleverReach\PSCleverReachModule\r"
 Import-Module "AptecoPSFramework" -Verbose
 Import-Settings -Path "D:\Scripts\CleverReach\PSCleverReachModule\settings.json"
 Get-Response
