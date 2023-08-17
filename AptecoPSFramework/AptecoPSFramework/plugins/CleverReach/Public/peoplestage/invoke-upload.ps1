@@ -321,6 +321,13 @@ function Invoke-Upload{
                 "groupId" = $groupId
             }
 
+            # Logging attribute sync settings
+            Write-Log "Attribute sync settings:"
+            $attributeParam.Keys | ForEach-Object {
+                $param = $_
+                Write-Log -message "    $( $param ) = '$( $attributeParam[$param] )'" #-writeToHostToo $false
+            }
+
             $attributes = Sync-Attribute @attributeParam
 
 
@@ -669,30 +676,36 @@ function Invoke-Upload{
 
                         $uploadBody = $uploadObject[0..( $uploadSize - 1 )]
 
-                        # Output the request body for debug purposes
-                        #Write-Log -Message "Debug Mode: $( $Script:debugMode )"
-                        If ( $Script:debugMode -eq $true ) {
-                            $tempFile = ".\$( $i )_$( [guid]::NewGuid().tostring() )_request.txt"
-                            Set-Content -Value ( ConvertTo-Json $uploadBody -Depth 99 ) -Encoding UTF8 -Path $tempFile
+                        If ( $uploadBody.count -gt 0 ) {
+
+                            # Output the request body for debug purposes
+                            #Write-Log -Message "Debug Mode: $( $Script:debugMode )"
+                            If ( $Script:debugMode -eq $true ) {
+                                $tempFile = ".\$( $i )_$( [guid]::NewGuid().tostring() )_request.txt"
+                                Set-Content -Value ( ConvertTo-Json $uploadBody -Depth 99 ) -Encoding UTF8 -Path $tempFile
+                            }
+
+                            # As a response we get the full profiles of the receivers back
+                            $upload = @( Invoke-CR -Object "groups" -Path "/$( $groupId )/receivers/upsertplus" -Method POST -Verbose -Body $uploadBody )
+
+                            # Count the successful upserted profiles
+                            $j += $upload.count
+                            $k += 1
+
+                            # Output the response body for debug purposes
+                            If ( $Script:debugMode -eq $true ) {
+                                $script:debug += $upload
+                                $tempFile = ".\$( $i )_$( [guid]::NewGuid().tostring() )_response.txt"
+                                Set-Content -Value ( ConvertTo-Json $upload -Depth 99 ) -Encoding UTF8 -Path $tempFile
+                            }
+
+                            $uploadObject.RemoveRange(0,$uploadBody.Count)
+    
+                        } else {
+
+                            Write-Log "No more data to upload"
+
                         }
-
-                        # As a response we get the full profiles of the receivers back
-                        $upload = @( Invoke-CR -Object "groups" -Path "/$( $groupId )/receivers/upsertplus" -Method POST -Verbose -Body $uploadBody )
-
-                        # Count the successful upserted profiles
-                        $j += $upload.count
-                        $k += 1
-
-                        # Output the response body for debug purposes
-                        #If ( $Script:debugMode -eq $true ) {
-                            $script:debug += $upload
-                            $tempFile = ".\$( $i )_$( [guid]::NewGuid().tostring() )_response.txt"
-                            Set-Content -Value ( ConvertTo-Json $upload -Depth 99 ) -Encoding UTF8 -Path $tempFile
-                        #}
-
-                        # TODO check how to log the returned values - please be aware, that the second number is not the final index, it is the amount that should be removed
-
-                        $uploadObject.RemoveRange(0,$uploadBody.Count)
 
                         # Do an extra round for remaining records AND if it is the last row
                         If ( $uploadObject.count -gt 0 -and $reader.EndOfStream -eq $true) {
@@ -788,7 +801,9 @@ function Invoke-Upload{
             $processDuration = New-TimeSpan -Start $processStart -End $processEnd
             Write-Log -Message "Needed $( [int]$processDuration.TotalSeconds ) seconds in total"
 
-            Write-Host "Uploaded $( $j ) record. Confirmed $( $tagcount ) receivers with tag '$( $tags )'"
+            If ( $tags.length -gt 0 ) {
+                Write-Log "Uploaded $( $j ) record. Confirmed $( $tagcount ) receivers with tag '$( $tags )'" -severity INFO
+            }
 
         }
 

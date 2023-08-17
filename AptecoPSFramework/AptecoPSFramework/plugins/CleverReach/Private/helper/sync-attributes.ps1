@@ -50,29 +50,33 @@
 
             # Log
             Write-Log -message "Loaded global attributes names: $( $globalAttributes.name -join ", " )"
-            Write-Log -message "Loaded local attributes names: $( $localAttributes.name -join ", " )"
             Write-Log -message "Loaded global attributes descriptions: $( $globalAttributes.description -join ", " )"
-            Write-Log -message "Loaded local attributes descriptions: $( $localAttributes.description -join ", " )"
 
             $script:pluginDebug = $localAttributes
             # Check if there is any communication key available
-            If ( $localAttributes.description.toLower() -notcontains $csvCommunicationKeyFieldName.toLower() ) {
+            If ( $localAttributes.count -gt 0 ) {
 
-                # The default name is not present in the attributes description
+                Write-Log -message "Loaded local attributes names: $( $localAttributes.name -join ", " )"
+                Write-Log -message "Loaded local attributes descriptions: $( $localAttributes.description -join ", " )"
 
-                If ( $localAttributes.description.toLower() -notcontains $csvCommunicationKeyFieldName.toLower().replace(" ","_") ) {
+                If ( $localAttributes.description.toLower() -notcontains $csvCommunicationKeyFieldName.toLower() ) {
 
-                    # There is also no equivalent with a technical name in the description -> Proceed with the default creation of communication key variable
+                    # The default name is not present in the attributes description
 
-                } else {
+                    If ( $localAttributes.description.toLower() -notcontains $csvCommunicationKeyFieldName.toLower().replace(" ","_") ) {
 
-                    # There is an equivalent with a technical name in the description -> Removing the communication key from the csv headers here so it won't get created
-                    ## Adding a "virtual communication key" for compatibility for already existing integration
+                        # There is also no equivalent with a technical name in the description -> Proceed with the default creation of communication key variable
 
-                    $csvAttributesNames = [Array]@( $csvAttributesNames | Where-Object { $_ -ne $csvCommunicationKeyFieldName } )
+                    } else {
+
+                        # There is an equivalent with a technical name in the description -> Removing the communication key from the csv headers here so it won't get created
+                        ## Adding a "virtual communication key" for compatibility for already existing integration
+
+                        $csvAttributesNames = [Array]@( $csvAttributesNames | Where-Object { $_ -ne $csvCommunicationKeyFieldName } )
+
+                    }
 
                 }
-
             }
 
 
@@ -201,8 +205,8 @@
 
             $msg = "Failed to sync attributes"
             Write-Log -Message $msg -Severity ERROR
-            #Write-Log -Message $_.Exception -Severity ERROR
-            throw [System.IO.InvalidDataException] $msg
+            Write-Log -Message $_.Exception -Severity ERROR
+            throw $msg
 
         }
 

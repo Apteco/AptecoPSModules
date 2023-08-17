@@ -12,7 +12,7 @@
 RootModule = 'AptecoPSFramework.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.0.12'
+ModuleVersion = '0.0.13'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -134,7 +134,9 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
-0.0.12 Fixing a problem when there is no preheader html already present
+0.0.13 Fixing a problem with newly created lists/groups without any attributes for CleverReach
+       Preventing a problem with empty upserts for CleverReach
+0.0.12 Fixing a problem when there is no preheader html already present in CleverReach
 0.0.11 Fixing updating the settings.json file after an module update
 0.0.10 Enrolling fix for changed function name
        Changed the Tag removal to wait until finished
