@@ -1,6 +1,6 @@
 ﻿
 <#
-Function Install-CleverReach {
+Function Install-Plugin {
 
 # Calling the function without parameters does the whole part
 # Calling with one of the Flags, just does this part
