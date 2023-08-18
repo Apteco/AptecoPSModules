@@ -10,6 +10,9 @@ Name|Module|Script
 [EncryptCredential](EncryptCredential/)|x|
 [ConverUnixTimestamp](ConverUnixTimestamp/)|x
 [MeasureRows](MeasureRows/)|x
+[AptecoPSFramework]|x
+[MergeHashtable]|x
+[MergePSCustomObject]|x
 
 ## WriteLog
 
@@ -146,3 +149,14 @@ function Invoke-CoreWebRequest {
 
 }
 ```
+## AptecoPSFramework
+
+This framework is mainly created for installing and using custom channels in Apteco Orbit and PeopleStage. The channel implementations are written in PowerShell and already implemented as "Plugins" in this module. But there is a function implemented so you can refer to your own channels that are not getting overwritten if you update this module.
+
+## MergePSCustomObject
+
+This module merges two PSCustomObjects into one. It is able to handle nested structures like hashtables, arrays and PSCustomObjects. 
+
+## MergeHashtable
+
+This module merges two Hashtables into one. It is able to handle nested structures like hashtables, arrays and PSCustomObjects. 
