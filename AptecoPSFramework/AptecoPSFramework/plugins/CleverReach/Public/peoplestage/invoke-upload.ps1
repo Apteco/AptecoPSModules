@@ -451,7 +451,8 @@ function Invoke-Upload{
 
             #$Script:debug = $reader
 
-            $globalAtts = $attributes.global | Where-Object { $_.name -in $headers }
+            $globalAtts = @( $attributes.global | Where-Object { $_.name -in $headers } )
+            $headersLower = @( $headers.tolower() )
 
             #$localAtts = $localAttributes | where { $_.name -in $headers }
 
@@ -513,12 +514,12 @@ function Invoke-Upload{
                 # Global attributes
                 $globalAtts | ForEach-Object {
 
-                    $attrName = $_.name # using description now rather than name, because the comparison is made on descriptions
-                    $attrDescription = $_.description
+                    $attrName = $_.name.toLower() # using description now rather than name, because the comparison is made on descriptions
+                    $attrDescription = $_.description.toLower()
                     $value = $null
 
-                    $nameIndex = $headers.IndexOf($attrName)
-                    $descriptionIndex = $headers.IndexOf($attrDescription)
+                    $nameIndex = $headersLower.IndexOf($attrName)
+                    $descriptionIndex = $headersLower.IndexOf($attrDescription)
                     # If nothing found, the index is -1
                     If ( $nameIndex -ge 0) {
                         $value = $values[$nameIndex]
@@ -535,12 +536,12 @@ function Invoke-Upload{
                 # New local attributes
                 $attributes.new | ForEach-Object {
 
-                    $attrName = $_.name # using description now rather than name, because the comparison is made on descriptions
-                    $attrDescription = $_.description
+                    $attrName = $_.name.toLower() # using description now rather than name, because the comparison is made on descriptions
+                    $attrDescription = $_.description.toLower()
                     $value = $null
 
-                    $nameIndex = $headers.IndexOf($attrName)
-                    $descriptionIndex = $headers.IndexOf($attrDescription)
+                    $nameIndex = $headersLower.IndexOf($attrName)
+                    $descriptionIndex = $headersLower.IndexOf($attrDescription)
                     # If nothing found, the index is -1
                     If ( $nameIndex -ge 0) {
                         $value = $values[$nameIndex]
@@ -561,12 +562,12 @@ function Invoke-Upload{
                     # } else {
                     #     $attrName = $_.name # using description now rather than name, because the comparison is made on descriptions
                     # }
-                    $attrName = $_.name # using description now rather than name, because the comparison is made on descriptions
-                    $attrDescription = $_.description
+                    $attrName = $_.name.toLower() # using description now rather than name, because the comparison is made on descriptions
+                    $attrDescription = $_.description.toLower()
                     $value = $null
 
-                    $nameIndex = $headers.IndexOf($attrName)
-                    $descriptionIndex = $headers.IndexOf($attrDescription)
+                    $nameIndex = $headersLower.IndexOf($attrName)
+                    $descriptionIndex = $headersLower.IndexOf($attrDescription)
                     # If nothing found, the index is -1
                     If ( $nameIndex -ge 0) {
                         $value = $values[$nameIndex]
@@ -605,6 +606,25 @@ function Invoke-Upload{
                     $uploadEntry.tags = @( @( $additionalTags ) + @( $tags ) )
                 } else {
                     $uploadEntry.tags = @( $tags )
+                }
+
+                # AptecoPreheader
+                <#
+                Make sure the preheader is getting overwritten to an empty value if not set
+                #>
+                If ( $preheaderIsSet -eq $true ) {
+
+                    # Find out if the preheader is global or local and change the value to ""
+                    If ( @( $uploadEntry.attributes.psobject.properties.name.toLower() ) -contains $Script:settings.broadcast.preheaderFieldname.toLower() ) {
+                        If ( "" -eq $uploadEntry.attributes.( $Script:settings.broadcast.preheaderFieldname ) -or "null" -eq $uploadEntry.attributes.( $Script:settings.broadcast.preheaderFieldname ) ) {
+                            $uploadEntry.attributes.( $Script:settings.broadcast.preheaderFieldname ) = ""
+                        }
+                    } ElseIf ( @( $uploadEntry.global_attributes.psobject.properties.name.toLower() ) -contains $Script:settings.broadcast.preheaderFieldname.toLower() ) {
+                        If ( "" -eq $uploadEntry.global_attributes.( $Script:settings.broadcast.preheaderFieldname ) -or "null" -eq $uploadEntry.global_attributes.( $Script:settings.broadcast.preheaderFieldname ) ) {
+                            $uploadEntry.global_attributes.( $Script:settings.broadcast.preheaderFieldname ) = ""
+                        }
+                    }
+
                 }
 
 
