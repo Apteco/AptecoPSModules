@@ -73,7 +73,7 @@ $Private = @( Get-ChildItem -Path "$( $PSScriptRoot )/private/*.ps1" -Recurse -E
 # dot source the files
 @( $Public + $Private ) | ForEach-Object {
     $import = $_
-    #Write-Host "Load $( $import.fullname )"
+    Write-Verbose "Load $( $import.fullname )"
     Try {
         . $import.fullname
     } Catch {
@@ -125,7 +125,7 @@ try {
         Import-Module -Name $mod -ErrorAction Stop
     }
 } catch {
-    Write-Error "Error loading dependencies. Please execute 'Install-CleverReach' now"
+    Write-Error "Error loading dependencies. Please execute 'Install-AptecoPSFramework' now"
     Exit 0
 }
 
@@ -166,6 +166,6 @@ Export-ModuleMember -Function $Public.Basename #-verbose  #+ "Set-Logfile"
 #-----------------------------------------------
 
 # Set a new process id first, but this can be overridden later
-Set-ProcessIdentifier -Id ( [guid]::NewGuid().toString() )
+Set-ProcessId -Id ( [guid]::NewGuid().toString() )
 
 # the path for the log file will be set with loading the settings

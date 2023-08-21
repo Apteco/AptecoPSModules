@@ -10,6 +10,7 @@
         "lastUpdate" = "2023-08-17"
         "category" = "channel"
         "type" = "email"
+        "stage" = "test"
 
         # have a look at ./bin/dependencies if you need more information about how to define this
         "dependencies" = [PSCustomObject]@{
