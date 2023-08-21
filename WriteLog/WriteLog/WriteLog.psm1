@@ -35,7 +35,7 @@ $Public  = @( Get-ChildItem -Path "$( $PSScriptRoot )/Public/*.ps1" -ErrorAction
 $Private = @( Get-ChildItem -Path "$( $PSScriptRoot )/Private/*.ps1" -ErrorAction SilentlyContinue )
 
 # dot source the files
-@( $Public + $Private ) | ForEach {
+@( $Public + $Private ) | ForEach-Object {
     $import = $_
     Try {
         . $import.fullname

@@ -32,17 +32,17 @@ Function Resize-Logfile {
     # TODO [ ] use input path rather than a variable?
 
     If ( $null -eq $logfile ) {
-     
+
         Write-Warning -Message "There is no variable '`$logfile' present on 'Script' scope"
         Write-Warning -Message "Please define a path in '`$logfile' or use 'Write-Log' once"
-    
+
     } else {
 
         # Testing the path
         If ( ( Test-Path -Path $logfile -IsValid ) -eq $false ) {
             Write-Error -Message "Invalid variable '`$logfile'. The path '$( $logfile )' is invalid."
         } else {
-            
+
             # [ ] TODO maybe implement another parameter to input date instead of no of rows, use streamreader for this instead
             # [Datetime]::ParseExact("20221027130112","yyyyMMddHHmmss",$null)
 

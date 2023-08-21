@@ -63,7 +63,7 @@ Function Write-Log {
     )
 
     Begin {
-    
+
         # If the variable is not present, it will create a temporary file
         If ( $null -eq $Script:logfile ) {
             $f = New-TemporaryFile
