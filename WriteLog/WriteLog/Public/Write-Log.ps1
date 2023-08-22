@@ -116,10 +116,10 @@ Function Write-Log {
             Switch ( $Severity ) {
                 ( [LogSeverity]::VERBOSE ) {
                     #Write-Verbose $message $message -Verbose # To always show the logmessage without verbose flag, execute    $VerbosePreference = "Continue"
-                    Write-Verbose Message $Message -InformationAction Continue -Verbose
+                    Write-Verbose -Message $Message -Verbose #-InformationAction Continue
                 }
                 ( [LogSeverity]::INFO ) {
-                    Write-Information -MessageData $Message -InformationAction Continue -Tags @("Info")
+                    Write-Information -MessageData $Message -Tags @("Info") -Verbose # -InformationAction Continue
                 }
                 ( [LogSeverity]::WARNING ) {
                     Write-Warning -Message $Message
@@ -129,7 +129,7 @@ Function Write-Log {
                 }
                 Default {
                     #Write-Verbose -Message $message -Verbose
-                    Write-Verbose Message $Message -InformationAction Continue -Verbose
+                    Write-Verbose -Message $Message -Verbose # -InformationAction Continue
                 }
             }
         }
