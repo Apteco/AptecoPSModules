@@ -254,7 +254,7 @@ function Invoke-Upload{
             #-----------------------------------------------
 
             # Read first 100 rows
-            $deliveryFileHead = Get-Content -Path $file.FullName -ReadCount 1 -TotalCount 201 -Encoding utf8
+            $deliveryFileHead = Get-Content -Path $file.FullName -ReadCount 100 -TotalCount 201 -Encoding utf8
             $deliveryFileCsv =  ConvertFrom-Csv $deliveryFileHead -Delimiter "`t"
 
             $headers = [Array]@( $deliveryFileCsv[0].psobject.properties.name )
@@ -616,11 +616,11 @@ function Invoke-Upload{
 
                     # Find out if the preheader is global or local and change the value to ""
                     If ( @( $uploadEntry.attributes.psobject.properties.name.toLower() ) -contains $Script:settings.broadcast.preheaderFieldname.toLower() ) {
-                        If ( "" -eq $uploadEntry.attributes.( $Script:settings.broadcast.preheaderFieldname ) -or "null" -eq $uploadEntry.attributes.( $Script:settings.broadcast.preheaderFieldname ) ) {
+                        If ( $Script:settings.upload.nullAttributeWhenValue -contains $uploadEntry.attributes.( $Script:settings.broadcast.preheaderFieldname ) ) {
                             $uploadEntry.attributes.( $Script:settings.broadcast.preheaderFieldname ) = ""
                         }
                     } ElseIf ( @( $uploadEntry.global_attributes.psobject.properties.name.toLower() ) -contains $Script:settings.broadcast.preheaderFieldname.toLower() ) {
-                        If ( "" -eq $uploadEntry.global_attributes.( $Script:settings.broadcast.preheaderFieldname ) -or "null" -eq $uploadEntry.global_attributes.( $Script:settings.broadcast.preheaderFieldname ) ) {
+                        If ( $Script:settings.upload.nullAttributeWhenValue -contains $uploadEntry.global_attributes.( $Script:settings.broadcast.preheaderFieldname ) ) {
                             $uploadEntry.global_attributes.( $Script:settings.broadcast.preheaderFieldname ) = ""
                         }
                     }

@@ -12,7 +12,7 @@
 RootModule = 'AptecoPSFramework.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.0.14'
+ModuleVersion = '0.0.16'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -134,6 +134,8 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.0.16 Added String values for Preheaders that are nulled when they are used
+0.0.15 Fixing a problem with WriteLog module
 0.0.14 Fixing a problem with the preview read of the input file when it has more than 100 rows
 0.0.13 Fixing a problem with newly created lists/groups without any attributes for CleverReach
        Preventing a problem with empty upserts for CleverReach

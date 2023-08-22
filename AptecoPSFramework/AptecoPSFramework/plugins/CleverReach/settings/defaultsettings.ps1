@@ -64,6 +64,12 @@
         "tagSource" = "Apteco"                              # Prefix of the tag, that will be used automatically, when doing mailings (not tagging)
         "useTagForUploadOnly" = $true
         "loadRuntimeStatistics" = $true                     # Loads total, active, inactive, bounced receivers of the group after upserting the data. This loads all receivers on the list, so can need a while and cause many api calls
+        "nullAttributeWhenValue" = @(                       # keywords that should be replace with an empty string for CleverReach
+            ""
+            "null"
+            "ContentObject"
+            "-"
+        )                 
     }
 
     # Broadcast settings
