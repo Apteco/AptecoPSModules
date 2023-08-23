@@ -36,7 +36,7 @@ Function Get-StringHash {
         # Add salt if needed
         $string = $InputString + $Salt
 
-        # Choose algorithm
+        # Choose algorithm: https://learn.microsoft.com/de-de/dotnet/api/system.security.cryptography.hashalgorithm.create?view=net-7.0
         $alg = [System.Security.Cryptography.HashAlgorithm]::Create($HashName)
 
         # Change key, e.g. for HMACSHA256
@@ -50,7 +50,7 @@ Function Get-StringHash {
 
         $bytes = $alg.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($string))
 
-        
+
         #-----------------------------------------------
         # RETURN
         #-----------------------------------------------
@@ -62,7 +62,7 @@ Function Get-StringHash {
         } else {
 
             # Create bytes from string and hash
-            $res = Convert-ByteArrayToHex -Bytes $bytes
+            $res = Convert-ByteArrayToHex -ByteArray $bytes
 
             # Transform uppercase, if needed, and return the result
             if ( $Uppercase ) {
@@ -72,7 +72,6 @@ Function Get-StringHash {
             }
 
         }
-
 
 
     }
