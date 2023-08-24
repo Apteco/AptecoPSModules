@@ -1,10 +1,9 @@
-
-Function Convert-StringEncoding {
+﻿Function Convert-StringEncoding {
 
     <#
     .SYNOPSIS
         Converts a string between different encodings. This is useful e.g. if you have APIs, that deliver UTF8 data, but does not deliver
-        the encoding information, so PowerShell (especially 5.1 and before) is interpreting it in the default encoding which is 
+        the encoding information, so PowerShell (especially 5.1 and before) is interpreting it in the default encoding which is
         not always UTF8.
 
     .DESCRIPTION
@@ -19,6 +18,7 @@ Function Convert-StringEncoding {
         Especially for Pwsh7 make sure to use the HeaderName of the encoding like "Windows-1252" instead of "iso-8859-1"
         [System.Text.Encoding]::GetEncodings()
         
+
         More explanation of this function and the background
 
         # representation as bytes from this string: žluťoučký kůň úpěl ďábelské ódy
@@ -67,10 +67,10 @@ Function Convert-StringEncoding {
 
     .EXAMPLE
         Convert-StringEncoding -string "žluťoučký kůň úpěl ďábelské ódy" -inputEncoding ([Console]::OutputEncoding.HeaderName) -outputEncoding ([System.Text.Encoding]::UTF8.HeaderName)
-    
+
     .EXAMPLE
         "žluťoučký kůň úpěl ďábelské ódy", "Hellö Wörld" | Convert-StringEncoding -inputEncoding "Windows-1252" -outputEncoding "utf-8"
-        
+
     .INPUTS
         String
 
@@ -88,7 +88,7 @@ Function Convert-StringEncoding {
          [Parameter(Mandatory=$true,ValueFromPipeline=$true)][String]$String
         ,[Parameter(Mandatory=$true)][String]$InputEncoding
         ,[Parameter(Mandatory=$false)][String]$OutputEncoding = "utf-8"
-    )    
+    )
 
     Process {
 

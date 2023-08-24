@@ -1,36 +1,10 @@
 
-# Apteco PS Modules - PowerShell file rows count
+# Apteco Customs - PowerShell WebRequest UTF8
 
+Helpful function for APIs, that return UTF8 encoded content, but PowerShell does not recognize it as UTF8 encoded.
 
-Just use
+So it reads the content and converts it from the `[Console]::OutputEncoding.HeaderName` to UTF8.
 
-```PowerShell
-Measure-Rows -Path "C:\Temp\Example.csv"
-```
-
-or
-
-```PowerShell
-"C:\Temp\Example.csv" | Measure-Rows -SkipFirstRow
-```
-
-or
-
-```PowerShell
-Measure-Rows -Path "C:\Temp\Example.csv" -Encoding UTF8
-```
-
-or even
-
-```PowerShell
-"C:\Users\Florian\Downloads\adressen.csv", "C:\Users\Florian\Downloads\italian.csv" | Measure-Rows -SkipFirstRow -Encoding ([System.Text.Encoding]::UTF8)
-```
-
-to count the rows in a csv file. It uses a .NET streamreader and is extremly fast.
-
-The default encoding is UTF8, but it uses the ones available in [System.Text.Encoding]
-
-If you want to skip the first line, just use this Switch -SkipFirstRow
 
 # Installation
 
@@ -43,13 +17,13 @@ You can just download the whole repository here and pick this script or your can
 For installation execute this for all users scope
 
 ```PowerShell
-Find-Module -Repository "PSGallery" -Name "EncryptCredential" -IncludeDependencies | Install-Module -Verbose -Scope AllUsers
+Find-Module -Repository "PSGallery" -Name "InvokeWebRequestUTF8" -IncludeDependencies | Install-Module -Verbose -Scope AllUsers
 ```
 
 You can check the installed module with
 
 ```PowerShell
-Get-InstalledModule EncryptCredential
+Get-InstalledModule InvokeWebRequestUTF8
 ```
 
 If you want to find more [Apteco scripts in PSGallery](https://www.powershellgallery.com/packages?q=Tags%3A%22Apteco%22), please search with
@@ -78,7 +52,7 @@ Find-Module -Repository LocalRepo
 Then install the script like 
 
 ```PowerShell
-Find-Module -Repository LocalRepo -Name MeasureRows -IncludeDependencies | Install-Module -Scope CurrentUser -Verbose
+Find-Module -Repository LocalRepo -Name InvokeWebRequestUTF8 -IncludeDependencies | Install-Module -Scope CurrentUser -Verbose
 ```
 
 That way you can exchange the `.nupkg` files and update them manually from time to time.
@@ -88,15 +62,26 @@ That way you can exchange the `.nupkg` files and update them manually from time 
 If you don't want to use the script anymore, just remove it with 
 
 ```PowerShell
-Uninstall-Module -Name MeasureRows
+Uninstall-Module -Name InvokeWebRequestUTF8
 ```
+
+
 
 ## Github
 
 Download the whole repository and to load the module, just execute
 
 ```PowerShell
-Set-Location MeasureRows
-Import-Module .\MeasureRows
+Set-Location InvokeWebRequestUTF8
+Import-Module .\InvokeWebRequestUTF8
 ```
 
+# Example
+
+This module is using the ExtendFunction module and is mirroring the original `Invoke-WebRequest` so you have the exact same parameters, only the command changes to something like
+
+```PowerShell
+Invoke-WebRequest -UseBasicParsing -Uri "https://api.chucknorris.io/jokes/random" -Method "GET"
+```
+
+If you are using this command on a console or restricted environment, please don't forget to use `-UseBasicParsing` as you already know. This shouldn't be an issue on pwsh or linux.

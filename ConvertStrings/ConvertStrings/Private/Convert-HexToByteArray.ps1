@@ -41,8 +41,8 @@ Function Convert-HexToByteArray {
         Hexadecimal string
 
     .EXAMPLE
-        Convert-HexToByteArray -HexString "48656c6c6f20576f726c64"
-        
+        Convert-HexToByteArray -HexString "48656c6c6f20576f726c64"        
+
     .INPUTS
         String
 
@@ -71,8 +71,5 @@ Function Convert-HexToByteArray {
         $Bytes
 
     }
-
-
-
 
 }

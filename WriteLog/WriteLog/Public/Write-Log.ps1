@@ -63,7 +63,7 @@ Function Write-Log {
     )
 
     Begin {
-    
+
         # If the variable is not present, it will create a temporary file
         If ( $null -eq $Script:logfile ) {
             $f = New-TemporaryFile
@@ -119,7 +119,7 @@ Function Write-Log {
                     Write-Verbose -Message $Message -InformationAction Continue -Verbose
                 }
                 ( [LogSeverity]::INFO ) {
-                    Write-Information -MessageData "INFO: $( $Message )" -InformationAction Continue -Tags @("Info")
+                    Write-Information -MessageData "INFO: $( $Message )" -Tags @("Info") -Verbose # -InformationAction Continue
                 }
                 ( [LogSeverity]::WARNING ) {
                     Write-Warning -Message $Message
@@ -129,7 +129,7 @@ Function Write-Log {
                 }
                 Default {
                     #Write-Verbose -Message $message -Verbose
-                    Write-Verbose -Message $Message -InformationAction Continue -Verbose
+                    Write-Verbose -Message $Message -Verbose # -InformationAction Continue
                 }
             }
         }

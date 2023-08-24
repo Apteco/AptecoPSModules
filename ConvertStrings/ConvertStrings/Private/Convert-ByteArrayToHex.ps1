@@ -1,5 +1,3 @@
-
-
 Function Convert-ByteArrayToHex {
 
     <#
@@ -48,11 +46,11 @@ Function Convert-ByteArrayToHex {
         $stringBuilder = [System.Text.StringBuilder]::new($ByteArray.Length * 2)
 
         # Format bytes
-        $ByteArray | ForEach {
+        $ByteArray | ForEach-Object {
             [void]$stringBuilder.Append($_.ToString("x2"))
             #$stringBuilder.AppendFormat("{0:x2}", $_) | Out-Null # Alternative
         }
-        
+
         # Return
         return $stringBuilder.ToString()
 

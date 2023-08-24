@@ -6,10 +6,11 @@
 
         # general information about this plugin
         "name" = "CleverReach"
-        "version" = "0.0.9"
-        "lastUpdate" = "2023-08-17"
+        "version" = "0.0.10"
+        "lastUpdate" = "2023-08-21"
         "category" = "channel"
         "type" = "email"
+        "stage" = "test"
 
         # have a look at ./bin/dependencies if you need more information about how to define this
         "dependencies" = [PSCustomObject]@{

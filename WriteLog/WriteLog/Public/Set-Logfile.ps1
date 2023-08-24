@@ -7,13 +7,13 @@ Function Set-Logfile {
 
     Process {
         try {
-            
+
             If ( (Test-Path -Path $Path -IsValid) -eq $true) {
 
                 # Create the item if not existing
                 If (( Test-Path -Path $Path ) -eq $false) {
-                    Write-Host "Create the item"
-                    $item = New-Item -Path $Path -ItemType File
+                    Write-Verbose "Create the item"
+                    New-Item -Path $Path -ItemType File
                 }
 
                 $resolvedPath = Resolve-Path -Path $Path

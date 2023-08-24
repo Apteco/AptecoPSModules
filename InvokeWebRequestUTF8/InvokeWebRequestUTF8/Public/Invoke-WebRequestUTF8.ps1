@@ -1,7 +1,6 @@
 Function Invoke-WebRequestUTF8 {
 
-# To solve these problems, load the content with Invoke-WebRequest rather than Invoke-RestMethod, and convert the content with the function above
-
+    # To solve these problems, load the content with Invoke-WebRequest rather than Invoke-RestMethod, and convert the content with the function above
 
     [CmdletBinding()]
     param (
@@ -16,7 +15,7 @@ Function Invoke-WebRequestUTF8 {
         $response = Invoke-WebRequest @updatedParameters
 
         # Convert Returned content
-        $fixedContent = Convert-StringEncoding -string $response.Content -inputEncoding ([Console]::OutputEncoding.HeaderName) -outputEncoding ([System.Text.Encoding]::UTF8.HeaderName)
+        $fixedContent = Convert-StringEncoding -String $response.Content -InputEncoding ([Console]::OutputEncoding.HeaderName) -OutputEncoding ([System.Text.Encoding]::UTF8.HeaderName)
 
         # Return new object
         [PSCustomObject]@{
@@ -25,5 +24,5 @@ Function Invoke-WebRequestUTF8 {
         }
 
     }
-    
+
 }
