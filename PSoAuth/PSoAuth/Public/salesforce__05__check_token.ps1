@@ -101,8 +101,8 @@ try {
             Method = "Post"
             Uri = "https://login.salesforce.com/services/oauth2/token" #"$( $apiRoot )$( $object )/exchange.json"
             Body = [Hashtable]@{
-                "client_id" = "3MVG9I5UQ_0k_hTkyC7dvZDoWszDfra.IGCBVnxubIu4opOza7jDxuLEIFH5ZWZepZLJ.Axbw.uoCtZqF1vUp"
-                "client_secret" = "1DBF58393544EA4AAE9F4B2E3B813A89626745F088FE12F0161165087D030B95" #$clientCred.GetNetworkCredential().Password
+                "client_id" = "3MVG9I5UQ_0k_hTkyC7dvZDoWszDfra.IGCBVnxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                "client_secret" = "1DBF58393544Exxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" #$clientCred.GetNetworkCredential().Password
                 "grant_type" = "refresh_token"
                 "refresh_token" = ( Get-SecureToPlaintext -String $settings.login.refreshtoken )
             }
