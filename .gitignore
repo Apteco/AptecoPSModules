@@ -3,3 +3,4 @@
 *publish.ps1
 *.json
 *.zip
+*_archive*
