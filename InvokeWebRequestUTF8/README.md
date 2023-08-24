@@ -1,5 +1,5 @@
 
-# Apteco Customs - PowerShell WebRequest UTF8
+# Apteco PS Modules - PowerShell WebRequest UTF8
 
 Helpful function for APIs, that return UTF8 encoded content, but PowerShell does not recognize it as UTF8 encoded.
 
