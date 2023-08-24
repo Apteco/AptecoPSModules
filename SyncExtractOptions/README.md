@@ -1,5 +1,5 @@
 
-# Apteco Customs - PowerShell extract options for FastStats Designer
+# Apteco PS Modules - PowerShell extract options for FastStats Designer
 
 This script is used to switch off or switch on some data sources in FastStats Designer to allow a build with only a few tables (like customer data)
 and then later do a bigger build with customer and transactional data.
