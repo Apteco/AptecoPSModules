@@ -1,55 +1,65 @@
 # AptecoPSModules
-Apteco PowerShell Modules
 
+The Apteco PowerShell Modules allow you to extend your current Apteco Marketing Stack with more customisation. For example here is fully featured Framework to create your own channels for Orbit and PeopleStage. Other modules in here are helpful in working with your data.
+
+All modules are targeted to be published on [PowerShell Gallery](https://www.powershellgallery.com/packages?q=apteco). So Installation is much easier than copy&paste.
+
+Those are the already published packages, but more are in the pipeline:
 
 Name|Module|Script
 -|-|-
-[WriteLog](WriteLog/)|x
-[SyncExtractOptions](SyncExtractOptions/)||x
-[ExtendFunction](ExtendFunction/)|x
-[EncryptCredential](EncryptCredential/)|x|
+[AptecoPSFramework](AptecoPSFramework/)|x
+[ConvertStrings](ConvertStrings/)|x
 [ConverUnixTimestamp](ConverUnixTimestamp/)|x
+[EncryptCredential](EncryptCredential/)|x|
+[ExtendFunction](ExtendFunction/)|x
+[InvokeWebRequestUTF8](InvokeWebRequestUTF8/)|x
 [MeasureRows](MeasureRows/)|x
-[AptecoPSFramework]|x
-[MergeHashtable]|x
-[MergePSCustomObject]|x
+[MergeHashtable](MergeHashtable/)|x
+[MergePSCustomObject](MergePSCustomObject/)|x
+[SyncExtractOptions](SyncExtractOptions/)||x
+[WriteLog](WriteLog/)|x
 
-## WriteLog
 
-This script allows to write log files pretty easy without any fuzz. It retries the write commands if parallel processes want to write into the same logfile.
+Here are some high level descriptions. Please follow the links from the table or go into the subdirectories to get more detailed information.
 
-Execute commands like
 
-```PowerShell
-Write-Log -message "Hello World"
-Write-Log -message "Hello World" -severity ([LogSeverity]::ERROR)
-"Hello World" | Write-Log
-```
 
-Then the logfile getting written looks like
 
-```
-20220217134552	a6f3eda5-1b50-4841-861e-010174784e8c	INFO	This is a general information
-20220217134617	a6f3eda5-1b50-4841-861e-010174784e8c	ERROR	Note! This is an error
-20220217134618	a6f3eda5-1b50-4841-861e-010174784e8c	VERBOSE	This is the verbose/debug information
-20220217134619	a6f3eda5-1b50-4841-861e-010174784e8c	WARNING	And please look at this warning
+## AptecoPSFramework
 
-```
+This framework is mainly created for installing and using custom channels in Apteco Orbit and PeopleStage. The channel implementations are written in PowerShell and already implemented as "Plugins" in this module. But there is a function implemented so you can refer to your own channels that are not getting overwritten if you update this module.
 
-separated by tabs.
+## ConvertStrings
 
-Click on the folder for more information.
+Allow you to manipulate strings like converting the string encoding or replacing strings. Random strings and hashed strings are also included.
 
-## SyncExtractOptions
+## MergePSCustomObject
 
-This script is used to switch off or switch on some data sources in FastStats Designer to allow a build with only a few tables (like customer data)
-and then later do a bigger build with customer and transactional data.
+This module merges two PSCustomObjects into one. It is able to handle nested structures like hashtables, arrays and PSCustomObjects. 
 
-This example just changes the behaviour of the extract options and saves it in the same xml
+
+## ConvertUnixTimestamp
+
+Converts a `[DateTime]` into a numeric unix timestamp as `[UInt64]` and vice versa.
+
+To get a unix timestamp from a `[DateTime]::Now` or `(Get-Date)` just do it like in these examples
 
 ```PowerShell
-SyncExtractOptions -DesignFile "C:\Apteco\Build\20220714\designs\20220714.xml" -Include "Bookings", "People"
+Get-Unixtime
+Get-Unixtime -InMilliseconds
+Get-Unixtime -InMilliseconds -Timestamp ( Get-Date ).AddDays(-2)
 ```
+
+To convert a timestamp back, just do it like here
+
+```PowerShell
+ConvertFrom-UnixTime -Unixtime 1591775090
+ConvertFrom-UnixTime -Unixtime 1591775090 -ConvertToLocalTimezone
+ConvertFrom-UnixTime -Unixtime 1591775146091 -InMilliseconds
+( ConvertFrom-UnixTime -Unixtime $lastSession.timestamp ).ToString("yyyy-MM-ddTHH:mm:ssK")
+```
+
 
 ## EncryptCredential
 
@@ -79,26 +89,32 @@ and get back
 Hello World
 ```
 
-## ConvertUnixTimestamp
 
-Converts a `[DateTime]` into a numeric unix timestamp as `[UInt64]` and vice versa.
+## ExtendFunction
 
-To get a unix timestamp from a `[DateTime]::Now` or `(Get-Date)` just do it like in these examples
-
-```PowerShell
-Get-Unixtime
-Get-Unixtime -InMilliseconds
-Get-Unixtime -InMilliseconds -Timestamp ( Get-Date ).AddDays(-2)
-```
-
-To convert a timestamp back, just do it like here
+This module can be used to extend existing functions/cmdlets with more scripting and possibly additional parameters like
 
 ```PowerShell
-ConvertFrom-UnixTime -Unixtime 1591775090
-ConvertFrom-UnixTime -Unixtime 1591775090 -ConvertToLocalTimezone
-ConvertFrom-UnixTime -Unixtime 1591775146091 -InMilliseconds
-( ConvertFrom-UnixTime -Unixtime $lastSession.timestamp ).ToString("yyyy-MM-ddTHH:mm:ssK")
+function Invoke-CoreWebRequest {
+    
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true)][string]$AdditionalString
+    )
+    DynamicParam { Get-BaseParameters "Invoke-WebRequest" }
+
+    Process {
+        Write-Host $AdditionalString
+        $updatedParameters = Skip-UnallowedBaseParameters -Base "Invoke-WebRequest" -Parameters $PSBoundParameters
+        Invoke-WebRequest @updatedParameters
+    }
+
+}
 ```
+
+## InvokeWebRequestUTF8
+
+Executes an `Invoke-WebRequst`, but converts the content afterwards into UTF8, if the correct encoding wasn't given back.
 
 ## MeasureRows
 
@@ -128,35 +144,50 @@ or even
 
 to count the rows in a csv file. It uses a .NET streamreader and is extremly fast.
 
-## ExtendFunction
-
-This module can be used to extend existing functions/cmdlets with more scripting and possibly additional parameters like
-
-```PowerShell
-function Invoke-CoreWebRequest {
-    
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory=$true)][string]$AdditionalString
-    )
-    DynamicParam { Get-BaseParameters "Invoke-WebRequest" }
-
-    Process {
-        Write-Host $AdditionalString
-        $updatedParameters = Skip-UnallowedBaseParameters -Base "Invoke-WebRequest" -Parameters $PSBoundParameters
-        Invoke-WebRequest @updatedParameters
-    }
-
-}
-```
-## AptecoPSFramework
-
-This framework is mainly created for installing and using custom channels in Apteco Orbit and PeopleStage. The channel implementations are written in PowerShell and already implemented as "Plugins" in this module. But there is a function implemented so you can refer to your own channels that are not getting overwritten if you update this module.
-
-## MergePSCustomObject
-
-This module merges two PSCustomObjects into one. It is able to handle nested structures like hashtables, arrays and PSCustomObjects. 
-
 ## MergeHashtable
 
 This module merges two Hashtables into one. It is able to handle nested structures like hashtables, arrays and PSCustomObjects. 
+
+## MergePSCustomObject
+
+This module merges PSCustomObjects into one. It is able to handle nested structures like hashtables, arrays and PSCustomObjects.
+
+## SyncExtractOptions
+
+This script is used to switch off or switch on some data sources in FastStats Designer to allow a build with only a few tables (like customer data)
+and then later do a bigger build with customer and transactional data.
+
+This example just changes the behaviour of the extract options and saves it in the same xml
+
+```PowerShell
+SyncExtractOptions -DesignFile "C:\Apteco\Build\20220714\designs\20220714.xml" -Include "Bookings", "People"
+```
+
+
+
+## WriteLog
+
+This script allows to write log files pretty easy without any fuzz. It retries the write commands if parallel processes want to write into the same logfile.
+
+Execute commands like
+
+```PowerShell
+Write-Log -message "Hello World"
+Write-Log -message "Hello World" -severity ([LogSeverity]::ERROR)
+"Hello World" | Write-Log
+```
+
+Then the logfile getting written looks like
+
+```
+20220217134552	a6f3eda5-1b50-4841-861e-010174784e8c	INFO	This is a general information
+20220217134617	a6f3eda5-1b50-4841-861e-010174784e8c	ERROR	Note! This is an error
+20220217134618	a6f3eda5-1b50-4841-861e-010174784e8c	VERBOSE	This is the verbose/debug information
+20220217134619	a6f3eda5-1b50-4841-861e-010174784e8c	WARNING	And please look at this warning
+
+```
+
+separated by tabs.
+
+Click on the folder for more information.
+
