@@ -71,6 +71,7 @@ $Script:store = [PSCustomObject]@{
     "lastChange" = [datetime]::Now.ToString("yyyyMMddHHmmss")
     "channels" = [Array]@()
     "additionalHeaders" = [PSCustomObject]@{}
+    "groups" = [Array]@()
 }
 
 
@@ -117,7 +118,7 @@ If ( (Test-Path -Path $defaultStorefile) -eq $true ) {
 #-----------------------------------------------
 
 Export-ModuleMember -Function $Public.Basename
-Export-ModuleMember -Function $Private.Basename
+Export-ModuleMember -Function $Private.Basename # TODO remove this later
 
 
 #-----------------------------------------------

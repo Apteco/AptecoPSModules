@@ -4,7 +4,7 @@ Install-Module PSNotification
 
 This will install the module. After installation there will be an automatic "store" file created in the current user account. Then you can add different channels to that module.
 
-A "channel" is something like `Teams|Slack|Email|Telegram`. A target specifies a defined #channel in slack or a chat in telegram.
+A "channel" is something like `Teams|Slack|Email|Telegram`. A target specifies a defined #channel in slack or a chat in telegram. A group is a combination of different targets
 
 # Telegram
 
@@ -30,17 +30,27 @@ Send-TelegramNotification -Name "MyNewChannel" -Target "MyNewTarget" -Text "Hell
 Send-TelegramNotification -Name "MyNewChannel" -Target "MyNewTarget" -Text "Hello World" -DisableNotification
 ```
 
+
+More telegram specific commands
+
+```PowerShell
 Get-TelegramMe -Name "MyNewChannel"
-
 Get-TelegramUpdates -Name "MyNewChannel"
+```
 
-Send-TelegramNotification -Target "xyz"
+## Add a target to a notification group
 
+A notification group combines multiple channels/targets together. It needs to be created first
 
+```PowerShell
+Add-NotificationGroup -Name "MyNewGroup"
+```
 
-# Telegram
+Then add targets to your group
 
-
+```PowerShell
+Add-NotificationGroupTarget -Group "MyNewGroup" -Channel "MyNewChannel" -Target "MyNewTarget"
+```
 
 ## Notes
 
