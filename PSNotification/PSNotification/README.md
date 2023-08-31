@@ -52,6 +52,12 @@ Then add targets to your group
 Add-NotificationGroupTarget -Group "MyNewGroup" -Channel "MyNewChannel" -Target "MyNewTarget"
 ```
 
+## Send a message to a notification group
+
+```PowerShell
+Send-GroupNotification -Name "MyNewGroup" -Message "Hello world"
+```
+
 ## Notes
 
 This should allow you to wait in PowerShell until someone has written a message directly to the bot or a group and choose that message. From that message we get the chat_id, which is needed for conversations.

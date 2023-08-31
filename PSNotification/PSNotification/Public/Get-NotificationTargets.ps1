@@ -30,6 +30,7 @@ function Get-NotificationTargets {
                     "modified" = $channel.DateModified
                     "targetid" = $target.TargetId
                     "targetname" = $target.TargetName
+                    "memberof" = $target.MemberOf
                 })
 
             }
