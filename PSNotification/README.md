@@ -87,3 +87,32 @@ Send-TeamsUpdate -Name "MyNewTeamsChannel" -Title "Great title!" -Text "Hello Wo
 ```
 
 
+# Slack
+
+## Pre-Requisites
+
+1. Follow the pretty good explanations here, create an app there: https://api.slack.com/tutorials/tracks/getting-a-token
+1. After creating the app it directs you back to that link and attached the app id similar to here: https://api.slack.com/tutorials/tracks/getting-a-token?app_id_from_manifest=Z05XXXXXXXX
+1. When you scroll down to Step 1 on that page, tadaa.... there is the token you can use now in this module. It is easy like that!
+
+
+## Add channel to PSNotification
+
+Add the channel now to this module
+
+```PowerShell
+Import-Module PSNotification
+Add-SlackChannel -Name "MyNewSlackChannel" -Token "xoxb-not-a-real-token-this-will-not-work"
+Add-SlackTarget -Name "MyNewSlackChannel" -TargetName "MyNewSlackTarget"
+
+
+Send-SlackNotification -Name "MyNewSlackChannel" -Target "MyNewSlackTarget" -Text "Hello World"
+```
+
+There will be some misunderstanding with the terminology. A target in this module is a Slack channel.
+
+More Slack specific commands
+
+```PowerShell
+Get-SlackConversations -Name "MyNewSlackChannel"
+```
