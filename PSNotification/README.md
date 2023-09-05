@@ -65,14 +65,25 @@ This module should be able to handle multiple chat_ids via a virtual group, mayb
 
 # Teams
 
+## Pre-Requisites
+
 Good resource: https://learn.microsoft.com/en-us/azure/data-factory/how-to-send-notifications-to-teams?tabs=data-factory
 
 1. Create a new team
 1. Add a new connector to one of the channels named `Incoming Webhook`, give it a name like `IncomingNotifications` and create it finally.
 1. Then you a url like https://apteco365.webhook.office.com/webhookb2/71d1c7d7-xxxx-xxxx-xxxx-xxxxxxxxxxxx@131c9905-xxxx-xxxx-xxxx-xxxxxxxxxxxx/IncomingWebhook/cb6e6cxxxxxxxxxxxxxxxxxxxx/801883d2-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-1. With that url you are able to send a post
+1. With that url you are able to send a post and add this url to this module.
 
 
-# Slack
+## Add channel to PSNotification
 
-https://api.slack.com/tutorials/tracks/getting-a-token
+Add the channel now to this module
+
+```PowerShell
+Import-Module PSNotification
+Add-TeamsChannel -Name "MyNewTeamsChannel" -Webhook "https://apteco365.webhook.office.com/webhookb2/71d1c7d7-xxxx-xxxx-xxxx-xxxxxxxxxxxx@131c9905-xxxx-xxxx-xxxx-xxxxxxxxxxxx/IncomingWebhook/cb6e6cxxxxxxxxxxxxxxxxxxxx/801883d2-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+
+Send-TeamsUpdate -Name "MyNewTeamsChannel" -Title "Great title!" -Text "Hello World"
+```
+
+

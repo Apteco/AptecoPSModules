@@ -120,7 +120,7 @@ function Invoke-Teams {
             If ( $wr.ok -eq $true ) {
                 $return = $wr.result
             } else {
-                throw "Error at telegram request"
+                throw "Error at teams request"
             }
             
             #$finished = $true
