@@ -19,7 +19,7 @@ function Get-TelegramChannel {
         }
 
         If ( $channel -eq $null ) {
-            throw "Channel $Name not found!"
+            throw "Channel $( $Name ) not found!"
         }
 
         $channel
