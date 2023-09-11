@@ -6,19 +6,19 @@ All modules are targeted to be published on [PowerShell Gallery](https://www.pow
 
 Those are the already published packages, but more are in the pipeline:
 
-Name|Module|Script
--|-|-
-[AptecoPSFramework](AptecoPSFramework/)|x
-[ConvertStrings](ConvertStrings/)|x
-[ConverUnixTimestamp](ConverUnixTimestamp/)|x
-[EncryptCredential](EncryptCredential/)|x|
-[ExtendFunction](ExtendFunction/)|x
-[InvokeWebRequestUTF8](InvokeWebRequestUTF8/)|x
-[MeasureRows](MeasureRows/)|x
-[MergeHashtable](MergeHashtable/)|x
-[MergePSCustomObject](MergePSCustomObject/)|x
-[SyncExtractOptions](SyncExtractOptions/)||x
-[WriteLog](WriteLog/)|x
+Name|Type|Repository/Version|Platform|Downloads|
+-|-|-|-|-
+[AptecoPSFramework](AptecoPSFramework/)|Module|![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/AptecoPSFramework)|![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/AptecoPSFramework)|![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/AptecoPSFramework)
+[ConvertStrings](ConvertStrings/)|Module|![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/ConvertStrings)|![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/ConvertStrings)|![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/ConvertStrings)
+[ConvertUnixTimestamp](ConverUnixTimestamp/)|Module|![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/ConvertUnixTimestamp)|![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/ConvertUnixTimestamp)|![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/ConvertUnixTimestamp)
+[EncryptCredential](EncryptCredential/)|Module|![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/EncryptCredential)|![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/EncryptCredential)|![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/EncryptCredential)
+[ExtendFunction](ExtendFunction/)|Module|![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/ExtendFunction)|![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/ExtendFunction)|![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/ExtendFunction)
+[InvokeWebRequestUTF8](InvokeWebRequestUTF8/)|Module|![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/InvokeWebRequestUTF8)|![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/InvokeWebRequestUTF8)|![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/InvokeWebRequestUTF8)
+[MeasureRows](MeasureRows/)|Module|![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/MeasureRows)|![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/MeasureRows)|![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/MeasureRows)
+[MergeHashtable](MergeHashtable/)|Module|![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/MergeHashtable)|![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/MergeHashtable)|![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/MergeHashtable)
+[MergePSCustomObject](MergePSCustomObject/)|Module|![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/MergePSCustomObject)|![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/MergePSCustomObject)|![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/MergePSCustomObject)
+[SyncExtractOptions](SyncExtractOptions/)|Script|![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/SyncExtractOptions)|![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/SyncExtractOptions)|![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/SyncExtractOptions)
+[WriteLog](WriteLog/)|Module|![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/WriteLog)|![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/WriteLog)|![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/WriteLog)
 
 
 Here are some high level descriptions. Please follow the links from the table or go into the subdirectories to get more detailed information.
