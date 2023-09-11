@@ -338,6 +338,21 @@ Path|Setting|Default|Explanation
 
 
 
+# Errors
+
+When you get this error
+
+```PowerShell
+PS C:\Users\Administrator> find-module aptecopsframework -IncludeDependencies -AllVersions
+Der Wert "0.0.17-alpha" kann nicht in den Typ "System.Version" konvertiert werden. Fehler: "Die Eingabezeichenfolge
+hat das falsche Format."
+```
+
+Please install a newer version of `PowerShellGet`
+
+```PowerShell
+Install-Module PowerShellGet -Force -AllowClobber
+```
 
 
 # TODO / TEST
