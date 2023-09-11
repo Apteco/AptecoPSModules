@@ -12,7 +12,7 @@
 RootModule = 'AptecoPSFramework.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.0.16'
+ModuleVersion = '0.0.17'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -132,8 +132,14 @@ PrivateData = @{
         # Eine URL zu einem Symbol, das das Modul darstellt.
         IconUri = 'https://www.apteco.de/sites/default/files/favicon_3.ico'
 
+        # release channel
+        #Prerelease = 'alpha1'
+
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.0.17 Fixing a problem when CleverReach invokes a http502 invalid gateway error -> Repeat the call a few times
+       Fixing a problem in CleverReach when creating new attributes we get now less information back, so we are loading details of new created attributes
+       Adding functionality to repeat REST calls, when specific problems occur
 0.0.16 Added String values for Preheaders that are nulled when they are used
 0.0.15 Fixing a problem with WriteLog module
 0.0.14 Fixing a problem with the preview read of the input file when it has more than 100 rows

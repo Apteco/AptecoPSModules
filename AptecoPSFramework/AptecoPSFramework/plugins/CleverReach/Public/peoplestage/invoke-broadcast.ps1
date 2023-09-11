@@ -528,7 +528,7 @@ function Invoke-Broadcast{
 
             # General return value to identify this custom channel in the broadcasts detail tables
             "CustomProvider"=  $Script:settings.providername
-            "ProcessId" = $Script:processId
+            "ProcessId" = $InputHashtable.ProcessId #$Script:processId
 
             # Some more information for the broadcasts script
             #"EmailFieldName"= $params.EmailFieldName

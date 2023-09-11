@@ -57,6 +57,10 @@ if ( $Script:settings.changeTLS ) {
     #     #,[System.Net.SecurityProtocolType]::Ssl3
     # )
     [System.Net.ServicePointManager]::SecurityProtocol = @( $Script:settings.allowedProtocols )
+
+    # Microsoft is using this setting in examples
+    #[Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+
 }
 
 # TODO look for newer version of this network stuff
@@ -159,6 +163,7 @@ If ("" -ne $Script:settings.keyfile) {
 #-----------------------------------------------
 
 Export-ModuleMember -Function $Public.Basename #-verbose  #+ "Set-Logfile"
+#Export-ModuleMember -Function $Private.Basename #-verbose  #+ "Set-Logfile"
 
 
 #-----------------------------------------------

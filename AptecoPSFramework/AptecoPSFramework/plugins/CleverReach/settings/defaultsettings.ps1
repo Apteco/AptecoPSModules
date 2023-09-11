@@ -17,6 +17,21 @@
     }                                                       # additional parameter for the Invoke-RestMethod call like Proxy or ProxyCredential, see https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/invoke-restmethod
     "logAPIrequests" = $true                                # log information like 'GET https://rest.cleverreach.com:443/v3/groups.json/1158984/stats'
 
+    # Error handling
+    "errorhandling" = [PSCustomObject]@{
+        
+        # Delay, if a problem happens and will be repeated
+        "HttpErrorDelay" = 200
+
+        # Specific http errors and their settings
+        "RepeatOnHttpErrors" = [Array]@(502)
+        "MaximumRetriesOnHttpErrorList" = 3
+        
+        # Generic errors like 404 that are not on the specific list
+        "MaximumRetriesGeneric" = 1
+
+    }
+
     # Token refreshment
     "token" = [PSCustomObject]@{
 
