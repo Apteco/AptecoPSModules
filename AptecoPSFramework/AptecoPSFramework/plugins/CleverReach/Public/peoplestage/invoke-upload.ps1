@@ -797,10 +797,11 @@ function Invoke-Upload{
 
         } catch {
 
-            $msg = "Error during uploading data. Abort!"
+            $msg = "Error during uploading data in line $( $_.InvocationInfo.ScriptLineNumber ). Abort!"
             Write-Log -Message $msg -Severity ERROR -WriteToHostToo $false
             Write-Log -Message $_.Exception -Severity ERROR
             throw $_.Exception
+
 
         } finally {
 
@@ -847,7 +848,7 @@ function Invoke-Upload{
 
             # General return value to identify this custom channel in the broadcasts detail tables
             "CustomProvider"= $Script:settings.providername
-            "ProcessId" = $Script:processId
+            "ProcessId" = Get-ProcessId #$Script:processId
 
             # More values for broadcast
             "Tag" = ( $tags -join ", " )

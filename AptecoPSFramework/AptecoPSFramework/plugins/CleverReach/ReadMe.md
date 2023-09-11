@@ -144,6 +144,10 @@ Path|Setting|Default|Explanation
 /|additionalHeaders||additional headers that should automatically be included in the API requests
 /|additionalParameters||additional parameters for the Invoke-RestMethod e.g. proxy parameters
 /|logAPIrequests|true|Output GET and POST requests in the console window
+/errorhandling/|HttpErrorDelay|200|Delay for next try in case of an exception
+/errorhandling/|RepeatOnHttpErrors|[502]|http errors array that should get the number of retries from MaximumRetriesOnHttpErrorList
+/errorhandling/|MaximumRetriesOnHttpErrorList|3|Repeats for specific http errors that are catched
+/errorhandling/|MaximumRetriesGeneric|1|Repeats for generic errors that are not specifically catched
 /token/|tokenUsage|consume|`consume` or `generate`, depending on the mode you are wishing
 /token/|tokenFilePath||path for the file containing the token that should be consumed or generated
 /upload/|countRowsInputFile|true|Automatically count the number of rows in the input file. This uses streaming and does not parse anything, so it is extremly fast.

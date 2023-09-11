@@ -184,6 +184,11 @@
 
             If ( $newAttributes.count -gt 0 ) {
                 Write-Log -message "Created new local attributes in CleverReach: $( $newAttributes.name.Tolower() -join ", " )" -Severity WARNING
+
+                # Get details for new created atributes as the creation only delivers since 202309
+                $newAttributesDetails = @( (Invoke-CR -Object $object -Method "GET" -Verbose -Query ( [PSCustomObject]@{ "group_id" = $groupId } )) | Where-Object { $_.name.ToLower() -in $newAttributes.name.Tolower() } )
+
+
             } else {
                 Write-Log -Message "No new local attributes needed to be created"
             }
@@ -196,7 +201,7 @@
             [Hashtable]@{
                 "global" = $globalAttributes
                 "local" = $localAttributes
-                "new" = $newAttributes
+                "new" = $newAttributesDetails #$newAttributes
                 "notneeded" = $colsInAttrButNotCsv.InputObject
             }
 

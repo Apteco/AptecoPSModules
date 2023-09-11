@@ -239,7 +239,15 @@ function Invoke-CR {
                 If ( $Script:logAPIrequests -eq $true ) {
                     Write-Log -Message "$( $updatedParameters.Method.ToString().ToUpper() ) $( $updatedParameters.Uri )" -severity verbose
                 }
-                $wr = Invoke-RestMethod @updatedParameters
+
+                $wrInput = [Hashtable]@{
+                    "Params" = $updatedParameters
+                    "RetryHttpErrorList" = $Script:settings.errorhandling.RepeatOnHttpErrors
+                    "MaxTriesSpecific" = $Script:settings.errorhandling.MaximumRetriesOnHttpErrorList
+                    "MaxTriesGeneric" = $Script:settings.errorhandling.MaximumRetriesGeneric
+                    "MillisecondsDelay" = $Script:settings.errorhandling.HttpErrorDelay
+                }
+                $wr = @( Invoke-RestMethodWithErrorHandling @wrInput )
 
             }
             catch {
