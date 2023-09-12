@@ -19,7 +19,7 @@
 
 .ICONURI https://www.apteco.de/sites/default/files/favicon_3.ico
 
-.EXTERNALMODULEDEPENDENCIES 
+.EXTERNALMODULEDEPENDENCIES WriteLog
 
 .REQUIREDSCRIPTS
 
@@ -31,6 +31,9 @@
 .PRIVATEDATA
 
 #>
+
+#Requires -Module WriteLog
+#Requires -RunAsAdministrator
 
 
 <#
@@ -81,13 +84,9 @@ Param(
     ,[Parameter(Mandatory=$false)][Switch]$InstallScriptAndModuleForCurrentUser = $false
 )
 
-#Requires -RunAsAdministrator
 
 # TODO check if we can check if this is an admin user rather than enforce it
 # TODO use write log instead of write verbose?
-
-$processStart = [datetime]::now
-
 
 #-----------------------------------------------
 # INPUT DEFINITION
@@ -162,10 +161,19 @@ Function Prompt-Choice {
 
 
 #-----------------------------------------------
+# START
+#-----------------------------------------------
+
+$processStart = [datetime]::now
+Set-Logfile -Path ".\dependencies.log"
+Write-Log -message "----------------------------------------------------" -Severity VERBOSE
+
+
+#-----------------------------------------------
 # TEST
 #-----------------------------------------------
 
-Write-Warning "Please make sure to start this script as administrator!"
+#Write-Warning "Please make sure to start this script as administrator!"
 # Write-Verbose "hello world"
 # write-verbose $PSScriptRoot
 
@@ -196,13 +204,15 @@ If ( $InstallScriptAndModuleForCurrentUser -eq $true ) {
     $psScope = "AllUsers" # CurrentUser|AllUsers
 }
 
+Write-Log -Message "Using installation scope: $( $psScope )" -Severity VERBOSE
+
 
 #-----------------------------------------------
 # CHECK EXECUTION POLICY
 #-----------------------------------------------
 
 $executionPolicy = Get-ExecutionPolicy
-Write-Verbose -Message "Your execution policy is currently: $( $executionPolicy )"
+Write-Log -Message "Your execution policy is currently: $( $executionPolicy )" -Severity VERBOSE
 
 
 #-----------------------------------------------
@@ -210,7 +220,7 @@ Write-Verbose -Message "Your execution policy is currently: $( $executionPolicy 
 #-----------------------------------------------
 
 $psVersion = $psversiontable.psversion
-Write-Verbose "Your are currently using PowerShell version $( $psVersion.toString() )"
+Write-Log "Your are currently using PowerShell version $( $psVersion.toString() )" -Severity VERBOSE
 
 
 #-----------------------------------------------
@@ -220,7 +230,7 @@ Write-Verbose "Your are currently using PowerShell version $( $psVersion.toStrin
 If ( $Script.Count -gt 0 -or $Module.Count -gt 0 ) {
     $powershellRepo = @( Get-PackageSource -ProviderName $powerShellSourceProviderName ) #@( Get-PSRepository -ProviderName $powerShellSourceProviderName ) #@( Get-PSRepository | where { $_.SourceLocation -like "https://www.powershellgallery.com*" } )
     If ( $powershellRepo.Count -eq 0 ) {
-        Write-Warning "No module/script repository found! Please make sure to add a repository to your machine!"
+        Write-Log "No module/script repository found! Please make sure to add a repository to your machine!" -Severity WARNING
     }
 }
 
@@ -234,9 +244,9 @@ If ( $Script.Count -gt 0 -or $Module.Count -gt 0 ) {
 
         # See if PSRepo needs to get registered
         If ( $powershellRepo.count -ge 1 ) {
-            Write-Verbose -Message "You have at minimum 1 $( $powerShellSourceProviderName ) repository. Good!"
+            Write-Log -Message "You have at minimum 1 $( $powerShellSourceProviderName ) repository. Good!"  -Severity VERBOSE
         } elseif ( $powershellRepo.count -eq 0 ) {
-            Write-Warning -Message "You don't have $( $powerShellSourceProviderName ) as a module/script source, do you want to register it now?"
+            Write-Log -Message "You don't have $( $powerShellSourceProviderName ) as a module/script source, do you want to register it now?" -Severity WARNING
             $registerPsRepoDecision = $Host.UI.PromptForChoice("", "Register $( $powerShellSourceProviderName ) as repository?", @('&Yes'; '&No'), 1)
             If ( $registerPsRepoDecision -eq "0" ) {
                 
@@ -249,7 +259,7 @@ If ( $Script.Count -gt 0 -or $Module.Count -gt 0 ) {
 
             } else {
                 # Means no and leave
-                Write-Error "No package repository found! Please make sure to add a PowerShellGet repository to your machine!"
+                Write-Log "No package repository found! Please make sure to add a PowerShellGet repository to your machine!" -Severity ERROR
                 exit 0
             }
         }
@@ -267,7 +277,7 @@ If ( $Script.Count -gt 0 -or $Module.Count -gt 0 ) {
 
         } else {
 
-            Write-Warning -Message "There is no $( $powerShellSourceProviderName ) repository available"
+            Write-Log -Message "There is no $( $powerShellSourceProviderName ) repository available"  -Severity WARNING
             Exit 0
 
         }
@@ -276,7 +286,7 @@ If ( $Script.Count -gt 0 -or $Module.Count -gt 0 ) {
 
         # Do you want to trust that source?
         If ( $psGetSource.IsTrusted -eq $false ) {
-            Write-Warning -Message "Your source is not trusted. Do you want to trust it now?"
+            Write-Log -Message "Your source is not trusted. Do you want to trust it now?" -Severity WARNING
             $trustChoice = Prompt-Choice -title "Trust script/module Source" -message "Do you want to trust $( $psGetSource.Name )?" -choices @("Yes", "No")
             If ( $trustChoice -eq 1 ) {
                 # Use
@@ -289,7 +299,7 @@ If ( $Script.Count -gt 0 -or $Module.Count -gt 0 ) {
 
     } catch {
 
-        Write-Warning -Message "There is a problem with the repository check!" #-Severity WARNING
+        Write-Log -Message "There is a problem with the repository check!" -Severity WARNING
 
     }
 
@@ -302,7 +312,7 @@ If ( $Script.Count -gt 0 -or $Module.Count -gt 0 ) {
 # CHECK SCRIPT DEPENDENCIES FOR INSTALLATION AND UPDATE
 #-----------------------------------------------
 
-If ( $Script.count -gt 0 ) {
+If ( $Script.Count -gt 0 ) {
 
     # TODO [ ] Add psgallery possibly, too
 
@@ -310,7 +320,7 @@ If ( $Script.count -gt 0 ) {
 
         #If ( $ScriptsOnly -eq $true -or ( $PackagesOnly -eq $false -and $ScriptsOnly -eq $false -and $ModulesOnly -eq $false) ) {
 
-        Write-Verbose "Checking Script dependencies"
+        Write-Log "Checking Script dependencies" -Severity VERBOSE
 
         # SCRIPTS
         #$installedScripts = Get-InstalledScript
@@ -318,7 +328,7 @@ If ( $Script.count -gt 0 ) {
 
             $psScript = $_
 
-            Write-Verbose "Checking script: $( $psScript )"
+            Write-Log "Checking script: $( $psScript )" -Severity VERBOSE
 
             # TODO [ ] possibly add dependencies on version number
             # This is using -force to allow updates
@@ -333,14 +343,14 @@ If ( $Script.count -gt 0 ) {
 
     } catch {
 
-        Write-Warning -Message "Cannot install scripts!" #-Severity WARNING
+        Write-Log -Message "Cannot install scripts!" -Severity WARNING
         #$success = $false
 
     }
 
 } else {
 
-    Write-Verbose "There is no script to install"
+    Write-Log "There is no script to install" -Severity VERBOSE
 
 }
 
@@ -355,14 +365,14 @@ If ( $Module.count -gt 0 ) {
 
         # PSGallery should have been added automatically yet
 
-        Write-Verbose "Checking Module dependencies"
+        Write-Log "Checking Module dependencies" -Severity VERBOSE
 
         #$installedModules = Get-InstalledModule
         $Module | ForEach-Object {
 
             $psModule = $_
 
-            Write-Verbose "Checking module: $( $psModule )"
+            Write-Log "Checking module: $( $psModule )" -Severity VERBOSE
 
             # TODO [ ] possibly add dependencies on version number
             # This is using -force to allow updates
@@ -375,7 +385,7 @@ If ( $Module.count -gt 0 ) {
 
     } catch {
 
-        Write-Warning -Message "Cannot install modules!" #-Severity WARNING
+        Write-Log -Message "Cannot install modules!" -Severity WARNING
 
         #Write-Error -Message $_.Exception.Message #-Severity ERROR
 
@@ -383,7 +393,7 @@ If ( $Module.count -gt 0 ) {
 
 } else {
 
-    Write-Verbose "There is no module to install"
+    Write-Log "There is no module to install" -Severity VERBOSE
 
 }
 
@@ -418,9 +428,9 @@ If ( $GlobalPackage.Count -gt 0 -or $LocalPackage.Count -gt 0 ) {
 
         # See if Nuget needs to get registered
         If ( $sources.count -ge 1 ) {
-            Write-Verbose -Message "You have at minimum 1 $( $packageSourceProviderName ) repository. Good!"
+            Write-Log -Message "You have at minimum 1 $( $packageSourceProviderName ) repository. Good!" -Severity VERBOSE
         } elseif ( $sources.count -eq 0 ) {
-            Write-Warning -Message "You don't have $( $packageSourceProviderName ) as a PackageSource, do you want to register it now?"
+            Write-Log -Message "You don't have $( $packageSourceProviderName ) as a PackageSource, do you want to register it now?" -Severity WARNING
             $registerNugetDecision = $Host.UI.PromptForChoice("", "Register $( $packageSourceProviderName ) as repository?", @('&Yes'; '&No'), 1)
             If ( $registerNugetDecision -eq "0" ) {
                 
@@ -432,7 +442,7 @@ If ( $GlobalPackage.Count -gt 0 -or $LocalPackage.Count -gt 0 ) {
 
             } else {
                 # Means no and leave
-                Write-Error "No package repository found! Please make sure to add a NuGet repository to your machine!"
+                Write-Log "No package repository found! Please make sure to add a NuGet repository to your machine!" -Severity ERROR
                 exit 0
             }
         }
@@ -450,7 +460,7 @@ If ( $GlobalPackage.Count -gt 0 -or $LocalPackage.Count -gt 0 ) {
 
         } else {
 
-            Write-Warning -Message "There is no $( $packageSourceProviderName ) repository available"
+            Write-Log -Message "There is no $( $packageSourceProviderName ) repository available" -Severity WARNING
             Exit 0
 
         }
@@ -459,7 +469,7 @@ If ( $GlobalPackage.Count -gt 0 -or $LocalPackage.Count -gt 0 ) {
 
         # Do you want to trust that source?
         If ( $packageSource.IsTrusted -eq $false ) {
-            Write-Warning -Message "Your source is not trusted. Do you want to trust it now?"
+            Write-Log -Message "Your source is not trusted. Do you want to trust it now?" -Severity WARNING
             $trustChoice = Prompt-Choice -title "Trust Package Source" -message "Do you want to trust $( $packageSource.Name )?" -choices @("Yes", "No")
             If ( $trustChoice -eq 1 ) {
                 # Use
@@ -471,7 +481,7 @@ If ( $GlobalPackage.Count -gt 0 -or $LocalPackage.Count -gt 0 ) {
 
     } catch {
 
-        Write-Warning -Message "There is a problem with the repository" #-Severity WARNING
+        Write-Log -Message "There is a problem with the repository" -Severity WARNING
 
     }
 
@@ -486,13 +496,13 @@ If ( $LocalPackage.count -gt 0 -or $GlobalPackage -gt 0) {
 
     try {
 
-        Write-Verbose "Check lib folder" -Verbose
+        Write-Log "Check lib folder" -Severity VERBOSE
 
         If ( (Test-Path -Path $LocalPackageFolder) -eq $false ) {
             New-Item -Name $LocalPackageFolder -ItemType Directory
         }
 
-        Write-Verbose "Checking package dependencies" -Verbose
+        Write-Log "Checking package dependencies" -Severity VERBOSE
 
         $localPackages = Get-Package -Destination $LocalPackageFolder
         $globalPackages = Get-Package
@@ -506,7 +516,7 @@ If ( $LocalPackage.count -gt 0 -or $GlobalPackage -gt 0) {
                 $globalFlag = $true
             } # TODO [ ] Especially test global and local installation
 
-            Write-Verbose "Checking package: $( $psPackage )" -Verbose
+            Write-Log "Checking package: $( $psPackage )" -severity VERBOSE
 
             # This is using -force to allow updates
             <#
@@ -519,7 +529,7 @@ If ( $LocalPackage.count -gt 0 -or $GlobalPackage -gt 0) {
                 If ( $null -eq $psPackage.version ) {
                     $pkg = Find-Package $psPackage.name -IncludeDependencies -Source $packageSource.Name -ErrorAction Continue
                 } else {
-                    $pkg = Find-Package $psPackage.name -IncludeDependencies -Source $packageSource.Name -RequiredVersion $psPackage.version -ErrorAction Continue
+                    $pkg = Find-Package $psPackage.name -IncludeDependencies -Source $packageSource.Name -ErrorAction Continue -RequiredVersion $psPackage.version
                 }
             } else {
                 $pkg = Find-Package $psPackage -IncludeDependencies -Source $packageSource.Name -ErrorAction Continue
@@ -543,22 +553,28 @@ If ( $LocalPackage.count -gt 0 -or $GlobalPackage -gt 0) {
             If ( $p.GlobalFlag -eq $true ) {
                 Install-Package -Name $p.Package.Name -Scope $psScope -Source $packageSource.Name -RequiredVersion $p.Package.Version -SkipDependencies -Force
             } else {
-                Install-Package -Name $p.Package.Name -Scope $psScope -Source $packageSource.Name -RequiredVersion $p.Package.Version -SkipDependencies -Destination $LocalPackageFolder -Force
+                Install-Package -Name $p.Package.Name -Scope $psScope -Source $packageSource.Name -RequiredVersion $p.Package.Version -SkipDependencies -Force -Destination $LocalPackageFolder
             }
         }
 
     } catch {
 
-        Write-Warning -Message "Cannot install local packages!" #-Severity WARNING
+        Write-Log -Message "Cannot install local packages!" -Severity WARNING
 
     }
 
 } else {
 
-    Write-Verbose "There is no package to install"
+    Write-Log "There is no package to install" -Severity VERBOSE
 
 }
 
+
+
+#-----------------------------------------------
+# FINISHING
+#-----------------------------------------------
+
 $processEnd = [datetime]::now
 $processDuration = New-TimeSpan -Start $processStart -End $processEnd
-Write-Verbose -Message "Needed $( [int]$processDuration.TotalSeconds ) seconds in total"
+Write-Log -Message "Done! Needed $( [int]$processDuration.TotalSeconds ) seconds in total" -Severity INFO
