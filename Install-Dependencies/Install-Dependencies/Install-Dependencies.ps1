@@ -83,6 +83,12 @@ Param(
 
 #Requires -RunAsAdministrator
 
+# TODO check if we can check if this is an admin user rather than enforce it
+# TODO use write log instead of write verbose?
+
+$processStart = [datetime]::now
+
+
 #-----------------------------------------------
 # INPUT DEFINITION
 #-----------------------------------------------
@@ -125,6 +131,7 @@ $choiceMatchedWithArray = $stringArray[$choice -1]
 
 #>
 
+# Add a time measure
 
 #-----------------------------------------------
 # FUNCTIONS
@@ -211,7 +218,7 @@ Write-Verbose "Your are currently using PowerShell version $( $psVersion.toStrin
 #-----------------------------------------------
 
 If ( $Script.Count -gt 0 -or $Module.Count -gt 0 ) {
-    $powershellRepo = @( Get-PSRepository -ProviderName $powerShellSourceProviderName ) #@( Get-PSRepository | where { $_.SourceLocation -like "https://www.powershellgallery.com*" } )
+    $powershellRepo = @( Get-PackageSource -ProviderName $powerShellSourceProviderName ) #@( Get-PSRepository -ProviderName $powerShellSourceProviderName ) #@( Get-PSRepository | where { $_.SourceLocation -like "https://www.powershellgallery.com*" } )
     If ( $powershellRepo.Count -eq 0 ) {
         Write-Warning "No module/script repository found! Please make sure to add a repository to your machine!"
     }
@@ -223,7 +230,7 @@ If ( $Script.Count -gt 0 -or $Module.Count -gt 0 ) {
     try {
 
         # Get PowerShellGet sources
-        $powershellRepo = @( Get-PSRepository -ProviderName $powerShellSourceProviderName )
+        $powershellRepo = @( Get-PackageSource -ProviderName $powerShellSourceProviderName ) #@( Get-PSRepository -ProviderName $powerShellSourceProviderName )
 
         # See if PSRepo needs to get registered
         If ( $powershellRepo.count -ge 1 ) {
@@ -479,6 +486,12 @@ If ( $LocalPackage.count -gt 0 -or $GlobalPackage -gt 0) {
 
     try {
 
+        Write-Verbose "Check lib folder" -Verbose
+
+        If ( (Test-Path -Path $LocalPackageFolder) -eq $false ) {
+            New-Item -Name $LocalPackageFolder -ItemType Directory
+        }
+
         Write-Verbose "Checking package dependencies" -Verbose
 
         $localPackages = Get-Package -Destination $LocalPackageFolder
@@ -496,15 +509,20 @@ If ( $LocalPackage.count -gt 0 -or $GlobalPackage -gt 0) {
             Write-Verbose "Checking package: $( $psPackage )" -Verbose
 
             # This is using -force to allow updates
+            <#
+                Use of continue in case of error because sometimes this happens
+                AUSFÜHRLICH: Total package yield:'2' for the specified package 'System.ObjectModel'.
+                Find-Package : Unable to find dependent package(s) (nuget:Microsoft.NETCore.Platforms/3.1.0)
+            #>
 
             If ( $psPackage -is [pscustomobject] ) {
                 If ( $null -eq $psPackage.version ) {
-                    $pkg = Find-Package $psPackage.name -IncludeDependencies
+                    $pkg = Find-Package $psPackage.name -IncludeDependencies -Source $packageSource.Name -ErrorAction Continue
                 } else {
-                    $pkg = Find-Package $psPackage.name -IncludeDependencies -RequiredVersion $psPackage.version
+                    $pkg = Find-Package $psPackage.name -IncludeDependencies -Source $packageSource.Name -RequiredVersion $psPackage.version -ErrorAction Continue
                 }
             } else {
-                $pkg = Find-Package $psPackage -IncludeDependencies
+                $pkg = Find-Package $psPackage -IncludeDependencies -Source $packageSource.Name -ErrorAction Continue
             }
 
             $pkg | Select-Object Name, Version -Unique | ForEach-Object { # | Where-Object { $_.Name -notin $installedPackages.Name }
@@ -520,14 +538,13 @@ If ( $LocalPackage.count -gt 0 -or $GlobalPackage -gt 0) {
         }
 
         # Install the packages now
-        $packagesToInstall | Select-Object * -Unique | ForEach-Object {
+        $packagesToInstall | Where-Object { $_.Source -eq $packageSource.Name } | Sort-Object Name -Unique | ForEach-Object { #where-object { $_.Source -eq $packageSource.Name } | Select-Object * -Unique | ForEach-Object {
             $p = $_
             If ( $p.GlobalFlag -eq $true ) {
                 Install-Package -Name $p.Package.Name -Scope $psScope -Source $packageSource.Name -RequiredVersion $p.Package.Version -SkipDependencies -Force
             } else {
                 Install-Package -Name $p.Package.Name -Scope $psScope -Source $packageSource.Name -RequiredVersion $p.Package.Version -SkipDependencies -Destination $LocalPackageFolder -Force
             }
-
         }
 
     } catch {
@@ -541,3 +558,7 @@ If ( $LocalPackage.count -gt 0 -or $GlobalPackage -gt 0) {
     Write-Verbose "There is no package to install"
 
 }
+
+$processEnd = [datetime]::now
+$processDuration = New-TimeSpan -Start $processStart -End $processEnd
+Write-Verbose -Message "Needed $( [int]$processDuration.TotalSeconds ) seconds in total"
