@@ -22,6 +22,11 @@ function Get-Response {
         # LOG
         #-----------------------------------------------
 
+        # Override logfile, if this is set to true
+        If ( $Script:settings.responses.useSeparateLogfile -eq $true ) {
+            Set-Logfile -Path $Script:settings.responses.logfile
+        }
+
         $moduleName = "GETRESPONSE"
 
         # Start the log

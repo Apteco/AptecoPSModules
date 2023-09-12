@@ -119,6 +119,9 @@
 
     "responses" = [PSCustomObject]@{
 
+        "useSeparateLogfile" = $false
+        "logfile" = "$( (resolve-path ".").path )\response.log"
+
         # TODO rename this column
         "urnFieldName" = "urn"                              # Primary key field name, which should be global and is needed for matching
         "communicationKeyAttributeName" = "communication_key"           # The local group attribute that will be loaded from the group, not used yet
@@ -150,10 +153,10 @@
     }
 
     # Create the binary value for loading the cleverreach details for each receiver
-    loadDetails = @{
-        events = $true
-        orders = $false
-        tags = $true
+    "loadDetails" = @{
+        "events" = $true
+        "orders" = $false
+        "tags" = $true
     }
 
 }

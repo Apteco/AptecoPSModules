@@ -174,7 +174,23 @@ Path|Setting|Default|Explanation
 /broadcast/|defaultGoogleCampaignName||Something like "My Campaign" for tracking reports in Google Analytics
 /broadcast/|waitUntilFinished|false|PS or Orbit are waiting until mailing is confirmed to be sent off
 /broadcast/|maxWaitForFinishedAfterOffset|120|Wait for another 120 seconds (or more or less) until it is confirmed of send off 
-
+/response/|useSeparateLogfile|false|Change this to true if you want to use a separate logfile
+/response/|logfile|.\response.log|The logfile if you decide to use a separate logfile
+/response/|urnFieldName|urn|Primary key field name, which should be global and is needed for matching
+/response/|communicationKeyAttributeName|communication_key|The local group attribute that will be loaded from the group, not used yet
+/response/|filePrefix|responses_|Prefix for the response files that are generated
+/response/|messagePeriod|60|How many days do you want to go backwards for loading mailing reports?
+/response/|responsePeriod|120|How many days to you want to go backwards for response data per message? Normally this numbers is smaller than the messagePeriod
+/response/|saveLastTimestamp|true|Save the current timestamp at the end of the response download
+/response/|saveLastTimestampFile|.\lastresponsedownload.json|Where to save the current timestamp?
+/response/|loadSent|true|Load confirmed email deliveries
+/response/|loadOpens|true|Load open reactions (if tracking is allowed in CleverReach)
+/response/|loadClicks|true|Load click reactions (if tracking is allowed in CleverReach)
+/response/|loadBounces|true|Load confirmed bounced emails
+/response/|loadUnsubscribes|true|Load unsubscribed emails based on a mailing/group
+/response/|triggerFerge|true|Should ferge get triggered after the response download is finished?
+/response/|fergePath|C:\Program Files\Apteco\FastStats Email Response Gatherer x64\EmailResponseGatherer64.exe|Where is the FERGE exe located?
+/response/|fergeConfigurationXml|D:\Scripts\CleverReach\PSCleverReachModule\responses.xml|Should be changed for the correct path. This xml file should be created with the FERGE configuration tool
 
 # Response Gathering
 
