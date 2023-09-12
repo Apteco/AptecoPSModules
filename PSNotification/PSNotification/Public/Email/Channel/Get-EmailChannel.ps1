@@ -1,4 +1,4 @@
-function Get-TelegramChannel {
+function Get-EmailChannel {
 
 
     [CmdletBinding()]
@@ -14,7 +14,7 @@ function Get-TelegramChannel {
         
         # Check if the telegram channel exists
         $channel = $null
-        Get-Channel -Name $Name | Where-Object { $_.Type -eq "Telegram" } | ForEach-Object {
+        Get-Channel -Name $Name | Where-Object { $_.Type -eq "Email" } | ForEach-Object {
             $channel = $_
         }
 
