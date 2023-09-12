@@ -548,7 +548,7 @@ If ( $LocalPackage.count -gt 0 -or $GlobalPackage -gt 0) {
         }
 
         # Install the packages now
-        $packagesToInstall | Where-Object { $_.Source -eq $packageSource.Name } | Sort-Object Name -Unique | ForEach-Object { #where-object { $_.Source -eq $packageSource.Name } | Select-Object * -Unique | ForEach-Object {
+        $packagesToInstall | Where-Object { $_.Source -eq $packageSource.Name -and $_.Name -notin $installedPackages.Name } | Sort-Object Name -Unique | ForEach-Object { #where-object { $_.Source -eq $packageSource.Name } | Select-Object * -Unique | ForEach-Object {
             $p = $_
             If ( $p.GlobalFlag -eq $true ) {
                 Install-Package -Name $p.Package.Name -Scope $psScope -Source $packageSource.Name -RequiredVersion $p.Package.Version -SkipDependencies -Force
