@@ -19,7 +19,7 @@ Name|Type|Repository/Version|Platform|Downloads|
 [MergePSCustomObject](MergePSCustomObject/)|Module|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/MergePSCustomObject)](https://www.powershellgallery.com/packages/MergePSCustomObject)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/MergePSCustomObject)](https://www.powershellgallery.com/packages/MergePSCustomObject)|[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/MergePSCustomObject)](https://www.powershellgallery.com/packages/MergePSCustomObject)
 [SyncExtractOptions](SyncExtractOptions/)|Script|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/SyncExtractOptions)](https://www.powershellgallery.com/packages/SyncExtractOptions)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/SyncExtractOptions)](https://www.powershellgallery.com/packages/SyncExtractOptions)|[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/SyncExtractOptions)](https://www.powershellgallery.com/packages/SyncExtractOptions)
 [WriteLog](WriteLog/)|Module|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/WriteLog)](https://www.powershellgallery.com/packages/WriteLog)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/WriteLog)](https://www.powershellgallery.com/packages/WriteLog)|[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/WriteLog)](https://www.powershellgallery.com/packages/WriteLog)
-
+[Install-Dependencies](Install-Dependencies/)|[Script]|
 
 Here are some high level descriptions. Please follow the links from the table or go into the subdirectories to get more detailed information.
 
@@ -115,6 +115,16 @@ function Invoke-CoreWebRequest {
 ## InvokeWebRequestUTF8
 
 Executes an `Invoke-WebRequst`, but converts the content afterwards into UTF8, if the correct encoding wasn't given back.
+
+## Install-Dependencies
+
+A small script that helps you to install scripts/modules/packages you need to load via a repository like PowerShellGallery or NuGet or a local repository.
+
+Just use
+
+```PowerShell
+Install-Dependencies -Module "WriteLog" -LocalPackage "System.Data.Sqlite", "Npgsql" -Verbose
+```
 
 ## MeasureRows
 
