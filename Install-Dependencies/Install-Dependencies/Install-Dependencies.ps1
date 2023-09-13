@@ -1,7 +1,7 @@
-
+﻿
 <#PSScriptInfo
 
-.VERSION 0.1
+.VERSION 0.0.2
 
 .GUID 4c029c8e-09fa-48ee-9d62-10895150ce83
 
@@ -15,7 +15,7 @@
 
 .LICENSEURI https://gist.github.com/gitfvb/58930387ee8677b5ccef93ffc115d836
 
-.PROJECTURI https://github.com/Apteco/Install-Dependencies/tree/main/Install-Dependencies
+.PROJECTURI https://github.com/Apteco/AptecoPSModules/tree/main/Install-Dependencies
 
 .ICONURI https://www.apteco.de/sites/default/files/favicon_3.ico
 
@@ -26,6 +26,7 @@
 .EXTERNALSCRIPTDEPENDENCIES
 
 .RELEASENOTES
+0.0.2 Ignore already installed global packages because they would need to be loaded first
 0.0.1 Initial release of this script
 
 .PRIVATEDATA
@@ -43,6 +44,8 @@
     Script to install dependencies from the PowerShell Gallery and NuGet. It is possible to install scripts, modules and packages.
     The packages can be installed from the PowerShell Gallery and packages from a NuGet repository.
     Packages can defined as a raw string array or as a pscustomobject with a specific version number.
+
+    Please make sure to have the Modules WriteLog and PowerShellGet (>= 2.2.4) installed.
 
 .EXAMPLE
     Install-Dependencies -Module "WriteLog" -LocalPackage "SQLitePCLRaw.core", "Npgsql" -Verbose
@@ -74,7 +77,8 @@
     Project Site: https://github.com/Apteco/Install-Dependencies/tree/main/Install-Dependencies
 #>
 
-#> 
+
+[CmdletBinding()]
 Param(
      [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][String[]]$Script = [Array]@()
     ,[Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][String[]]$Module = [Array]@()
@@ -249,7 +253,7 @@ If ( $Script.Count -gt 0 -or $Module.Count -gt 0 ) {
             Write-Log -Message "You don't have $( $powerShellSourceProviderName ) as a module/script source, do you want to register it now?" -Severity WARNING
             $registerPsRepoDecision = $Host.UI.PromptForChoice("", "Register $( $powerShellSourceProviderName ) as repository?", @('&Yes'; '&No'), 1)
             If ( $registerPsRepoDecision -eq "0" ) {
-                
+
                 # Means yes and proceed
                 Register-PSRepository -Name $powerShellSourceName -SourceLocation $powerShellSourceLocation
                 #Register-PackageSource -Name $packageSourceName -Location $packageSourceLocation -ProviderName $packageSourceProviderName
@@ -332,7 +336,7 @@ If ( $Script.Count -gt 0 ) {
 
             # TODO [ ] possibly add dependencies on version number
             # This is using -force to allow updates
-            
+
             $psScriptDependencies = Find-Script -Name $psScript -IncludeDependencies
             #$psScriptDependencies | Where-Object { $_.Name -notin $installedScripts.Name } | Install-Script -Scope AllUsers -Verbose -Force
             $psScriptDependencies | Install-Script -Scope $psScope -Force
@@ -433,7 +437,7 @@ If ( $GlobalPackage.Count -gt 0 -or $LocalPackage.Count -gt 0 ) {
             Write-Log -Message "You don't have $( $packageSourceProviderName ) as a PackageSource, do you want to register it now?" -Severity WARNING
             $registerNugetDecision = $Host.UI.PromptForChoice("", "Register $( $packageSourceProviderName ) as repository?", @('&Yes'; '&No'), 1)
             If ( $registerNugetDecision -eq "0" ) {
-                
+
                 # Means yes and proceed
                 Register-PackageSource -Name $packageSourceName -Location $packageSourceLocation -ProviderName $packageSourceProviderName
 
@@ -548,7 +552,9 @@ If ( $LocalPackage.count -gt 0 -or $GlobalPackage -gt 0) {
         }
 
         # Install the packages now
-        $packagesToInstall | Where-Object { $_.Source -eq $packageSource.Name -and $_.Name -notin $installedPackages.Name } | Sort-Object Name -Unique | ForEach-Object { #where-object { $_.Source -eq $packageSource.Name } | Select-Object * -Unique | ForEach-Object {
+        #$packagesToInstall | Where-Object { $_.Source -eq $packageSource.Name -and $_.Name -notin $installedPackages.Name } | Sort-Object Name -Unique | ForEach-Object { #where-object { $_.Source -eq $packageSource.Name } | Select-Object * -Unique | ForEach-Object {
+        $packagesToInstall | Where-Object { $_.Source -eq $packageSource.Name } | Sort-Object Name -Unique | ForEach-Object { #where-object { $_.Source -eq $packageSource.Name } | Select-Object * -Unique | ForEach-Object {
+
             $p = $_
             If ( $p.GlobalFlag -eq $true ) {
                 Install-Package -Name $p.Package.Name -Scope $psScope -Source $packageSource.Name -RequiredVersion $p.Package.Version -SkipDependencies -Force

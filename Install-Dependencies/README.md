@@ -35,6 +35,35 @@ You can just download the whole repository here and pick this script or your can
 
 ### Installation via Install-Script
 
+Before you proceed, it is needed to update your PowerShellGet or PATH variable to find script. You can see this in this snippet how it can work
+```PowerShell
+PS C:\Users\WDAGUtilityAccount> install-module writelog
+NuGet provider is required to continue                                                                                  
+PowerShellGet requires NuGet provider version '2.8.5.201' or newer to interact with NuGet-based repositories. The NuGet  provider must be available in 'C:\Program Files\PackageManagement\ProviderAssemblies' or 'C:\Users\WDAGUtilityAccount\AppData\Local\PackageManagement\ProviderAssemblies'. You can also install the NuGet provider by running 'Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force'. Do you want PowerShellGet   to install and import the NuGet provider now?
+[Y] Yes  [N] No  [S] Suspend  [?] Help (default is "Y"): Y
+
+Untrusted repository
+You are installing the modules from an untrusted repository. If you trust this repository, change its
+InstallationPolicy value by running the Set-PSRepository cmdlet. Are you sure you want to install the modules from
+'PSGallery'?
+[Y] Yes  [A] Yes to All  [N] No  [L] No to All  [S] Suspend  [?] Help (default is "N"): Y
+PS C:\Users\WDAGUtilityAccount> install-script install-dependencies
+
+PATH Environment Variable Change
+Your system has not been configured with a default script installation path yet, which means you can only run a script
+by specifying the full path to the script file. This action places the script into the folder 'C:\Program
+Files\WindowsPowerShell\Scripts', and adds that folder to your PATH environment variable. Do you want to add the script
+ installation path 'C:\Program Files\WindowsPowerShell\Scripts' to the PATH environment variable?
+[Y] Yes  [N] No  [S] Suspend  [?] Help (default is "Y"): Y
+
+Untrusted repository
+You are installing the scripts from an untrusted repository. If you trust this repository, change its
+InstallationPolicy value by running the Set-PSRepository cmdlet. Are you sure you want to install the scripts from
+'PSGallery'?
+[Y] Yes  [A] Yes to All  [N] No  [L] No to All  [S] Suspend  [?] Help (default is "N"): Y
+PS C:\Users\WDAGUtilityAccount>
+```
+
 For installation execute this for all users scope
 
 ```PowerShell
