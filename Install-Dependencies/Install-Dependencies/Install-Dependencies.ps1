@@ -553,9 +553,13 @@ If ( $LocalPackage.count -gt 0 -or $GlobalPackage -gt 0) {
 
         }
 
+        Write-Log -Message "Done with searching for packages"
+
         # Install the packages now
+        $pack = $packagesToInstall | Where-Object { $_.Source -eq $packageSource.Name } | Sort-Object Name -Unique
+        Write-Log -Message "This is likely to install $( $pack.Count ) packages"
         #$packagesToInstall | Where-Object { $_.Source -eq $packageSource.Name -and $_.Name -notin $installedPackages.Name } | Sort-Object Name -Unique | ForEach-Object { #where-object { $_.Source -eq $packageSource.Name } | Select-Object * -Unique | ForEach-Object {
-        $packagesToInstall | Where-Object { $_.Source -eq $packageSource.Name } | Sort-Object Name -Unique | ForEach-Object { #where-object { $_.Source -eq $packageSource.Name } | Select-Object * -Unique | ForEach-Object {
+        $pack | ForEach-Object { #where-object { $_.Source -eq $packageSource.Name } | Select-Object * -Unique | ForEach-Object {
 
             $p = $_
 
@@ -580,7 +584,7 @@ If ( $LocalPackage.count -gt 0 -or $GlobalPackage -gt 0) {
 
 }
 
-# TODO exclude packages that should be referended like red hat, ubuntu etc.
+
 
 #-----------------------------------------------
 # FINISHING
