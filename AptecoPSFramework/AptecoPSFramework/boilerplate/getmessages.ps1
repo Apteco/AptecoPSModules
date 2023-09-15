@@ -31,14 +31,17 @@ $modulePath = @( $Env:PSModulePath -split ";" ) + @(
 )
 $Env:PSModulePath = ( $modulepath | Select-Object -unique ) -join ";"
 
-<#
-$Env:PSModulePath = @(
-    $Env:PSModulePath
-    "$( $Env:ProgramFiles )\WindowsPowerShell\Modules"
-    "$( $Env:HOMEDRIVE )\$( $Env:HOMEPATH )\Documents\WindowsPowerShell\Modules"
-    #$( $Env:windir )\system32\WindowsPowerShell\v1.0\Modules"
-) -join ";"
-#>
+#-----------------------------------------------
+# ADD SCRIPT PATH, IF NOT PRESENT
+#-----------------------------------------------
+
+#$envVariables = [System.Environment]::GetEnvironmentVariables()
+$scriptPath = @( $Env:Path -split ";" ) + @(
+    "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles") )\WindowsPowerShell\Scripts"
+    "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles(x86)") )\WindowsPowerShell\Scripts"
+    "$( [System.Environment]::GetEnvironmentVariable("USERPROFILE") )\Documents\WindowsPowerShell\Scripts"
+)
+$Env:Path = ( $scriptPath | Select-Object -unique ) -join ";"
 
 
 #-----------------------------------------------

@@ -70,6 +70,19 @@ $dir = $params.scriptPath
 Set-Location $dir
 #>
 
+#-----------------------------------------------
+# ADD SCRIPT PATH, IF NOT PRESENT
+#-----------------------------------------------
+
+#$envVariables = [System.Environment]::GetEnvironmentVariables()
+$scriptPath = @( $Env:Path -split ";" ) + @(
+    "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles") )\WindowsPowerShell\Scripts"
+    "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles(x86)") )\WindowsPowerShell\Scripts"
+    "$( [System.Environment]::GetEnvironmentVariable("USERPROFILE") )\Documents\WindowsPowerShell\Scripts"
+)
+$Env:Path = ( $scriptPath | Select-Object -unique ) -join ";"
+
+
 ################################################
 #
 # SETTINGS

@@ -24,12 +24,23 @@ $debug = $false
 #$envVariables = [System.Environment]::GetEnvironmentVariables()
 $modulePath = @( $Env:PSModulePath -split ";" ) + @(
     "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles") )\WindowsPowerShell\Modules"
-    #"C:\Program Files\WindowsPowerShell\Modules"
     "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles(x86)") )\WindowsPowerShell\Modules"
     "$( [System.Environment]::GetEnvironmentVariable("USERPROFILE") )\Documents\WindowsPowerShell\Modules"
-    #"$( $Env:windir )\system32\WindowsPowerShell\v1.0\Modules"
 )
 $Env:PSModulePath = ( $modulepath | Select-Object -unique ) -join ";"
+
+
+#-----------------------------------------------
+# ADD SCRIPT PATH, IF NOT PRESENT
+#-----------------------------------------------
+
+#$envVariables = [System.Environment]::GetEnvironmentVariables()
+$scriptPath = @( $Env:Path -split ";" ) + @(
+    "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles") )\WindowsPowerShell\Scripts"
+    "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles(x86)") )\WindowsPowerShell\Scripts"
+    "$( [System.Environment]::GetEnvironmentVariable("USERPROFILE") )\Documents\WindowsPowerShell\Scripts"
+)
+$Env:Path = ( $scriptPath | Select-Object -unique ) -join ";"
 
 
 #-----------------------------------------------
