@@ -12,7 +12,7 @@
 RootModule = 'AptecoPSFramework.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.0.18'
+ModuleVersion = '0.0.19'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -153,6 +153,7 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.0.19 Added script support for boilerplates
 0.0.18 Added a new setting for CleverReach to put response log information into a separate logfile
        Added more documentation for CleverReach response download
 0.0.17 Fixing a problem when CleverReach invokes a http502 invalid gateway error -> Repeat the call a few times
