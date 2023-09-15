@@ -456,7 +456,7 @@ If ( $GlobalPackage.Count -gt 0 -or $LocalPackage.Count -gt 0 ) {
 
             $packageSources = $sources.Name
             $packageSourceChoice = Prompt-Choice -title "PackageSource" -message "Which $( $packageSourceProviderName ) repository do you want to use?" -choices $packageSources
-            $packageSource = $packageSources[$packageSourceChoice -1]
+            $packageSource = $sources[$packageSourceChoice -1]
 
         } elseif ( $sources.count -eq 1 ) {
 
@@ -506,7 +506,7 @@ If ( $LocalPackage.count -gt 0 -or $GlobalPackage -gt 0) {
             New-Item -Name $LocalPackageFolder -ItemType Directory
         }
 
-        Write-Log "Checking package dependencies" -Severity VERBOSE
+        Write-Log "Checking package dependencies with $( $packageSource.Name )" -Severity VERBOSE
 
         $localPackages = Get-Package -Destination $LocalPackageFolder
         $globalPackages = Get-Package
@@ -544,6 +544,8 @@ If ( $LocalPackage.count -gt 0 -or $GlobalPackage -gt 0) {
                 $pd = [PSCustomObject]@{
                     "GlobalFlag" = $globalFlag
                     "Package" = $p
+                    "Name" = $p.Name
+                    "Version" = $p.Version
                 }
                 [void]$packagesToInstall.Add($pd)
 
@@ -556,9 +558,12 @@ If ( $LocalPackage.count -gt 0 -or $GlobalPackage -gt 0) {
         $packagesToInstall | Where-Object { $_.Source -eq $packageSource.Name } | Sort-Object Name -Unique | ForEach-Object { #where-object { $_.Source -eq $packageSource.Name } | Select-Object * -Unique | ForEach-Object {
 
             $p = $_
+
             If ( $p.GlobalFlag -eq $true ) {
+                Write-Log -message "Installing $( $p.Package.Name ) with version $( $p.Package.version ) from $( $p.Package.Source ) globally"
                 Install-Package -Name $p.Package.Name -Scope $psScope -Source $packageSource.Name -RequiredVersion $p.Package.Version -SkipDependencies -Force
             } else {
+                Write-Log -message "Installing $( $p.Package.Name ) with version $( $p.Package.version ) from $( $p.Package.Source ) locally"
                 Install-Package -Name $p.Package.Name -Scope $psScope -Source $packageSource.Name -RequiredVersion $p.Package.Version -SkipDependencies -Force -Destination $LocalPackageFolder
             }
         }
@@ -575,7 +580,7 @@ If ( $LocalPackage.count -gt 0 -or $GlobalPackage -gt 0) {
 
 }
 
-
+# TODO exclude packages that should be referended like red hat, ubuntu etc.
 
 #-----------------------------------------------
 # FINISHING
