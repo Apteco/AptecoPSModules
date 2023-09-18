@@ -1,11 +1,29 @@
 
 
+This oAuth process does work if you are allowed to use Apps for receiving the code instead of a public https website.
+The process guids you to the login page of the service you want to receiver an authentication token for. After this it
+will be redirected to an app url that this module created beforehand like `myNewApp:\\putinherewhateveryouwant`.
+After receiving the code at this app, it will be exchanged with an oAuth token. Sometimes you also get a refresh token.
+Both is saved in a local json file, encrypted, if you want to.
+This module also supports you in creating a scheduled task in Windows for refreshing. But you have to setup the schedule afterwards.
+Sometimes tokens are only for 1 hour, sometimes for 30 days.
 
-# Supported Solutions
+Be aware, that you can close your browser window when the whole process is done.
+
+
+# Supported/Tested Solutions
 
 - CleverReach
 - Hubspot Private App
 - Salesforce SalesCloud Connected App
+
+
+
+
+
+
+
+
 
 
 
