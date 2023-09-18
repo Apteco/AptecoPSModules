@@ -33,7 +33,7 @@ $Env:Path = ( $scriptPath | Select-Object -unique ) -join ";"
 ################################################
 
 Import-Module "AptecoPSFramework" -Verbose # TODO change later to plain module name
-
+Import-Module "EncryptCredential" # Add this so you can encrypt your credentials, but start this window with your PeopleStage executing server user
 # TODO Is this step still needed?
 #Set-ExecutionDirectory -Path "."
 
