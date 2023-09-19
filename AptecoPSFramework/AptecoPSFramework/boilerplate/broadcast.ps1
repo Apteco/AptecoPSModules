@@ -21,13 +21,16 @@ $debug = $false
 # ADD MODULE PATH, IF NOT PRESENT
 #-----------------------------------------------
 
-#$envVariables = [System.Environment]::GetEnvironmentVariables()
-$modulePath = @( $Env:PSModulePath -split ";" ) + @(
+$modulePath = @( [System.Environment]::GetEnvironmentVariable("PSModulePath") -split ";" ) + @(
+    #C:\Program Files\PowerShell\Modules
+    #c:\program files\powershell\7\Modules
     "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles") )\WindowsPowerShell\Modules"
     "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles(x86)") )\WindowsPowerShell\Modules"
     "$( [System.Environment]::GetEnvironmentVariable("USERPROFILE") )\Documents\WindowsPowerShell\Modules"
+    "$( [System.Environment]::GetEnvironmentVariable("windir") )\system32\WindowsPowerShell\v1.0\Modules"
 )
-$Env:PSModulePath = ( $modulepath | Select-Object -unique ) -join ";"
+$Env:PSModulePath = ( $modulePath | Sort-Object -unique ) -join ";"
+# Using $env:PSModulePath for only temporary override
 
 
 #-----------------------------------------------
@@ -35,12 +38,13 @@ $Env:PSModulePath = ( $modulepath | Select-Object -unique ) -join ";"
 #-----------------------------------------------
 
 #$envVariables = [System.Environment]::GetEnvironmentVariables()
-$scriptPath = @( $Env:Path -split ";" ) + @(
+$scriptPath = @( [System.Environment]::GetEnvironmentVariable("Path") -split ";" ) + @(
     "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles") )\WindowsPowerShell\Scripts"
     "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles(x86)") )\WindowsPowerShell\Scripts"
     "$( [System.Environment]::GetEnvironmentVariable("USERPROFILE") )\Documents\WindowsPowerShell\Scripts"
 )
-$Env:Path = ( $scriptPath | Select-Object -unique ) -join ";"
+$Env:Path = ( $scriptPath | Sort-Object -unique ) -join ";"
+# Using $env:Path for only temporary override
 
 
 #-----------------------------------------------
