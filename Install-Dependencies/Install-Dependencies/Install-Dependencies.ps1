@@ -1,7 +1,7 @@
 ﻿
 <#PSScriptInfo
 
-.VERSION 0.0.3
+.VERSION 0.0.4
 
 .GUID 4c029c8e-09fa-48ee-9d62-10895150ce83
 
@@ -26,6 +26,7 @@
 .EXTERNALSCRIPTDEPENDENCIES
 
 .RELEASENOTES
+0.0.4 Changed the way to temporarily save packages when an error happens in dependency check
 0.0.3 Some bigger changes for getting it to run
 0.0.2 Ignore already installed global packages because they would need to be loaded first
 0.0.1 Initial release of this script
@@ -560,6 +561,7 @@ If ( $LocalPackage.count -gt 0 -or $GlobalPackage -gt 0) {
 
             $psPackage = $_
             $globalFlag = $false
+            $pkg = [System.Collections.ArrayList]@()
             If ( $GlobalPackage -contains $psPackage ) {
                 $globalFlag = $true
             } # TODO [ ] Especially test global and local installation
@@ -575,12 +577,15 @@ If ( $LocalPackage.count -gt 0 -or $GlobalPackage -gt 0) {
 
             If ( $psPackage -is [pscustomobject] ) {
                 If ( $null -eq $psPackage.version ) {
-                    $pkg = Find-Package $psPackage.name -IncludeDependencies -Source $packageSource.Name -ErrorAction Continue
+                    #$pkg = Find-Package $psPackage.name -IncludeDependencies -Source $packageSource.Name -ErrorAction Continue
+                    [void]@( Find-Package $psPackage.name -IncludeDependencies -Source $packageSource.Name -ErrorAction Continue ).foreach({$pkg.add($_)}) # add elements directly instead of saving everything into a variable
                 } else {
-                    $pkg = Find-Package $psPackage.name -IncludeDependencies -Source $packageSource.Name -ErrorAction Continue -RequiredVersion $psPackage.version
+                    #$pkg = Find-Package $psPackage.name -IncludeDependencies -Source $packageSource.Name -ErrorAction Continue -RequiredVersion $psPackage.version
+                    [void]@( Find-Package $psPackage.name -IncludeDependencies -Source $packageSource.Name -ErrorAction Continue -RequiredVersion $psPackage.version ).foreach({$pkg.add($_)}) # add elements directly instead of saving everything into a variable
                 }
             } else {
-                $pkg = Find-Package $psPackage -IncludeDependencies -Source $packageSource.Name -ErrorAction Continue
+                [void]@( Find-Package $psPackage -IncludeDependencies -Source $packageSource.Name -ErrorAction Continue ).foreach({$pkg.add($_)}) # add elements directly instead of saving everything into a variable
+                #$pkg = Find-Package $psPackage -IncludeDependencies -Source $packageSource.Name -ErrorAction Continue
             }
 
             $pkg | ForEach-Object { # | Where-Object { $_.Name -notin $installedPackages.Name } # | Sort-Object Name, Version -Unique -Descending
