@@ -91,6 +91,12 @@ Param(
     ,[Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][String]$LocalPackageFolder = "lib"
     ,[Parameter(Mandatory=$false)][Switch]$InstallScriptAndModuleForCurrentUser = $false
 )
+
+
+#-----------------------------------------------
+# DEBUG
+#-----------------------------------------------
+
 <#
 Set-Location -Path "C:\Users\Florian\Downloads\20230918"
 
@@ -184,7 +190,7 @@ Function Prompt-Choice {
 #-----------------------------------------------
 
 $processStart = [datetime]::now
-Set-Logfile -Path ".\dependencies.log"
+Set-Logfile -Path ".\dependencies_install.log"
 Write-Log -message "----------------------------------------------------" -Severity VERBOSE
 
 
@@ -623,7 +629,7 @@ If ( $LocalPackage.count -gt 0 -or $GlobalPackage -gt 0) {
             }
 
             # Write progress
-            Write-Progress -Activity "Package installation in Progress" -Status "$( [math]::Round($i/$pack.Count*100) )% Complete:" -PercentComplete ([math]::Round($i/$pack.Count*100))
+            Write-Progress -Activity "Package installation in progress" -Status "$( [math]::Round($i/$pack.Count*100) )% Complete:" -PercentComplete ([math]::Round($i/$pack.Count*100))
 
             $i+=1
 

@@ -22,7 +22,7 @@ Before installing modules/scripts/packages, it will automatically scan for depen
 
 When you don't have suitable repositories available, it will ask you to create them.
 
-It will also automatically create a log file in the current folder named `dependencies.log`
+It will also automatically create a log file in the current folder named `dependencies_install.log`
 
 If you want to see more output in your console, just add the `-Verbose` flag to your command.
 
@@ -129,7 +129,7 @@ That way you can exchange the `.nupkg` files and update them manually from time 
 If you don't want to use the script anymore, just remove it with 
 
 ```PowerShell
-Uninstall-Script -Name "INstall-Dependencies"
+Uninstall-Script -Name "Install-Dependencies"
 ```
 
 # Contribution
