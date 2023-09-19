@@ -1,7 +1,7 @@
 ﻿
 <#PSScriptInfo
 
-.VERSION 0.0.2
+.VERSION 0.0.3
 
 .GUID 4c029c8e-09fa-48ee-9d62-10895150ce83
 
@@ -26,6 +26,7 @@
 .EXTERNALSCRIPTDEPENDENCIES
 
 .RELEASENOTES
+0.0.3 Some bigger changes for getting it to run
 0.0.2 Ignore already installed global packages because they would need to be loaded first
 0.0.1 Initial release of this script
 
@@ -35,6 +36,7 @@
 
 #Requires -Module WriteLog
 #Requires -RunAsAdministrator
+# The admin rights are only needed for modules and scripts and global packages, but not local packages, but this way we can ensure everythings in the right place
 
 
 <#
@@ -87,6 +89,17 @@ Param(
     ,[Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][String]$LocalPackageFolder = "lib"
     ,[Parameter(Mandatory=$false)][Switch]$InstallScriptAndModuleForCurrentUser = $false
 )
+<#
+Set-Location -Path "C:\Users\Florian\Downloads\20230918"
+
+$Script = [Array]@()
+$Module = [Array]@()
+$GlobalPackage = [Array]@()
+$LocalPackage = [Array]@("npgsql")
+$LocalPackageFolder = "lib"
+$InstallScriptAndModuleForCurrentUser = $false
+$VerbosePreference = "Continue"
+#>
 
 
 # TODO check if we can check if this is an admin user rather than enforce it
@@ -183,6 +196,53 @@ Write-Log -message "----------------------------------------------------" -Sever
 
 # exit 0
 
+#-----------------------------------------------
+# DOING SOME CHECKS
+#-----------------------------------------------
+
+# Check if this is Pwsh Core
+$isCore = ($PSVersionTable.Keys -contains "PSEdition") -and ($PSVersionTable.PSEdition -ne 'Desktop')
+$psVersion = $psversiontable.psversion
+
+Write-Log -Message "Using PowerShell version $( $PSVersionTable.PSVersion.ToString() ) and $( $PSVersionTable.PSEdition ) edition"
+
+
+# Check the operating system, if Core
+if ($isCore -eq $true) {
+    $os = If ( $IsWindows -eq $true ) {
+        "Windows"
+    } elseif ( $IsLinux -eq $true ) {
+        "Linux"
+    } elseif ( $IsMacOS -eq $true ) {
+        "MacOS"
+    } else {
+        throw "Unknown operating system"
+    }
+} else {
+    # [System.Environment]::OSVersion.VersionString()
+    # [System.Environment]::Is64BitOperatingSystem
+    $os = "Windows"
+}
+
+Write-Log -Message "Using OS: $( $os )"
+
+
+# Check elevation
+if ($os -eq "Windows") {
+    $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+    $principal = [Security.Principal.WindowsPrincipal]::new($identity)
+    $isElevated = $principal.IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)
+    Write-Log -Message "User: $( $identity.Name )"
+    Write-Log -Message "Elevated: $( $isElevated )"
+} else {
+    Write-Log -Message "No user and elevation check due to OS"
+}
+
+
+# Check execution policy
+$executionPolicy = Get-ExecutionPolicy
+Write-Log -Message "Your execution policy is currently: $( $executionPolicy )" -Severity VERBOSE
+
 
 #-----------------------------------------------
 # NUGET SETTINGS
@@ -209,22 +269,6 @@ If ( $InstallScriptAndModuleForCurrentUser -eq $true ) {
 }
 
 Write-Log -Message "Using installation scope: $( $psScope )" -Severity VERBOSE
-
-
-#-----------------------------------------------
-# CHECK EXECUTION POLICY
-#-----------------------------------------------
-
-$executionPolicy = Get-ExecutionPolicy
-Write-Log -Message "Your execution policy is currently: $( $executionPolicy )" -Severity VERBOSE
-
-
-#-----------------------------------------------
-# CURRENT POWERSHELL VERSION
-#-----------------------------------------------
-
-$psVersion = $psversiontable.psversion
-Write-Log "Your are currently using PowerShell version $( $psVersion.toString() )" -Severity VERBOSE
 
 
 #-----------------------------------------------
@@ -539,7 +583,7 @@ If ( $LocalPackage.count -gt 0 -or $GlobalPackage -gt 0) {
                 $pkg = Find-Package $psPackage -IncludeDependencies -Source $packageSource.Name -ErrorAction Continue
             }
 
-            $pkg | Select-Object Name, Version -Unique | ForEach-Object { # | Where-Object { $_.Name -notin $installedPackages.Name }
+            $pkg | ForEach-Object { # | Where-Object { $_.Name -notin $installedPackages.Name } # | Sort-Object Name, Version -Unique -Descending
                 $p = $_
                 $pd = [PSCustomObject]@{
                     "GlobalFlag" = $globalFlag
@@ -553,23 +597,30 @@ If ( $LocalPackage.count -gt 0 -or $GlobalPackage -gt 0) {
 
         }
 
-        Write-Log -Message "Done with searching for packages"
+        Write-Log -Message "Done with searching for $( $packagesToInstall.Count ) packages"
 
-        # Install the packages now
-        $pack = $packagesToInstall | Where-Object { $_.Source -eq $packageSource.Name } | Sort-Object Name -Unique
+        # Install the packages now, we only use packages of the current repository, so in there if other repositories are used for cross-reference, this won't work at the moment
+        $pack = $packagesToInstall | Where-Object { $_.Package.Summary -notlike "*not reference directly*" -and $_.Package.Name -notlike "Xamarin.*"} | Where-Object { $_.Package.Source -eq $packageSource.Name } | Sort-Object Name, Version -Unique -Descending
         Write-Log -Message "This is likely to install $( $pack.Count ) packages"
         #$packagesToInstall | Where-Object { $_.Source -eq $packageSource.Name -and $_.Name -notin $installedPackages.Name } | Sort-Object Name -Unique | ForEach-Object { #where-object { $_.Source -eq $packageSource.Name } | Select-Object * -Unique | ForEach-Object {
+        $i = 0
         $pack | ForEach-Object { #where-object { $_.Source -eq $packageSource.Name } | Select-Object * -Unique | ForEach-Object {
 
             $p = $_
 
             If ( $p.GlobalFlag -eq $true ) {
                 Write-Log -message "Installing $( $p.Package.Name ) with version $( $p.Package.version ) from $( $p.Package.Source ) globally"
-                Install-Package -Name $p.Package.Name -Scope $psScope -Source $packageSource.Name -RequiredVersion $p.Package.Version -SkipDependencies -Force
+                Install-Package -Name $p.Name -Scope $psScope -Source $packageSource.Name -RequiredVersion $p.Version -SkipDependencies -Force
             } else {
-                Write-Log -message "Installing $( $p.Package.Name ) with version $( $p.Package.version ) from $( $p.Package.Source ) locally"
-                Install-Package -Name $p.Package.Name -Scope $psScope -Source $packageSource.Name -RequiredVersion $p.Package.Version -SkipDependencies -Force -Destination $LocalPackageFolder
+                Write-Log -message "Installing $( $p.Name ) with version $( $p.version ) from $( $p.Package.Source ) locally"
+                Install-Package -Name $p.Name -Scope $psScope -Source $packageSource.Name -RequiredVersion $p.Version -SkipDependencies -Force -Destination $LocalPackageFolder
             }
+
+            # Write progress
+            Write-Progress -Activity "Package installation in Progress" -Status "$( $i/$pack.Count )% Complete:" -PercentComplete ([math]::Round($i/$pack.Count*100))
+
+            $i+=1
+
         }
 
     } catch {
