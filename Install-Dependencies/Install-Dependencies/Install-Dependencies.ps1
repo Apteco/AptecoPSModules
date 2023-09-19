@@ -1,7 +1,7 @@
 ﻿
 <#PSScriptInfo
 
-.VERSION 0.0.4
+.VERSION 0.0.5
 
 .GUID 4c029c8e-09fa-48ee-9d62-10895150ce83
 
@@ -26,6 +26,7 @@
 .EXTERNALSCRIPTDEPENDENCIES
 
 .RELEASENOTES
+0.0.5 Fix of rounded status percentage
 0.0.4 Changed the way to temporarily save packages when an error happens in dependency check
 0.0.3 Some bigger changes for getting it to run
 0.0.2 Ignore already installed global packages because they would need to be loaded first
@@ -622,7 +623,7 @@ If ( $LocalPackage.count -gt 0 -or $GlobalPackage -gt 0) {
             }
 
             # Write progress
-            Write-Progress -Activity "Package installation in Progress" -Status "$( $i/$pack.Count )% Complete:" -PercentComplete ([math]::Round($i/$pack.Count*100))
+            Write-Progress -Activity "Package installation in Progress" -Status "$( [math]::Round($i/$pack.Count*100) )% Complete:" -PercentComplete ([math]::Round($i/$pack.Count*100))
 
             $i+=1
 
