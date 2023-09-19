@@ -3,7 +3,7 @@
 
 .VERSION 0.0.1
 
-.GUID c031e57-3a22-46f9-a18c-ece2c984b024
+.GUID 06dbc814-edfe-4571-a01f-f4091ff5f3c2
 
 .AUTHOR florian.von.bracht@apteco.de
 
@@ -32,13 +32,13 @@
 
 #>
 
+#Requires -Module WriteLog
+
 <#
 .SYNOPSIS
-    Downloads and installs the latest versions of some scripts, modules and packages (saved in current folder of machine folder) from the PowerShell Gallery and NuGet.
+    Imports modules and global/local packages. Local packages are loaded by default from the .\lib folder in the current directory
 .DESCRIPTION
-    Script to install dependencies from the PowerShell Gallery and NuGet. It is possible to install scripts, modules and packages.
-    The packages can be installed from the PowerShell Gallery and packages from a NuGet repository.
-    Packages can defined as a raw string array or as a pscustomobject with a specific version number.
+    Script to import dependencies from the PowerShell Gallery and NuGet.
 
     Please make sure to have the Modules WriteLog and PowerShellGet (>= 2.2.4) installed.
 
@@ -78,7 +78,7 @@ Import-Dependencies -LocalPackage MimeKit, Mailkit
 Import-Dependencies -LocalPackageFolder lib -LoadWholePackageFolder # the default is a lib subfolder, so that does not need to be used
 
 #>
-
+<#
 [CmdletBinding()]
 Param(
      #[Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][String[]]$Script = [Array]@()              # Define specific scripts you want to load -> not needed as PATH will be added
@@ -89,6 +89,20 @@ Param(
     ,[Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][Switch]$LoadWholePackageFolder = $false    # Load whole local package folder
     #,[Parameter(Mandatory=$false)][Switch]$InstallScriptAndModuleForCurrentUser = $false
 )
+#>
+
+#-----------------------------------------------
+# DEBUG
+#-----------------------------------------------
+<#
+Set-Location -Path "C:\Users\Florian\Downloads\dep2"
+$Module = [Array]@()              # Define specific modules you want to load
+$GlobalPackage = [Array]@()       # Define specific global package to load
+$LocalPackage = [Array]@()        # Define a specific local package to load
+$LocalPackageFolder = "lib"         # Where to find local packages
+$LoadWholePackageFolder = $true    # Load whole local package folder
+$VerbosePreference = "Continue"
+#>
 
 
 #-----------------------------------------------
@@ -111,7 +125,7 @@ $runtimes = @("win-x64","win-x86","win10","win7","win")
 
 # TODO use the parent logfile if used by a module
 $processStart = [datetime]::now
-Set-Logfile -Path ".\dependencies.log"
+Set-Logfile -Path ".\dependencies_import.log"
 Write-Log -message "----------------------------------------------------" -Severity VERBOSE
 
 
@@ -187,7 +201,7 @@ $Module | ForEach-Object {
 #-----------------------------------------------
 
 $kernel32Loaded = $false
-If ( ($LocalPackage.Count -gt 0 -or $GlobalPackage.Count -gt 0) -and $os -eq "Windows" ) {
+If ( ( $LocalPackage.Count -gt 0 -or $GlobalPackage.Count -gt 0 -or $LoadWholePackageFolder -eq $true ) -and $os -eq "Windows" ) {
 
     Add-Type @"
     using System;
@@ -196,7 +210,7 @@ If ( ($LocalPackage.Count -gt 0 -or $GlobalPackage.Count -gt 0) -and $os -eq "Wi
     public static class Kernel32 {
         [DllImport("kernel32")]
         public static extern IntPtr LoadLibrary(string lpFileName);
-    }    
+    }
 "@
 
     $kernel32Loaded = $true
@@ -237,7 +251,7 @@ function Preload-Assembly {
 # LOAD LIB FOLDER (DLLs AND ASSEMBLIES)
 #-----------------------------------------------
 
-If ( $LocalPackage.Count -gt 0 -or $GlobalPackage.Count -gt 0 ) {
+If ( $LocalPackage.Count -gt 0 -or $GlobalPackage.Count -gt 0 -or $LoadWholePackageFolder -eq $true) {
 
     Write-Log -message "Loading libs..."
 
@@ -250,7 +264,7 @@ If ( $LocalPackage.Count -gt 0 -or $GlobalPackage.Count -gt 0 ) {
     $packagesToLoad.AddRange( @( $globalPackages | Where-Object { $_.Name -in $GlobalPackage } ))
 
     # Decide whether to load all local packages or just a selection
-    If ( ´$LoadWholePackageFolder -eq $true ) {
+    If ( $LoadWholePackageFolder -eq $true ) {
         $packagesToLoad.AddRange( @( $localPackages ))
     } else {
         $packagesToLoad.AddRange( @($localPackages | Where-Object { $_.Name -in $LocalPackage } ))
@@ -259,6 +273,11 @@ If ( $LocalPackage.Count -gt 0 -or $GlobalPackage.Count -gt 0 ) {
     Write-Log -Message "There are $( $packagesToLoad.Count ) packages to load"
 
     # Load through the packages objects instead of going through the folders
+    $successCounter = 0
+    $failureCounter = 0
+    $runtimeSuccessCounter = 0
+    $runtimeFailureCounter = 0
+    $i = 0
     $packagesToLoad | ForEach-Object {
 
         # This is the whole path to the nupkg, but we can use the parent directory
@@ -268,7 +287,6 @@ If ( $LocalPackage.Count -gt 0 -or $GlobalPackage.Count -gt 0 ) {
         # Counters
         $packageLoaded = 0
         $loadError = 0
-    
 
         # Check the package ref folder
         If ( ( Test-Path -Path "$( $package.FullName )/ref" ) -eq $true ) {
@@ -278,33 +296,9 @@ If ( $LocalPackage.Count -gt 0 -or $GlobalPackage.Count -gt 0 ) {
                 #"Checking $( $dotnetVersion )"
                 $dotnetFolder = "$( $package.FullName )/$( $subfolder )/$( $dotnetVersion )"
                 If ( (Test-Path -Path $dotnetFolder)  -eq $true -and $packageLoaded -eq 0) {
-                    Get-ChildItem -Path $dotnetFolder -Filter "*.dll" | ForEach {
+                    Get-ChildItem -Path $dotnetFolder -Filter "*.dll" | ForEach-Object {
                         $f = $_
-                        #"Loading $( $f.FullName )"                    
-                        try {
-                            [void][Reflection.Assembly]::LoadFile($f.FullName)
-                            $packageLoaded = 1
-                            #"Loaded $( $dotnetFolder )"
-                        } catch {
-                            $loadError = 1
-                        }
-                    }                
-                }
-            }
-        }
-
-        
-        # Check the package lib folder
-        if ( ( Test-Path -Path "$( $package.FullName )/lib" ) -eq $true -and $packageLoaded -eq 0) {
-            $subfolder = "lib"
-            $dotnetVersions | ForEach {
-                $dotnetVersion = $_
-                #"Checking $( $dotnetVersion )"
-                $dotnetFolder = "$( $package.FullName )/$( $subfolder )/$( $dotnetVersion )"
-                If ( (Test-Path -Path $dotnetFolder)  -eq $true -and $packageLoaded -eq 0) {
-                    Get-ChildItem -Path $dotnetFolder -Filter "*.dll" | ForEach {
-                        $f = $_
-                        #"Loading $( $f.FullName )"                    
+                        #"Loading $( $f.FullName )"
                         try {
                             [void][Reflection.Assembly]::LoadFile($f.FullName)
                             $packageLoaded = 1
@@ -317,16 +311,42 @@ If ( $LocalPackage.Count -gt 0 -or $GlobalPackage.Count -gt 0 ) {
             }
         }
 
-        <#
+
+        # Check the package lib folder
+        if ( ( Test-Path -Path "$( $package.FullName )/lib" ) -eq $true -and $packageLoaded -eq 0) {
+            $subfolder = "lib"
+            $dotnetVersions | ForEach-Object {
+                $dotnetVersion = $_
+                #"Checking $( $dotnetVersion )"
+                $dotnetFolder = "$( $package.FullName )/$( $subfolder )/$( $dotnetVersion )"
+                If ( (Test-Path -Path $dotnetFolder)  -eq $true -and $packageLoaded -eq 0) {
+                    Get-ChildItem -Path $dotnetFolder -Filter "*.dll" | ForEach-Object {
+                        $f = $_
+                        #"Loading $( $f.FullName )"
+                        try {
+                            [void][Reflection.Assembly]::LoadFile($f.FullName)
+                            $packageLoaded = 1
+                            #"Loaded $( $dotnetFolder )"
+                        } catch {
+                            $loadError = 1
+                        }
+                    }
+                }
+            }
+        }
+
         # Output the current status
         If ($packageLoaded -eq 1) {
-            "OK lib/ref $( $f.fullname )"
+            $successCounter += 1
+            #"OK lib/ref $( $f.fullname )"
         } elseif ($loadError -eq 1) {
-            "ERROR lib/ref $( $f.fullname )"
+            #"ERROR lib/ref $( $f.fullname )"
+            $failureCounter += 1
         } else {
+            #$notLoadedCounter += 1
             #"Not loaded lib/ref $( $package.fullname )"
         }
-        #>
+
 
         # Check the runtimes folder
         $runtimeLoaded = 0
@@ -334,14 +354,14 @@ If ( $LocalPackage.Count -gt 0 -or $GlobalPackage.Count -gt 0 ) {
         #$useKernel32 = 0
         if ( ( Test-Path -Path "$( $package.FullName )/runtimes" ) -eq $true -and $runtimeLoaded -eq 0) {
             $subfolder = "runtimes"
-            $runtimes | ForEach {
+            $runtimes | ForEach-Object {
                 $runtime = $_
                 #"Checking $( $dotnetVersion )"
                 $runtimeFolder = "$( $package.FullName )/$( $subfolder )/$( $runtime )"
                 If ( (Test-Path -Path $runtimeFolder)  -eq $true -and $runtimeLoaded -eq 0) {
-                    Get-ChildItem -Path $runtimeFolder -Filter "*.dll" -Recurse | ForEach {
+                    Get-ChildItem -Path $runtimeFolder -Filter "*.dll" -Recurse | ForEach-Object {
                         $f = $_
-                        #"Loading $( $f.FullName )"                    
+                        #"Loading $( $f.FullName )"
                         try {
                             [void][Reflection.Assembly]::LoadFile($f.FullName)
                             $runtimeLoaded = 1
@@ -349,7 +369,7 @@ If ( $LocalPackage.Count -gt 0 -or $GlobalPackage.Count -gt 0 ) {
                         } catch [System.BadImageFormatException] {
                             # Try it one more time with LoadLibrary through Kernel, if the kernel was loaded
                             If ( $kernel32Loaded -eq $true ) {
-                                [Kernel32]::LoadLibrary($f.FullName)
+                                [void][Kernel32]::LoadLibrary($f.FullName)
                                 $runtimeLoaded = 1
                             }
                             #$useKernel32 = 1
@@ -357,15 +377,31 @@ If ( $LocalPackage.Count -gt 0 -or $GlobalPackage.Count -gt 0 ) {
                             $runtimeLoadError = 1
                         }
                     }
-                    
-                    
+
                 }
             }
         }
 
+        # Log stats
+        If ( $runtimeLoaded -eq 1 ) {
+            $runtimeSuccessCounter += 1
+        } elseif ( $runtimeLoadError -eq 1 ) {
+            $runtimeFailureCounter += 1
+        } else {
 
+        }
+
+        # Write progress
+        Write-Progress -Activity "Package load in progress" -Status "$( [math]::Round($i/$packagesToLoad.Count*100) )% Complete:" -PercentComplete ([math]::Round($i/$packagesToLoad.Count*100))
+        $i += 1
 
     }
+
+    Write-Log -Message "Load status:"
+    Write-Log -Message "  Lib/ref loaded: $( $successCounter )"
+    Write-Log -Message "  Lib/ref failed: $( $failureCounter )"
+    Write-Log -Message "  Runtime loaded: $( $runtimeSuccessCounter )"
+    Write-Log -Message "  Runtime failed: $( $runtimeFailureCounter )"
 
 }
 

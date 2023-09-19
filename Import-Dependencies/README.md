@@ -1,28 +1,28 @@
-# Apteco PS Modules - PowerShell dependency installation
+# Apteco PS Modules - PowerShell dependency import
 
 Execute commands like
+
+```PowerShell
+Import-Dependencies.ps1 -Module "WriteLog" -LoadWholePackageFolder -Verbose
+```
+
+or
+
+```Powershell
+Import-Dependencies.ps1 -Module "WriteLog" -LocalPackage "System.Data.SQLite", "Npgsql" -Verbose
+```
+
+The last way is more efficient, but could cause more problems, when important dependencies are missing. Best way is to install all needed dependencies with my other script like
 
 ```PowerShell
 Install-Dependencies -Module "WriteLog" -LocalPackage "System.Data.SQLite", "Npgsql" -Verbose
 ```
 
-Then the modules/scripts/packages will be installed on your machine:
-- Scripts will be installed with `AllUsers` scope, so will be installed in `C:\Program Files\WindowsPowerShell\Modules`
-- Modules will be installed with `AllUsers` scope, so will be installed in `C:\Program Files\WindowsPowerShell\Modules`
-- Global packages will be installed in `%LOCALAPPDATA%\PackageManagement\NuGet\Packages`
-- Local packages will be installed in the current folder. It will create a `.\lib` folder and puts all packages in there
+And then work out (e.g. with moving folders) which packages are not needed or are needed
 
-Sources for the modules/scripts are PowerShellGallery and for packages it is NuGet. But you can also use other or local repositories. You only have to choose one repository when exeucting this script.
+This script is automatically searching for a `.\lib` subfolder in your current directory.
 
-Existing modules/scripts/packages will be overwritten with the newest version. So they get updated.
-
-This script requires administrator privileges, so it will remind you if those are missing.
-
-Before installing modules/scripts/packages, it will automatically scan for dependencies and will install them too.
-
-When you don't have suitable repositories available, it will ask you to create them.
-
-It will also automatically create a log file in the current folder named `dependencies.log`
+It will also automatically create a log file in the current folder named `dependencies_import.log`
 
 If you want to see more output in your console, just add the `-Verbose` flag to your command.
 
@@ -67,7 +67,7 @@ PS C:\Users\WDAGUtilityAccount>
 For installation execute this for all users scope
 
 ```PowerShell
-$pkg = Find-Module -Repository "PSGallery" -Name "Install-Dependencies" -IncludeDependencies
+$pkg = Find-Module -Repository "PSGallery" -Name "Import-Dependencies" -IncludeDependencies
 $pkg | Where-Object { $_.Type -eq "Module" } | Install-Module -Verbose -Scope AllUsers
 $pkg | Where-Object { $_.Type -eq "Script" } | Install-Script -Verbose -Scope AllUsers
 ```
@@ -75,7 +75,7 @@ $pkg | Where-Object { $_.Type -eq "Script" } | Install-Script -Verbose -Scope Al
 You can check the installed module with
 
 ```PowerShell
-Get-InstalledScript "Install-Dependencies"
+Get-InstalledScript "Import-Dependencies"
 ```
 
 If you want to find more [Apteco scripts in PSGallery](https://www.powershellgallery.com/packages?q=Tags%3A%22Apteco%22), please search with
@@ -117,7 +117,7 @@ Find-Module -Repository "LocalRepo"
 Then install the script like 
 
 ```PowerShell
-$pkg = Find-Script -Repository "LocalRepo" -Name "Install-Dependencies" -IncludeDependencies
+$pkg = Find-Script -Repository "LocalRepo" -Name "Import-Dependencies" -IncludeDependencies
 $pkg | Where-Object { $_.Type -eq "Module" } | Install-Module -Verbose -Scope AllUsers
 $pkg | Where-Object { $_.Type -eq "Script" } | Install-Script -Verbose -Scope AllUsers
 ```
@@ -129,7 +129,7 @@ That way you can exchange the `.nupkg` files and update them manually from time 
 If you don't want to use the script anymore, just remove it with 
 
 ```PowerShell
-Uninstall-Script -Name "INstall-Dependencies"
+Uninstall-Script -Name "Import-Dependencies"
 ```
 
 # Contribution
