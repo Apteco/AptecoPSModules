@@ -21,11 +21,11 @@ Name|Type|Repository/Version|Platform|Downloads|
 [MergePSCustomObject](MergePSCustomObject/)|Module|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/MergePSCustomObject)](https://www.powershellgallery.com/packages/MergePSCustomObject)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/MergePSCustomObject)](https://www.powershellgallery.com/packages/MergePSCustomObject)<br/>[![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)](https://github.com/PlagueHO/PSAuth)|[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/MergePSCustomObject)](https://www.powershellgallery.com/packages/MergePSCustomObject)
 [SyncExtractOptions](SyncExtractOptions/)|Script|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/SyncExtractOptions)](https://www.powershellgallery.com/packages/SyncExtractOptions)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/SyncExtractOptions)](https://www.powershellgallery.com/packages/SyncExtractOptions)<br/>[![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)](https://github.com/PlagueHO/PSAuth)|[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/SyncExtractOptions)](https://www.powershellgallery.com/packages/SyncExtractOptions)
 [WriteLog](WriteLog/)|Module|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/WriteLog)](https://www.powershellgallery.com/packages/WriteLog)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/WriteLog)](https://www.powershellgallery.com/packages/WriteLog)<br/>[![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)](https://github.com/PlagueHO/PSAuth)|[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/WriteLog)](https://www.powershellgallery.com/packages/WriteLog)
-[Install-Dependencies](Install-Dependencies/)|[Script]|
+[Install-Dependencies](Install-Dependencies/)|Script|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/Install-Dependencies)](https://www.powershellgallery.com/packages/Install-Dependencies)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/Install-Dependencies)](https://www.powershellgallery.com/packages/Install-Dependencies)<br/>[![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)](https://github.com/PlagueHO/PSAuth)|[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/Install-Dependencies)](https://www.powershellgallery.com/packages/Install-Dependencies)
+[Import-Dependencies](Import-Dependencies/)|Script|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/Import-Dependencies)](https://www.powershellgallery.com/packages/Import-Dependencies)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/Import-Dependencies)](https://www.powershellgallery.com/packages/Import-Dependencies)<br/>[![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)](https://github.com/PlagueHO/PSAuth)|[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/Import-Dependencies)](https://www.powershellgallery.com/packages/Import-Dependencies)
+
 
 Here are some high level descriptions. Please follow the links from the table or go into the subdirectories to get more detailed information.
-
-
 
 
 ## AptecoPSFramework
@@ -127,6 +127,25 @@ Just use
 ```PowerShell
 Install-Dependencies -Module "WriteLog" -LocalPackage "System.Data.Sqlite", "Npgsql" -Verbose
 ```
+
+## Import-Dependencies
+
+A small script that helps you to import your installed modules and packages you have installed through PowerShellGallery, NuGet or a local repository.
+
+Just use
+
+```PowerShell
+Import-Dependencies.ps1 -Module "WriteLog" -LoadWholePackageFolder -Verbose
+```
+
+to load your `lib` subfolder or
+
+```Powershell
+Import-Dependencies.ps1 -Module "WriteLog" -LocalPackage "System.Data.SQLite", "Npgsql" -Verbose
+```
+
+to load specific folders
+
 
 ## MeasureRows
 
