@@ -1,7 +1,7 @@
 ﻿
 <#PSScriptInfo
 
-.VERSION 0.0.1
+.VERSION 0.0.2
 
 .GUID 06dbc814-edfe-4571-a01f-f4091ff5f3c2
 
@@ -26,6 +26,7 @@
 .EXTERNALSCRIPTDEPENDENCIES
 
 .RELEASENOTES
+0.0.2 Fixed a problem with out commented input parameters
 0.0.1 Initial release of this script
 
 .PRIVATEDATA
@@ -78,7 +79,7 @@ Import-Dependencies -LocalPackage MimeKit, Mailkit
 Import-Dependencies -LocalPackageFolder lib -LoadWholePackageFolder # the default is a lib subfolder, so that does not need to be used
 
 #>
-<#
+
 [CmdletBinding()]
 Param(
      #[Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][String[]]$Script = [Array]@()              # Define specific scripts you want to load -> not needed as PATH will be added
@@ -89,7 +90,7 @@ Param(
     ,[Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][Switch]$LoadWholePackageFolder = $false    # Load whole local package folder
     #,[Parameter(Mandatory=$false)][Switch]$InstallScriptAndModuleForCurrentUser = $false
 )
-#>
+
 
 #-----------------------------------------------
 # DEBUG
@@ -190,10 +191,14 @@ $Env:Path = ( $scriptPath | Select-Object -unique ) -join ";"
 # LOAD MODULES
 #-----------------------------------------------
 
+$modCount = 0
 $Module | ForEach-Object {
     $mod = $_
-    Import-Module $_ #-Global
+    Import-Module $mod #-Global
+    $modCount += 1
 }
+
+Write-Log -Message "Loaded $( $modCount ) modules" #-Severity VERBOSE
 
 
 #-----------------------------------------------
