@@ -1,5 +1,7 @@
 
-function Install-MailKit {
+
+
+function Load-LibFolder {
     [CmdletBinding()]
     param (
         
@@ -13,12 +15,13 @@ function Install-MailKit {
     
         #install-script install-dependencies, import-dependencies -force -verbose 
         #Install-Dependencies -LocalPackage MailKit -verbose
-        #Import-Dependencies.ps1 -LoadWholePackageFolder -LocalPackageFolder "./lib"
 
         # This installation includes Mimekit
-        Install-Dependencies -LocalPackage MailKit -LocalPackageFolder "$( $Script:localLibFolder )" #-verbose
+        #Import-Dependencies -LocalPackage MailKit -LocalPackageFolder "$( $Script:localLibFolder )" #-verbose
+        Import-Dependencies -LoadWholePackageFolder -LocalPackageFolder "$( $Script:localLibFolder )"
 
         # TODO save an indikator or bool flag, if it already has been installed
+        $Script:libFolderLoadedIndicator = $true
 
     }
     

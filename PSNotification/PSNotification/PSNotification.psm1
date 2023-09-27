@@ -59,14 +59,18 @@ $Private = @( Get-ChildItem -Path "$( $PSScriptRoot )/Private/*.ps1" -ErrorActio
 New-Variable -Name timestamp -Value $null -Scope Script -Force      # Start time of this module
 New-Variable -Name moduleRoot -Value $null -Scope Script -Force     # Current location root of this module
 New-Variable -Name defaultStorefile -Value $null -Scope Script -Force  # Default path for all settings
-New-Variable -Name store -Value $null -Scope Script -Force        # Plugins collection for all registered plugins
-New-Variable -Name Debug -Value $null -Scope Script -Force        # Plugins collection for all registered plugins
+New-Variable -Name store -Value $null -Scope Script -Force        # Default json storage template
+New-Variable -Name Debug -Value $null -Scope Script -Force        # debug variable to test things on
+New-Variable -Name localLibFolder -Value $null -Scope Script -Force        # app folder for settings of this module
+New-Variable -Name libFolderLoadedIndicator -Value $null -Scope Script -Force        # app folder for settings of this module
+
 
 # Set the variables now
 $Script:timestamp = [datetime]::Now
 $Script:moduleRoot = $PSScriptRoot.ToString()
+$Script:libFolderLoadedIndicator = $false
 
-
+# Default json storage template
 $Script:store = [PSCustomObject]@{
     "lastChange" = [datetime]::Now.ToString("yyyyMMddHHmmss")
     "channels" = [Array]@()
@@ -83,6 +87,7 @@ $Script:store = [PSCustomObject]@{
 $localAppData = [Environment]::GetFolderPath("LocalApplicationData")
 $localTargetFolder = "$( $localAppData )/AptecoPSModules/PSNotification"
 $Script:defaultStorefile = "$( $localTargetFolder )/store.json"
+$Script:localLibFolder = "$( $localTargetFolder )/lib"
 
 # Check if the path is valid and if so and the folder does not exist, create it
 If ( (Test-Path -Path $localTargetFolder -IsValid) -eq $true ) {
