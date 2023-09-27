@@ -565,6 +565,8 @@ If ( $GlobalPackage.Count -gt 0 -or $LocalPackage.Count -gt 0 ) {
 # CHECK LOCAL PACKAGES DEPENDENCIES FOR INSTALLATION AND UPDATE
 #-----------------------------------------------
 
+$l = 0
+$g = 0
 If ( $LocalPackage.count -gt 0 -or $GlobalPackage.Count -gt 0) {
 
     try {
@@ -635,7 +637,7 @@ If ( $LocalPackage.count -gt 0 -or $GlobalPackage.Count -gt 0) {
         $pack = $packagesToInstall | Where-Object { $_.Package.Summary -notlike "*not reference directly*" -and $_.Package.Name -notlike "Xamarin.*"} | Where-Object { $_.Package.Source -eq $packageSource.Name } | Sort-Object Name, Version -Unique -Descending
         Write-Log -Message "This is likely to install $( $pack.Count ) packages"
         #$packagesToInstall | Where-Object { $_.Source -eq $packageSource.Name -and $_.Name -notin $installedPackages.Name } | Sort-Object Name -Unique | ForEach-Object { #where-object { $_.Source -eq $packageSource.Name } | Select-Object * -Unique | ForEach-Object {
-        $i = 0
+
         $pack | ForEach-Object { #where-object { $_.Source -eq $packageSource.Name } | Select-Object * -Unique | ForEach-Object {
 
             $p = $_
@@ -643,15 +645,15 @@ If ( $LocalPackage.count -gt 0 -or $GlobalPackage.Count -gt 0) {
             If ( $p.GlobalFlag -eq $true ) {
                 Write-Log -message "Installing $( $p.Package.Name ) with version $( $p.Package.version ) from $( $p.Package.Source ) globally"
                 Install-Package -Name $p.Name -Scope $psScope -Source $packageSource.Name -RequiredVersion $p.Version -SkipDependencies -Force
+                $g += 1
             } else {
                 Write-Log -message "Installing $( $p.Name ) with version $( $p.version ) from $( $p.Package.Source ) locally"
                 Install-Package -Name $p.Name -Scope $psScope -Source $packageSource.Name -RequiredVersion $p.Version -SkipDependencies -Force -Destination $LocalPackageFolder
+                $l += 1
             }
 
             # Write progress
             Write-Progress -Activity "Package installation in progress" -Status "$( [math]::Round($i/$pack.Count*100) )% Complete:" -PercentComplete ([math]::Round($i/$pack.Count*100))
-
-            $i+=1
 
         }
 
@@ -675,9 +677,10 @@ If ( $LocalPackage.count -gt 0 -or $GlobalPackage.Count -gt 0) {
 
 # Installation Status
 Write-Log -Message "STATUS:" -Severity INFO
-Write-Log -Message "  $( $i ) local and global packages installed" -Severity INFO
-Write-Log -Message "  $( $m ) modules installed" -Severity INFO
-Write-Log -Message "  $( $s ) scripts installed" -Severity INFO
+Write-Log -Message "  $( $l ) local packages installed into '$( $LocalPackageFolder )'" -Severity INFO
+Write-Log -Message "  $( $g ) global packages installed" -Severity INFO
+Write-Log -Message "  $( $m ) modules installed with scope '$( $psScope )'" -Severity INFO
+Write-Log -Message "  $( $s ) scripts installed with scope '$( $psScope )'" -Severity INFO
 
 # Performance information
 $processEnd = [datetime]::now
