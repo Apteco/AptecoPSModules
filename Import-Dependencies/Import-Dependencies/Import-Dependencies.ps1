@@ -1,7 +1,7 @@
 ﻿
 <#PSScriptInfo
 
-.VERSION 0.0.2
+.VERSION 0.0.3
 
 .GUID 06dbc814-edfe-4571-a01f-f4091ff5f3c2
 
@@ -26,6 +26,9 @@
 .EXTERNALSCRIPTDEPENDENCIES
 
 .RELEASENOTES
+0.0.3 Minor Improvements
+      Status information at the end
+      Differentiation between .net core and windows/desktop priorities
 0.0.2 Fixed a problem with out commented input parameters
 0.0.1 Initial release of this script
 
@@ -115,7 +118,8 @@ $VerbosePreference = "Continue"
 # SETTTINGS FOR LOADING PACKAGES
 # TODO [ ] Define a priority later for .net versions, but use fixed ones at the moment
 # These lists will be checked in the defined order
-$dotnetVersions = @("net6.0","net6.0-windows","net5.0","net5.0-windows","netcore50","netstandard2.1","netstandard2.0","netstandard1.5","netstandard1.3","netstandard1.1","netstandard1.0")
+$dotnetDesktopVersions = @("net48","net47","net462","netstandard2.1","netstandard2.0","netstandard1.5","netstandard1.3","netstandard1.1","netstandard1.0")
+$dotnetCoreVersions = @("net6.0","net6.0-windows","net5.0","net5.0-windows","netcore50")
 $targetFolders = @("ref","lib")
 $runtimes = @("win-x64","win-x86","win10","win7","win")
 
@@ -138,6 +142,13 @@ Write-Log -message "----------------------------------------------------" -Sever
 $isCore = ($PSVersionTable.Keys -contains "PSEdition") -and ($PSVersionTable.PSEdition -ne 'Desktop')
 
 Write-Log -Message "Using PowerShell version $( $PSVersionTable.PSVersion.ToString() ) and $( $PSVersionTable.PSEdition ) edition"
+
+# Decide which lib priority to use
+If ( $isCore -eq $true ) {
+    $dotnetVersions = $dotnetCoreVersions + $dotnetDesktopVersions
+} else {
+    $dotnetVersions = $dotnetDesktopVersions
+}
 
 # Check the operating system, if Core
 if ($isCore -eq $true) {
@@ -256,12 +267,19 @@ function Preload-Assembly {
 # LOAD LIB FOLDER (DLLs AND ASSEMBLIES)
 #-----------------------------------------------
 
+$successCounter = 0
+$failureCounter = 0
+$runtimeSuccessCounter = 0
+$runtimeFailureCounter = 0
+
 If ( $LocalPackage.Count -gt 0 -or $GlobalPackage.Count -gt 0 -or $LoadWholePackageFolder -eq $true) {
 
     Write-Log -message "Loading libs..."
 
     # Load the packages we can find
-    $localPackages = Get-Package -Destination $LocalPackageFolder
+    If ( $LocalPackage.Count -gt 0 -or $LoadWholePackageFolder -eq $true) {
+        $localPackages = Get-Package -Destination $LocalPackageFolder
+    }
     $globalPackages = Get-Package -ProviderName NuGet
 
     # Filter the packages
@@ -278,10 +296,6 @@ If ( $LocalPackage.Count -gt 0 -or $GlobalPackage.Count -gt 0 -or $LoadWholePack
     Write-Log -Message "There are $( $packagesToLoad.Count ) packages to load"
 
     # Load through the packages objects instead of going through the folders
-    $successCounter = 0
-    $failureCounter = 0
-    $runtimeSuccessCounter = 0
-    $runtimeFailureCounter = 0
     $i = 0
     $packagesToLoad | ForEach-Object {
 
@@ -305,10 +319,12 @@ If ( $LocalPackage.Count -gt 0 -or $GlobalPackage.Count -gt 0 -or $LoadWholePack
                         $f = $_
                         #"Loading $( $f.FullName )"
                         try {
+                            Write-Verbose -Message "Loading package ref '$( $f.FullName )'"
                             [void][Reflection.Assembly]::LoadFile($f.FullName)
                             $packageLoaded = 1
                             #"Loaded $( $dotnetFolder )"
                         } catch {
+                            Write-Verbose -Message "Failed! Loading package ref '$( $f.FullName )'"
                             $loadError = 1
                         }
                     }
@@ -329,10 +345,12 @@ If ( $LocalPackage.Count -gt 0 -or $GlobalPackage.Count -gt 0 -or $LoadWholePack
                         $f = $_
                         #"Loading $( $f.FullName )"
                         try {
+                            Write-Verbose -Message "Loading package lib '$( $f.FullName )'"
                             [void][Reflection.Assembly]::LoadFile($f.FullName)
                             $packageLoaded = 1
                             #"Loaded $( $dotnetFolder )"
                         } catch {
+                            Write-Verbose -Message "Failed! Loading package lib '$( $f.FullName )'"
                             $loadError = 1
                         }
                     }
@@ -368,12 +386,14 @@ If ( $LocalPackage.Count -gt 0 -or $GlobalPackage.Count -gt 0 -or $LoadWholePack
                         $f = $_
                         #"Loading $( $f.FullName )"
                         try {
+                            Write-Verbose -Message "Loading package runtime '$( $f.FullName )'"
                             [void][Reflection.Assembly]::LoadFile($f.FullName)
                             $runtimeLoaded = 1
                             #"Loaded $( $dotnetFolder )"
                         } catch [System.BadImageFormatException] {
                             # Try it one more time with LoadLibrary through Kernel, if the kernel was loaded
                             If ( $kernel32Loaded -eq $true ) {
+                                Write-Verbose -Message "Failed! Using kernel32 for loading package runtime '$( $f.FullName )'"
                                 [void][Kernel32]::LoadLibrary($f.FullName)
                                 $runtimeLoaded = 1
                             }
@@ -402,21 +422,23 @@ If ( $LocalPackage.Count -gt 0 -or $GlobalPackage.Count -gt 0 -or $LoadWholePack
 
     }
 
-    Write-Log -Message "Load status:"
-    Write-Log -Message "  Lib/ref loaded: $( $successCounter )"
-    Write-Log -Message "  Lib/ref failed: $( $failureCounter )"
-    Write-Log -Message "  Runtime loaded: $( $runtimeSuccessCounter )"
-    Write-Log -Message "  Runtime failed: $( $runtimeFailureCounter )"
+
 
 }
 
 
+#-----------------------------------------------
+# STATUS
+#-----------------------------------------------
 
-
+Write-Log -Message "Load status:"
+Write-Log -Message "  Modules loaded: $( $modCount )" #-Severity VERBOSE
+Write-Log -Message "  Lib/ref loaded: $( $successCounter )"
+Write-Log -Message "  Lib/ref failed: $( $failureCounter )"
+Write-Log -Message "  Runtime loaded: $( $runtimeSuccessCounter )"
+Write-Log -Message "  Runtime failed: $( $runtimeFailureCounter )"
 
 #Add-Type -AssemblyName System.Security
-
-
 
 
 #-----------------------------------------------
