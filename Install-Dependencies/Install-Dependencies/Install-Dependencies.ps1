@@ -1,7 +1,7 @@
 ﻿
 <#PSScriptInfo
 
-.VERSION 0.0.5
+.VERSION 0.0.6
 
 .GUID 4c029c8e-09fa-48ee-9d62-10895150ce83
 
@@ -26,6 +26,9 @@
 .EXTERNALSCRIPTDEPENDENCIES
 
 .RELEASENOTES
+0.0.6 Admin privileges are now checked in another way and is not needed for local packages anymore
+      Fix for installation if package names are strings
+      Adding status information at the end
 0.0.5 Fix of rounded status percentage
 0.0.4 Changed the way to temporarily save packages when an error happens in dependency check
 0.0.3 Some bigger changes for getting it to run
@@ -37,7 +40,7 @@
 #>
 
 #Requires -Module WriteLog
-#Requires -RunAsAdministrator
+
 # The admin rights are only needed for modules and scripts and global packages, but not local packages, but this way we can ensure everythings in the right place
 
 
@@ -251,6 +254,11 @@ if ($os -eq "Windows") {
 $executionPolicy = Get-ExecutionPolicy
 Write-Log -Message "Your execution policy is currently: $( $executionPolicy )" -Severity VERBOSE
 
+# Check if elevated rights are needed
+If (($GlobalPackage.Count -gt 0 -or $Module.Count -gt 0 -or $Script.count -gt 0 ) -and $isElevated -eq $false) {
+    throw "To install global packages, you need elevated rights, so please restart PowerShell with Administrator privileges!"
+}
+
 
 #-----------------------------------------------
 # NUGET SETTINGS
@@ -368,6 +376,7 @@ If ( $Script.Count -gt 0 -or $Module.Count -gt 0 ) {
 # CHECK SCRIPT DEPENDENCIES FOR INSTALLATION AND UPDATE
 #-----------------------------------------------
 
+$s = 0
 If ( $Script.Count -gt 0 ) {
 
     # TODO [ ] Add psgallery possibly, too
@@ -391,7 +400,11 @@ If ( $Script.Count -gt 0 ) {
 
             $psScriptDependencies = Find-Script -Name $psScript -IncludeDependencies
             #$psScriptDependencies | Where-Object { $_.Name -notin $installedScripts.Name } | Install-Script -Scope AllUsers -Verbose -Force
-            $psScriptDependencies | Install-Script -Scope $psScope -Force
+            $psScriptDependencies | ForEach-Object {
+                $scr = $_
+                $scr | Install-Script -Scope $psScope -Force
+                $s += 1
+            }
 
         }
 
@@ -415,6 +428,7 @@ If ( $Script.Count -gt 0 ) {
 # CHECK MODULES DEPENDENCIES FOR INSTALLATION AND UPDATE
 #-----------------------------------------------
 
+$m = 0
 If ( $Module.count -gt 0 ) {
 
     try {
@@ -433,11 +447,14 @@ If ( $Module.count -gt 0 ) {
             # TODO [ ] possibly add dependencies on version number
             # This is using -force to allow updates
             $psModuleDependencies = Find-Module -Name $psModule -IncludeDependencies
-            $psModuleDependencies | Install-Module -Scope $psScope -Force
+            $psModuleDependencies | ForEach-Object {
+                $mod = $_
+                $mod | Install-Module -Scope $psScope -Force
+                $m += 1
+            }
             #$psModuleDependencies | where { $_.Name -notin $installedModules.Name } | Install-Module -Scope AllUsers -Verbose -Force
 
         }
-
 
     } catch {
 
@@ -548,7 +565,7 @@ If ( $GlobalPackage.Count -gt 0 -or $LocalPackage.Count -gt 0 ) {
 # CHECK LOCAL PACKAGES DEPENDENCIES FOR INSTALLATION AND UPDATE
 #-----------------------------------------------
 
-If ( $LocalPackage.count -gt 0 -or $GlobalPackage -gt 0) {
+If ( $LocalPackage.count -gt 0 -or $GlobalPackage.Count -gt 0) {
 
     try {
 
@@ -564,7 +581,7 @@ If ( $LocalPackage.count -gt 0 -or $GlobalPackage -gt 0) {
         $globalPackages = Get-Package
         $installedPackages = $localPackages + $globalPackages
         $packagesToInstall = [System.Collections.ArrayList]@()
-        $LocalPackage + $GlobalPackage | ForEach-Object {
+        @( $LocalPackage + $GlobalPackage ) | ForEach-Object {
 
             $psPackage = $_
             $globalFlag = $false
@@ -582,15 +599,18 @@ If ( $LocalPackage.count -gt 0 -or $GlobalPackage -gt 0) {
                 Find-Package : Unable to find dependent package(s) (nuget:Microsoft.NETCore.Platforms/3.1.0)
             #>
 
-            If ( $psPackage -is [pscustomobject] ) {
+            If ( ($psPackage.gettype()).Name -eq "PsCustomObject" ) {
                 If ( $null -eq $psPackage.version ) {
+                    Write-Verbose "Looking for $( $psPackage.name ) without specific version."
                     #$pkg = Find-Package $psPackage.name -IncludeDependencies -Source $packageSource.Name -ErrorAction Continue
                     [void]@( Find-Package $psPackage.name -IncludeDependencies -Source $packageSource.Name -ErrorAction Continue ).foreach({$pkg.add($_)}) # add elements directly instead of saving everything into a variable
                 } else {
+                    Write-Verbose "Looking for $( $psPackage.name ) with version $( $psPackage.version )"
                     #$pkg = Find-Package $psPackage.name -IncludeDependencies -Source $packageSource.Name -ErrorAction Continue -RequiredVersion $psPackage.version
                     [void]@( Find-Package $psPackage.name -IncludeDependencies -Source $packageSource.Name -ErrorAction Continue -RequiredVersion $psPackage.version ).foreach({$pkg.add($_)}) # add elements directly instead of saving everything into a variable
                 }
             } else {
+                Write-Verbose "Looking for $( $psPackage ) without specific version"
                 [void]@( Find-Package $psPackage -IncludeDependencies -Source $packageSource.Name -ErrorAction Continue ).foreach({$pkg.add($_)}) # add elements directly instead of saving everything into a variable
                 #$pkg = Find-Package $psPackage -IncludeDependencies -Source $packageSource.Name -ErrorAction Continue
             }
@@ -653,6 +673,13 @@ If ( $LocalPackage.count -gt 0 -or $GlobalPackage -gt 0) {
 # FINISHING
 #-----------------------------------------------
 
+# Installation Status
+Write-Log -Message "STATUS:" -Severity INFO
+Write-Log -Message "  $( $i ) local and global packages installed" -Severity INFO
+Write-Log -Message "  $( $m ) modules installed" -Severity INFO
+Write-Log -Message "  $( $s ) scripts installed" -Severity INFO
+
+# Performance information
 $processEnd = [datetime]::now
 $processDuration = New-TimeSpan -Start $processStart -End $processEnd
 Write-Log -Message "Done! Needed $( [int]$processDuration.TotalSeconds ) seconds in total" -Severity INFO
