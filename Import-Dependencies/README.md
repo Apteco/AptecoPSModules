@@ -132,6 +132,17 @@ If you don't want to use the script anymore, just remove it with
 Uninstall-Script -Name "Import-Dependencies"
 ```
 
+# Examples
+
+## How to use e.g. for installing MailKit into a local folder
+
+```PowerShell
+install-script install-dependencies, import-dependencies -force
+cd c:\temp
+Install-Dependencies -LocalPackage MailKit -verbose
+Import-Dependencies -LoadWholePackageFolder -LocalPackageFolder "./lib" -verbose
+```
+
 # Contribution
 
 You are free to use this code, put in some changes and use a pull request to feedback improvements :-)
