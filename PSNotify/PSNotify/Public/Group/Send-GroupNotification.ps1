@@ -4,7 +4,8 @@ function Send-GroupNotification {
     [CmdletBinding()]
     param (
          [Parameter(Mandatory = $true)][string]$Name        # Give the channel a name, this is the "identifier for this channel"
-        ,[Parameter(Mandatory = $true)][string]$Message 
+        ,[Parameter(Mandatory = $true)][string]$Message     # Main message to send
+        ,[Parameter(Mandatory = $false)][string]$Subject    # Used for teams and email
     )
     
     begin {
@@ -32,15 +33,15 @@ function Send-GroupNotification {
                 "Telegram" {
                     Send-TelegramNotification -Name $target.Name -Target $target.targetname -Text $Message
                 }
-                # "Teams" {
-                #     Send-SlackNotification -Name $target.Name -Target $target.targetname -Text $Message
-                # }
-                # "Slack" {
-                #     Send-SlackNotification -Name $target.Name -Target $target.targetname -Text $Message
-                # }
-                # "Mail" {
-                #     Send-MailNotification -Name $target.Name -Target $target.targetname -Text $Message
-                # }
+                "Teams" {
+                    Send-TeamsNotification -Name $target.Name -Text $Message -Title $Subject
+                }
+                "Slack" {
+                    Send-SlackNotification -Name $target.Name -Target $target.targetname -Text $Message
+                }
+                "Mail" {
+                    Send-MailNotification -Name $target.Name -Target $target.targetname -Text $Message -Subject $Subject
+                }
             }
             
         }

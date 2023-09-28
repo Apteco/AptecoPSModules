@@ -46,7 +46,7 @@ A notification group combines multiple channels/targets together. It needs to be
 Add-NotificationGroup -Name "MyNewGroup"
 ```
 
-Then add targets to your group
+Then add already existing targets to your group. In the end it is a reference to your channel/target
 
 ```PowerShell
 Add-NotificationGroupTarget -Group "MyNewGroup" -Channel "MyNewChannel" -Target "MyNewTarget"

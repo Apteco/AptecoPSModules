@@ -9,6 +9,7 @@ function Add-EmailChannel {
         ,[Parameter(Mandatory = $true)][string]$Password
         ,[Parameter(Mandatory = $true)][string]$Host
         ,[Parameter(Mandatory = $false)][int]$Port = 587
+        ,[Parameter(Mandatory = $false)][Switch]$UseSSL = $false
         #,[Parameter(Mandatory = $true)][string]$Token
     )
     
@@ -18,17 +19,45 @@ function Add-EmailChannel {
     
     process {
         
-        # TODO First idea, change later for mailkit
+        # Load mailkit lib
+        If ( Confirm-MailKitLoaded -eq $true ) {
+            Write-Verbose "MailKit loaded successfully"
+        } else {
+            throw "You need to install MailKit first. Please execute Install-Mailkit!" # TODO maybe the throw is not needed here
+        }
 
-        # This is customised for Telegram
+        # Try connect to server
+        try {
+            Write-Verbose "Connecting to mailserver"
+            $smtpClient = [MailKit.Net.Smtp.SmtpClient]::new()
+            $smtpClient.Connect($Host, $Port, $UseSSL) # $SMTP.Connect('smtp.gmail.com', 587, $False)
+        } catch {
+            throw "Connection to host '$( $Host )' failed!"
+        }
+
+        # Try to authenticate
+        try {
+            Write-Verbose "Authentication to mailserver"
+            $smtpClient.Authenticate($Username, $Password) # $SMTP.Authenticate('myemail1@gmail.com', 'appspecificpassword' )
+        } catch {
+            throw "Authentication to host '$( $Host )' failed!"
+        }
+
+        # Kill that connection
+        $smtpClient.Disconnect($true)
+        $smtpClient.Dispose()
+
+        # This is customised for email
         $definition = [PSCustomObject]@{
             "from" = $From
             "username" = $Username
             "password" = Convert-PlaintextToSecure -String $Password 
             "port" = $Port
             "host" = $Host
+            "ssl" = $UseSSL
         }
 
+        # Add the channel
         Add-Channel -Type "Email" -Name $Name -Definition $definition
 
     }
@@ -36,4 +65,5 @@ function Add-EmailChannel {
     end {
         
     }
+
 }

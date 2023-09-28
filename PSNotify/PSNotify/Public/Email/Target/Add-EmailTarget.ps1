@@ -14,9 +14,11 @@ function Add-EmailTarget {
     
     process {
         
+        # TODO maybe directly send to all receivers and confirm the email was received
+
         # Build the target object
         Add-Target -Name $Name -TargetName $TargetName -Definition ([PSCustomObject]@{
-            "Receivers" = $Receivers
+            "Receivers" = [Array]@( $Receivers )
         })
 
         # Get the channel to extend it

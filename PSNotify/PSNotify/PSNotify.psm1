@@ -89,10 +89,17 @@ $localTargetFolder = "$( $localAppData )/AptecoPSModules/PSNotification"
 $Script:defaultStorefile = "$( $localTargetFolder )/store.json"
 $Script:localLibFolder = "$( $localTargetFolder )/lib"
 
-# Check if the path is valid and if so and the folder does not exist, create it
+# Check if the modules path is valid and if so and the folder does not exist, create it
 If ( (Test-Path -Path $localTargetFolder -IsValid) -eq $true ) {
     If ( (Test-Path -Path $localTargetFolder) -eq $false ) {
         New-Item -Path $localTargetFolder -ItemType Directory
+    }
+}
+
+# Check if the lib path is valid and if so and the folder does not exist, create it
+If ( (Test-Path -Path $localLibFolder -IsValid) -eq $true ) {
+    If ( (Test-Path -Path $localLibFolder) -eq $false ) {
+        New-Item -Path $localLibFolder -ItemType Directory
     }
 }
 

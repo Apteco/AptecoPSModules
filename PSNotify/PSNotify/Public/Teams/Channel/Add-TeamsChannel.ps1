@@ -23,6 +23,9 @@ function Add-TeamsChannel {
 
         Add-Channel -Type "Teams" -Name $Name -Definition $definition
 
+        # Adds a dummy target (because we don't have multiple targets in Teams) to the channel to make it easier with group notifications
+        Add-Target -Name $Name -TargetName $Name -Definition ([PSCustomObject]@{})
+
     }
     
     end {

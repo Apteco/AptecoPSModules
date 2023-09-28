@@ -4,8 +4,8 @@ function Send-TelegramNotification {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory=$true)][String]$Name                                # The telegram channel to use
-        ,[Parameter(Mandatory=$true)][String]$Target                                # The telegram channel to use
-        ,[Parameter(Mandatory=$true)][String]$Text                                # The telegram channel to use
+        ,[Parameter(Mandatory=$true)][String]$Target                                # The telegram target to use
+        ,[Parameter(Mandatory=$true)][String]$Text                                # The text to send
         ,[Parameter(Mandatory=$false)][Switch]$DisableNotification = $false                        # The chat id to use
     )
     
