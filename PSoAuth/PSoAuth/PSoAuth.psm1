@@ -20,30 +20,33 @@ https://github.com/RamblingCookieMonster/PSStackExchange/blob/db1277453374cb1668
 
 
 #-----------------------------------------------
-# LOAD DEFAULT SETTINGS
+# ADD MODULE PATH, IF NOT PRESENT
 #-----------------------------------------------
 
-$Env:PSModulePath = @(
-    $Env:PSModulePath
-    "$( $Env:ProgramFiles )\WindowsPowerShell\Modules"
-    "$( $Env:HOMEDRIVE )\$( $Env:HOMEPATH )\Documents\WindowsPowerShell\Modules"
-    "$( $Env:windir )\system32\WindowsPowerShell\v1.0\Modules"
-) -join ";"
-
-# TODO add the scripts folder loading
+$modulePath = @( [System.Environment]::GetEnvironmentVariable("PSModulePath") -split ";" ) + @(
+    #C:\Program Files\PowerShell\Modules
+    #c:\program files\powershell\7\Modules
+    "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles") )\WindowsPowerShell\Modules"
+    "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles(x86)") )\WindowsPowerShell\Modules"
+    "$( [System.Environment]::GetEnvironmentVariable("USERPROFILE") )\Documents\WindowsPowerShell\Modules"
+    "$( [System.Environment]::GetEnvironmentVariable("windir") )\system32\WindowsPowerShell\v1.0\Modules"
+)
+$Env:PSModulePath = ( $modulePath | Sort-Object -unique ) -join ";"
+# Using $env:PSModulePath for only temporary override
 
 
 #-----------------------------------------------
-# LOAD DEFAULT SETTINGS
+# ADD SCRIPT PATH, IF NOT PRESENT
 #-----------------------------------------------
 
-$defaultsettingsFile = Join-Path -Path $PSScriptRoot -ChildPath "/settings/defaultsettings.ps1"
-Try {
-    $Script:defaultSettings = [PSCustomObject]( . $defaultsettingsFile )
-} Catch {
-    Write-Error -Message "Failed to import default settings $( $defaultsettingsFile )"
-}
-$Script:settings = $Script:defaultSettings
+#$envVariables = [System.Environment]::GetEnvironmentVariables()
+$scriptPath = @( [System.Environment]::GetEnvironmentVariable("Path") -split ";" ) + @(
+    "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles") )\WindowsPowerShell\Scripts"
+    "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles(x86)") )\WindowsPowerShell\Scripts"
+    "$( [System.Environment]::GetEnvironmentVariable("USERPROFILE") )\Documents\WindowsPowerShell\Scripts"
+)
+$Env:Path = ( $scriptPath | Sort-Object -unique ) -join ";"
+# Using $env:Path for only temporary override
 
 
 #-----------------------------------------------
@@ -52,14 +55,14 @@ $Script:settings = $Script:defaultSettings
 
 # Allow only newer security protocols
 # hints: https://www.frankysweb.de/powershell-es-konnte-kein-geschuetzter-ssltls-kanal-erstellt-werden/
-if ( $Script:settings.changeTLS ) {
+#if ( $Script:settings.changeTLS ) {
     # $AllProtocols = @(
     #     [System.Net.SecurityProtocolType]::Tls12
     #     #[System.Net.SecurityProtocolType]::Tls13,
     #     #,[System.Net.SecurityProtocolType]::Ssl3
     # )
-    [System.Net.ServicePointManager]::SecurityProtocol = @( $Script:settings.allowedProtocols )
-}
+#    [System.Net.ServicePointManager]::SecurityProtocol = @( $Script:settings.allowedProtocols )
+#}
 
 # TODO look for newer version of this network stuff
 
@@ -112,7 +115,7 @@ try {
         Import-Module -Name $mod -ErrorAction Stop
     }
 } catch {
-    Write-Error "Error loading dependencies. Please execute 'Install-AptecoPSFramework' now"
+    Write-Error "Error loading dependencies. Please execute 'Install-PSOAuth' now"
     Exit 0
 }
 
@@ -123,6 +126,7 @@ try {
 # LOAD SECURITY SETTINGS
 #-----------------------------------------------
 
+<#
 If ("" -ne $Script:settings.keyfile) {
     If ( Test-Path -Path $Script:settings.keyfile -eq $true ) {
         Import-Keyfile -Path $Script:settings.keyfile
@@ -130,6 +134,7 @@ If ("" -ne $Script:settings.keyfile) {
         Write-Error "Path to keyfile is not valid. Please check your settings json file!"
     }
 }
+#>
 
 
 #-----------------------------------------------
@@ -148,3 +153,4 @@ Export-ModuleMember -Function $Public.Basename
 Set-ProcessId -Id ( [guid]::NewGuid().toString() )
 
 # the path for the log file will be set with loading the settings
+Set-Logfile -Path "./psoauth.log"

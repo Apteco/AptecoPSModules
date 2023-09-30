@@ -1,4 +1,7 @@
 
+# General approach
+
+This description needs reworking as a local webserver is supported now!
 
 This oAuth process does work if you are allowed to use Apps for receiving the code instead of a public https website.
 The process guids you to the login page of the service you want to receiver an authentication token for. After this it
@@ -10,12 +13,196 @@ Sometimes tokens are only for 1 hour, sometimes for 30 days.
 
 Be aware, that you can close your browser window when the whole process is done.
 
+```Powershell
+
+# First install this module
+Install-Module PSOAuth -verbose
+
+# Install dependencies for this module
+Install-PSOAuth
+
+# Move to the directory where you want everything to be saved
+# The logfile will be created in this directory
+
+# Create a token
+Request-OAuthApp -SaveSeparateTokenFile
+Request-OAuthLocalhost
+
+# Do an api call to refresh the token
+# ...
+
+# Refresh the token 
+Request-TokenRefresh -SettingsFile "xyz"
+```
+
+- This uses the response type `code` and grant=basic
+- The second call uses grant_type = "authorization_code"
+
+- Create automated task for refresh
+- Create specific functions to ask for token ttl and so forth -> or maybe use aptecopsframework with prebuilt integrations for that
+
+# CleverReach
+
+## Request initial access
+
+
+Parameter|Value|Explanation
+-|-|-
+ClientId|ssCNo32SNf|Default and certified CleverReach App for Apteco
+ClientSecret||Please ask Apteco
+AuthUrl|https://rest.cleverreach.com/oauth/authorize.php
+TokenUrl|https://rest.cleverreach.com/oauth/token.php
+Protocol|apttoken|The app that will be called to gather the code/token
+Scope||This can be left empty
+
+```Powershell
+Request-OAuthApp
+```
+
+or
+
+```Powershell
+$oauthParam = [Hashtable]@{
+    "ClientId" = "ssCNo32SNf"
+    "ClientSecret" = ""     # ask for this at Apteco, if you don't have your own app
+    "AuthUrl" = "https://rest.cleverreach.com/oauth/authorize.php"
+    "TokenUrl" = "https://rest.cleverreach.com/oauth/token.php"
+    "SaveSeparateTokenFile" = $true
+}
+Request-OAuthLocalhost @oauthParam
+```
+
+
+## Refresh your access
+
+Request your token with an api call
+At moment CleverReach tokens have a ttl of 30 days
+
+```PowerShell
+# TEST THIS CODE
+
+# Read settings file
+$settings = Get-Content -Path ".\settings.json" -Encoding utf8 -Raw | ConvertFrom-Json -Depth 99
+
+# Build your header
+$header = @{
+    "Authorization" = "Bearer $( $settings.accesstoken )"
+}
+
+# Exchange token
+$validateParameters = [Hashtable]@{
+    Uri = "https://rest.cleverreach.com/v3/debug/exchange.json"
+    Method = "Get"
+    Headers = $header
+    Verbose = $true
+    ContentType = "application/json"
+}
+$newToken = Invoke-RestMethod @validateParameters
+
+# Log
+Write-Verbose -message "Got new token valid for $( $newToken.expires_in ) seconds and scope '$( $newToken.scope )'" -Verbose
+
+# Exchange file
+Request-TokenRefresh -SettingsFile $settingsFile -NewAccessToken $newToken.access_token
+```
+
+
+You can save this as a script, if it helps. And create a scheduled task for it.
+
+
+# Salesforce
+
+
+## Create an connected app
+
+Create a connected app beforehand
+
+## Request initial access
+
+POST https://login.salesforce.com/services/oauth2/token
+
+
+Parameter|Value|Explanation
+-|-|-
+ClientId||ClientID of your Salesforce Connected App
+ClientSecret||ClientSecret of your Salesforce Connected App
+AuthUrl|https://login.salesforce.com/services/oauth2/authorize
+TokenUrl|https://login.salesforce.com/services/oauth2/token
+Protocol|sftoken|The app that will be called to gather the code/token
+Scope||This can be left empty
+
+## Refresh access
+
+At moment Salesforce tokens have a ttl of 1 hour, so you better create a task for refreshment
+
+Please have a look at the path to your json file, and replace your client_id and client_secret
+
+```PowerShell
+
+# Read settings file
+$settingsFile = ".\settings.json"
+$settings = Get-Content -Path $settingsFile -Encoding utf8 -Raw | ConvertFrom-Json -Depth 99
+
+# Exchange token
+$validateParameters = [Hashtable]@{
+    Method = "POST"
+    Uri = "https://login.salesforce.com/services/oauth2/token"
+    Body = [Hashtable]@{
+        "client_id" = "3MVG9I5UQ_0k_hTkyC7dvZDoWszDfra.IGCBVnxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        "client_secret" = "1DBF58393544Exxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        "grant_type" = "refresh_token"
+        "refresh_token" = $settings.refreshtoken
+    }
+    Verbose = $true
+}
+$newToken = Invoke-RestMethod @validateParameters
+
+# Log
+Write-Log -message "Got new token valid for $( $newToken.expires_in ) seconds and scope '$( $newToken.scope )'"
+
+# Exchange file
+Request-TokenRefresh -SettingsFile $settingsFile -NewAccessToken $newToken.access_token
+```
+
+If you have encrypted your tokens, use `( Get-SecuretoPlaintext $settings.refreshtoken )` instead of `$settings.refreshtoken`
+
+
+# Microsoft Dynamics Sales 365 (DataVerse)
+
+## Create an Azure App
+
+Create your app through the Azure Portal following these instructions: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/walkthrough-register-app-azure-active-directory#create-an-application-registration
+
+
+## Request initial access
+
+
+Parameter|Value|Explanation
+-|-|-
+ClientId||Please use your `Application ID (Client)` of your created app
+ClientSecret||Please use your `Secret ID`, not the Secret itself, of your created app
+AuthUrl|https://login.microsoftonline.com/{tenantID}/oauth2/v2.0/authorize|Please replace your `{tenantID}` before using it
+TokenUrl|https://login.microsoftonline.com/{tenantID}/oauth2/v2.0/token|Please replace your `{tenantID}` before using it
+RedirectURL|http://localhost:43902|This is the url for redirection, please take this from your app
+Scope|https://{orgID}.crm.dynamics.com/user_impersonation offline_access|Please replace your `{orgID}` from your dynamics URL
+
+
+
+
+
+
+
+
+
+
+
 
 # Supported/Tested Solutions
 
 - CleverReach
 - Hubspot Private App
 - Salesforce SalesCloud Connected App
+- Microsoft Azure App
 
 
 
@@ -26,8 +213,7 @@ Be aware, that you can close your browser window when the whole process is done.
 
 
 
-
-# OLD
+# OLD - see what is useful
 
 
 

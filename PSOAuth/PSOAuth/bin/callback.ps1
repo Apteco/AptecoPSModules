@@ -1,3 +1,6 @@
+
+# This is called from the registry entry through the browser
+
 # TODO read this filename from a central json file
 "$( $args[0] )" | Set-Content -Path "$( $env:TEMP )\callback.txt" -Encoding utf8
 
