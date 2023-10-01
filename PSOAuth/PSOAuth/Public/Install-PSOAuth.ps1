@@ -19,7 +19,7 @@ function Install-PSOAuth {
         . ( Join-Path -Path $Script:moduleRoot -ChildPath "/bin/dependencies.ps1" )
 
         # Call the script to install dependencies
-        Install-Dependencies -Module $psModules #-LocalPackage $psModules -Script $psScripts 
+        Install-Dependencies -Script $psScripts -Module $psModules -LocalPackage $psPackages
 
     }
 
