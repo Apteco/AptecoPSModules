@@ -12,7 +12,7 @@
 RootModule = 'AptecoPSFramework.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.0.19'
+ModuleVersion = '0.0.20'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -154,6 +154,7 @@ PrivateData = @{
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
 0.0.20 Exchanged the module/script path handling for the module itself and the boilerplate
+       Improved the installation of dependencies with a new script
 0.0.19 Added script support for boilerplates
 0.0.18 Added a new setting for CleverReach to put response log information into a separate logfile
        Added more documentation for CleverReach response download

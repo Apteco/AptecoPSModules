@@ -1,6 +1,6 @@
 
 $psScripts = [Array]@(
-    #"WriteLogfile"
+    "Import-Dependencies"
 )
 
 $psModules = [Array]@(
