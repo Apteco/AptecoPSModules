@@ -1,7 +1,7 @@
 ﻿
 <#PSScriptInfo
 
-.VERSION 0.0.6
+.VERSION 0.0.7
 
 .GUID 4c029c8e-09fa-48ee-9d62-10895150ce83
 
@@ -26,6 +26,8 @@
 .EXTERNALSCRIPTDEPENDENCIES
 
 .RELEASENOTES
+0.0.7 Allowed empty arrays for wrapping the script into other modules
+      Changed internal function prompt-choice to request-choice to only allow approved verbs
 0.0.6 Admin privileges are now checked in another way and is not needed for local packages anymore
       Fix for installation if package names are strings
       Adding status information at the end
@@ -87,11 +89,11 @@
 
 [CmdletBinding()]
 Param(
-     [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][String[]]$Script = [Array]@()
-    ,[Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][String[]]$Module = [Array]@()
-    ,[Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][String[]]$GlobalPackage = [Array]@()
-    ,[Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][String[]]$LocalPackage = [Array]@()
-    ,[Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][String]$LocalPackageFolder = "lib"
+     [Parameter(Mandatory=$false)][String[]]$Script = [Array]@()
+    ,[Parameter(Mandatory=$false)][String[]]$Module = [Array]@()
+    ,[Parameter(Mandatory=$false)][String[]]$GlobalPackage = [Array]@()
+    ,[Parameter(Mandatory=$false)][String[]]$LocalPackage = [Array]@()
+    ,[Parameter(Mandatory=$false)][String]$LocalPackageFolder = "lib"
     ,[Parameter(Mandatory=$false)][Switch]$InstallScriptAndModuleForCurrentUser = $false
 )
 
@@ -151,7 +153,7 @@ $psPackages = @(
 Example to use
 
 $stringArray = @("Frankfurt","Aachen","Braunschweig")
-$choice = Prompt-Choice -title "City" -message "Which city would you prefer?" -choices $stringArray
+$choice = Request-Choice -title "City" -message "Which city would you prefer?" -choices $stringArray
 $choiceMatchedWithArray = $stringArray[$choice -1]
 
 # TODO [ ] put this into a module
@@ -164,7 +166,7 @@ $choiceMatchedWithArray = $stringArray[$choice -1]
 # FUNCTIONS
 #-----------------------------------------------
 
-Function Prompt-Choice {
+Function Request-Choice {
 
     param(
          [Parameter(Mandatory=$true)][string]$title
@@ -332,7 +334,7 @@ If ( $Script.Count -gt 0 -or $Module.Count -gt 0 ) {
         If ( $powershellRepo.count -gt 1 ) {
 
             $psGetSources = $powershellRepo.Name
-            $psGetSourceChoice = Prompt-Choice -title "Script/module Source" -message "Which $( $powerShellSourceProviderName ) repository do you want to use?" -choices $psGetSources
+            $psGetSourceChoice = Request-Choice -title "Script/module Source" -message "Which $( $powerShellSourceProviderName ) repository do you want to use?" -choices $psGetSources
             $psGetSource = $psGetSources[$psGetSourceChoice -1]
 
         } elseif ( $powershellRepo.count -eq 1 ) {
@@ -351,7 +353,7 @@ If ( $Script.Count -gt 0 -or $Module.Count -gt 0 ) {
         # Do you want to trust that source?
         If ( $psGetSource.IsTrusted -eq $false ) {
             Write-Log -Message "Your source is not trusted. Do you want to trust it now?" -Severity WARNING
-            $trustChoice = Prompt-Choice -title "Trust script/module Source" -message "Do you want to trust $( $psGetSource.Name )?" -choices @("Yes", "No")
+            $trustChoice = Request-Choice -title "Trust script/module Source" -message "Do you want to trust $( $psGetSource.Name )?" -choices @("Yes", "No")
             If ( $trustChoice -eq 1 ) {
                 # Use
                 # Set-PSRepository -Name $psGetSource.Name -InstallationPolicy Untrusted
@@ -524,7 +526,7 @@ If ( $GlobalPackage.Count -gt 0 -or $LocalPackage.Count -gt 0 ) {
         If ( $sources.count -gt 1 ) {
 
             $packageSources = $sources.Name
-            $packageSourceChoice = Prompt-Choice -title "PackageSource" -message "Which $( $packageSourceProviderName ) repository do you want to use?" -choices $packageSources
+            $packageSourceChoice = Request-Choice -title "PackageSource" -message "Which $( $packageSourceProviderName ) repository do you want to use?" -choices $packageSources
             $packageSource = $sources[$packageSourceChoice -1]
 
         } elseif ( $sources.count -eq 1 ) {
@@ -543,7 +545,7 @@ If ( $GlobalPackage.Count -gt 0 -or $LocalPackage.Count -gt 0 ) {
         # Do you want to trust that source?
         If ( $packageSource.IsTrusted -eq $false ) {
             Write-Log -Message "Your source is not trusted. Do you want to trust it now?" -Severity WARNING
-            $trustChoice = Prompt-Choice -title "Trust Package Source" -message "Do you want to trust $( $packageSource.Name )?" -choices @("Yes", "No")
+            $trustChoice = Request-Choice -title "Trust Package Source" -message "Do you want to trust $( $packageSource.Name )?" -choices @("Yes", "No")
             If ( $trustChoice -eq 1 ) {
                 # Use
                 # Set-PackageSource -Name NuGet
