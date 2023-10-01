@@ -142,6 +142,73 @@ Install-Dependencies -LocalPackage MailKit -verbose
 Import-Dependencies -LoadWholePackageFolder -LocalPackageFolder "./lib" -verbose
 ```
 
+## How could this module be wrapped into other modules
+
+This is dependent on the script `Import-Dependencies` and uses a `./bin/dependencies.ps1` file which contains multiple arrays. This file looks like this
+
+```PowerShell
+$psScripts = @(
+    #"WriteLogfile"
+)
+
+$psModules = @(
+    "WriteLog"
+    #"MeasureRows"
+    "EncryptCredential"
+    #"ExtendFunction"
+    "ConvertUnixTimestamp"
+    "ConvertStrings"
+    #"Microsoft.PowerShell.Utility"
+    #"MergePSCustomObject"
+    #"MergeHashtable"
+)
+
+# Define either a simple string or provide a pscustomobject with a specific version number
+$psPackages = @(
+    <#
+    [PSCustomObject]@{
+        name="Npgsql"
+        version = "4.1.12"
+    }
+    #>
+)
+```
+
+To wrap these array into an installation script, you could do it like this, but please rename the function. Please be aware, that the module root is saved into a variable `$Script:moduleRoot` in the main modules `.psm1` file like `$Script:moduleRoot = $PSScriptRoot.ToString()`
+
+```PowerShell
+function Install-xyz {
+    [CmdletBinding()]
+    param (
+
+    )
+    
+    begin {
+
+    }
+
+    process {
+
+        # Check if Install-Dependenies is present
+        If ( @( Get-InstalledScript | Where-Object { $_.Name -eq "Import-Dependencies" } ).Count -lt 1 ) {
+            throw "Missing dependency, execute: 'Install-Script Import-Dependencies'"
+        }
+
+        # Load dependencies as variables
+        . ( Join-Path -Path $Script:moduleRoot -ChildPath "/bin/dependencies.ps1" )
+
+        # Call the script to install dependencies
+        Install-Dependencies -Script $psScripts -Module $psModules -LocalPackage $psPackages
+
+    }
+
+    end {
+
+    }
+
+}
+```
+
 # Contribution
 
 You are free to use this code, put in some changes and use a pull request to feedback improvements :-)
