@@ -190,8 +190,8 @@ function Install-xyz {
     process {
 
         # Check if Install-Dependenies is present
-        If ( @( Get-InstalledScript | Where-Object { $_.Name -eq "Import-Dependencies" } ).Count -lt 1 ) {
-            throw "Missing dependency, execute: 'Install-Script Import-Dependencies'"
+        If ( @( Get-InstalledScript | Where-Object { $_.Name -eq "Install-Dependencies" } ).Count -lt 1 ) {
+            throw "Missing dependency, execute: 'Install-Script Install-Dependencies'"
         }
 
         # Load dependencies as variables
