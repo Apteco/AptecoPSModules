@@ -24,3 +24,7 @@ $psPackages = @(
     }
     #>
 )
+
+$psAssemblies = @(
+    "System.Web"
+)

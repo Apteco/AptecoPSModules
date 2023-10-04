@@ -55,13 +55,8 @@ TokenUrl|https://rest.cleverreach.com/oauth/token.php
 Protocol|apttoken|The app that will be called to gather the code/token
 Scope||This can be left empty
 
-```Powershell
-Request-OAuthApp
-```
-
-or
-
-```Powershell
+```PowerShell
+import-module PSOAuth -Verbose
 $oauthParam = [Hashtable]@{
     "ClientId" = "ssCNo32SNf"
     "ClientSecret" = ""     # ask for this at Apteco, if you don't have your own app
@@ -72,6 +67,19 @@ $oauthParam = [Hashtable]@{
 Request-OAuthLocalhost @oauthParam
 ```
 
+or
+
+```PowerShell
+import-module PSOAuth -Verbose
+$oauthParam = [Hashtable]@{
+     "ClientId" = "ssCNo32SNf"
+     "ClientSecret" = ""     # ask for this at Apteco, if you don't have your own app
+     "AuthUrl" = "https://rest.cleverreach.com/oauth/authorize.php"
+     "TokenUrl" = "https://rest.cleverreach.com/oauth/token.php"
+     "SaveSeparateTokenFile" = $true
+}
+Request-OAuthApp @oauthParam -Verbose
+```
 
 ## Refresh your access
 

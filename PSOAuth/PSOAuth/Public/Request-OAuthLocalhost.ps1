@@ -2,12 +2,11 @@
 function Request-OAuthLocalhost {
     [CmdletBinding()]
     param (
-        # TODO put settingsfile and tokenfile into parameters?
          [Parameter(Mandatory=$true)][String]$ClientId
         ,[Parameter(Mandatory=$true)][String]$ClientSecret
         ,[Parameter(Mandatory=$true)][Uri]$AuthUrl
         ,[Parameter(Mandatory=$true)][Uri]$TokenUrl
-        ,[Parameter(Mandatory=$false)][String]$Scope = ""
+        ,[Parameter(Mandatory=$false)][String]$Scope = "" # TODO not yet implemented
         #,[Parameter(Mandatory=$false)][String]$State = "" # TODO not yet implemented
         ,[Parameter(Mandatory=$false)][Uri]$RedirectUrl = "http://localhost:$( Get-Random -Minimum 49152 -Maximum 65535 )/"
         ,[Parameter(Mandatory=$false)][String]$SettingsFile = "./settings.json"
@@ -16,12 +15,9 @@ function Request-OAuthLocalhost {
         ,[Parameter(Mandatory=$false)][Switch]$SaveSeparateTokenFile = $false
         ,[Parameter(Mandatory=$false)][int]$TimeoutForCode = 360
         ,[Parameter(Mandatory=$false)][Switch]$EncryptToken = $false
-
     )
-    
-    begin {
 
-        Add-Type -AssemblyName System.Web
+    begin {
 
         #-----------------------------------------------
         # ASK FOR SETTINGSFILE
@@ -49,7 +45,7 @@ function Request-OAuthLocalhost {
             Write-Log "SettingsFile '$( $SettingsFile )' contains invalid characters"
         }
 
-        
+
         #-----------------------------------------------
         # ASK FOR TOKENFILE
         #-----------------------------------------------
@@ -104,7 +100,7 @@ function Request-OAuthLocalhost {
 
         #$clientCred = New-Object PSCredential $ClientId,$ClientSecret
 
-        
+
         #-----------------------------------------------
         # OAUTHv2 PROCESS - STEP 1
         #-----------------------------------------------
@@ -134,7 +130,6 @@ function Request-OAuthLocalhost {
         # PREPARE WEBSERVER LISTENER FOR CALLBACK
         #-----------------------------------------------
 
-        
         $webserverProcess = [scriptblock]{
 
             param(
@@ -143,17 +138,17 @@ function Request-OAuthLocalhost {
 
             Add-Type -AssemblyName System.Web
 
-            $http = [System.Net.HttpListener]::new() 
+            $http = [System.Net.HttpListener]::new()
 
             # Hostname and port to listen on
             $http.Prefixes.Add($redirect)
 
-            # Start the Http Server 
+            # Start the Http Server
             $http.Start()
 
-            # Log ready message to terminal 
+            # Log ready message to terminal
             if ($http.IsListening) {
-                #Write-Information -MessageData " HTTP Server Ready on '$( $http.Prefixes )'" 
+                #Write-Information -MessageData " HTTP Server Ready on '$( $http.Prefixes )'"
             } else {
                 throw "There was an error starting the HTTP server, pleasy retry or choose another port"
             }
@@ -167,7 +162,7 @@ function Request-OAuthLocalhost {
                 # Get Request Url
                 # When a request is made in a web browser the GetContext() method will return a request object
                 $context = $http.GetContext()
-            
+
                 # Raw url
                 if ($context.Request.HttpMethod -eq 'GET' -and $context.Request.RawUrl -eq '/') {
 
@@ -176,19 +171,19 @@ function Request-OAuthLocalhost {
 
                     # the html/data you want to send to the browser
                     # you could replace this with: [string]$html = Get-Content "C:\some\path\index.html" -Raw
-                    [string]$html = "Waiting for Code." 
-                
+                    [string]$html = "Waiting for Code."
+
                     #resposed to the request
                     $buffer = [System.Text.Encoding]::UTF8.GetBytes($html) # convert htmtl to bytes
                     $context.Response.ContentLength64 = $buffer.Length
                     $context.Response.OutputStream.Write($buffer, 0, $buffer.Length) #stream to broswer
                     $context.Response.OutputStream.Close() # close the response
-            
+
                 }
-            
+
                 # If the url contains the code
                 if ( $context.request.RawUrl -like "*code=*" ) {
-                
+
                     #Write-Verbose "Got a code" -verbose
 
                     # Looking for code in query
@@ -205,14 +200,14 @@ function Request-OAuthLocalhost {
                     # the html/data you want to send to the browser
                     # you could replace this with: [string]$html = Get-Content "C:\some\path\index.html" -Raw
                     [string]$html = "<h1>Received code: $( $code )</h1>"
-                        
+
                     #resposed to the request
                     $buffer = [System.Text.Encoding]::UTF8.GetBytes($html) # convert htmtl to bytes
                     $context.Response.ContentLength64 = $buffer.Length
                     $context.Response.OutputStream.Write($buffer, 0, $buffer.Length) #stream to broswer
                     $context.Response.OutputStream.Close() # close the response
-                    
-                } 
+
+                }
 
                 <#
                 a few examples
@@ -221,7 +216,7 @@ function Request-OAuthLocalhost {
                 $context.Request.UserHostAddress
                 $context.Request.Url
                 #>
-            
+
                 # powershell will continue looping and listen for new requests...
 
             } until ( $closeHttpListener -eq $true ) #$http.IsListening
@@ -243,11 +238,11 @@ function Request-OAuthLocalhost {
         } else {
             $maxSeconds = $TimeoutForCode
         }
-        
+
         # Show a progress bar and wait for a result
         $waitingStart = [datetime]::Now
         Do {
-            
+
             # Show the progress
             $ts = New-TimeSpan -Start $waitingStart -End ( [datetime]::now )
             $secondsRemaining = [math]::Ceiling($maxSeconds - $ts.TotalSeconds)
@@ -263,7 +258,7 @@ function Request-OAuthLocalhost {
             try {
                 $job.StopJob()
             } catch {
-            
+
             }
         }
 
@@ -277,7 +272,7 @@ function Request-OAuthLocalhost {
             throw "Timeout reached or no usable code received"
         }
 
-        
+
         #-----------------------------------------------
         # OAUTHv2 PROCESS - STEP 2
         #-----------------------------------------------
@@ -307,11 +302,11 @@ function Request-OAuthLocalhost {
                 "Authorization" = "Bearer $( $response.access_token )"
             }
             $ttl = Invoke-RestMethod -Uri "https://rest.cleverreach.com/v3/debug/ttl.json" -Method Get -ContentType "application/json; charset=utf-8" -Headers $headers
-            
+
             Write-Log -message "Used token for API call successfully. Token expires at '$( $ttl.date.toString() )'"
-            
+
         } catch {
-            
+
             Write-Log -message "API call was not successful. Aborting the whole script now!" -severity ( [Logseverity]::WARNING )
             throw $_.Exception
 
@@ -330,12 +325,12 @@ function Request-OAuthLocalhost {
         $refreshToken = ""
         If ( $EncryptToken -eq $true) {
             $accessToken = Get-PlaintextToSecure $response.access_token
-            If ( $response.refresh_token -ne $null ) {
+            If ( $null -ne $response.refresh_token ) {
                 $refreshToken = Get-PlaintextToSecure $response.refresh_token
             }
         } else {
             $accessToken = $response.access_token
-            If ( $response.refresh_token -ne $null ) {
+            If ( $null -ne $response.refresh_token ) {
                 $refreshToken = $response.refresh_token
             }
         }
@@ -371,7 +366,7 @@ function Request-OAuthLocalhost {
         # save settings to file
         $json | Set-Content -path $SettingsFile -Encoding UTF8
 
-        
+
         #-----------------------------------------------
         # SAVE THE TOKENS AS SEPARATE FILE UNENCRYPTED
         #-----------------------------------------------

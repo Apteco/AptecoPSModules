@@ -36,7 +36,7 @@ function Request-TokenRefresh {
         # The changed settings to save for refreshing
         $set.accesstoken = $accessToken
         $set.unixtime = Get-Unixtime
-        
+
         # create json object
         $json = ConvertTo-Json -InputObject $set -Depth 99 # -compress
 
@@ -59,7 +59,7 @@ function Request-TokenRefresh {
         # save settings to file
         $json | Set-Content -path $SettingsFile -Encoding UTF8 -Force
 
-        
+
         #-----------------------------------------------
         # SAVE THE TOKENS AS SEPARATE FILE UNENCRYPTED
         #-----------------------------------------------

@@ -103,12 +103,16 @@ $Script:moduleRoot = $PSScriptRoot.ToString()
 
 
 #-----------------------------------------------
-# IMPORT MODULES
+# IMPORT DEPENDENCIES
 #-----------------------------------------------
 
 # Load dependencies
 . ( Join-Path -Path $PSScriptRoot.ToString() -ChildPath "/bin/dependencies.ps1" )
 
+# Load scripts
+# -> They are automatically loaded
+
+# Load modules
 try {
     $psModules | ForEach-Object {
         $mod = $_
@@ -120,6 +124,17 @@ try {
 }
 
 # TODO For future you need in linux maybe this module for outgrid-view, which is also supported on console only: microsoft.powershell.consoleguitools
+
+# Load packages from current local libfolder
+If ( $psPackages.Count -gt 0 ) {
+    Import-Dependencies -LoadWholePackageFolder
+}
+
+# Load assemblies
+$psAssemblies | ForEach-Object {
+    $ass = $_
+    Add-Type -AssemblyName $ass
+}
 
 
 #-----------------------------------------------

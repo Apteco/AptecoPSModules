@@ -3,7 +3,7 @@ function Install-PSOAuth {
     param (
 
     )
-    
+
     begin {
 
     }
