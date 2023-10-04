@@ -23,6 +23,7 @@ Name|Type|Repository/Version|Platform|Downloads|
 [WriteLog](WriteLog/)|Module|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/WriteLog)](https://www.powershellgallery.com/packages/WriteLog)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/WriteLog)](https://www.powershellgallery.com/packages/WriteLog)<br/>[![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)](https://github.com/PlagueHO/PSAuth)|[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/WriteLog)](https://www.powershellgallery.com/packages/WriteLog)
 [Install-Dependencies](Install-Dependencies/)|Script|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/Install-Dependencies)](https://www.powershellgallery.com/packages/Install-Dependencies)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/Install-Dependencies)](https://www.powershellgallery.com/packages/Install-Dependencies)<br/>[![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)](https://github.com/PlagueHO/PSAuth)|[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/Install-Dependencies)](https://www.powershellgallery.com/packages/Install-Dependencies)
 [Import-Dependencies](Import-Dependencies/)|Script|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/Import-Dependencies)](https://www.powershellgallery.com/packages/Import-Dependencies)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/Import-Dependencies)](https://www.powershellgallery.com/packages/Import-Dependencies)<br/>[![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)](https://github.com/PlagueHO/PSAuth)|[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/Import-Dependencies)](https://www.powershellgallery.com/packages/Import-Dependencies)
+[PSOAuth](PSOAuth/)|Module|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/PSOAuth)](https://www.powershellgallery.com/packages/PSOAuth)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/PSOAuth)](https://www.powershellgallery.com/packages/PSOAuth)<br/>[![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)](https://github.com/PlagueHO/PSAuth)|[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/PSOAuth)](https://www.powershellgallery.com/packages/PSOAuth)
 
 
 Here are some high level descriptions. Please follow the links from the table or go into the subdirectories to get more detailed information.
@@ -182,6 +183,38 @@ This module merges two Hashtables into one. It is able to handle nested structur
 ## MergePSCustomObject
 
 This module merges PSCustomObjects into one. It is able to handle nested structures like hashtables, arrays and PSCustomObjects.
+
+## PSOAuth
+
+Support of oAuth v2 in PowerShell! This module allows the oAuth flow to create your first api token for Microsoft Dynamics, Salesforce, CleverReach and much more...
+We support redirect urls to local urls `http://localhost:54321` and app urls (handled via registry) `apttoken://localhost`. The local url is instantly starting up a
+basic webserver on the port you have defined. This module can be used for debugging or server2server communication. Here you can see the two methods than can be used:
+
+```PowerShell
+import-module PSOAuth -Verbose
+$oauthParam = [Hashtable]@{
+    "ClientId" = "ssCNo32SNf"
+    "ClientSecret" = ""     # ask for this at Apteco, if you don't have your own app
+    "AuthUrl" = "https://rest.cleverreach.com/oauth/authorize.php"
+    "TokenUrl" = "https://rest.cleverreach.com/oauth/token.php"
+    "SaveSeparateTokenFile" = $true
+}
+Request-OAuthLocalhost @oauthParam
+```
+
+or
+
+```PowerShell
+import-module PSOAuth -Verbose
+$oauthParam = [Hashtable]@{
+     "ClientId" = "ssCNo32SNf"
+     "ClientSecret" = ""     # ask for this at Apteco, if you don't have your own app
+     "AuthUrl" = "https://rest.cleverreach.com/oauth/authorize.php"
+     "TokenUrl" = "https://rest.cleverreach.com/oauth/token.php"
+     "SaveSeparateTokenFile" = $true
+}
+Request-OAuthApp @oauthParam -Verbose
+```
 
 ## SyncExtractOptions
 
