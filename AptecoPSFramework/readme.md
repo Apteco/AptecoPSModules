@@ -19,6 +19,20 @@ This is the easier option if your machine is allowed to talk to the internet. If
 
 For installation execute this for all users scope (or with a users scope, but this needs to be the exact user that executes the "Apteco Service").
 
+It is recommended, to use at minimum the module `PowerShellGet` with version `1.6.0` to avoid problems with loading prerelease versions. To check this, run
+
+```PowerShell
+Get-InstalledModule -Name PowerShellGet -MinimumVersion 1.6.0
+```
+
+If you have no result, then execute
+
+```PowerShell
+install-module powershellget -Verbose -AllowClobber -force
+```
+
+to update that module. Now proceed with installing apteco modules:
+
 ```PowerShell
 Find-Module -Repository "PSGallery" -Name "AptecoPSFramework" -IncludeDependencies | Install-Module -Verbose -Scope AllUsers
 ```
