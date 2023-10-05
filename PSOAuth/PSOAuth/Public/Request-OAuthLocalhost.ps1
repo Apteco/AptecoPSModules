@@ -348,7 +348,7 @@ function Request-OAuthLocalhost {
         $set = @{
             "accesstoken" = $accessToken
             "refreshtoken" = $refreshToken
-            "tokenFile" = [System.io.path]::GetFullPath($TokenFile)
+            "tokenFile" = [IO.Path]::GetFullPath([IO.Path]::Combine((Get-Location -PSProvider "FileSystem").ProviderPath, $TokenFile))
             "unixtime" = Get-Unixtime
             "saveSeparateTokenFile" = $separateTokenFile
             "payload" = $PayloadToSave
