@@ -24,6 +24,7 @@ Name|Type|Repository/Version|Platform|Downloads|
 [Install-Dependencies](Install-Dependencies/)|Script|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/Install-Dependencies)](https://www.powershellgallery.com/packages/Install-Dependencies)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/Install-Dependencies)](https://www.powershellgallery.com/packages/Install-Dependencies)<br/>[![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)](https://github.com/PlagueHO/PSAuth)|[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/Install-Dependencies)](https://www.powershellgallery.com/packages/Install-Dependencies)
 [Import-Dependencies](Import-Dependencies/)|Script|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/Import-Dependencies)](https://www.powershellgallery.com/packages/Import-Dependencies)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/Import-Dependencies)](https://www.powershellgallery.com/packages/Import-Dependencies)<br/>[![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)](https://github.com/PlagueHO/PSAuth)|[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/Import-Dependencies)](https://www.powershellgallery.com/packages/Import-Dependencies)
 [PSOAuth](PSOAuth/)|Module|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/PSOAuth)](https://www.powershellgallery.com/packages/PSOAuth)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/PSOAuth)](https://www.powershellgallery.com/packages/PSOAuth)<br/>[![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)](https://github.com/PlagueHO/PSAuth)|[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/PSOAuth)](https://www.powershellgallery.com/packages/PSOAuth)
+[TestCredential](TestCredential/)|Module|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/TestCredential)](https://www.powershellgallery.com/packages/TestCredential)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/TestCredential)](https://www.powershellgallery.com/packages/TestCredential)<br/>[![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)](https://github.com/PlagueHO/TestCredential)|[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/TestCredential)](https://www.powershellgallery.com/packages/TestCredential)
 
 
 Here are some high level descriptions. Please follow the links from the table or go into the subdirectories to get more detailed information.
@@ -227,7 +228,33 @@ This example just changes the behaviour of the extract options and saves it in t
 SyncExtractOptions -DesignFile "C:\Apteco\Build\20220714\designs\20220714.xml" -Include "Bookings", "People"
 ```
 
+# TestCredential
 
+This module helps you to test credentials before you use them. By default, this module asks 3x times before cancelling. It delivers a `$true` or `$false` back.
+
+Use this module in interactive mode -> this one requests your user and password, uses the current user as default
+
+```PowerShell
+Test-Credential
+```
+
+Define User and password beforehand
+
+```PowerShell
+$c = Get-Credential
+Test-Credential -Credentials $c
+```
+
+OR
+
+```PowerShell
+$c = Get-Credential
+Test-Credential -Credentials $c  -NonInteractive
+```
+
+# OR
+
+Get-Credential | Test-Credential
 
 ## WriteLog
 
