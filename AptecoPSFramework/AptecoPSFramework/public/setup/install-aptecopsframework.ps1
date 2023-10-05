@@ -39,7 +39,6 @@ Calling with one of the Flags, just does this part
 
     Process {
 
-
         #-----------------------------------------------
         # CHECK AND INSTALL DEPENDENCIES
         #-----------------------------------------------
@@ -60,46 +59,47 @@ Calling with one of the Flags, just does this part
         # GIVE SOME HELPFUL OUTPUT
         #-----------------------------------------------
 
-        If ( $PackagesOnly -eq $false -and $ScriptsOnly -eq $false -and $ModulesOnly -eq $false) {
+        #If ( $PackagesOnly -eq $false -and $ScriptsOnly -eq $false -and $ModulesOnly -eq $false) {
 
             # TODO replace the integration parameters
 
             #try {
 
-            Write-Verbose "This script is copying the boilerplate (needed for installation ) to your current directory" -Verbose
+        Write-Verbose "This script is copying the boilerplate (needed for installation ) to your current directory." -Verbose
+        Write-Warning "This is only needed for the first installation"
 
-            Copy-Item -Path "$( $Script:moduleRoot )\boilerplate\*" -Destination "." -Confirm
+        Copy-Item -Path "$( $Script:moduleRoot )\boilerplate\*" -Destination "." -Confirm
 
-            $currentPath = ( resolve-path -Path "." ).Path
-            Write-Verbose "Please have a look at your PeopleStage channels and create a new email channel:" -Verbose
-            Write-Verbose "  GENERAL" -Verbose
-            Write-Verbose "    Broadcaster: PowerShell" -Verbose
-            Write-Verbose "    Username: dummy" -Verbose
-            Write-Verbose "    Password: dummy" -Verbose
-            Write-Verbose "    Email Variable: Please choose your email variable" -Verbose
-            Write-Verbose "    Email Variable Description Override: email" -Verbose
-            Write-Verbose "  PARAMETER" -Verbose
-            Write-Verbose "    URL: https://rest.cleverreach.com/v3/" -Verbose
-            Write-Verbose "    GetMessagesScript: $( $currentPath )\getmessages.ps1" -Verbose
-            Write-Verbose "    GetListsScript: $( $currentPath )\getmessagelists.ps1" -Verbose
-            Write-Verbose "    UploadScript: $( $currentPath )\upload.ps1" -Verbose
-            Write-Verbose "    BroadcastScript: $( $currentPath )\broadcast.ps1" -Verbose
-            Write-Verbose "    PreviewMessageScript: $( $currentPath )\preview.ps1" -Verbose
-            Write-Verbose "    TestScript: $( $currentPath )\test.ps1" -Verbose
-            Write-Verbose "    SendTestEmailScript: $( $currentPath )\testsend.ps1" -Verbose
-            Write-Verbose "    IntegrationParameters: settingsFile=D:\Scripts\CleverReach\PSCleverReachModule\settings.json;mode=taggingOnly" -Verbose
-            Write-Verbose "    Encoding: UTF8" -Verbose
-            Write-Verbose "  OUTPUT SETTINGS" -Verbose
-            Write-Verbose "    Append To List: false" -Verbose
-            Write-Verbose "    Number of retries: 1" -Verbose
-            Write-Verbose "    Response File Key Type: Email with Broadcast Id" -Verbose
-            Write-Verbose "    Message Content Type: Broadcaster Template" -Verbose
-            Write-Verbose "    Retrieve Existing List Names: true" -Verbose
-            Write-Verbose "  FILE SETTINGS" -Verbose
-            Write-Verbose "    Encoding: UTF-8" -Verbose
-            Write-Verbose "  ADDITIONAL VARIABLES" -Verbose
-            Write-Verbose "    Add all variables that you would like to always upload" -Verbose
-            Write-Verbose "Please consider to ask Apteco to look at your settings when you have done your first setup" -Verbose
+        $currentPath = ( resolve-path -Path "." ).Path
+        Write-Verbose "Please have a look at your PeopleStage channels and create a new email channel:" -Verbose
+        Write-Verbose "  GENERAL" -Verbose
+        Write-Verbose "    Broadcaster: PowerShell" -Verbose
+        Write-Verbose "    Username: dummy" -Verbose
+        Write-Verbose "    Password: dummy" -Verbose
+        Write-Verbose "    Email Variable: Please choose your email variable" -Verbose
+        Write-Verbose "    Email Variable Description Override: email" -Verbose
+        Write-Verbose "  PARAMETER" -Verbose
+        Write-Verbose "    URL: https://rest.cleverreach.com/v3/" -Verbose
+        Write-Verbose "    GetMessagesScript: $( $currentPath )\getmessages.ps1" -Verbose
+        Write-Verbose "    GetListsScript: $( $currentPath )\getmessagelists.ps1" -Verbose
+        Write-Verbose "    UploadScript: $( $currentPath )\upload.ps1" -Verbose
+        Write-Verbose "    BroadcastScript: $( $currentPath )\broadcast.ps1" -Verbose
+        Write-Verbose "    PreviewMessageScript: $( $currentPath )\preview.ps1" -Verbose
+        Write-Verbose "    TestScript: $( $currentPath )\test.ps1" -Verbose
+        Write-Verbose "    SendTestEmailScript: $( $currentPath )\testsend.ps1" -Verbose
+        Write-Verbose "    IntegrationParameters: settingsFile=D:\Scripts\CleverReach\PSCleverReachModule\settings.json;mode=taggingOnly" -Verbose
+        Write-Verbose "    Encoding: UTF8" -Verbose
+        Write-Verbose "  OUTPUT SETTINGS" -Verbose
+        Write-Verbose "    Append To List: false" -Verbose
+        Write-Verbose "    Number of retries: 1" -Verbose
+        Write-Verbose "    Response File Key Type: Email with Broadcast Id" -Verbose
+        Write-Verbose "    Message Content Type: Broadcaster Template" -Verbose
+        Write-Verbose "    Retrieve Existing List Names: true" -Verbose
+        Write-Verbose "  FILE SETTINGS" -Verbose
+        Write-Verbose "    Encoding: UTF-8" -Verbose
+        Write-Verbose "  ADDITIONAL VARIABLES" -Verbose
+        Write-Verbose "    Add all variables that you would like to always upload" -Verbose
+        Write-Verbose "Please consider to ask Apteco to look at your settings when you have done your first setup" -Verbose
 
 
 
@@ -124,7 +124,7 @@ Calling with one of the Flags, just does this part
             Write-Verbose -Message $sql -Verbose
             #>
 
-        }
+        #}
 
 
     }
