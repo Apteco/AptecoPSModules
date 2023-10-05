@@ -66,7 +66,7 @@ function Request-TokenRefresh {
 
         If ( $set.saveSeparateTokenFile -eq $true ) {
             Write-Log -message "Saving token to '$( $set.tokenFile )'"
-            $NewAccessToken | Set-Content -path "$( $TokenFile )" -Encoding UTF8 -Force
+            $NewAccessToken | Set-Content -path "$( $set.tokenFile )" -Encoding UTF8 -Force
         }
 
 
