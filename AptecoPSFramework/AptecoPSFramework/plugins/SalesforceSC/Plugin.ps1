@@ -6,8 +6,8 @@ function Get-CurrentPluginInfo {
         
         # general information about this plugin
         "name" = "Salesforce SalesCloud CampaignMembers"
-        "version" = "0.0.1"
-        "lastUpdate" = "2023-08-17"
+        "version" = "0.0.2"
+        "lastUpdate" = "2023-10-04"
         "category" = "channel"
         "type" = "crm"
         "stage" = "dev"
@@ -15,7 +15,9 @@ function Get-CurrentPluginInfo {
         # have a look at ./bin/dependencies if you need more information about how to define this
         "dependencies" = [PSCustomObject]@{
             "psScripts" = @()
-            "psModules" = @()
+            "psModules" = @(
+                "PSOAuth"       # TODO make sure this module is loaded
+            )
             "psPackages" = @()
         }
         "functions" = [PSCustomObject]@{

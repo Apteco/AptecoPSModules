@@ -103,7 +103,7 @@
             }
         }
 
-        New-Module -Name "Invoke $( $plugin.Name )" -ArgumentList $pluginParam -ScriptBlock {
+        New-Module -Name "$( $plugin.Name )" -ArgumentList $pluginParam -ScriptBlock {
 
             # argument input object
             param(
