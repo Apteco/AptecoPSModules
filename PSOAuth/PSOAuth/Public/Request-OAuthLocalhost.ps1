@@ -15,6 +15,7 @@ function Request-OAuthLocalhost {
         ,[Parameter(Mandatory=$false)][Switch]$SaveSeparateTokenFile = $false
         ,[Parameter(Mandatory=$false)][int]$TimeoutForCode = 360
         ,[Parameter(Mandatory=$false)][Switch]$EncryptToken = $false
+        ,[Parameter(Mandatory=$false)][PSCustomObject]$PayloadToSave = [PSCustomObject]@{}  # If you want to save more information in the settingsfile, e.g. for refreshing the token, put it in here
     )
 
     begin {
@@ -321,6 +322,8 @@ function Request-OAuthLocalhost {
         # SAVE THE TOKENS
         #-----------------------------------------------
 
+        # TODO the saving could be put into a separate function
+
         # Encrypt tokens, if wished
         $refreshToken = ""
         If ( $EncryptToken -eq $true) {
@@ -335,13 +338,20 @@ function Request-OAuthLocalhost {
             }
         }
 
+        # Parse the switch
+        $separateTokenFile = $false
+        If ( $SaveSeparateTokenFile -eq $true ) {
+            $separateTokenFile = $true
+        }
+
         # The settings to save for refreshing
         $set = @{
             "accesstoken" = $accessToken
             "refreshtoken" = $refreshToken
             "tokenFile" = [System.io.path]::GetFullPath($TokenFile)
             "unixtime" = Get-Unixtime
-            "saveSeparateTokenFile" = $SaveSeparateTokenFile
+            "saveSeparateTokenFile" = $separateTokenFile
+            "payload" = $PayloadToSave
             #"refreshTokenAutomatically" = $true
             #"refreshTtl" = 604800 # seconds; refresh one week before expiration
         }

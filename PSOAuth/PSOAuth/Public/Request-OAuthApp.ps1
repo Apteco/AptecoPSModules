@@ -236,6 +236,8 @@ function Request-OAuthApp {
             # SAVE THE TOKENS
             #-----------------------------------------------
 
+            # TODO the saving could be put into a separate function
+
             # Encrypt tokens, if wished
             If ( $EncryptToken -eq $true) {
                 $accessToken = Get-PlaintextToSecure $response.access_token
@@ -249,13 +251,20 @@ function Request-OAuthApp {
                 }
             }
 
+            # Parse the switch
+            $separateTokenFile = $false
+            If ( $SaveSeparateTokenFile -eq $true ) {
+                $separateTokenFile = $true
+            }
+
             # The settings to save for refreshing
             $set = @{
                 "accesstoken" = $accessToken
                 "refreshtoken" = $refreshToken
                 "tokenFile" = [System.io.path]::GetFullPath($TokenFile)
                 "unixtime" = Get-Unixtime
-                "saveSeparateTokenFile" = $SaveSeparateTokenFile
+                "saveSeparateTokenFile" = $separateTokenFile
+                "payload" = $PayloadToSave
                 #"refreshTokenAutomatically" = $true
                 #"refreshTtl" = 604800 # seconds; refresh one week before expiration
             }
