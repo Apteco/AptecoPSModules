@@ -29,7 +29,9 @@ function Invoke-RestMethodWithErrorHandling {
     process {
 
         $response = $null
-        while ($completed -ne $true) {
+        $specificCounter = 0
+        $genericCounter = 0
+        do {
 
             try {
 
@@ -50,34 +52,38 @@ function Invoke-RestMethodWithErrorHandling {
 
                 # retry if a specific http error happens
                 if ( $RetryHttpErrorList -contains $errResponse.StatusCode.value__ ) {
+                    
+                    $specificCounter += 1
 
                     # Exceeded all retries
-                    if ($Error.Count -ge $MaxTriesSpecific) {
-                        Write-Log -Message "Request $( $Error.Count ) failed with $( $errResponse.StatusCode.value__ ) $( $errResponse.StatusCode.ToString() ). Command failed the maximum number of $( $MaxTriesSpecific ) times."  -Severity WARNING
+                    if ($specificCounter -ge $MaxTriesSpecific) {
+                        Write-Log -Message "Request $( $specificCounter ) failed with $( $errResponse.StatusCode.value__ ) $( $errResponse.StatusCode.ToString() ). Command failed the maximum number of $( $MaxTriesSpecific ) times."  -Severity WARNING
                         #Write-Log -Message $_.Exception.Message -Severity ERROR
                         Write-Log -Message "RESPONSE: $( ConvertTo-Json -InputObject $errBody -Depth 99 -Compress)" -Severity WARNING
                         throw $_.Exception
 
                     # Not all generic tries used yet, repeat
                     } else {
-                        Write-Log -Message "Request $( $Error.Count ) failed with $( $errResponse.StatusCode.value__ ) $( $errResponse.StatusCode.ToString() ). Retrying in $( $MillisecondsDelay ) milliseconds." 
+                        Write-Log -Message "Request $( $specificCounter ) failed with $( $errResponse.StatusCode.value__ ) $( $errResponse.StatusCode.ToString() ). Retrying in $( $MillisecondsDelay ) milliseconds." 
                         Start-Sleep -Milliseconds $MillisecondsDelay
                         Continue
                     }
 
                 # generic problems
                 } else {
+                    
+                    $genericCounter += 1
 
                     # Exceeded all retries
-                    if ($Error.Count -ge $MaxTriesGeneric) {
-                        Write-Log -Message "Request $( $Error.Count ) failed. Command failed the maximum number of $( $MaxTriesGeneric ) times." -Severity WARNING
+                    if ($genericCounter -ge $MaxTriesGeneric) {
+                        Write-Log -Message "Request $( $genericCounter ) failed. Command failed the maximum number of $( $MaxTriesGeneric ) times." -Severity WARNING
                         #Write-Log -Message $_.Exception.Message -Severity ERROR
                         Write-Log -Message "RESPONSE: $( ConvertTo-Json -InputObject $errBody -Depth 99 -Compress)"
                         throw $_.Exception
 
                     # Not all generic tries used yet, repeat
                     } else {
-                        Write-Log -Message "Request $( $Error.Count ) failed. Retrying in $( $MillisecondsDelay ) milliseconds." -Severity WARNING
+                        Write-Log -Message "Request $( $genericCounter ) failed. Retrying in $( $MillisecondsDelay ) milliseconds." -Severity WARNING
                         Start-Sleep -Milliseconds $MillisecondsDelay
                         Continue
                     }
@@ -86,7 +92,7 @@ function Invoke-RestMethodWithErrorHandling {
 
             }
 
-        }
+        } until ( $completed -eq $true -or $specificCounter -ge $MaxTriesSpecific -or $genericCounter -ge $MaxTriesGeneric)
 
     }
 

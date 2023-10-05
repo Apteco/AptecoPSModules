@@ -93,6 +93,7 @@ if ( $Script:settings.changeTLS ) {
 $Public  = @( Get-ChildItem -Path "$( $PSScriptRoot )/public/*.ps1" -Recurse -ErrorAction SilentlyContinue )
 $Private = @( Get-ChildItem -Path "$( $PSScriptRoot )/private/*.ps1" -Recurse -ErrorAction SilentlyContinue )
 
+
 # dot source the files
 @( $Public + $Private ) | ForEach-Object {
     $import = $_
@@ -152,7 +153,18 @@ try {
     Exit 0
 }
 
-# TODO For future you need in linux maybe this module for outgrid-view, which is also supported on console only: microsoft.powershell.consoleguitools
+
+# Load packages from current local libfolder
+If ( $psLocalPackages.Count -gt 0 ) {
+    Import-Dependencies -LoadWholePackageFolder
+}
+
+
+# Load assemblies
+$psAssemblies | ForEach-Object {
+    $ass = $_
+    Add-Type -AssemblyName $_
+}
 
 
 #-----------------------------------------------
