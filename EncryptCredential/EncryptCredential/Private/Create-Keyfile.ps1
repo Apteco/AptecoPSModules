@@ -1,16 +1,14 @@
-
-Function Create-KeyFile {
-    
 <#
 This function creates a new keyfile
 #>
+Function Create-KeyFile {
 
     param(
          [Parameter(Mandatory=$true)][string]$Path
         ,[Parameter(Mandatory=$false)][int]$ByteLength = 32
         ,[Parameter(Mandatory=$false)][Switch]$Force
     )
-    
+
     $writeFile = $false
 
     # Evaluate if the file should be created
@@ -23,7 +21,7 @@ This function creates a new keyfile
         } else {
             Write-Warning "The keyfile at '$( $Path )' already exists. Please use -Force to overwrite the file."
         }
-        
+
     } else {
 
         # File does not exist -> create it
@@ -36,7 +34,7 @@ This function creates a new keyfile
         # Checking the path validity
         If ( (Test-Path -Path $Path -IsValid) -eq $true ) {
 
-            Write-Verbose -Message "Path is valid. Creating a new keyfile at '$( $Path )'" -Verbose
+            Write-Verbose -Message "Path is valid. Creating a new keyfile at '$( $Path )'" #-Verbose
 
             $Key = New-Object Byte[] $ByteLength   # You can use 16, 24, or 32 for AES
             [Security.Cryptography.RNGCryptoServiceProvider]::Create().GetBytes($Key)
@@ -44,10 +42,10 @@ This function creates a new keyfile
 
         } else {
 
-            Write-Warning -InputObject "Path is invalid. Please check '$( $Path )'"
-            
+            Write-Warning -Message "Path is invalid. Please check '$( $Path )'"
+
         }
 
     }
-    
+
 }
