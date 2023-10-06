@@ -9,7 +9,7 @@
     }
 
     process {
-        "Hello World from Demo!"
+        "Hello World from Salesforce!"
     }
 
     end {

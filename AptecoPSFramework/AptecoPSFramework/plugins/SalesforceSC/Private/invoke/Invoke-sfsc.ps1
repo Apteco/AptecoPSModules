@@ -5,9 +5,6 @@ function Invoke-SFSC {
 
     [CmdletBinding()]
     param (
-
-        
-
          [Parameter(Mandatory=$true)][String]$Object                                # The cleverreach object like groups or mailings (first part after the main url)
         ,[Parameter(Mandatory=$false)][String]$Service = "data"
         ,[Parameter(Mandatory=$false)][String]$ContentType = "application/json"
@@ -202,16 +199,24 @@ function Invoke-SFSC {
                 }
 
                 #Write-Host ( convertto-json $updatedParameters )
-                $wr = Invoke-WebRequest @updatedParameters -UseBasicParsing
+                $wrInput = [Hashtable]@{
+                    "Params" = $updatedParameters
+                    "RetryHttpErrorList" = $Script:settings.errorhandling.RepeatOnHttpErrors
+                    "MaxTriesSpecific" = $Script:settings.errorhandling.MaximumRetriesOnHttpErrorList
+                    "MaxTriesGeneric" = $Script:settings.errorhandling.MaximumRetriesGeneric
+                    "MillisecondsDelay" = $Script:settings.errorhandling.HttpErrorDelay
+                }
+                $wr = @( Invoke-WebRequestWithErrorHandling @wrInput )
+                #$wr = Invoke-WebRequest @updatedParameters -UseBasicParsing
 
             } catch {
 
                 Write-Log -Message $_.Exception.Message -Severity ERROR
                 
-                $responseStream = $_.Exception.Response.GetResponseStream()
-                $responseReader = [System.IO.StreamReader]::new($responseStream)
-                $responseBody = $responseReader.ReadToEnd()
-                Write-Log -Message $responseBody -Severity ERROR
+                # $responseStream = $_.Exception.Response.GetResponseStream()
+                # $responseReader = [System.IO.StreamReader]::new($responseStream)
+                # $responseBody = $responseReader.ReadToEnd()
+                # Write-Log -Message $responseBody -Severity ERROR
                 
                 throw $_.Exception
 
@@ -253,19 +258,23 @@ function Invoke-SFSC {
 
             #}
             
-            
             If ( $Verbose -eq $true ) {
-                Write-log $r.Headers."Sforce-Limit-Info" -severity verbose #api-usage=2/15000
+                Write-log $wr.Headers."Sforce-Limit-Info" -severity verbose #api-usage=2/15000
             }
-            
-            
-            If ( $ContentType -eq "application/json" ) {
+
+        } Until ( $finished -eq $true )
+
+        
+        If ( $wr.Content -eq $null ) {
+            $ret = [Array]@()
+        } else {
+            # TODO check with utf8 in returned header
+            If ( $wr.headers.'Content-Type' -like "application/json*" ) {
                 $ret = convertfrom-json -InputObject $wr.content #-Depth 99
             } else {
                 $ret = $wr.content
             }
-
-        } Until ( $finished -eq $true )
+        }
 
         $ret
 

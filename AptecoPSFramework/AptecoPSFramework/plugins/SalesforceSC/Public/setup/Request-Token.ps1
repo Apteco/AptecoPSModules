@@ -1,4 +1,4 @@
-function Request-SalesforceToken {
+function Request-Token {
     [CmdletBinding()]
     param (
          [Parameter(Mandatory=$true)][String]$ClientId
