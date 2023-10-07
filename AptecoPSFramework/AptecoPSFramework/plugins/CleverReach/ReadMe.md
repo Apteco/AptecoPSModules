@@ -126,7 +126,7 @@ function Get-PluginDebug {
 }
 ```
 
-# Quick start
+# Quickstart
 
 If you know what you are doing, just proceed with this guide
 
@@ -143,7 +143,7 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 Get-InstalledModule -Name PowerShellGet -MinimumVersion 1.6.0
 
 # Install PowerShellGet with a current version
-Install-Module -Name PowerShellGet -force -verbose
+Install-Module -Name PowerShellGet -force -verbose -allowclobber
 
 # Execute this with elevated rights or with the user you need to execute it with, e.g. the apteco service user
 install-script install-dependencies, import-dependencies
@@ -189,6 +189,7 @@ $settingsFile = ".\settings.json"
 Export-Settings -Path $settingsFile
 
 # Register a task for automatic token refreshment
+# You will be asked for a user to execute the task with
 Register-TokenRefreshTask -SettingsFile $settingsFile
 
 #-----------------------------------------------
