@@ -20,6 +20,14 @@ function Request-OAuthApp {
     begin {
 
         #-----------------------------------------------
+        # SET LOGFILE
+        #-----------------------------------------------
+
+        # Set log file here, otherwise it could interrupt the process when launched headless from .net in System32
+        Set-Logfile -Path "./psoauth.log"
+
+
+        #-----------------------------------------------
         # ASK FOR SETTINGSFILE
         #-----------------------------------------------
         <#

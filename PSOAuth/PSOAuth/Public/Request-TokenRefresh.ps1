@@ -14,6 +14,18 @@ function Request-TokenRefresh {
 
     process {
 
+        #-----------------------------------------------
+        # SET LOGFILE
+        #-----------------------------------------------
+
+        # Set log file here, otherwise it could interrupt the process when launched headless from .net in System32
+        Set-Logfile -Path "./psoauth.log"
+
+
+        #-----------------------------------------------
+        # EXCHANGE THE TOKEN
+        #-----------------------------------------------
+
         # Read the settingsfile
         $set = Get-Content -Path $SettingsFile -Encoding utf8 -Raw | ConvertFrom-Json
 
@@ -41,6 +53,11 @@ function Request-TokenRefresh {
         $json = ConvertTo-Json -InputObject $set -Depth 99 # -compress
 
         # TODO implement PSNotify here for email notifications
+
+
+        #-----------------------------------------------
+        # SAVING TO FILE
+        #-----------------------------------------------
 
         # rename settings file if it already exists
         If ( $BackupPreviousFile -eq $true ) {
