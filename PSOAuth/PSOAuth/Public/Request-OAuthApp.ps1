@@ -2,6 +2,75 @@
 
 function Request-OAuthApp {
     [CmdletBinding()]
+
+    <#
+    .SYNOPSIS
+        Requesting oAuth v2 flow for an app via app link
+
+    .DESCRIPTION
+        Apteco PS Modules - PowerShell OAuthV2 flow
+
+    .PARAMETER ClientID
+        The client id that will be sent in this flow
+
+    .PARAMETER ClientSecret
+        The client secret that will be sent in this flow - this should be kept secret!!!
+
+    .PARAMETER Scope
+        The scope that will be sent with in the oauth flow
+
+    .PARAMETER AuthUrl
+        The auth url that will be used to initiate this flow
+
+    .PARAMETER TokenUrl
+        The token url that will be used to exchange the code into a token
+
+    .PARAMETER Protocol
+        The app protocol that should be used like apttoken54321://localhost 
+
+    .PARAMETER SettingsFile
+        The path to the json file where all settings from this flow are saved into
+
+    .PARAMETER EncryptToken
+        Should the token be saved encrypted in the resulting json file
+
+    .PARAMETER SaveSeparateTokenFile
+        Should the access token be saved in a separate file and not only in the json file?
+
+    .PARAMETER TokenFile
+        The path to the access token file, when the switch SaveSeparateTokenFile is set
+
+    .PARAMETER SaveExchangedPayload
+        Do you want to save the payload of the second call, which could contain important information
+
+    .PARAMETER PayloadToSave
+        If you want to save more information in the settingsfile, e.g. for refreshing the token, put it in here
+
+    .EXAMPLE
+        import-module PSOAuth -Verbose
+        $oauthParam = [Hashtable]@{
+            "ClientId" = "ssCNo32SNf"
+            "ClientSecret" = ""     # ask for this at Apteco, if you don't have your own app
+            "AuthUrl" = "https://rest.cleverreach.com/oauth/authorize.php"
+            "TokenUrl" = "https://rest.cleverreach.com/oauth/token.php"
+            "SaveSeparateTokenFile" = $true
+        }
+        Request-OAuthApp @oauthParam -Verbose
+
+    .EXAMPLE
+        TODO SALESFORCE EXAMPLE
+
+    .INPUTS
+        String
+
+    .OUTPUTS
+        $null
+
+    .NOTES
+        Author:  florian.von.bracht@apteco.de
+
+    #>
+
     param (
          [Parameter(Mandatory=$true)][String]$ClientId
         ,[Parameter(Mandatory=$true)][String]$ClientSecret
@@ -15,6 +84,8 @@ function Request-OAuthApp {
         #,[Parameter(Mandatory=$false)][String]$CallbackFile = "$( $env:TEMP )\crcallback.txt"
         ,[Parameter(Mandatory=$false)][Switch]$SaveSeparateTokenFile = $false
         ,[Parameter(Mandatory=$false)][Switch]$EncryptToken = $false
+        ,[Parameter(Mandatory=$false)][PSCustomObject]$PayloadToSave = [PSCustomObject]@{}
+        ,[Parameter(Mandatory=$false)][Switch]$SaveExchangedPayload = $false    # Do you want to save the payload of the second call, which could contain important information
     )
 
     begin {
@@ -238,6 +309,10 @@ function Request-OAuthApp {
 
             # Clear the variables straight away
             #$clientCred = $null
+
+            If ( $SaveExchangedPayload -eq $true ) {
+                ConvertToJson -InputObject $response -Depth 99 | Set-Content -path ".\exchange.json" -Encoding UTF8 -Force
+            }
 
 
             #-----------------------------------------------
