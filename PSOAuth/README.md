@@ -3,7 +3,8 @@
 
 This description needs reworking as a local webserver is supported now!
 
-This oAuth process does work if you are allowed to use Apps for receiving the code instead of a public https website.
+This oAuthV2 flow process does work if you are allowed to use Apps or localhost websites for receiving the code grant type instead of a public https website.
+It supports the `response_type=code` based flow, which should be fine for the most common cases.
 The process guids you to the login page of the service you want to receiver an authentication token for. After this it
 will be redirected to an app url that this module created beforehand like `myNewApp:\\putinherewhateveryouwant`.
 After receiving the code at this app, it will be exchanged with an oAuth token. Sometimes you also get a refresh token.
