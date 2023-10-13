@@ -66,7 +66,8 @@ function Invoke-SFSC {
         # Prepare Authentication
         
         If ( $Script:settings.token.tokenUsage -eq "consume" ) {
-            $rawToken = Get-Content -Path $Script:settings.token.tokenFilePath -Encoding UTF8 -Raw
+            #$rawToken = Get-Content -Path $Script:settings.token.tokenFilePath -Encoding UTF8 -Raw
+            $rawToken = ( Get-Content -Path $Script:settings.token.tokenFilePath -Encoding UTF8 -Raw ).replace("`n","").replace("`r","")
             If ( $Script:settings.token.encryptTokenFile -eq $true ) {
                 $token = Convert-SecureToPlaintext -String $rawToken
             } else {
