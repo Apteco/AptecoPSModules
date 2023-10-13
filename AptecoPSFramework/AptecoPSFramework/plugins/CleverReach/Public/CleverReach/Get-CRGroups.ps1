@@ -13,7 +13,7 @@ function Get-CRGroups {
     }
     process {
 
-        $groups = Invoke-CR -Object "groups" -Method GET -Verbose
+        $groups = Invoke-CR -Object "groups" -Method GET #-Verbose
 
         $groups
 

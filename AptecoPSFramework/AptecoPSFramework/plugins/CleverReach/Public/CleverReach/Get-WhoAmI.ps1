@@ -13,7 +13,7 @@ function Get-WhoAmI {
     }
     process {
 
-        $whoAmI = Invoke-CR -Object "debug" -Path "whoami.json" -Method GET -Verbose
+        $whoAmI = Invoke-CR -Object "debug" -Path "whoami.json" -Method GET #-Verbose
 
         $whoAmI
 

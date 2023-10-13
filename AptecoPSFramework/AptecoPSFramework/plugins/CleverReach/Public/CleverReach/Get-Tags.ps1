@@ -13,7 +13,7 @@ function Get-Tags {
     }
     process {
 
-        $tags = @( Invoke-CR -Object "tags" -Query ([PSCustomObject]@{"group_id"=0;"order_by"="tag"}) -Method GET -Verbose -Paging ) # use a copy so the reference is not changed because it will used a second time
+        $tags = @( Invoke-CR -Object "tags" -Query ([PSCustomObject]@{"group_id"=0;"order_by"="tag"}) -Method GET -Paging ) # use a copy so the reference is not changed because it will used a second time
 
         $tags
 

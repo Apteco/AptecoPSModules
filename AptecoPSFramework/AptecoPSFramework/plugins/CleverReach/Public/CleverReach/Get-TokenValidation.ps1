@@ -12,7 +12,7 @@ function Get-TokenValidation {
     }
     process {
 
-        $validation = Invoke-CR -Object "debug" -Path "validate.json" -Method GET -Verbose
+        $validation = Invoke-CR -Object "debug" -Path "validate.json" -Method GET #-Verbose
 
         $validation
 

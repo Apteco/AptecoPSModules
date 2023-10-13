@@ -13,7 +13,7 @@ function Get-TokenTimeToLive {
     }
     process {
 
-        $ttl = Invoke-CR -Object "debug" -Path "ttl.json" -Method GET -Verbose
+        $ttl = Invoke-CR -Object "debug" -Path "ttl.json" -Method GET #-Verbose
 
         $ttl
 

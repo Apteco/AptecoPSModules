@@ -35,7 +35,7 @@ function Get-GlobalDeactivated {
             "detail" = 0
         }
 
-        $globalDeactivated = [Array]@( Invoke-CR -Object "receivers" -Path "filter.json" -Method POST -Verbose -Paging -Body $deactivatedGlobalFilterBody ) # .PsObject.Copy() use a copy so the reference is not changed because it will used a second time
+        $globalDeactivated = [Array]@( Invoke-CR -Object "receivers" -Path "filter.json" -Method POST -Paging -Body $deactivatedGlobalFilterBody ) # .PsObject.Copy() use a copy so the reference is not changed because it will used a second time
 
         $globalDeactivated
 

@@ -33,7 +33,7 @@ function Get-LocalDeactivated {
             "detail" = 0
         }
 
-        $localDeactivated = @( Invoke-CR -Object "receivers" -Path "filter.json" -Method POST -Verbose -Paging -Body $deactivatedLocalFilterBody.PsObject.Copy() ) # use a copy so the reference is not changed because it will used a second time
+        $localDeactivated = @( Invoke-CR -Object "receivers" -Path "filter.json" -Method POST -Paging -Body $deactivatedLocalFilterBody.PsObject.Copy() ) # use a copy so the reference is not changed because it will used a second time
 
         $localDeactivated
 
