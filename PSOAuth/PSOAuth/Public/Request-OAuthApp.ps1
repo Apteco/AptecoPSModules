@@ -29,7 +29,7 @@ function Request-OAuthApp {
         The token url that will be used to exchange the code into a token
 
     .PARAMETER Protocol
-        The app protocol that should be used like apttoken54321://localhost 
+        The app protocol that should be used like apttoken54321://localhost/
 
     .PARAMETER SettingsFile
         The path to the json file where all settings from this flow are saved into
@@ -289,6 +289,8 @@ function Request-OAuthApp {
                 If ( $callbackUriSegments["state"] -ne $State ) {
                     throw "State of initial call does not match the returned state! Exit!"
                     Exit 0
+                } else {
+                    Write-Log "State was accepted!"
                 }
             }
 
@@ -337,7 +339,7 @@ function Request-OAuthApp {
             #$clientCred = $null
 
             If ( $SaveExchangedPayload -eq $true ) {
-                ConvertToJson -InputObject $response -Depth 99 | Set-Content -path ".\exchange.json" -Encoding UTF8 -Force
+                ConvertTo-Json -InputObject $response -Depth 99 | Set-Content -path ".\exchange.json" -Encoding UTF8 -Force
             }
 
 

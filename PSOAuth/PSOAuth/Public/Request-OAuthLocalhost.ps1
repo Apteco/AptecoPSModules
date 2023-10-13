@@ -28,7 +28,7 @@ function Request-OAuthLocalhost {
         The token url that will be used to exchange the code into a token
 
     .PARAMETER RedirectUrl
-        The redirect url that will be used after the first login, sth. like http://localhost:54321
+        The redirect url that will be used after the first login, sth. like http://localhost:54321/
         Please be sure to use the exact url with or without the slash in your app configuration
 
     .PARAMETER TimeoutForCode
@@ -376,6 +376,8 @@ function Request-OAuthLocalhost {
             If ( $webjob.state -ne $State ) {
                 throw "State of initial call does not match the returned state! Exit!"
                 Exit 0
+            } else {
+                Write-Log "State was accepted!"
             }
         }
 
@@ -424,7 +426,7 @@ function Request-OAuthLocalhost {
         #$clientCred = $null
 
         If ( $SaveExchangedPayload -eq $true ) {
-            ConvertToJson -InputObject $response -Depth 99 | Set-Content -path ".\exchange.json" -Encoding UTF8 -Force
+            ConvertTo-Json -InputObject $response -Depth 99 | Set-Content -path ".\exchange.json" -Encoding UTF8 -Force
         }
 
 
