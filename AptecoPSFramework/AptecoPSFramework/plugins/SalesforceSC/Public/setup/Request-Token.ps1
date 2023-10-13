@@ -5,6 +5,7 @@ function Request-Token {
         ,[Parameter(Mandatory=$true)][Uri]$RedirectUrl
         ,[Parameter(Mandatory=$false)][String]$SettingsFile = "./salesforce_token_settings.json"
         ,[Parameter(Mandatory=$false)][String]$TokenFile = "./salesforce.token"
+        ,[Parameter(Mandatory=$false)][Switch]$UseStateToPreventCSRFAttacks = $false
     )
 
     begin {
@@ -21,29 +22,38 @@ function Request-Token {
 
 
         #-----------------------------------------------
-        # SET THE PARAMETERS
-        #-----------------------------------------------
-        
-        $oauthParam = [Hashtable]@{
-            "ClientId" = $ClientId
-            "ClientSecret" = ""     # this will be asked for in the next step
-            "AuthUrl" = "https://login.salesforce.com/services/oauth2/authorize"
-            "TokenUrl" = "https://login.salesforce.com/services/oauth2/token"
-            "SaveSeparateTokenFile" = $true
-            "RedirectUrl" = $RedirectUrl
-            "SettingsFile" = $SettingsFile
-            "TokenFile" = $TokenFile
-        }
-
-
-        #-----------------------------------------------
         # ASK FOR CLIENT SECRET
         #-----------------------------------------------
         
         # Ask to enter the client secret
         $clientSecret = Read-Host -AsSecureString "Please enter the client secret"
         $clientCred = [pscredential]::new("dummy",$clientSecret)
-        $oauthParam.ClientSecret = $clientCred.GetNetworkCredential().password
+        
+
+        #-----------------------------------------------
+        # SET THE PARAMETERS
+        #-----------------------------------------------
+        
+        $oauthParam = [Hashtable]@{
+            "ClientId" = $ClientId
+            "ClientSecret" = $clientCred.GetNetworkCredential().password     # this will be asked for in the next step
+            "AuthUrl" = "https://login.salesforce.com/services/oauth2/authorize"
+            "TokenUrl" = "https://login.salesforce.com/services/oauth2/token"
+            "SaveSeparateTokenFile" = $true
+            "RedirectUrl" = $RedirectUrl
+            "SettingsFile" = $SettingsFile
+            "PayloadToSave" = [PSCustomObject]@{
+                "secret" = $clientCred.GetNetworkCredential().password  # TODO maybe encrypt this?
+            }]
+            "TokenFile" = $TokenFile
+        }
+
+        # Add state to prevent CSRF attacks
+        If ( $UseStateToPreventCSRFAttacks -eq $true ) {
+            $oauthParam.Add("State",( Get-RandomString -Length 24 -ExcludeUpperCase -ExcludeSpecialChars ))
+        }
+
+        # Empty that variable
         $clientSecret = ""
 
 
@@ -54,6 +64,7 @@ function Request-Token {
         Request-OAuthLocalhost @oauthParam #-Verbose
         #Request-OAuthApp @oauthParam -Verbose
 
+        
         #-----------------------------------------------
         # WRITE LOG
         #-----------------------------------------------

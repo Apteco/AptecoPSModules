@@ -14,7 +14,7 @@ function Get-SFSCToken {
     }
     process {
 
-        $oAuthIntrospect = Invoke-SFSC -Service "oauth2" -Object "introspect" -Method "Post"        
+        $oAuthIntrospect = Invoke-SFSC -Service "oauth2" -Object "introspect" -Method "Post"
 
         # $objects = Invoke-SFSC -Object "sobjects" -Method "Get"        
 

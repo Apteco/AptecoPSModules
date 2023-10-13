@@ -3,6 +3,7 @@ function Request-Token {
     param (
          [Parameter(Mandatory=$false)][String]$SettingsFile = "./cleverreach_token_settings.json"
         ,[Parameter(Mandatory=$false)][String]$TokenFile = "./cleverreach.token"
+        ,[Parameter(Mandatory=$false)][Switch]$UseStateToPreventCSRFAttacks = $false
     )
 
     begin {
@@ -24,7 +25,7 @@ function Request-Token {
 
         $oauthParam = [Hashtable]@{
             "ClientId" = "ssCNo32SNf"
-            "ClientSecret" = ""     # ask for this at Apteco, if you don't have your own app
+            "ClientSecret" = ""     # This will be asked in a moment for
             "AuthUrl" = "https://rest.cleverreach.com/oauth/authorize.php"
             "TokenUrl" = "https://rest.cleverreach.com/oauth/token.php"
             "SaveSeparateTokenFile" = $Script:settings.token.exportTokenToFile
@@ -33,6 +34,11 @@ function Request-Token {
             "TokenFile" = $TokenFile
         }
 
+        # Add state to prevent CSRF attacks
+        If ( $UseStateToPreventCSRFAttacks -eq $true ) {
+            $oauthParam.Add("State",( Get-RandomString -Length 24 -ExcludeUpperCase -ExcludeSpecialChars ))
+        }
+        
 
         #-----------------------------------------------
         # ASK APTECO FOR CLIENT SECRET

@@ -158,6 +158,11 @@ Install-AptecoPSFramework -Verbose
 #-----------------------------------------------
 
 # Please open another PowerShell window to enforce a reload of that module, recommended with elevated rights, if the plugin has dependencies
+
+# Change to the location where you wish to install the plugin to
+Set-Location -Path "C:\Apteco\Scripts\AptecoPSFramework\CleverReach"
+
+# Import the module
 Import-Module aptecopsframework -Verbose
 
 # Choose a plugin
@@ -176,7 +181,7 @@ $settings.logfile = ".\file.log"
 # Create a token for cleverreach and save the path to it
 $tokenFile = ".\cr.token"
 $tokenSettings = ".\cr_token_settings.json"
-Request-Token -SettingsFile $tokenSettings -TokenFile $tokenFile
+Request-Token -SettingsFile $tokenSettings -TokenFile $tokenFile -UseStateToPreventCSRFAttacks
 
 $settings.token.tokenFilePath = ( get-item -Path $tokenFile ).fullname
 $settings.token.tokenSettingsFile = ( get-item -Path $tokenSettings ).fullname
