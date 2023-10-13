@@ -155,6 +155,7 @@
             #-----------------------------------------------
 
             $newAttributes = [Array]@()
+            $newAttributesDetails = [Array]@()
             #$Script:debug = $colsInCsvButNotAttr
 
             If ( $colsInCsvButNotAttr.Count -gt 0 ) {

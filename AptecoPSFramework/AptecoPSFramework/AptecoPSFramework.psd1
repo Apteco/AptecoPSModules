@@ -155,6 +155,7 @@ PrivateData = @{
         ReleaseNotes = '
 0.0.20 Exchanged the module/script path handling for the module itself and the boilerplate
        Improved the installation of dependencies with a new script
+       Fix of $null when loading details of new attributes
 0.0.19 Added script support for boilerplates
 0.0.18 Added a new setting for CleverReach to put response log information into a separate logfile
        Added more documentation for CleverReach response download
