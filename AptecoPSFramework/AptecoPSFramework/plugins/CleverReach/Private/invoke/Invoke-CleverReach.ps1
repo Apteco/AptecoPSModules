@@ -209,7 +209,7 @@ function Invoke-CR {
     Process {
 
         $finished = $false
-
+        $continueAfterTokenRefresh = $false
         Do {
 
             # Prepare query
@@ -250,10 +250,37 @@ function Invoke-CR {
                 }
                 $wr = @( Invoke-RestMethodWithErrorHandling @wrInput )
 
-            }
-            catch {
-                Write-Log -Message $_.Exception.Message -Severity ERROR
+            } catch {
+
+                $e = $_
+
+                Write-Log -Message $e.Exception.Message -Severity ERROR
+
+                # parse the response code and body
+                $errResponse = $e.Exception.Response
+                $errBody = Import-ErrorForResponseBody -Err $e
+
+                # Do this only once
+                if ( $errResponse.StatusCode.value__ -eq 401 -and $continueAfterTokenRefresh -eq $false) {
+                                    
+                    Write-Log -Severity WARNING -Message "401 Unauthorized"
+                    try {
+                        $newToken = Save-NewToken
+                        Write-Log -Severity WARNING -Message "Successful token refresh"
+                        $wrInput.Params.Header.Authorization = "Bearer $( $newToken )"
+                        $continueAfterTokenRefresh = $true
+                    } catch {
+                        Write-Log -Severity ERROR -Message "Token refresh not successful"
+                    }
+
+                    If ( $continueAfterTokenRefresh -eq $true ) {
+                        Continue
+                    }
+
+                }
+
                 throw $_.Exception
+                
             }
 
             # Increase page and add results to the collection

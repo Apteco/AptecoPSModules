@@ -50,23 +50,9 @@ function Invoke-RestMethodWithErrorHandling {
                 #$errResponse.StatusCode.ToString() # = "BadGateway"
                 #$errResponse.ReasonPhrase # = "Bad Gateway"
 
-                # try to refresh the token
-                if ( $errResponse.StatusCode.value__ -eq 401 ) {
-                    
-                    Write-Log -Severity WARNING -Message "Trying to refresh the access token"
-                    $continueAfterTokenRefresh = $false
-                    try {
-                        Save-NewToken
-                        Write-Log -Severity WARNING -Message "Successful token refresh"
-                        $continueAfterTokenRefresh = $true
-                    } catch {
-                        Write-Log -Severity ERROR -Message "Token refresh not successful"
-                    }
-
-                    If ( $continueAfterTokenRefresh -eq $true ) {
-                        Continue
-                    }
-                
+                # directly throw an exception so we can catch it in the caller
+                if ( $errResponse.StatusCode.value__ -eq 401 ) {        
+                    throw $e.exception
                 }
                 
                 # retry if a specific http error happens

@@ -165,7 +165,7 @@ Function Invoke-Dynamics {
     Process {
 
         $finished = $false
-
+        $continueAfterTokenRefresh = $false
         Do {
 
             # Prepare query
@@ -211,7 +211,32 @@ Function Invoke-Dynamics {
 
             } catch {
 
-                Write-Log -Message $_.Exception.Message -Severity ERROR
+                $e = $_
+
+                Write-Log -Message $e.Exception.Message -Severity ERROR
+
+                # parse the response code and body
+                $errResponse = $e.Exception.Response
+                $errBody = Import-ErrorForResponseBody -Err $e
+
+                # Do this only once
+                if ( $errResponse.StatusCode.value__ -eq 401 -and $continueAfterTokenRefresh -eq $false) {
+                                    
+                    Write-Log -Severity WARNING -Message "401 Unauthorized"
+                    try {
+                        $newToken = Save-NewToken
+                        Write-Log -Severity WARNING -Message "Successful token refresh"
+                        $wrInput.Params.Header.Authorization = "Bearer $( $newToken )"
+                        $continueAfterTokenRefresh = $true
+                    } catch {
+                        Write-Log -Severity ERROR -Message "Token refresh not successful"
+                    }
+
+                    If ( $continueAfterTokenRefresh -eq $true ) {
+                        Continue
+                    }
+
+                }
                 
                 # $responseStream = $_.Exception.Response.GetResponseStream()
                 # $responseReader = [System.IO.StreamReader]::new($responseStream)

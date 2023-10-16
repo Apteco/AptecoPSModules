@@ -47,6 +47,7 @@ function Request-Token {
                 "secret" = $clientCred.GetNetworkCredential().password  # TODO maybe encrypt this?
             }
             "TokenFile" = $TokenFile
+            "SaveExchangedPayload" = $true
         }
 
         # Add state to prevent CSRF attacks
