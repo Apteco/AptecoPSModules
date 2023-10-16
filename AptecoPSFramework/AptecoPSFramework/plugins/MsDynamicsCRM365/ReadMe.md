@@ -36,7 +36,7 @@ Install-AptecoPSFramework -Verbose
 Import-Module aptecopsframework -Verbose
 
 # Choose a plugin
-$plugin = get-plugins | Select guid, name, version, update, path | Out-GridView -PassThru | Select -first 1
+$plugin = get-plugins | Where-Object { $_.name -like "*Dynamics*" }
 
 # Install the plugin before loading it (installing dependencies)
 Install-Plugin -Guid $plugin.guid
@@ -49,6 +49,9 @@ $settings = Get-settings
 $settings.logfile = ".\file.log"
 $settings.base = "https://orgabcdefg.crm11.dynamics.com"
 
+# Set the settings
+Set-Settings -PSCustom $settings
+
 # Create a token for cleverreach and save the path to it
 # The client secret will be asked for when executing the cmdlet
 $tokenFile = ".\dyn365.token"
@@ -56,16 +59,10 @@ $tokenSettings = ".\dyn365_token_settings.json"
 $orgId = "d9792e43-ac09-46e5-bbde-4056c3b6792a" # German: Verzeichnis-ID (Mandant)
 Request-Token -ClientId "4f6cf54a-96cc-4e71-8a6a-0f018b439e6f" -RedirectUrl "http://localhost:43902/" -SettingsFile $tokenSettings -TokenFile $tokenFile -CrmUrl $settings.base -OrgId $orgId -UseStateToPreventCSRFAttacks
 
-# TODO check the redirect url, if it has trailing / in the azure portal
+# Please check the redirect url, if it has trailing / in the azure portal
 
-# Secret value (not the secret ID)
-$secret = "DxBMv~MP2krXQ-xvavDVnseXmtuJN6UzEb0u-XUH" 
-
-$settings.token.tokenFilePath = ( get-item -Path $tokenFile ).fullname
-$settings.token.tokenSettingsFile = ( get-item -Path $tokenSettings ).fullname
-
-# Set the settings
-Set-Settings -PSCustom $settings
+# You are getting asked for a secret (not the secret ID), just paste it interactively
+# The secret should look like: DxBMv~MP2krXQ-xvavDVnseXmtuJN6UzEb0u-XUH
 
 # Save the settings into a file
 $settingsFile = ".\settings.json"
@@ -83,9 +80,20 @@ Import-Module aptecopsframework -Verbose
 Import-Settings -Path ".\settings.json"
 
 # List all commands of this plugin
-# get-command -module "Invoke Microsoft"
+get-command -module "*Dynamics*"
 
 # Then you can use commands like these
 Get-WhoAmI
 Get-Account
+
+#-----------------------------------------------
+
+# To manually refresh your token later, just execute
+
+Save-NewToken
+
 ```
+
+Use `Request-Token` to use the auth flow to obtain a new token, use `Save-NewToken` to use your refresh token and obtain a new one and save it
+
+The refresh token should have a longer expiration duration, so doing a `Save-NewToken` before doing more, should help

@@ -5,7 +5,7 @@
 RootModule = 'AptecoPSFramework.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.1.1'
+ModuleVersion = '0.1.2'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -38,6 +38,7 @@ This framework brings lots of useful features with it like
 - Easy boilerplate, documentation on GitHub and Demo-Channel to start quickly
 - Easy updates via PowerShellGallery
 - Easy integration of proxies, custom headers, REST handling
+- Using oAuth for connected apps like Microsoft Dynamics, Salesforce SalesCloud and CleverReach
 - Much more to follow...
 
 Your help is appreciated. Just contact me.
@@ -147,6 +148,8 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.1.2 Support of PSOAuth for Salesforce SalesCloud and Microsoft Dynamics Dataverse, improved token refreshment for CleverReach
+      Added automatic try of token refresh, if there is a http401 error
 0.1.1 New version jump with more dependencies that have been implemented now: Install-Dependencies and Import-Dependencies, make sure to install those scripts before updating
       Support of PSOAuth for CleverReach
       Fix for http calls so generic problematic are not repeating infinite

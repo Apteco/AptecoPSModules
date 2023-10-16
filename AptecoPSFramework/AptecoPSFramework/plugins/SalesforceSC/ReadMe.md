@@ -62,7 +62,7 @@ Install-AptecoPSFramework -Verbose
 Import-Module aptecopsframework -Verbose
 
 # Choose a plugin
-$plugin = get-plugins | Select guid, name, version, update, path | Out-GridView -PassThru | Select -first 1
+$plugin = get-plugins | Where-Object { $_.name -like "*Salesforce*" }
 
 # Install the plugin before loading it (installing dependencies)
 Install-Plugin -Guid $plugin.guid
@@ -76,19 +76,16 @@ $settings.logfile = ".\file.log"
 $tokenFile = ".\sf.token"
 $tokenSettings = ".\sf_token_settings.json"
 
+# Set the settings
+Set-Settings -PSCustom $settings
+
 # Create a token for cleverreach and save the path to it
 # The client secret will be asked for when executing the cmdlet
 # NOTE: Please exchange [CLIENTID] with your client ID and redirect url here
 Request-Token -ClientId "[CLIENTID]" -RedirectUrl "http://localhost:54321/" -SettingsFile $tokenSettings -TokenFile $tokenFile -UseStateToPreventCSRFAttacks
 
-# Secret
-$secret = "GQF26T1CR9FSWSJ4CH52ESCDDCJ4X132H91PP3WTFVGCGFQ22SGUQA0P6DH6U"
-
-$settings.token.tokenFilePath = ( get-item -Path $tokenFile ).fullname
-$settings.token.tokenSettingsFile = ( get-item -Path $tokenSettings ).fullname
-
-# Set the settings
-Set-Settings -PSCustom $settings
+# You are getting asked for a secret, just paste it interactively
+# The secret should look like: GQF26T1CR9FSWSJ4CH52ESCDDCJ4X132H91PP3WTFVGCGFQ22SGUQA0P6DH6U
 
 # Save the settings into a file
 $settingsFile = ".\settings.json"
@@ -106,5 +103,12 @@ Import-Module aptecopsframework -Verbose
 Import-Settings -Path ".\settings.json"
 
 # List all commands of this plugin
-get-command -module "Salesforce SalesCloud CampaignMembers"
+get-command -module "*Salesforce*"
+
+#-----------------------------------------------
+
+# To manually refresh your token later, just execute
+
+Save-NewToken
+
 ```

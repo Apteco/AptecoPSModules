@@ -26,6 +26,14 @@ function Request-Token {
         #$crmUriParts = $CrmUrl.Host.split(".")
         #$orgId = $crmUriParts[0]
 
+        #-----------------------------------------------
+        # ASK FOR CLIENT SECRET
+        #-----------------------------------------------
+        
+        # Ask to enter the client secret
+        $clientSecret = Read-Host -AsSecureString "Please enter the client secret"
+        $clientCred = [pscredential]::new("dummy",$clientSecret)
+
 
         #-----------------------------------------------
         # SET THE PARAMETERS
@@ -33,7 +41,7 @@ function Request-Token {
         
         $oauthParam = [Hashtable]@{
             "ClientId" = $ClientId
-            "ClientSecret" = ""     # this will be asked for in the next step
+            "ClientSecret" = $clientCred.GetNetworkCredential().password     # this will be asked for in the next step
             "AuthUrl" = "https://login.microsoftonline.com/$( $orgId )/oauth2/v2.0/authorize"
             "TokenUrl" = "https://login.microsoftonline.com/$( $orgId )/oauth2/v2.0/token"
             "SaveSeparateTokenFile" = $true
@@ -42,6 +50,10 @@ function Request-Token {
             "Scope" = "https://$( $CrmUrl.Host )/user_impersonation offline_access"
             "TokenFile" = $TokenFile
             "SaveExchangedPayload" = $true
+            "PayloadToSave" = [PSCustomObject]@{
+                "clientid" = $ClientId
+                "secret" = $clientCred.GetNetworkCredential().password  # TODO maybe encrypt this?
+            }
         }
 
         # Add state to prevent CSRF attacks
@@ -51,22 +63,19 @@ function Request-Token {
 
 
         #-----------------------------------------------
-        # ASK FOR CLIENT SECRET
-        #-----------------------------------------------
-        
-        # Ask to enter the client secret
-        $clientSecret = Read-Host -AsSecureString "Please enter the client secret"
-        $clientCred = [pscredential]::new("dummy",$clientSecret)
-        $oauthParam.ClientSecret = $clientCred.GetNetworkCredential().password
-        $clientSecret = ""
-
-
-        #-----------------------------------------------
         # REQUEST THAT TOKEN
         #-----------------------------------------------
 
         Request-OAuthLocalhost @oauthParam #-Verbose
         #Request-OAuthApp @oauthParam -Verbose
+
+        #-----------------------------------------------
+        # PUT THIS AUTOMATICALLY INTO SETTINGS
+        #-----------------------------------------------
+
+        $Script:settings.token.tokenFilePath = ( get-item -Path $tokenFile ).fullname
+        $Script:settings.token.tokenSettingsFile = ( get-item -Path $tokenSettings ).fullname
+        
 
         #-----------------------------------------------
         # WRITE LOG

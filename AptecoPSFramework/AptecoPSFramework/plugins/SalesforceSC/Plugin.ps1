@@ -6,8 +6,8 @@ function Get-CurrentPluginInfo {
         
         # general information about this plugin
         "name" = "Salesforce SalesCloud CampaignMembers"
-        "version" = "0.0.2"
-        "lastUpdate" = "2023-10-06"
+        "version" = "0.0.3"
+        "lastUpdate" = "2023-10-16"
         "category" = "channel"
         "type" = "crm"
         "stage" = "dev"

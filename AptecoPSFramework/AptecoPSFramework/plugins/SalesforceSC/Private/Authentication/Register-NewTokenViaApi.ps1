@@ -1,6 +1,6 @@
 
 
-function Register-NewToken {
+function Register-NewTokenViaApi {
 
     [CmdletBinding()]
     param (
@@ -11,6 +11,7 @@ function Register-NewToken {
     begin {
 
     }
+
     process {
 
         $oAuthIntrospect = Invoke-SFSC -Service "oauth2" -Object "introspect" -Method "Post"        

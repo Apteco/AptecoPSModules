@@ -13,7 +13,7 @@ function Save-NewToken {
     }
     process {
 
-        $newToken = Register-NewToken
+        $newToken = Register-NewTokenViaOauth
         Write-Log -message "Got new token valid for $( $newToken.expires_in ) seconds and scope '$( $newToken.scope )'" #-Verbose
 
         Request-TokenRefresh -SettingsFile $Script:settings.token.tokenSettingsFile -NewAccessToken $newToken.access_token

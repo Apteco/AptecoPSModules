@@ -1,6 +1,6 @@
 
 
-function Register-NewToken {
+function Register-NewTokenViaApi {
 
     [CmdletBinding()]
     param (

@@ -177,17 +177,17 @@ import-plugin -Guid $plugin.guid
 # Get merged settings for this plugin and change some
 $settings = Get-settings
 $settings.logfile = ".\file.log"
-
-# Create a token for cleverreach and save the path to it
 $tokenFile = ".\cr.token"
 $tokenSettings = ".\cr_token_settings.json"
-Request-Token -SettingsFile $tokenSettings -TokenFile $tokenFile -UseStateToPreventCSRFAttacks
-
-$settings.token.tokenFilePath = ( get-item -Path $tokenFile ).fullname
-$settings.token.tokenSettingsFile = ( get-item -Path $tokenSettings ).fullname
 
 # Set the settings
 Set-Settings -PSCustom $settings
+
+# Create a token for cleverreach
+Request-Token -SettingsFile $tokenSettings -TokenFile $tokenFile -UseStateToPreventCSRFAttacks
+
+# You are getting asked for a secret, just paste it interactively
+# The secret should look like: JQZrcjW2gJtr93bvys4GFVeaUCTecpa
 
 # Save the settings into a file
 $settingsFile = ".\settings.json"
@@ -206,7 +206,7 @@ Import-Module aptecopsframework -Verbose
 Import-Settings -Path ".\settings.json"
 
 # List all commands of this plugin
-get-command -module "CleverReach"
+get-command -module "*CleverReach*"
 
 # Then you can use commands like these
 Test-Login
@@ -215,6 +215,14 @@ Get-Messages
 Get-Tags
 Get-Bounces
 Get-Blocklist
+
+
+#-----------------------------------------------
+
+# To manually refresh your token later, just execute
+
+Save-NewToken
+
 ```
 
 # CleverReach Settings

@@ -1,4 +1,4 @@
-
+# TODO not implemented yet
 
 function Save-NewToken {
 
@@ -13,8 +13,7 @@ function Save-NewToken {
     }
     process {
 
-        #$newToken = Register-NewTokenViaApi
-        $newToken = Register-NewTokenViaOauth
+        $newToken = Register-NewToken
         Write-Log -message "Got new token valid for $( $newToken.expires_in ) seconds and scope '$( $newToken.scope )'" #-Verbose
 
         Request-TokenRefresh -SettingsFile $Script:settings.token.tokenSettingsFile -NewAccessToken $newToken.access_token -NewRefreshToken $newToken.refresh_token

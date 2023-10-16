@@ -1,3 +1,4 @@
+
 Param(
      $SettingsFile
     #,$TokenSettings
@@ -19,7 +20,7 @@ Write-Log "CHECK TOKEN" -Severity INFO
 
 
 #-----------------------------------------------
-# EXCHANGE TOKEN
+# JUST EXCHANGE TOKEN
 #-----------------------------------------------
 
 # Exchange file

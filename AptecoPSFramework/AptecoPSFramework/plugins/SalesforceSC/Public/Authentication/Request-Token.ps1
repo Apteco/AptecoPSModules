@@ -43,8 +43,9 @@ function Request-Token {
             "RedirectUrl" = $RedirectUrl
             "SettingsFile" = $SettingsFile
             "PayloadToSave" = [PSCustomObject]@{
+                "clientid" = $ClientId
                 "secret" = $clientCred.GetNetworkCredential().password  # TODO maybe encrypt this?
-            }]
+            }
             "TokenFile" = $TokenFile
         }
 
@@ -64,6 +65,14 @@ function Request-Token {
         Request-OAuthLocalhost @oauthParam #-Verbose
         #Request-OAuthApp @oauthParam -Verbose
 
+        
+        #-----------------------------------------------
+        # PUT THIS AUTOMATICALLY INTO SETTINGS
+        #-----------------------------------------------
+
+        $Script:settings.token.tokenFilePath = ( get-item -Path $tokenFile ).fullname
+        $Script:settings.token.tokenSettingsFile = ( get-item -Path $tokenSettings ).fullname
+        
         
         #-----------------------------------------------
         # WRITE LOG

@@ -7,8 +7,8 @@ function Get-CurrentPluginInfo {
         # general information about this plugin
         "name" = "Microsoft Dynamics CRM 365"
         "version" = "0.0.1"
-        "lastUpdate" = "2023-10-11"
-        "category" = "channel"
+        "lastUpdate" = "2023-10-16"
+        "category" = "data"
         "type" = "crm"
         "stage" = "dev"
 

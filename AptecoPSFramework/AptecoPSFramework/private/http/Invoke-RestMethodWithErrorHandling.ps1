@@ -50,6 +50,19 @@ function Invoke-RestMethodWithErrorHandling {
                 #$errResponse.StatusCode.ToString() # = "BadGateway"
                 #$errResponse.ReasonPhrase # = "Bad Gateway"
 
+                # try to refresh the token
+                if ( $errResponse.StatusCode.value__ -eq 401 ) {
+                    
+                    Write-Log -Severity WARNING -Message "Trying to refresh the access token"
+                    try {
+                        Save-NewToken
+                        Write-Log -Severity WARNING -Message "Successful token refresh"
+                    } catch {
+                        Write-Log -Severity ERROR -Message "Token refresh not successful"
+                    }
+                
+                }
+                
                 # retry if a specific http error happens
                 if ( $RetryHttpErrorList -contains $errResponse.StatusCode.value__ ) {
                     
