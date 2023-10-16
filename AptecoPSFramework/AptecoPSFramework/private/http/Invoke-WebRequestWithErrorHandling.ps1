@@ -54,11 +54,17 @@ function Invoke-WebRequestWithErrorHandling {
                 if ( $errResponse.StatusCode.value__ -eq 401 ) {
                                     
                     Write-Log -Severity WARNING -Message "Trying to refresh the access token"
+                    $continueAfterTokenRefresh = $false
                     try {
                         Save-NewToken
                         Write-Log -Severity WARNING -Message "Successful token refresh"
+                        $continueAfterTokenRefresh = $true
                     } catch {
                         Write-Log -Severity ERROR -Message "Token refresh not successful"
+                    }
+
+                    If ( $continueAfterTokenRefresh -eq $true ) {
+                        Continue
                     }
 
                 }
@@ -75,7 +81,7 @@ function Invoke-WebRequestWithErrorHandling {
                         Write-Log -Message "RESPONSE: $( ConvertTo-Json -InputObject $errBody -Depth 99 -Compress)" -Severity WARNING
                         throw $_.Exception
 
-                    # Not all generic tries used yet, repeat
+                    # Not all specific tries used yet, repeat
                     } else {
                         Write-Log -Message "Request $( $specificCounter ) failed with $( $errResponse.StatusCode.value__ ) $( $errResponse.StatusCode.ToString() ). Retrying in $( $MillisecondsDelay ) milliseconds." 
                         Start-Sleep -Milliseconds $MillisecondsDelay
