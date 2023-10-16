@@ -103,7 +103,7 @@ function Register-TokenRefreshTask {
             # Enter username and password so it can run without being logged on
             $credCounter = 0
             Do {
-                $taskCred = Get-Credential -UserName $env:Username
+                $taskCred = Get-Credential -UserName $env:Username -Message "Credentials for executing the task"
                 $taskCredTest = Test-Credential -Credentials $taskCred
                 $credCounter += 1
             } Until ( $taskCredTest -eq $true -or $credCounter -ge 3) # max 3 tries
