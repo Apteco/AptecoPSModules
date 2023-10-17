@@ -1,4 +1,4 @@
-
+﻿
 
 function Get-SFSCObjectData {
 
@@ -14,7 +14,7 @@ function Get-SFSCObjectData {
 
     }
     process {
-        
+
         # curl https://MyDomainName.my.salesforce.com/services/data/v58.0/query/?q=SELECT+name+from+Account -H "Authorization: Bearer token"
 
         If ( $fields.count -eq 0 ) {
@@ -29,7 +29,7 @@ function Get-SFSCObjectData {
 
         $query = "SELECT $( $fieldList ) FROM $( $Object ) LIMIT $( $limit )"
 
-        $result = @( Invoke-SFSCQuery -Query $query -IncludeAttributes ) #Invoke-SFSC -Service "data" -Object "query" -Path "$( $Object )" -Query $query -Method "Get" 
+        $result = @( Invoke-SFSCQuery -Query $query -IncludeAttributes ) #Invoke-SFSC -Service "data" -Object "query" -Path "$( $Object )" -Query $query -Method "Get"
 
         #$objects = Invoke-RestMethod -URI "$( $base )/services/data/v$( $version )/sobjects/" -Method Get -verbose -ContentType $contentType -Headers $headers
         <#
@@ -45,9 +45,9 @@ function Get-SFSCObjectData {
         )
         #>
 
-        #return 
+        #return
         $result #| where-object { $_.createable -eq $true } | Select-Object name, label | Out-GridView -PassThru
-        
+
     }
 
     end {

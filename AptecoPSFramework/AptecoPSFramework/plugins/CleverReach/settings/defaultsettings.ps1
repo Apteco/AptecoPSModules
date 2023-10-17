@@ -19,14 +19,14 @@
 
     # Error handling
     "errorhandling" = [PSCustomObject]@{
-        
+
         # Delay, if a problem happens and will be repeated
         "HttpErrorDelay" = 200
 
         # Specific http errors and their settings
         "RepeatOnHttpErrors" = [Array]@(502)
         "MaximumRetriesOnHttpErrorList" = 3
-        
+
         # Generic errors like 404 that are not on the specific list
         "MaximumRetriesGeneric" = 1
 
@@ -90,7 +90,7 @@
             "null"
             "ContentObject"
             "-"
-        )                 
+        )
     }
 
     # Broadcast settings

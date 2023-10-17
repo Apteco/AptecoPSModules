@@ -1,4 +1,4 @@
-Param(
+﻿Param(
      $SettingsFile
     #,$TokenSettings
 )
@@ -33,7 +33,7 @@ try {
 
 # Token not valid anymore
 } catch {
-    
+
     # Log
     Write-Log "Test was not successful, closing the script" -Severity ERROR
 
@@ -44,12 +44,12 @@ try {
     #         "subject" = "[CLEVERREACH] Token is invalid, please check"
     #         "body" = "Refreshment failed, please check if you can create a valid token"
     #     }
-    #     Send-Mail @splattedArguments # note the @ instead of $    
+    #     Send-Mail @splattedArguments # note the @ instead of $
     # }
-    
+
     # Exception
-    throw "Test was not successful"  
-    
+    throw "Test was not successful"
+
 }
 
 

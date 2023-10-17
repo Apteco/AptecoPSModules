@@ -1,4 +1,4 @@
-
+﻿
 
 function Invoke-SFSCQuery {
 
@@ -27,7 +27,7 @@ function Invoke-SFSCQuery {
         If ( $Bulk -eq $true ) {
             # TODO [ ] implement
         } else {
-            $result = Invoke-SFSC -Service "data" -Object "query" -Query $queryObj -Method "Get" 
+            $result = Invoke-SFSC -Service "data" -Object "query" -Query $queryObj -Method "Get"
             <#
             $result = [PSCustomObject]@{
                 "totalSize" = 10
@@ -47,14 +47,14 @@ function Invoke-SFSCQuery {
         }
 
         #$objects = Invoke-RestMethod -URI "$( $base )/services/data/v$( $version )/sobjects/" -Method Get -verbose -ContentType $contentType -Headers $headers
-        
-        #return 
+
+        #return
         Write-Log -severity verbose -Message "Result:"
         Write-Log -severity verbose -Message "  Status: $( $result.done ) "
         Write-Log -severity verbose -Message "  Records: $( $result.totalSize ) "
 
         #$result #| where-object { $_.createable -eq $true } | Select-Object name, label | Out-GridView -PassThru
-        
+
         # return
         $return = $null
         If ( $ReturnCount -eq $true ) {
@@ -67,8 +67,8 @@ function Invoke-SFSCQuery {
             }
         }
 
-        $return 
-        
+        $return
+
     }
 
     end {

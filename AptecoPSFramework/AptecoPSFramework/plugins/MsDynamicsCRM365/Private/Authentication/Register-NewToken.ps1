@@ -1,4 +1,4 @@
-
+﻿
 
 function Register-NewToken {
 
@@ -26,10 +26,10 @@ function Register-NewToken {
         #-----------------------------------------------
 
         $oauthSettingsFile = $Script:settings.token.tokenSettingsFile
-        
+
 
     }
-    
+
     process {
 
         #-----------------------------------------------
@@ -38,7 +38,7 @@ function Register-NewToken {
 
         If (( Test-Path -Path $oauthSettingsFile -IsValid )) {
             If (( Test-Path -Path $oauthSettingsFile )) {
-                
+
                 $tokenSettings = Get-Content -Path $oauthSettingsFile -Encoding UTF8 -raw | Convertfrom-json
 
             } else {

@@ -1,4 +1,4 @@
-function Request-Token {
+﻿function Request-Token {
     [CmdletBinding()]
     param (
          [Parameter(Mandatory=$true)][String]$ClientId
@@ -29,7 +29,7 @@ function Request-Token {
         #-----------------------------------------------
         # ASK FOR CLIENT SECRET
         #-----------------------------------------------
-        
+
         # Ask to enter the client secret
         $clientSecret = Read-Host -AsSecureString "Please enter the client secret"
         $clientCred = [pscredential]::new("dummy",$clientSecret)
@@ -38,7 +38,7 @@ function Request-Token {
         #-----------------------------------------------
         # SET THE PARAMETERS
         #-----------------------------------------------
-        
+
         $oauthParam = [Hashtable]@{
             "ClientId" = $ClientId
             "ClientSecret" = $clientCred.GetNetworkCredential().password     # this will be asked for in the next step
@@ -75,7 +75,7 @@ function Request-Token {
 
         $Script:settings.token.tokenFilePath = ( get-item -Path $tokenFile ).fullname
         $Script:settings.token.tokenSettingsFile = ( get-item -Path $tokenSettings ).fullname
-        
+
 
         #-----------------------------------------------
         # WRITE LOG

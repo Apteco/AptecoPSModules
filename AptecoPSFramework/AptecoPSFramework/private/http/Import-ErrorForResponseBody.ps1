@@ -1,8 +1,8 @@
-# https://stackoverflow.com/questions/18771424/how-to-get-powershell-invoke-restmethod-to-return-body-of-http-500-code-response
+﻿# https://stackoverflow.com/questions/18771424/how-to-get-powershell-invoke-restmethod-to-return-body-of-http-500-code-response
 
 <#
 
-Use like 
+Use like
 try {
 
     Invoke-Restmethod ...
@@ -20,7 +20,7 @@ function Import-ErrorForResponseBody() {
 
     # Only needed in PS5.1, not in Pwsh
     if ($PSVersionTable.PSVersion.Major -lt 6) {
-        if ($err.Exception.Response) {  
+        if ($err.Exception.Response) {
             $Reader = New-Object System.IO.StreamReader($Err.Exception.Response.GetResponseStream())
             $Reader.BaseStream.Position = 0
             $Reader.DiscardBufferedData()

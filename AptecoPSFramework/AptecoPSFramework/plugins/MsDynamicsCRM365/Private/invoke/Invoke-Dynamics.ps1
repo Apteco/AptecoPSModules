@@ -62,7 +62,7 @@ Function Invoke-Dynamics {
         }
 
         # Prepare Authentication
-        
+
         If ( $Script:settings.token.tokenUsage -eq "consume" ) {
             $rawToken = ( Get-Content -Path $Script:settings.token.tokenFilePath -Encoding UTF8 -Raw ).replace("`n","").replace("`r","")
             If ( $Script:settings.token.encryptTokenFile -eq $true ) {
@@ -76,7 +76,7 @@ Function Invoke-Dynamics {
             throw "No token available!"
             exit 0 # TODO check, if this token is needed or should be another exit code
         }
-        
+
         # Build up header
         $header = [Hashtable]@{
             "Authorization" = "Bearer $( $token )"
@@ -90,7 +90,7 @@ Function Invoke-Dynamics {
         $rawToken = ""
 
         # Add auth header or just set it
-        
+
         If ( $updatedParameters.ContainsKey("Header") -eq $true ) {
             $header.Keys | ForEach-Object {
                 $key = $_
@@ -99,7 +99,7 @@ Function Invoke-Dynamics {
         } else {
             $updatedParameters.add("Header",$header)
         }
-        
+
 
         # Add additional headers from the settings, e.g. for api gateways or proxies
         $Script:settings.additionalHeaders.PSObject.Properties | ForEach-Object {
@@ -221,7 +221,7 @@ Function Invoke-Dynamics {
 
                 # Do this only once
                 if ( $errResponse.StatusCode.value__ -eq 401 -and $continueAfterTokenRefresh -eq $false) {
-                                    
+
                     Write-Log -Severity WARNING -Message "401 Unauthorized"
                     try {
                         $newToken = Save-NewToken
@@ -237,12 +237,12 @@ Function Invoke-Dynamics {
                     }
 
                 }
-                
+
                 # $responseStream = $_.Exception.Response.GetResponseStream()
                 # $responseReader = [System.IO.StreamReader]::new($responseStream)
                 # $responseBody = $responseReader.ReadToEnd()
                 # Write-Log -Message $responseBody -Severity ERROR
-                
+
                 throw $_.Exception
 
             }
@@ -282,14 +282,14 @@ Function Invoke-Dynamics {
                 $finished = $true
 
             #}
-            
+
             If ( $Verbose -eq $true ) {
                 Write-log $wr.Headers."Sforce-Limit-Info" -severity verbose #api-usage=2/15000
             }
 
         } Until ( $finished -eq $true )
 
-        
+
         If ( $wr.Content -eq $null ) {
             $ret = [Array]@()
         } else {

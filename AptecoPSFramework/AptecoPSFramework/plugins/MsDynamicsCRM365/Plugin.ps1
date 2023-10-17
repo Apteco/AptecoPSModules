@@ -1,9 +1,9 @@
-function Get-CurrentPluginInfo {
+﻿function Get-CurrentPluginInfo {
     [PSCustomObject]@{
 
         # identifier for this plugin - please do not change or use this twice
         "guid" = "8914f5ef-509f-4f0d-b285-ec9e38cd44e5"
-        
+
         # general information about this plugin
         "name" = "Microsoft Dynamics CRM 365"
         "version" = "0.0.1"
@@ -27,7 +27,7 @@ function Get-CurrentPluginInfo {
             "lists" = $true
             "preview" = $true
             "upload" = $true
-            "broadcast" = $false    
+            "broadcast" = $false
         }
     }
 }

@@ -720,7 +720,7 @@ function Invoke-Upload{
                             }
 
                             $uploadObject.RemoveRange(0,$uploadBody.Count)
-    
+
                         } else {
 
                             Write-Log "No more data to upload"

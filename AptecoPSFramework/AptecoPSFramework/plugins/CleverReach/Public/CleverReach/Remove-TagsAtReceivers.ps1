@@ -70,7 +70,7 @@
         $start = Get-Date
         $allDone = $false
         Do {
-            $receivers = @( Get-ReceiversWithTag -Source $Source -Tag $Tag )            
+            $receivers = @( Get-ReceiversWithTag -Source $Source -Tag $Tag )
             $ts = New-TimeSpan -Start $start -end ( Get-Date )
             Start-Sleep -Seconds 10
             Write-Log "  $( $receivers.count ) receivers left for this tag" -Severity VERBOSE
@@ -78,7 +78,7 @@
                 $allDone = $true
             }
         } until ( $allDone -eq $true -or $ts.TotalSeconds -gt $maxSeconds)
-        
+
         $ts = New-TimeSpan -Start $start -end ( Get-Date )
         Write-Log "Needed $( $ts.TotalSeconds ) for changes to take effect. There are $( $receivers.count ) receivers left with that tag"
 

@@ -262,7 +262,7 @@ function Invoke-CR {
 
                 # Do this only once
                 if ( $errResponse.StatusCode.value__ -eq 401 -and $continueAfterTokenRefresh -eq $false) {
-                                    
+
                     Write-Log -Severity WARNING -Message "401 Unauthorized"
                     try {
                         $newToken = Save-NewToken
@@ -280,7 +280,7 @@ function Invoke-CR {
                 }
 
                 throw $_.Exception
-                
+
             }
 
             # Increase page and add results to the collection

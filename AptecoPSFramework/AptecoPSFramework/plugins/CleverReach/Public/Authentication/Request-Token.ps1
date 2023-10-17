@@ -1,4 +1,4 @@
-function Request-Token {
+﻿function Request-Token {
     [CmdletBinding()]
     param (
          [Parameter(Mandatory=$false)][String]$SettingsFile = "./cleverreach_token_settings.json"
@@ -21,12 +21,12 @@ function Request-Token {
         #-----------------------------------------------
         # ASK FOR CLIENT SECRET
         #-----------------------------------------------
-        
+
         # Ask to enter the client secret
         $clientId = "ssCNo32SNf"
         $clientSecret = Read-Host -AsSecureString "Please enter the client secret"
         $clientCred = [pscredential]::new("dummy",$clientSecret)
-        
+
 
         #-----------------------------------------------
         # SET THE PARAMETERS
@@ -51,11 +51,11 @@ function Request-Token {
         If ( $UseStateToPreventCSRFAttacks -eq $true ) {
             $oauthParam.Add("State",( Get-RandomString -Length 24 -ExcludeUpperCase -ExcludeSpecialChars ))
         }
-        
+
         # Empty that variable
         $clientSecret = ""
 
-        
+
         #-----------------------------------------------
         # REQUEST THAT TOKEN
         #-----------------------------------------------
@@ -63,7 +63,7 @@ function Request-Token {
         Request-OAuthLocalhost @oauthParam #-Verbose
         #Request-OAuthApp @oauthParam -Verbose
 
-        
+
         #-----------------------------------------------
         # WRITE LOG
         #-----------------------------------------------

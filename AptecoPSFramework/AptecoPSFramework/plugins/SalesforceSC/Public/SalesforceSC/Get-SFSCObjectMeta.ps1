@@ -1,4 +1,4 @@
-
+﻿
 
 
 
@@ -16,10 +16,10 @@ function Get-SFSCObjectMeta {
     }
     process {
 
-        $meta = Invoke-SFSC -Service "data" -Object "sobjects" -Path "$( $Object )" -Method "Get" 
+        $meta = Invoke-SFSC -Service "data" -Object "sobjects" -Path "$( $Object )" -Method "Get"
         #$objects = Invoke-RestMethod -URI "$( $base )/services/data/v$( $version )/sobjects/" -Method Get -verbose -ContentType $contentType -Headers $headers
-        
-        #return 
+
+        #return
         $meta.objectDescribe
 
     }

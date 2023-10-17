@@ -1,4 +1,4 @@
-function Register-TokenRefreshTask {
+﻿function Register-TokenRefreshTask {
     [CmdletBinding()]
     param (
          [Parameter(Mandatory=$true)][String]$SettingsFile
@@ -33,11 +33,11 @@ function Register-TokenRefreshTask {
 
         }
 
-        
+
         #-----------------------------------------------
         # MORE CHECKS
         #-----------------------------------------------
-        
+
         # Get absolute paths
         $settingsFileAbsolute = ( Get-Item -Path $SettingsFile ).FullName
         #$tokenSettingsFileAbsolute = ( Get-Item -Path $TokenSettingsFile ).FullName
@@ -47,7 +47,7 @@ function Register-TokenRefreshTask {
 
     process {
 
-        
+
 
         #-----------------------------------------------
         # CREATE THE TASK
@@ -105,13 +105,13 @@ function Register-TokenRefreshTask {
                 $taskCredTest = Test-Credential -Credentials $taskCred
                 $credCounter += 1
             } Until ( $taskCredTest -eq $true -or $credCounter -ge 3) # max 3 tries
-            
+
             If ( $taskCredTest -eq $false ) {
                 $msg = "There is a problem with your entered credentials. Please try again later."
                 Write-Log -Message $msg -Severity ERROR
                 throw $msg
             }
-            
+
             # $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
             # $principal = [Security.Principal.WindowsPrincipal]::new($identity)
             # $isElevated = $principal.IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)

@@ -1,4 +1,4 @@
-# $params =[Hashtable]@{
+﻿# $params =[Hashtable]@{
 #     "Uri" = "https://requestly.dev/api/mockv2/helloworld?rq_uid=UyRFxSA8PHPgJg6VKNz2tQZYlI23"
 # }
 
@@ -51,13 +51,13 @@ function Invoke-WebRequestWithErrorHandling {
                 #$errResponse.ReasonPhrase # = "Bad Gateway"
 
                 # directly throw an exception so we can catch it in the caller
-                if ( $errResponse.StatusCode.value__ -eq 401 ) {        
+                if ( $errResponse.StatusCode.value__ -eq 401 ) {
                     throw $e.exception
                 }
 
                 # retry if a specific http error happens
                 if ( $RetryHttpErrorList -contains $errResponse.StatusCode.value__ ) {
-                    
+
                     $specificCounter += 1
 
                     # Exceeded all retries
@@ -69,14 +69,14 @@ function Invoke-WebRequestWithErrorHandling {
 
                     # Not all specific tries used yet, repeat
                     } else {
-                        Write-Log -Message "Request $( $specificCounter ) failed with $( $errResponse.StatusCode.value__ ) $( $errResponse.StatusCode.ToString() ). Retrying in $( $MillisecondsDelay ) milliseconds." 
+                        Write-Log -Message "Request $( $specificCounter ) failed with $( $errResponse.StatusCode.value__ ) $( $errResponse.StatusCode.ToString() ). Retrying in $( $MillisecondsDelay ) milliseconds."
                         Start-Sleep -Milliseconds $MillisecondsDelay
                         Continue
                     }
 
                 # generic problems
                 } else {
-                    
+
                     $genericCounter += 1
 
                     # Exceeded all retries
