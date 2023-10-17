@@ -38,7 +38,7 @@ This framework brings lots of useful features with it like
 - Easy boilerplate, documentation on GitHub and Demo-Channel to start quickly
 - Easy updates via PowerShellGallery
 - Easy integration of proxies, custom headers, REST handling
-- Using oAuth for connected apps like Microsoft Dynamics, Salesforce SalesCloud and CleverReach
+- Using secure oAuth for connected apps like Microsoft Dynamics, Salesforce SalesCloud and CleverReach
 - Much more to follow...
 
 Your help is appreciated. Just contact me.
@@ -144,10 +144,12 @@ PrivateData = @{
         IconUri = 'https://www.apteco.de/sites/default/files/favicon_3.ico'
 
         # release channel
-        Prerelease = 'alpha2'
+        Prerelease = 'alpha3'
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.1.1-alpha3 Added enforced secret encryption for CleverReach, Salesforce and Microsoft
+0.1.1-alpha2 Added automatic try of token refresh, if there is a http401 error
 0.1.1 New version jump with more dependencies that have been implemented now: Install-Dependencies and Import-Dependencies, make sure to install those scripts before updating
       Support of PSOAuth for CleverReach
       Fix for http calls so generic problematic are not repeating infinite
@@ -155,7 +157,6 @@ PrivateData = @{
       Add a function/cmdlet to install plugins dependencies
       Adding more CleverReach api functions around token handling
       Support of PSOAuth for Salesforce SalesCloud and Microsoft Dynamics Dataverse, improved token refreshment for CleverReach
-      Added automatic try of token refresh, if there is a http401 error
 0.0.20 Exchanged the module/script path handling for the module itself and the boilerplate
        Improved the installation of dependencies with a new script
 0.0.19 Added script support for boilerplates

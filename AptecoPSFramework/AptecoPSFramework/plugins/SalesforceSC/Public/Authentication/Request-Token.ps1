@@ -60,7 +60,7 @@
                 Write-Log -Message $msg -Severity ERROR
                 throw $msg
             }
-            
+
             # Create a job to encrypt the secret
             $secretJob = Start-Job -ScriptBlock $encryptScriptBlock -ArgumentList $clientCred.GetNetworkCredential().password -Credential $taskCred
 
@@ -75,25 +75,25 @@
                 "Completed" {
                     $encryptedSecret = ( Receive-Job -Job $secretJob ).toString()
                 }
-            
+
                 "Failed" {
                     $msg = "Job state: Failed! There is a problem with encrypting the secret"
                     Write-Log -Severity ERROR -Message $msg
                     throw $msg
                 }
-            
+
                 "Stopped" {
                     $msg = "Job state: Stopped! There is a problem with encrypting the secret"
                     Write-Log -Severity ERROR -Message $msg
                     throw $msg
                 }
-            
+
                 Default {
                     $msg = "Unknown job state $( $secretJob.State )! There is a problem with encrypting the secret"
                     Write-Log -Severity ERROR -Message $msg
-                    throw $msg                
+                    throw $msg
                 }
-            
+
             }
 
 
