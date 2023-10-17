@@ -31,6 +31,81 @@
 
 
         #-----------------------------------------------
+        # ASK FOR ANOTHER USER TO ENCRYPT
+        #-----------------------------------------------
+
+        $encryptScriptBlock = {
+            param($str)
+            Import-Module EncryptCredential
+            $ret = Convert-PlaintextToSecure $str
+            return $ret
+        }
+
+        Write-Log "It is important to encrypt the client secret." -Severity INFO
+        Write-Log "This module will be called from the Apteco service user and encryption is tied to that." -Severity INFO
+        $registerPsRepoDecision = $Host.UI.PromptForChoice("", "Do you want to use another user than '$( $env:Username )' for encryption?", @('&Yes'; '&No'), 1)
+        If ( $registerPsRepoDecision -eq "0" ) {
+
+            # Means yes and proceed
+            $credCounter = 0
+            $taskCredTest = $false
+            Do {
+                $taskCred = Get-Credential -Message "Credentials for executing the task"
+                $taskCredTest = Test-Credential -Credentials $taskCred
+                $credCounter += 1
+            } Until ( $taskCredTest -eq $true -or $credCounter -ge 3) # max 3 tries
+
+            If ( $taskCredTest -eq $false ) {
+                $msg = "There is a problem with your entered credentials. Please try again later."
+                Write-Log -Message $msg -Severity ERROR
+                throw $msg
+            }
+            
+            # Create a job to encrypt the secret
+            $secretJob = Start-Job -ScriptBlock $encryptScriptBlock -ArgumentList $clientCred.GetNetworkCredential().password -Credential $taskCred
+
+            # Wait until job is not running anymore
+            While ( $secretJob.State -eq "Running" ) {
+                Start-Sleep -Milliseconds 100
+            }
+
+            # Check the result of the job
+            Switch ( $secretJob.State ) {
+
+                "Completed" {
+                    $encryptedSecret = ( Receive-Job -Job $secretJob ).toString()
+                }
+            
+                "Failed" {
+                    $msg = "Job state: Failed! There is a problem with encrypting the secret"
+                    Write-Log -Severity ERROR -Message $msg
+                    throw $msg
+                }
+            
+                "Stopped" {
+                    $msg = "Job state: Stopped! There is a problem with encrypting the secret"
+                    Write-Log -Severity ERROR -Message $msg
+                    throw $msg
+                }
+            
+                Default {
+                    $msg = "Unknown job state $( $secretJob.State )! There is a problem with encrypting the secret"
+                    Write-Log -Severity ERROR -Message $msg
+                    throw $msg                
+                }
+            
+            }
+
+
+        } else {
+
+            # Means no and just encrypt with current user
+            $encryptedSecret = Invoke-Command -ScriptBlock $encryptScriptBlock -ArgumentList $clientCred.GetNetworkCredential().password
+
+        }
+
+
+        #-----------------------------------------------
         # SET THE PARAMETERS
         #-----------------------------------------------
 
@@ -44,7 +119,7 @@
             "SettingsFile" = $SettingsFile
             "PayloadToSave" = [PSCustomObject]@{
                 "clientid" = $ClientId
-                "secret" = $clientCred.GetNetworkCredential().password  # TODO maybe encrypt this?
+                "secret" = $encryptedSecret #$clientCred.GetNetworkCredential().password  # TODO maybe encrypt this?
             }
             "TokenFile" = $TokenFile
             "SaveExchangedPayload" = $true

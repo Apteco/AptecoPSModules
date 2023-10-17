@@ -66,7 +66,7 @@ function Register-NewToken {
 
         $body = @{
             "client_id" = $tokenSettings.payload.clientid
-            "client_secret" = $tokenSettings.payload.secret
+            "client_secret" = Convert-SecureToPlaintext $tokenSettings.payload.secret #$tokenSettings.payload.secret
             "grant_type" = "refresh_token"
             "refresh_token" = $tokenSettings.refreshtoken
             #"resource"
