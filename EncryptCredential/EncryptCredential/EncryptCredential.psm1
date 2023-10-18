@@ -28,7 +28,7 @@ $Public  = @( Get-ChildItem -Path "$( $PSScriptRoot )/Public/*.ps1" -ErrorAction
 $Private = @( Get-ChildItem -Path "$( $PSScriptRoot )/Private/*.ps1" -ErrorAction SilentlyContinue )
 
 # dot source the files
-@( $Public + $Private ) | ForEach {
+@( $Public + $Private ) | ForEach-Object {
     $import = $_
     Try {
         . $import.fullname
@@ -44,8 +44,8 @@ $Private = @( Get-ChildItem -Path "$( $PSScriptRoot )/Private/*.ps1" -ErrorActio
 
 # Default folders and files
 $localAppData = [Environment]::GetFolderPath("LocalApplicationData")
-$localTargetFolder = "$( $localAppData )/AptecoPSModules"
-$Script:defaultKeyfile = "$( $localTargetFolder )/key.aes"
+$localTargetFolder = Join-Path -Path $localAppData -ChildPath "/AptecoPSModules" #"$( $localAppData )/AptecoPSModules"
+$Script:defaultKeyfile = Join-Path -Path $localTargetFolder -ChildPath "/key.aes" #"$( $localTargetFolder )/key.aes"
 
 # Check if the path is valid and if so and the folder does not exist, create it
 If ( (Test-Path -Path $localTargetFolder -IsValid) -eq $true ) {
@@ -55,9 +55,9 @@ If ( (Test-Path -Path $localTargetFolder -IsValid) -eq $true ) {
 }
 
 # Some verbose information
-Write-Verbose -Message "Default path for keyfile:$( $defaultKeyfile )" -Verbose
-Write-Verbose -Message "If you want to use another path, use 'Export-Keyfile -Path' to save it." -Verbose
-Write-Verbose -Message "Use 'Import-Keyfile -Path' for loading that file" -Verbose
+Write-Verbose -Message "Default path for keyfile:$( $defaultKeyfile )" #-Verbose
+Write-Verbose -Message "If you want to use another path, use 'Export-Keyfile -Path' to save it." #-Verbose
+Write-Verbose -Message "Use 'Import-Keyfile -Path' for loading that file" #-Verbose
 
 # Setting it to null for now
 $Script:keyfile = $null

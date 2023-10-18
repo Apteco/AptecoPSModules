@@ -86,7 +86,7 @@ function Show-Preview {
 
         try {
 
-            $fields = Get-SFSCObjectField -Object "CampaignMember"          
+            $fields = Get-SFSCObjectField -Object "CampaignMember"
 
             $fieldRows = [System.Collections.ArrayList]@()
 
@@ -94,7 +94,7 @@ function Show-Preview {
                 $field = $_
 
                 $pl = [System.Collections.ArrayList]@()
-                if ( $field.picklistValues.count -gt 0 ) {                    
+                if ( $field.picklistValues.count -gt 0 ) {
                     $field.picklistValues | ForEach-Object {
                         $plv = $_
                         [void]$pl.add("$( $plv.label ) ($( $plv.value ))")

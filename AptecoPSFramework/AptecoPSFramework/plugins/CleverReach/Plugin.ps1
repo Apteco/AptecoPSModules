@@ -6,8 +6,8 @@
 
         # general information about this plugin
         "name" = "CleverReach"
-        "version" = "0.0.11"
-        "lastUpdate" = "2023-09-12"
+        "version" = "0.1.2"
+        "lastUpdate" = "2023-10-16"
         "category" = "channel"
         "type" = "email"
         "stage" = "test"
@@ -15,7 +15,11 @@
         # have a look at ./bin/dependencies if you need more information about how to define this
         "dependencies" = [PSCustomObject]@{
             "psScripts" = @()
-            "psModules" = @()
+            "psModules" = @(
+                "PSOAuth"       # TODO make sure this module is loaded
+                "ConvertStrings"
+                "TestCredential"
+            )
             "psPackages" = @()
         }
 

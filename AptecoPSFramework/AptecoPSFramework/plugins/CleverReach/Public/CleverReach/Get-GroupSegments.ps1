@@ -13,7 +13,7 @@ function Get-GroupSegments {
     }
     process {
 
-        $filters = Invoke-CR -Object "groups" -Path "/$( $GroupId )/filters" -Method GET -Verbose
+        $filters = Invoke-CR -Object "groups" -Path "/$( $GroupId )/filters" -Method GET #-Verbose
 
         $filters
 

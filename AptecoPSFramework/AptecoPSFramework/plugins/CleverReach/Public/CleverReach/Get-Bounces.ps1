@@ -41,7 +41,7 @@ function Get-Bounces {
         ]
         #>
 
-        $bounced = Invoke-CR -Object "bounces" -Method GET -Verbose -Paging
+        $bounced = Invoke-CR -Object "bounces" -Method GET -Paging #-Verbose
 
         $bounced
 

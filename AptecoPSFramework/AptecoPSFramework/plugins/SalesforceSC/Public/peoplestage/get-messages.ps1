@@ -46,7 +46,7 @@ function Get-Messages {
 
             #default {
 
-                # Load mailings data from SalesForce                
+                # Load mailings data from SalesForce
                 $campaigns = @( Get-SFSCObjectData -Object "Campaign" -Fields @("Id", "Name") -Limit 200 )
                 #$campaigns = Invoke-SFSCQuery -query "select id, name from campaign" -IncludeAttributes
                 # $queryObj = [PSCustomObject]@{
@@ -77,7 +77,7 @@ function Get-Messages {
             #}
 
         #}
-        
+
 
         # fields, id, name, status, type, StartDate, EndDate, ...
         # Get-SFSCObjectField -object "Campaign" | Out-GridView

@@ -103,7 +103,7 @@
             }
         }
 
-        New-Module -Name "Invoke $( $plugin.Name )" -ArgumentList $pluginParam -ScriptBlock {
+        New-Module -Name "$( $plugin.Name )" -ArgumentList $pluginParam -ScriptBlock {
 
             # argument input object
             param(
@@ -167,7 +167,7 @@
                     Import-Module -Name $mod -ErrorAction Stop
                 }
             } catch {
-                Write-Error "Error loading dependencies. Please execute 'Install-AptecoPSFramework' now"
+                Write-Error "Error loading dependencies. Please execute 'Install-AptecoPSFramework' or 'Install-Plugin' now"
                 Exit 0
             }
 
@@ -177,6 +177,7 @@
             #-----------------------------------------------
 
             New-Variable -Name settings -Value $InputPlugin.settings -Scope Script -Force       # Path of the calling script
+            New-Variable -Name pluginRoot -Value $plugin.path -Scope Script -Force       # Path of the calling script
             New-Variable -Name pluginDebug -Value $null -Scope Script -Force              # Debug variable for the scripts
 
             #Write-verbose ( Convertto-json $Script:settings -dept 99 ) -Verbose

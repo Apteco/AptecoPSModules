@@ -234,13 +234,13 @@ function Invoke-Upload{
 
             #Write-Log "Using salesforce campaign member status '$( $campaignMemberStatus.Label )' with id '$( $campaignMemberStatus.Id )'"
             Write-Log "Using salesforce campaign member status '$( $listName )'"
-            
+
 
             #-----------------------------------------------
             # DEFINE DATA
             #-----------------------------------------------
 
-            <# 
+            <#
 
             # COLUMN NAMES
 
@@ -351,7 +351,7 @@ function Invoke-Upload{
             $nf = "$( $Env:TEMP )\$( [guid]::NewGuid().toString() ).csv" #New-TemporaryFile
             Write-Log "Using temporary file $( $nf )"
             # TODO [ ] Not the best way when you have quotes in values
-            $newCsvContent = $newCsv | convertto-csv -NoTypeInformation -Delimiter "`t" | % {$_ -replace '"',''} 
+            $newCsvContent = $newCsv | convertto-csv -NoTypeInformation -Delimiter "`t" | % {$_ -replace '"',''}
             #$newCsvContent | set-content -Path $nf -Encoding UTF8
 
             [IO.File]::WriteAllLines($nf, $newCsvContent)
@@ -382,7 +382,7 @@ function Invoke-Upload{
             # }
             # $patchedJob = Invoke-RestMethod -URI "$( $base )/services/data/v$( $version )/jobs/ingest/$( $job.id )/" -Method PATCH -verbose -ContentType $contentType -Headers $headers -body $patchDetails
             $patchedJob = Invoke-SFSC -Service "data" -Object "jobs" -Path "/ingest/$( $job.id )/" -Method "PATCH" -body ( [PSCustomObject]@{ "state" = "UploadComplete" } )
-            
+
             Write-Log "Patched the job to state 'UploadComplete'"
 
             <#
@@ -432,7 +432,7 @@ function Invoke-Upload{
             $unprocessed = Invoke-RestMethod -URI "$( $base )/services/data/v$( $version )/jobs/ingest/$( $job.id )/unprocessedRecords/" -Method GET -verbose -ContentType $contentType -Headers $csvHeaders
 #>
             $jobResults = Invoke-SFSC -Service "data" -Object "jobs" -Path "/ingest/$( $job.id )/" -method get
-            $processed = $jobResults.numberRecordsProcessed 
+            $processed = $jobResults.numberRecordsProcessed
             $failed = $jobResults.numberRecordsFailed
             $successful = $processed - $failed
 

@@ -126,7 +126,104 @@ function Get-PluginDebug {
 }
 ```
 
+# Quickstart
 
+If you know what you are doing, just proceed with this guide
+
+```PowerShell
+# Check your executionpolicy: https:/go.microsoft.com/fwlink/?LinkID=135170
+Get-ExecutionPolicy
+
+# Either set it to Bypass to generally allow scripts for current user
+Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope CurrentUser
+# or
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+
+# Make sure to have PowerShellGet >= 1.6.0
+Get-InstalledModule -Name PowerShellGet -MinimumVersion 1.6.0
+
+# Install PowerShellGet with a current version
+Install-Module -Name PowerShellGet -force -verbose -allowclobber
+
+# Execute this with elevated rights or with the user you need to execute it with, e.g. the apteco service user
+install-script install-dependencies, import-dependencies
+install-module writelog
+Install-Dependencies -module aptecopsframework
+
+
+# Import Module and install more dependencies
+Import-Module aptecopsframework
+Install-AptecoPSFramework -Verbose
+
+#-----------------------------------------------
+
+# Please open another PowerShell window to enforce a reload of that module, recommended with elevated rights, if the plugin has dependencies
+
+# Change to the location where you wish to install the plugin to
+Set-Location -Path "C:\Apteco\Scripts\AptecoPSFramework\CleverReach"
+
+# Import the module
+Import-Module aptecopsframework -Verbose
+
+# Choose a plugin
+$plugin = get-plugins | Select guid, name, version, update, path | Out-GridView -PassThru | Select -first 1
+
+# Install the plugin before loading it (installing dependencies)
+Install-Plugin -Guid $plugin.guid
+
+# Import the plugin into this session
+import-plugin -Guid $plugin.guid
+
+# Get merged settings for this plugin and change some
+$settings = Get-settings
+$settings.logfile = ".\file.log"
+$tokenFile = ".\cr.token"
+$tokenSettings = ".\cr_token_settings.json"
+
+# Set the settings
+Set-Settings -PSCustom $settings
+
+# Create a token for cleverreach
+Request-Token -SettingsFile $tokenSettings -TokenFile $tokenFile -UseStateToPreventCSRFAttacks
+
+# You are getting asked for a secret, just paste it interactively
+# The secret should look like: JQZrcjW2gJtr93bvys4GFVeaUCTecpa
+
+# Save the settings into a file
+$settingsFile = ".\settings.json"
+Export-Settings -Path $settingsFile
+
+# Register a task for automatic token refreshment
+# You will be asked for a user to execute the task with
+Register-TokenRefreshTask -SettingsFile $settingsFile
+
+#-----------------------------------------------
+
+# Please open another PowerShell window to enforce a reload of that module, recommended with elevated rights, if the plugin has dependencies
+
+# Import the module and the settings file, which contains the plugin settings, too
+Import-Module aptecopsframework -Verbose
+Import-Settings -Path ".\settings.json"
+
+# List all commands of this plugin
+get-command -module "*CleverReach*"
+
+# Then you can use commands like these
+Test-Login
+Get-CRGroups
+Get-Messages
+Get-Tags
+Get-Bounces
+Get-Blocklist
+
+
+#-----------------------------------------------
+
+# To manually refresh your token later, just execute
+
+Save-NewToken
+
+```
 
 # CleverReach Settings
 
@@ -251,6 +348,9 @@ As per default, FERGE should be automatically triggered after downloading and pa
 # Automatic Token Refreshment
 
 Still needs to be implemented here. In the meantime have a look here: https://github.com/Apteco/HelperScripts/tree/master/scripts/cleverreach/check-token
+
+We are using a already existing and prepared apteco app to make this happen. This app has some privileges that you don't get by default. So for debugging purposes you can copy this plugin and change your clientid, clientsecret and redirecturi, but we would recommend to use the Apteco App. Please be aware, we are not getting notified about the app usage and don't have any access on the data. The app
+is only your kind of gateway to your account through the API.
 
 # FAQ
 

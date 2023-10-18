@@ -1,22 +1,105 @@
+# TODO documentation of parameters
 
 function Request-OAuthApp {
     [CmdletBinding()]
+
+    <#
+    .SYNOPSIS
+        Requesting oAuth v2 flow for an app via app link
+
+    .DESCRIPTION
+        Apteco PS Modules - PowerShell OAuthV2 flow
+
+    .PARAMETER ClientID
+        The client id that will be sent in this flow
+
+    .PARAMETER ClientSecret
+        The client secret that will be sent in this flow - this should be kept secret!!!
+
+    .PARAMETER Scope
+        Optionally used parameter to request specific rights. The scope that will be sent in the first step of the oauth flow
+
+    .PARAMETER State
+        The state is optionally used and normally uses a random string in multiple steps of this flow to prevent CSRF attacks
+
+    .PARAMETER AuthUrl
+        The auth url that will be used to initiate this flow
+
+    .PARAMETER TokenUrl
+        The token url that will be used to exchange the code into a token
+
+    .PARAMETER Protocol
+        The app protocol that should be used like apttoken54321://localhost/
+
+    .PARAMETER SettingsFile
+        The path to the json file where all settings from this flow are saved into
+
+    .PARAMETER EncryptToken
+        Should the token be saved encrypted in the resulting json file
+
+    .PARAMETER SaveSeparateTokenFile
+        Should the access token be saved in a separate file and not only in the json file?
+
+    .PARAMETER TokenFile
+        The path to the access token file, when the switch SaveSeparateTokenFile is set
+
+    .PARAMETER SaveExchangedPayload
+        Do you want to save the payload of the second call, which could contain important information
+
+    .PARAMETER PayloadToSave
+        If you want to save more information in the settingsfile, e.g. for refreshing the token, put it in here
+
+    .EXAMPLE
+        import-module PSOAuth -Verbose
+        $oauthParam = [Hashtable]@{
+            "ClientId" = "ssCNo32SNf"
+            "ClientSecret" = ""     # ask for this at Apteco, if you don't have your own app
+            "AuthUrl" = "https://rest.cleverreach.com/oauth/authorize.php"
+            "TokenUrl" = "https://rest.cleverreach.com/oauth/token.php"
+            "SaveSeparateTokenFile" = $true
+        }
+        Request-OAuthApp @oauthParam -Verbose
+
+    .EXAMPLE
+        TODO SALESFORCE EXAMPLE
+
+    .INPUTS
+        String
+
+    .OUTPUTS
+        $null
+
+    .NOTES
+        Author:  florian.von.bracht@apteco.de
+
+    #>
+
     param (
          [Parameter(Mandatory=$true)][String]$ClientId
         ,[Parameter(Mandatory=$true)][String]$ClientSecret
         ,[Parameter(Mandatory=$true)][Uri]$AuthUrl
         ,[Parameter(Mandatory=$true)][Uri]$TokenUrl
-        ,[Parameter(Mandatory=$false)][String]$Scope = "" # TODO not yet implemented
-        #,[Parameter(Mandatory=$false)][String]$State = "" # TODO not yet implemented
+        ,[Parameter(Mandatory=$false)][String]$Scope = "" # Supported since 0.0.6
+        ,[Parameter(Mandatory=$false)][String]$State = "" # Supported since 0.0.6
         ,[Parameter(Mandatory=$false)][String]$Protocol = "apttoken$( Get-RandomString -length 6 -ExcludeSpecialChars )"
         ,[Parameter(Mandatory=$false)][String]$SettingsFile = "./settings.json"
         ,[Parameter(Mandatory=$false)][String]$TokenFile = "./oauth.token"
         #,[Parameter(Mandatory=$false)][String]$CallbackFile = "$( $env:TEMP )\crcallback.txt"
         ,[Parameter(Mandatory=$false)][Switch]$SaveSeparateTokenFile = $false
         ,[Parameter(Mandatory=$false)][Switch]$EncryptToken = $false
+        ,[Parameter(Mandatory=$false)][PSCustomObject]$PayloadToSave = [PSCustomObject]@{}
+        ,[Parameter(Mandatory=$false)][Switch]$SaveExchangedPayload = $false    # Do you want to save the payload of the second call, which could contain important information
     )
 
     begin {
+
+        #-----------------------------------------------
+        # SET LOGFILE
+        #-----------------------------------------------
+
+        # Set log file here, otherwise it could interrupt the process when launched headless from .net in System32
+        Set-Logfile -Path "./psoauth.log"
+
 
         #-----------------------------------------------
         # ASK FOR SETTINGSFILE
@@ -152,6 +235,12 @@ function Request-OAuthApp {
             $nvCollection.Add('client_id',$ClientId)
             $nvCollection.Add('grant',"basic")
             $nvCollection.Add('redirect_uri', $redirectUri) # a dummy url like apteco.de is needed
+            If ( $Scope.length -gt 0 ) {
+                $nvCollection.Add('scope', $Scope) # Set only the scope, if it is filled
+            }
+            If ( $State.length -gt 0 ) {
+                $nvCollection.Add('state', $State) # Set only the state, if it is filled
+            }
 
             # Create the url
             $uriRequest = [System.UriBuilder]$authUrl
@@ -165,6 +254,7 @@ function Request-OAuthApp {
 
             # Open the default browser with the generated url
             Write-Log -message "Opening the browser now to allow the access to the account"
+            Write-Log -message "$( $uriRequest.Uri.OriginalString )"
             Write-Log -message "Please finish the process in your browser now"
             Write-Log -message "NOTE:"
             Write-Log -message "  APTECO WILL NOT GET ACCESS TO YOUR DATA THROUGH THE APP!"
@@ -185,6 +275,24 @@ function Request-OAuthApp {
             $callbackUri = [uri]$callback
             $callbackUriSegments = [System.Web.HttpUtility]::ParseQueryString($callbackUri.Query)
             $code = $callbackUriSegments["code"]
+
+            # Check the code
+            If ( $code.Length -gt 0 ) {
+                #Write-Host $code
+            } else {
+                throw "No usable code received"
+                Exit 0
+            }
+
+            # Check the state
+            If ( $State.length -gt 0 ) {
+                If ( $callbackUriSegments["state"] -ne $State ) {
+                    throw "State of initial call does not match the returned state! Exit!"
+                    Exit 0
+                } else {
+                    Write-Log "State was accepted!"
+                }
+            }
 
 
             #-----------------------------------------------
@@ -230,10 +338,16 @@ function Request-OAuthApp {
             # Clear the variables straight away
             #$clientCred = $null
 
+            If ( $SaveExchangedPayload -eq $true ) {
+                ConvertTo-Json -InputObject $response -Depth 99 | Set-Content -path ".\exchange.json" -Encoding UTF8 -Force
+            }
+
 
             #-----------------------------------------------
             # SAVE THE TOKENS
             #-----------------------------------------------
+
+            # TODO the saving could be put into a separate function
 
             # Encrypt tokens, if wished
             If ( $EncryptToken -eq $true) {
@@ -248,13 +362,20 @@ function Request-OAuthApp {
                 }
             }
 
+            # Parse the switch
+            $separateTokenFile = $false
+            If ( $SaveSeparateTokenFile -eq $true ) {
+                $separateTokenFile = $true
+            }
+
             # The settings to save for refreshing
             $set = @{
                 "accesstoken" = $accessToken
                 "refreshtoken" = $refreshToken
-                "tokenFile" = [System.io.path]::GetFullPath($TokenFile)
+                "tokenFile" = [IO.Path]::GetFullPath([IO.Path]::Combine((Get-Location -PSProvider "FileSystem").ProviderPath, $TokenFile))
                 "unixtime" = Get-Unixtime
-                "saveSeparateTokenFile" = $SaveSeparateTokenFile
+                "saveSeparateTokenFile" = $separateTokenFile
+                "payload" = $PayloadToSave
                 #"refreshTokenAutomatically" = $true
                 #"refreshTtl" = 604800 # seconds; refresh one week before expiration
             }

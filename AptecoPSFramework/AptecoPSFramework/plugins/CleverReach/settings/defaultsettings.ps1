@@ -19,14 +19,14 @@
 
     # Error handling
     "errorhandling" = [PSCustomObject]@{
-        
+
         # Delay, if a problem happens and will be repeated
         "HttpErrorDelay" = 200
 
         # Specific http errors and their settings
         "RepeatOnHttpErrors" = [Array]@(502)
         "MaximumRetriesOnHttpErrorList" = 3
-        
+
         # Generic errors like 404 that are not on the specific list
         "MaximumRetriesGeneric" = 1
 
@@ -43,11 +43,15 @@
 
         # Refreshing task
         "taskDefaultName" =  "Apteco CleverReach Token Refresher"
-        "dailyTaskSchedule" =  6
+        "dailyTaskSchedule" =  6 # runs every day at 6 local time in the morning
+        "refreshTtl" = 604800 # seconds; refresh one week before expiration
 
+        # Process to use for refresh task
+        "powershellExePath" = "powershell.exe" # e.g. use pwsh.exe for PowerShell7
 
         #"tokenfile" =  "C:\Test\cr.token"
         #"createTokenFile" = $true
+        "tokenSettingsFile" = "" # Path for the settings file that contains important information about the token creation and refreshing
 
         # Not implemented yet, but settings for the token file
         "exportTokenToFile" = $true                         # only used, if the token usage is on 'generate'
@@ -55,6 +59,8 @@
         "encryptTokenFile" = $false                         # only used, if the token usage is on 'generate', when 'consume' then the tokenfile will be decrypted
                                                             # be careful, that the encryption is user dependent so cannot be shared between multiple users
         "tokenFilePath" = ""                                # path for the file containing the token that should be consumed or generated
+
+
 
     }
 
@@ -84,7 +90,7 @@
             "null"
             "ContentObject"
             "-"
-        )                 
+        )
     }
 
     # Broadcast settings

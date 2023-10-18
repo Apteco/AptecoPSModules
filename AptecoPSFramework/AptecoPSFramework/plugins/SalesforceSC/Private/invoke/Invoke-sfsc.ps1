@@ -5,9 +5,6 @@ function Invoke-SFSC {
 
     [CmdletBinding()]
     param (
-
-        
-
          [Parameter(Mandatory=$true)][String]$Object                                # The cleverreach object like groups or mailings (first part after the main url)
         ,[Parameter(Mandatory=$false)][String]$Service = "data"
         ,[Parameter(Mandatory=$false)][String]$ContentType = "application/json"
@@ -67,9 +64,10 @@ function Invoke-SFSC {
         }
 
         # Prepare Authentication
-        
+
         If ( $Script:settings.token.tokenUsage -eq "consume" ) {
-            $rawToken = Get-Content -Path $Script:settings.token.tokenFilePath -Encoding UTF8 -Raw
+            #$rawToken = Get-Content -Path $Script:settings.token.tokenFilePath -Encoding UTF8 -Raw
+            $rawToken = ( Get-Content -Path $Script:settings.token.tokenFilePath -Encoding UTF8 -Raw ).replace("`n","").replace("`r","")
             If ( $Script:settings.token.encryptTokenFile -eq $true ) {
                 $token = Convert-SecureToPlaintext -String $rawToken
             } else {
@@ -81,7 +79,7 @@ function Invoke-SFSC {
             throw "No token available!"
             exit 0 # TODO check, if this token is needed or should be another exit code
         }
-        
+
         # Build up header
         $header = [Hashtable]@{
             "Authorization" = "Bearer $( $token )"
@@ -94,7 +92,7 @@ function Invoke-SFSC {
         $rawToken = ""
 
         # Add auth header or just set it
-        
+
         If ( $updatedParameters.ContainsKey("Header") -eq $true ) {
             $header.Keys | ForEach-Object {
                 $key = $_
@@ -103,7 +101,7 @@ function Invoke-SFSC {
         } else {
             $updatedParameters.add("Header",$header)
         }
-        
+
 
         # Add additional headers from the settings, e.g. for api gateways or proxies
         $Script:settings.additionalHeaders.PSObject.Properties | ForEach-Object {
@@ -169,7 +167,7 @@ function Invoke-SFSC {
     Process {
 
         $finished = $false
-
+        $continueAfterTokenRefresh = $false
         Do {
 
             # Prepare query
@@ -202,17 +200,50 @@ function Invoke-SFSC {
                 }
 
                 #Write-Host ( convertto-json $updatedParameters )
-                $wr = Invoke-WebRequest @updatedParameters -UseBasicParsing
+                $wrInput = [Hashtable]@{
+                    "Params" = $updatedParameters
+                    "RetryHttpErrorList" = $Script:settings.errorhandling.RepeatOnHttpErrors
+                    "MaxTriesSpecific" = $Script:settings.errorhandling.MaximumRetriesOnHttpErrorList
+                    "MaxTriesGeneric" = $Script:settings.errorhandling.MaximumRetriesGeneric
+                    "MillisecondsDelay" = $Script:settings.errorhandling.HttpErrorDelay
+                }
+                $wr = @( Invoke-WebRequestWithErrorHandling @wrInput )
+                #$wr = Invoke-WebRequest @updatedParameters -UseBasicParsing
 
             } catch {
 
-                Write-Log -Message $_.Exception.Message -Severity ERROR
-                
-                $responseStream = $_.Exception.Response.GetResponseStream()
-                $responseReader = [System.IO.StreamReader]::new($responseStream)
-                $responseBody = $responseReader.ReadToEnd()
-                Write-Log -Message $responseBody -Severity ERROR
-                
+                $e = $_
+
+                Write-Log -Message $e.Exception.Message -Severity ERROR
+
+                # parse the response code and body
+                $errResponse = $e.Exception.Response
+                $errBody = Import-ErrorForResponseBody -Err $e
+
+                # Do this only once
+                if ( $errResponse.StatusCode.value__ -eq 401 -and $continueAfterTokenRefresh -eq $false) {
+
+                    Write-Log -Severity WARNING -Message "401 Unauthorized"
+                    try {
+                        $newToken = Save-NewToken
+                        Write-Log -Severity WARNING -Message "Successful token refresh"
+                        $wrInput.Params.Header.Authorization = "Bearer $( $newToken )"
+                        $continueAfterTokenRefresh = $true
+                    } catch {
+                        Write-Log -Severity ERROR -Message "Token refresh not successful"
+                    }
+
+                    If ( $continueAfterTokenRefresh -eq $true ) {
+                        Continue
+                    }
+
+                }
+
+                # $responseStream = $_.Exception.Response.GetResponseStream()
+                # $responseReader = [System.IO.StreamReader]::new($responseStream)
+                # $responseBody = $responseReader.ReadToEnd()
+                # Write-Log -Message $responseBody -Severity ERROR
+
                 throw $_.Exception
 
             }
@@ -252,20 +283,24 @@ function Invoke-SFSC {
                 $finished = $true
 
             #}
-            
-            
+
             If ( $Verbose -eq $true ) {
-                Write-log $r.Headers."Sforce-Limit-Info" -severity verbose #api-usage=2/15000
+                Write-log $wr.Headers."Sforce-Limit-Info" -severity verbose #api-usage=2/15000
             }
-            
-            
-            If ( $ContentType -eq "application/json" ) {
+
+        } Until ( $finished -eq $true )
+
+
+        If ( $wr.Content -eq $null ) {
+            $ret = [Array]@()
+        } else {
+            # TODO check with utf8 in returned header
+            If ( $wr.headers.'Content-Type' -like "application/json*" ) {
                 $ret = convertfrom-json -InputObject $wr.content #-Depth 99
             } else {
                 $ret = $wr.content
             }
-
-        } Until ( $finished -eq $true )
+        }
 
         $ret
 

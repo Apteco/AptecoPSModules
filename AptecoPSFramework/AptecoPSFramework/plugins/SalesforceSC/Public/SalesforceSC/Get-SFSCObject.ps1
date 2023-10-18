@@ -1,4 +1,4 @@
-
+﻿
 
 
 function Get-SFSCObject {
@@ -15,11 +15,11 @@ function Get-SFSCObject {
     process {
 
 
-        $objects = Invoke-SFSC -Object "sobjects" -Method "Get"        
+        $objects = Invoke-SFSC -Object "sobjects" -Method "Get"
 
         #$objects = Invoke-RestMethod -URI "$( $base )/services/data/v$( $version )/sobjects/" -Method Get -verbose -ContentType $contentType -Headers $headers
-        
-        #return 
+
+        #return
         $objects.sobjects #| where-object { $_.createable -eq $true } | Select-Object name, label | Out-GridView -PassThru
 
         <#

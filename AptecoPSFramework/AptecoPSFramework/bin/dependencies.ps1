@@ -1,5 +1,6 @@
 
 $psScripts = [Array]@(
+    "Install-Dependencies"
     "Import-Dependencies"
 )
 
@@ -10,17 +11,16 @@ $psModules = [Array]@(
     "ExtendFunction"
     "ConvertUnixTimestamp"
     #"Microsoft.PowerShell.Utility"
+    #"PSOAUth"  # is defined in the local plugins where it is needed
 )
 
-# Define either a simple string or provide a pscustomobject with a specific version number
-$psPackages = [Array]@(
-
-)
 
 $psGlobalPackages = [Array]@(
 
 )
 
+
+# Define either a simple string or provide a pscustomobject with a specific version number
 $psLocalPackages = [Array]@(
     <#
     [PSCustomObject]@{
@@ -43,5 +43,8 @@ $psLocalPackages = [Array]@(
 
     #>
 
+)
+
+$psAssemblies = [Array]@(
 
 )

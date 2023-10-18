@@ -13,7 +13,7 @@ function Get-Blocklist {
     }
     process {
 
-        $blocklist = Invoke-CR -Object "blacklist" -Method GET -Verbose
+        $blocklist = Invoke-CR -Object "blacklist" -Method GET #-Verbose
 
         $blocklist
 

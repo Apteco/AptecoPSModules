@@ -32,7 +32,7 @@ function Get-ReceiversWithTag {
             "detail" = 0
         }
 
-        $receiversWithTag = [Array]@( Invoke-CR -Object "receivers" -Path "filter.json" -Method POST -Verbose -Paging -Body $filterBody ) # .PsObject.Copy() use a copy so the reference is not changed because it will used a second time
+        $receiversWithTag = [Array]@( Invoke-CR -Object "receivers" -Path "filter.json" -Method POST -Paging -Body $filterBody ) # .PsObject.Copy() use a copy so the reference is not changed because it will used a second time
 
         $receiversWithTag
 
