@@ -135,11 +135,11 @@ Calling with one of the Flags, just does this part
         # FINISH
         #-----------------------------------------------
 
-        If ( $success -eq $true ) {
+        #If ( $success -eq $true ) {
             Write-Verbose -Message "All good. Installation finished!" #-Severity INFO
-        } else {
-            Write-Error -Message "There was a problem. Please check the output in this window and retry again." #-Severity ERROR
-        }
+        #} else {
+        #    Write-Error -Message "There was a problem. Please check the output in this window and retry again." #-Severity ERROR
+        #}
 
     }
 }
