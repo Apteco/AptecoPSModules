@@ -252,7 +252,7 @@ $c = Get-Credential
 Test-Credential -Credentials $c  -NonInteractive
 ```
 
-# OR
+OR
 
 Get-Credential | Test-Credential
 
