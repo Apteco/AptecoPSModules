@@ -189,7 +189,7 @@ Create your app through the Azure Portal following these instructions: https://l
 Parameter|Value|Explanation
 -|-|-
 ClientId||Please use your `Application ID (Client)` of your created app
-ClientSecret||Please use your `Secret ID`, not the Secret itself, of your created app
+ClientSecret||Please use your `Secret` of your created app, this will only be shown once
 AuthUrl|https://login.microsoftonline.com/{tenantID}/oauth2/v2.0/authorize|Please replace your `{tenantID}` before using it
 TokenUrl|https://login.microsoftonline.com/{tenantID}/oauth2/v2.0/token|Please replace your `{tenantID}` before using it
 RedirectURL|http://localhost:43902|This is the url for redirection, please take this from your app
