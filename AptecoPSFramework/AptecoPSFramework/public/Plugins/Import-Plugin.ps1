@@ -177,10 +177,13 @@
             #-----------------------------------------------
 
             New-Variable -Name settings -Value $InputPlugin.settings -Scope Script -Force       # Path of the calling script
-            New-Variable -Name pluginRoot -Value $plugin.path -Scope Script -Force       # Path of the calling script
-            New-Variable -Name pluginDebug -Value $null -Scope Script -Force              # Debug variable for the scripts
+            New-Variable -Name pluginRoot -Value $plugin.path -Scope Script -Force              # Path of the calling script
+            New-Variable -Name pluginDebug -Value $null -Scope Script -Force                    # Debug variable for the scripts
+            New-Variable -Name variableCache -Value $null -Scope Script -Force                  # Caching variable for shared plugin information like apiusage
 
             #Write-verbose ( Convertto-json $Script:settings -dept 99 ) -Verbose
+            $Script:variableCache = [Hashtable]@{}
+            
 
             #-----------------------------------------------
             # EXPORT PUBLIC FUNCTIONS
