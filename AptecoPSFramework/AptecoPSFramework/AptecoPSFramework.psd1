@@ -148,6 +148,8 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.1.2 New hashtable variable "variableCache" for plugins to share data/variables between functions
+      Fix of saving oauth settings file path in the settings.json file
 0.1.1 New version jump with more dependencies that have been implemented now: Install-Dependencies and Import-Dependencies, make sure to install those scripts before updating
       Support of PSOAuth for CleverReach
       Fix for http calls so generic problematic are not repeating infinite

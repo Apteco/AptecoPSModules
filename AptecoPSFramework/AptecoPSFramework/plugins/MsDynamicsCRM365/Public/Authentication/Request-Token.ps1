@@ -148,8 +148,8 @@
         # PUT THIS AUTOMATICALLY INTO SETTINGS
         #-----------------------------------------------
 
-        $Script:settings.token.tokenFilePath = ( get-item -Path $tokenFile ).fullname
-        $Script:settings.token.tokenSettingsFile = ( get-item -Path $tokenSettings ).fullname
+        $Script:settings.token.tokenFilePath = ( get-item -Path $TokenFile ).fullname
+        $Script:settings.token.tokenSettingsFile = ( get-item -Path $SettingsFile ).fullname
 
 
         #-----------------------------------------------
