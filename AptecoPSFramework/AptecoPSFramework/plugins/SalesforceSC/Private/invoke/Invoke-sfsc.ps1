@@ -93,19 +93,19 @@ function Invoke-SFSC {
 
         # Add auth header or just set it
 
-        If ( $updatedParameters.ContainsKey("Header") -eq $true ) {
+        If ( $updatedParameters.ContainsKey("Headers") -eq $true ) {
             $header.Keys | ForEach-Object {
                 $key = $_
-                $updatedParameters.Header.Add( $key, $header.$key )
+                $updatedParameters.Headers.Add( $key, $header.$key )
             }
         } else {
-            $updatedParameters.add("Header",$header)
+            $updatedParameters.add("Headers",$header)
         }
 
 
         # Add additional headers from the settings, e.g. for api gateways or proxies
         $Script:settings.additionalHeaders.PSObject.Properties | ForEach-Object {
-            $updatedParameters.add($_.Name, $_.Value)
+            $updatedParameters.Headers.add($_.Name, $_.Value)
         }
 
         # Set content type, if not present yet
@@ -227,7 +227,7 @@ function Invoke-SFSC {
                     try {
                         $newToken = Save-NewToken
                         Write-Log -Severity WARNING -Message "Successful token refresh"
-                        $wrInput.Params.Header.Authorization = "Bearer $( $newToken )"
+                        $wrInput.Params.Headers.Authorization = "Bearer $( $newToken )"
                         $continueAfterTokenRefresh = $true
                     } catch {
                         Write-Log -Severity ERROR -Message "Token refresh not successful"
