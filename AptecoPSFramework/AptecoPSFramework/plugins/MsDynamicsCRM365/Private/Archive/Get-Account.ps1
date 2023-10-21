@@ -1,7 +1,7 @@
 
 
 
-function Get-WhoAmI {
+function Get-Account {
 
     [CmdletBinding()]
     param (
@@ -14,14 +14,14 @@ function Get-WhoAmI {
     }
     process {
 
-        $whoAmI = Invoke-Dynamics -Path "WhoAmI" -Method "Get"
+        $accounts = @( Invoke-Dynamics -Path "accounts" -Method "Get" )
 
         # $objects = Invoke-SFSC -Object "sobjects" -Method "Get"
 
         # #$objects = Invoke-RestMethod -URI "$( $base )/services/data/v$( $version )/sobjects/" -Method Get -verbose -ContentType $contentType -Headers $headers
         # $obj = $objects.sobjects | where { $_.createable -eq $true } | Select-Object name, label | Out-GridView -PassThru
 
-        $whoAmI.value
+        $accounts.value
 
     }
 

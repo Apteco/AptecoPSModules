@@ -5,11 +5,11 @@ Function Invoke-Dynamics {
     param (
          #[Parameter(Mandatory=$true)][String]$Object                                # The cleverreach object like groups or mailings (first part after the main url)
          [Parameter(Mandatory=$false)][String]$Service = "data"
-        ,[Parameter(Mandatory=$false)][String]$ContentType = "application/json"
+        ,[Parameter(Mandatory=$false)][String]$ContentType = "application/json; charset=utf-8"
         ,[Parameter(Mandatory=$false)][String]$Path = ""                            # The path in the url after the object
         ,[Parameter(Mandatory=$false)][PSCustomObject]$Query = [PSCustomObject]@{}  # Query parameters for the url
-        #,[Parameter(Mandatory=$false)][Switch]$Paging = $false                      # Automatic paging through the result, only needed for a few calls
-        #,[Parameter(Mandatory=$false)][Int]$Pagesize = 0                          # Pagesize, if not defined in settings. For reports the max is 100.
+        ,[Parameter(Mandatory=$false)][Switch]$Paging = $false                      # Automatic paging through the result, only needed for a few calls
+        #,[Parameter(Mandatory=$false)][Int]$Pagesize = 0                          # Pagesize, if not defined in settings. For reports the max is 5000.
         ,[Parameter(Mandatory=$false)][ValidateScript({
              If ($_ -is [PSCustomObject]) {
                  [PSCustomObject]$_
@@ -82,6 +82,8 @@ Function Invoke-Dynamics {
             "Authorization" = "Bearer $( $token )"
             "OData-MaxVersion" = "4.0"
             "OData-Version" = "4.0"
+            "If-None-Match" = "null" # according to this: https://bengribaudo.com/blog/2021/04/09/5577/dataverse-web-api-tip-the-always-include-headers
+            #"Prefer" = 'odata.include-annotations="*"'
             #"Accept" = "application/json"
         }
 
@@ -90,20 +92,18 @@ Function Invoke-Dynamics {
         $rawToken = ""
 
         # Add auth header or just set it
-
-        If ( $updatedParameters.ContainsKey("Header") -eq $true ) {
+        If ( $updatedParameters.ContainsKey("Headers") -eq $true ) {
             $header.Keys | ForEach-Object {
                 $key = $_
-                $updatedParameters.Header.Add( $key, $header.$key )
+                $updatedParameters.Headers.Add( $key, $header.$key )
             }
         } else {
-            $updatedParameters.add("Header",$header)
+            $updatedParameters.add("Headers",$header)
         }
-
 
         # Add additional headers from the settings, e.g. for api gateways or proxies
         $Script:settings.additionalHeaders.PSObject.Properties | ForEach-Object {
-            $updatedParameters.add($_.Name, $_.Value)
+            $updatedParameters.Headers.add($_.Name, $_.Value)
         }
 
         # Set content type, if not present yet
@@ -121,69 +121,47 @@ Function Invoke-Dynamics {
             }
         }
 
-        # set the pagesize
-        <#
-        If ( $Pagesize -gt 0 ) {
-            $currentPagesize = $Pagesize
-        } else {
-            $currentPagesize = $Script:settings.pageSize
-        }
-        #>
-
-        # set paging parameters
-        <#
-        If ( $Paging -eq $true ) {
-
-            Switch ( $updatedParameters.Method ) {
-
-                "GET"{
-                    #Write-Host "get"
-                    $Query | Add-Member -MemberType NoteProperty -Name "pagesize" -Value $currentPagesize  #$Script:settings.pageSize
-                    $Query | Add-Member -MemberType NoteProperty -Name "page" -Value 0
-                }
-
-                "POST" {
-                    If ( $Body -is [PSCustomObject] ) {
-                        $Body | Add-Member -MemberType NoteProperty -Name "pagesize" -Value $currentPagesize # $Script:settings.pageSize
-                        $Body | Add-Member -MemberType NoteProperty -Name "page" -Value 0
-                    # } elseif ( $Body -is [System.Collections.Specialized.OrderedDictionary] ) {
-                    #     $Body.add("pagesize", $Script:settings.pageSize)
-                    #     $Body.add("page", 0)
-                    }
-                }
-
-            }
-
-            # Add a collection instead of a single object for the return
-            $res = [System.Collections.ArrayList]@()
-
-        }
-        #>
-
     }
 
     Process {
 
+        #-----------------------------------------------
+        # PREPARE QUERY
+        #-----------------------------------------------
+
+        $nvCollection = [System.Web.HttpUtility]::ParseQueryString([String]::Empty)
+        $Query.PSObject.Properties | ForEach-Object {
+            $nvCollection.Add( $_.Name, $_.Value )
+        }
+
+
+        #-----------------------------------------------
+        # PREPARE URL
+        #-----------------------------------------------
+
+        $uriRequest = [System.UriBuilder]::new("$( $base )/$( $Path )")
+        $uriRequest.Query = $nvCollection.ToString()
+        $updatedParameters.Uri = $uriRequest.Uri.OriginalString
+
+
+        #-----------------------------------------------
+        # PREPARE BODY
+        #-----------------------------------------------
+
+        If ( $updatedParameters.ContainsKey("Body") -eq $true ) {
+            $bodyJson = ConvertTo-Json -InputObject $Body -Depth 99
+            $updatedParameters.Body = $bodyJson
+        }
+
+
+        #-----------------------------------------------
+        # DO THE REQUEST
+        #-----------------------------------------------
+
         $finished = $false
         $continueAfterTokenRefresh = $false
-        Do {
-
-            # Prepare query
-            $nvCollection = [System.Web.HttpUtility]::ParseQueryString([String]::Empty)
-            $Query.PSObject.Properties | ForEach-Object {
-                $nvCollection.Add( $_.Name, $_.Value )
-            }
-
-            # Prepare URL
-            $uriRequest = [System.UriBuilder]::new("$( $base )/$( $Path )")
-            $uriRequest.Query = $nvCollection.ToString()
-            $updatedParameters.Uri = $uriRequest.Uri.OriginalString
-
-            # Prepare Body
-            If ( $updatedParameters.ContainsKey("Body") -eq $true ) {
-                $bodyJson = ConvertTo-Json -InputObject $Body -Depth 99
-                $updatedParameters.Body = $bodyJson
-            }
+        $res = [System.Collections.ArrayList]@()
+        Do {            
 
             # Execute the request
             try {
@@ -193,6 +171,7 @@ Function Invoke-Dynamics {
                     Write-Host "REST: $( Convertto-json -InputObject $updatedParameters -Depth 99 )"
                 }
 
+                Write-Verbose -Message "$( $updatedParameters.Method.ToString().ToUpper() ) $( $updatedParameters.Uri )" -verbose
                 If ( $Script:logAPIrequests -eq $true ) {
                     Write-Log -Message "$( $updatedParameters.Method.ToString().ToUpper() ) $( $updatedParameters.Uri )" -severity verbose
                 }
@@ -207,6 +186,19 @@ Function Invoke-Dynamics {
                     "MillisecondsDelay" = $Script:settings.errorhandling.HttpErrorDelay
                 }
                 $wr = @( Invoke-WebRequestWithErrorHandling @wrInput )
+
+                # Parse the result
+                If ( $wr.Content -eq $null ) {
+                    $wrContent = [Array]@()
+                } else {
+                    # TODO check with utf8 in returned header
+                    If ( $wr.headers.'Content-Type' -like "application/json*" ) {
+                        $wrContent = convertfrom-json -InputObject $wr.content #-Depth 99
+                    } else {
+                        $wrContent = $wr.content
+                    }
+                }
+
                 #$wr = Invoke-WebRequest @updatedParameters -UseBasicParsing
 
             } catch {
@@ -226,7 +218,7 @@ Function Invoke-Dynamics {
                     try {
                         $newToken = Save-NewToken
                         Write-Log -Severity WARNING -Message "Successful token refresh"
-                        $wrInput.Params.Header.Authorization = "Bearer $( $newToken )"
+                        $wrInput.Params.Headers.Authorization = "Bearer $( $newToken )"
                         $continueAfterTokenRefresh = $true
                     } catch {
                         Write-Log -Severity ERROR -Message "Token refresh not successful"
@@ -247,23 +239,14 @@ Function Invoke-Dynamics {
 
             }
 
-            # Increase page and add results to the collection
-            <#
+            # Choose next page link add results to the collection
             If ( $Paging -eq $true ) {
 
-                # If the result equals the pagesize, try it one more time with the next page
-                If ( $wr.count -eq $currentPagesize ) {
+                # If the result has a link to the next page, just follow it
+                If ( $wrContent.psobject.properties.name -contains "@odata.nextLink" ) {
 
-                    Switch ( $updatedParameters.Method ) {
-
-                        "GET"{
-                            $Query.page += 1
-                        }
-
-                        "POST" {
-                            $Body.page += 1
-                        }
-                    }
+                    Write-Verbose "Next url: $( $wrContent."@odata.nextLink" )" -verbose
+                    $updatedParameters.Uri = $wrContent."@odata.nextLink"
 
                 } else {
 
@@ -273,35 +256,49 @@ Function Invoke-Dynamics {
                 }
 
                 # Add result to return collection
-                [void]$res.AddRange($wr)
+                [void]$res.AddRange($wrContent.value)
 
             } else {
-                #>
 
                 # If this is only one request without paging -> done!
                 $finished = $true
 
-            #}
-
-            If ( $Verbose -eq $true ) {
-                Write-log $wr.Headers."Sforce-Limit-Info" -severity verbose #api-usage=2/15000
             }
+
+            # If ( $Verbose -eq $true ) {
+            #     Write-log $wr.Headers."Sforce-Limit-Info" -severity verbose #api-usage=2/15000
+            # }
+            $Script:pluginDebug = $wr.headers
 
         } Until ( $finished -eq $true )
 
 
-        If ( $wr.Content -eq $null ) {
-            $ret = [Array]@()
+        #-----------------------------------------------
+        # SAVE CURRENT RATE
+        #-----------------------------------------------
+
+        # There is also: x-ms-dop-hint and x-ms-ratelimit-time-remaining-xrm-requests
+        # Explained here: https://github.com/MicrosoftDocs/powerapps-docs/blob/main/powerapps-docs/developer/data-platform/api-limits.md
+
+        If ( $Script:variableCache.Keys -contains "api_rate_remaining" ) {
+            #$Script:variableCache.api_rate_limit = $wr.Headers."X-HubSpot-RateLimit-Daily"
+            $Script:variableCache.api_rate_remaining = $wr.Headers."x-ms-ratelimit-burst-remaining-xrm-requests"
         } else {
-            # TODO check with utf8 in returned header
-            If ( $wr.headers.'Content-Type' -like "application/json*" ) {
-                $ret = convertfrom-json -InputObject $wr.content #-Depth 99
-            } else {
-                $ret = $wr.content
-            }
+            #$Script:variableCache.Add("api_rate_limit",$wr.Headers."X-HubSpot-RateLimit-Daily")
+            $Script:variableCache.Add("api_rate_remaining", $wr.Headers."x-ms-ratelimit-burst-remaining-xrm-requests")
         }
 
-        $ret
+
+        #-----------------------------------------------
+        # RETURN
+        #-----------------------------------------------
+
+        If ( $Paging -eq $true ) {
+            $res
+        } else {
+            $wrContent
+        }
+
 
     }
 

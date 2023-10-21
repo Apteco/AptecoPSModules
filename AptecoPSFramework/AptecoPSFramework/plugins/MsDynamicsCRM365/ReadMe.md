@@ -97,3 +97,93 @@ Save-NewToken
 Use `Request-Token` to use the auth flow to obtain a new token, use `Save-NewToken` to use your refresh token and obtain a new one and save it
 
 The refresh token should have a longer expiration duration, so doing a `Save-NewToken` before doing more, should help
+
+# Usage
+
+To list all table
+
+```PowerShell
+Get-Table
+```
+
+Or search for tables containing `contacts`
+
+```PowerShell
+Get-Table | where { $_.name -like "*contact*" }
+```
+
+List Contacts and Accounts
+
+List any table, limited by 3 records
+
+```PowerShell
+get-record -TableName contacts -top 3 | Out-GridView
+```
+
+Get a specific record by id and resolve guids
+
+```PowerShell
+get-record -TableName contacts -id "cdcfa450-cb0c-ea11-a813-000d3a1b1223" -ResolveLookups
+```
+
+Filter contacts by gender and give back 3 records
+
+```PowerShell
+get-record -TableName "contacts" -verbose -filter "gendercode eq 1" -top 3
+```
+
+Filter contacts by gender and modifiedon date
+
+```PowerShell
+# tipp: use this format to create the right date time format
+# [datetime]::UtcNow.toString("yyyy-MM-ddTHH:mm:ssZ")
+# or just
+# [DateTime]::UtcNow.ToString('u')
+get-record -TableName "contacts" -verbose -filter "gendercode eq 1 and modifiedon gt 2023-09-13T00:00:00Z"
+```
+
+More about filters can be found here: https://learn.microsoft.com/de-de/power-apps/developer/data-platform/webapi/query-data-web-api
+
+
+
+
+
+Only return `contactid` and `fullname`
+
+```PowerShell
+get-record -TableName "contacts" -verbose -select contactid,fullname
+```
+
+
+Count all records in contacts table
+
+```PowerShell
+get-record -TableName contacts -count
+```
+
+or filter and count
+```PowerShell
+get-record -TableName "contacts" -verbose -filter "gendercode eq 1 and modifiedon gt 2023-09-13T00:00:00Z" -count
+```
+
+This command will always show you the first page of data (which is 5000 records by default), if you want to load all pages, use the `-paging` flag like
+
+```PowerShell
+get-record -TableName contacts -select fullname,lastname -verbose -paging
+```
+
+
+Some objects support delta tracking, which is really a nice way to load changes instead of timestamps, so doing this at the first step
+
+```PowerShell
+
+# At the first call, define your recordset
+# This will create a deltatracking.json file in your current directory which saves the deltalink for the next call
+Get-Record -TableName contacts -Select fullname, lastname -DeltaTracking
+
+# This call will look for a deltatracking.json file in your current directory and will reuse that link and save the new one
+Get-Record -TableName contacts -LoadDelta
+
+```
+
+Good explanations on delta tracking: https://bengribaudo.com/blog/2021/05/06/5704/dataverse-web-api-tip-deltas-tracking-changes
