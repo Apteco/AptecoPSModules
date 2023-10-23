@@ -1,11 +1,9 @@
 
-
-
-function Get-Account {
+function Get-MetaData {
 
     [CmdletBinding()]
     param (
-        #[Parameter(Mandatory=$false)][Hashtable] $InputHashtable
+        [Parameter(Mandatory=$true)][String]$TableName
         #[Parameter(Mandatory=$false)][String] $GroupId
     )
 
@@ -14,14 +12,14 @@ function Get-Account {
     }
     process {
 
-        $accounts = @( Invoke-Dynamics -Path "accounts" -Method "Get" )
+        $metadata = @( Invoke-Dynamics -Method "Get" -Path "`$metadata#$( $TableName )" )
 
         # $objects = Invoke-SFSC -Object "sobjects" -Method "Get"
 
         # #$objects = Invoke-RestMethod -URI "$( $base )/services/data/v$( $version )/sobjects/" -Method Get -verbose -ContentType $contentType -Headers $headers
         # $obj = $objects.sobjects | where { $_.createable -eq $true } | Select-Object name, label | Out-GridView -PassThru
 
-        $accounts
+        $metadata
 
     }
 
@@ -30,4 +28,3 @@ function Get-Account {
     }
 
 }
-
