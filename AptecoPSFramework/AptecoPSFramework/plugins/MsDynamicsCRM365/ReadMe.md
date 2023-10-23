@@ -106,6 +106,12 @@ To list all table
 Get-Table
 ```
 
+Or get more details
+
+```PowerShell
+Get-TableDetail -TableName accounts, contacts | Out-GridView
+```
+
 Or search for tables containing `contacts`
 
 ```PowerShell
@@ -321,4 +327,92 @@ PS C:\Users\Florian\Downloads\20231016\ms> ( $p | where { $_.logicalname -eq "ge
                                         ]
                         }
 }
+```
+
+When you are happing with just attribute, the picklist code like 1,2,.. and the localised description, you can just use
+
+```PowerShell
+Get-PicklistOptions -LogicalName account | Sort-Object -Property Attribute, Code | Format-Table
+```
+
+to get a table like
+
+```PowerShell
+Get-PicklistOptions -LogicalName account | Sort-Object -Property Attribute, Code | ft
+
+AUSFÜHRLICH: GET https://orgbdabcedf.crm11.dynamics.com:443/api/data/v9.2/EntityDefinitions(LogicalName='account')/Attributes/Microsoft.Dynamics.CRM.PicklistAttributeMetadata?%24expand=GlobalOptionSet(%24select%3dOptions)&%24select=LogicalName%2cOptionSet
+
+Attribute                    Code Description
+---------                    ---- -----------
+accountcategorycode             1 Bevorzugter Kunde
+accountcategorycode             2 Standard
+accountclassificationcode       1 Standardwert
+accountratingcode               1 Standardwert
+address1_addresstypecode        1 Rechnungsadresse
+address1_addresstypecode        2 Lieferadresse
+address1_addresstypecode        3 Primär
+address1_addresstypecode        4 Sonstiges
+address1_freighttermscode       1 Frei an Bord
+address1_freighttermscode       3 Kosten und Fracht
+address1_freighttermscode      21 Abholung
+address1_shippingmethodcode     2 DHL
+address1_shippingmethodcode     3 FedEx
+address1_shippingmethodcode     4 UPS
+address1_shippingmethodcode     5 Postal Mail
+address1_shippingmethodcode     7 Selbstabholer
+address1_shippingmethodcode    13 Deutsche Post
+address1_shippingmethodcode    14 DPD
+address2_addresstypecode        1 Standardwert
+address2_freighttermscode       1 Standardwert
+address2_shippingmethodcode     1 Standardwert
+businesstypecode                1 Standardwert
+customersizecode                1 Standardwert
+customertypecode                1 Mitbewerber
+customertypecode                2 Berater
+customertypecode                3 Kunde
+customertypecode                4 Investor
+customertypecode                5 Partner
+customertypecode                6 Schlüsselperson
+customertypecode                7 Presse
+customertypecode                8 Interessent
+customertypecode                9 Wiederverkäufer
+customertypecode               10 Lieferant
+customertypecode               11 Hersteller
+customertypecode               12 Sonstiges
+industrycode                   33 Großhandel
+industrycode                   44 Chemische Industrie
+industrycode                   47 Services
+industrycode                   53 Baugewerbe
+industrycode                   60 Verarbeitendes Gewerbe
+industrycode                   72 Einzelhandel
+industrycode                   73 Herstellung technischer Geräte und Anlagen
+industrycode                   74 IT-Industrie
+industrycode                   75 Metallindustrie, Maschinen- und Fahrzeugbau
+industrycode                   76 Nahrungs- und Genussmittel
+industrycode                   77 Ver- und Entsorgung
+ownershipcode                   1 Öffentlich
+ownershipcode                   2 Privat
+ownershipcode                   3 Niederlassung
+ownershipcode                   4 Sonstiges
+paymenttermscode                2 10 Tage 2%, 30 Tage netto
+paymenttermscode                5 7 Tage netto
+paymenttermscode                7 14 Tage netto
+paymenttermscode                8 21 Tage netto
+preferredappointmentdaycode     0 Sonntag
+preferredappointmentdaycode     1 Montag
+preferredappointmentdaycode     2 Dienstag
+preferredappointmentdaycode     3 Mittwoch
+preferredappointmentdaycode     4 Donnerstag
+preferredappointmentdaycode     5 Freitag
+preferredappointmentdaycode     6 Samstag
+preferredappointmenttimecode    1 Morgens
+preferredappointmenttimecode    2 Nachmittags
+preferredappointmenttimecode    3 Abends
+preferredcontactmethodcode      1 Beliebig
+preferredcontactmethodcode      2 E-Mail
+preferredcontactmethodcode      3 Telefon
+preferredcontactmethodcode      4 Fax
+preferredcontactmethodcode      5 Post
+shippingmethodcode              1 Standardwert
+territorycode                   1 Standardwert
 ```
