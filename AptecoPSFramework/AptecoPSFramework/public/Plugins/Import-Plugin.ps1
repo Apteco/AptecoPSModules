@@ -183,7 +183,7 @@
 
             #Write-verbose ( Convertto-json $Script:settings -dept 99 ) -Verbose
             $Script:variableCache = [Hashtable]@{}
-            
+
 
             #-----------------------------------------------
             # EXPORT PUBLIC FUNCTIONS

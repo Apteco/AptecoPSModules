@@ -1,4 +1,4 @@
-
+﻿
 
 
 function Get-Contact {
@@ -22,7 +22,7 @@ function Get-Contact {
         # } else {
         #     $contacts = @( Invoke-Dynamics -Path "contacts" -Method "Get" )
         # }
-        
+
         $callParams = [Hashtable]@{
             "Path"="contacts"
         }
@@ -32,9 +32,9 @@ function Get-Contact {
         }
 
         $contacts = Get-Record @callParams -ResolveLookups
-        
+
         # TODO implement limit and id lookup
-        
+
         $contacts
 
     }

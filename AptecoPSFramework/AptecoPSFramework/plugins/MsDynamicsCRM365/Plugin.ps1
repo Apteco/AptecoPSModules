@@ -6,8 +6,8 @@
 
         # general information about this plugin
         "name" = "Microsoft Dynamics CRM 365"
-        "version" = "0.0.1"
-        "lastUpdate" = "2023-10-16"
+        "version" = "0.1.0"
+        "lastUpdate" = "2023-10-23"
         "category" = "data"
         "type" = "crm"
         "stage" = "dev"

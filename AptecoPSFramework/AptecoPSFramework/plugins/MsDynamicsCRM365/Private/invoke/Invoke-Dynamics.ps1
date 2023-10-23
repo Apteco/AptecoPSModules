@@ -161,7 +161,7 @@ Function Invoke-Dynamics {
         $finished = $false
         $continueAfterTokenRefresh = $false
         $res = [System.Collections.ArrayList]@()
-        Do {            
+        Do {
 
             # Execute the request
             try {

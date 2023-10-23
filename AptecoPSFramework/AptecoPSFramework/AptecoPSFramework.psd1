@@ -5,7 +5,7 @@
 RootModule = 'AptecoPSFramework.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.1.1'
+ModuleVersion = '0.1.2'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -150,6 +150,7 @@ PrivateData = @{
         ReleaseNotes = '
 0.1.2 New hashtable variable "variableCache" for plugins to share data/variables between functions
       Fix of saving oauth settings file path in the settings.json file
+      Read-Only Support for Microsoft Dynamics DataVerse Web API
 0.1.1 New version jump with more dependencies that have been implemented now: Install-Dependencies and Import-Dependencies, make sure to install those scripts before updating
       Fix for http calls so generic problematic are not repeating infinite
       Loading assemblies as dependencies, too

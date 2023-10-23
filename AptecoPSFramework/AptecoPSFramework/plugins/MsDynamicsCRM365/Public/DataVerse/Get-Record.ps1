@@ -1,4 +1,4 @@
-
+﻿
 
 
 function Get-Record {
@@ -49,7 +49,7 @@ function Get-Record {
             [ ] $apply -> used to aggregate data, not needed now
             [x] $skip -> not supported in dynamics
             [x] $search -> not supported in dynamics
-            
+
 
         #>
 
@@ -63,7 +63,7 @@ function Get-Record {
         #-----------------------------------------------
         # DEFAULT PARAMETERS
         #-----------------------------------------------
-        
+
         $callParams = [Hashtable]@{
             "Method" = "GET"
         }
@@ -73,11 +73,11 @@ function Get-Record {
         If ( $ResolveLookups -eq $true ) {
             [void]$preferOptions.add('odata.include-annotations="*"')
             #'odata.include-annotations="OData.Community.Display.V1.FormattedValue"'
-            # also available: "Microsoft.Dynamics.CRM.associatednavigationproperty,Microsoft.Dynamics.CRM.lookuplogicalname"            
+            # also available: "Microsoft.Dynamics.CRM.associatednavigationproperty,Microsoft.Dynamics.CRM.lookuplogicalname"
         }
 
         If ( $Count -eq $true) {
-            [void]$preferOptions.add("odata.maxpagesize=1")            
+            [void]$preferOptions.add("odata.maxpagesize=1")
         }
 
         If ( $Paging -eq $true ) {
@@ -95,7 +95,7 @@ function Get-Record {
             }
             $callParams.Add("Headers", $header)
         }
-        
+
 
         #-----------------------------------------------
         # GET DELTALINKS
@@ -103,14 +103,14 @@ function Get-Record {
 
         $deltaTrackingFile = ".\deltalinks.json" # TODO put this into settings?
         If ( $DeltaTracking -eq $true -or $PSCmdlet.ParameterSetName -eq "RecordByDelta") {
-            
+
             # Load the file, if existing, otherwise create a new object
             If ( (Test-Path -Path $deltaTrackingFile) -eq $true ) {
                 $deltaLinks = Get-Content -Path $deltaTrackingFile -Encoding UTF8 -Raw | convertfrom-json
             } else {
                 $deltaLinks = [PSCustomObject]@{}
             }
-        
+
         }
 
 
@@ -122,7 +122,7 @@ function Get-Record {
         #-----------------------------------------------
         # LOAD RECORD(S)
         #-----------------------------------------------
-        
+
         Switch ( $PSCmdlet.ParameterSetName ) {
 
             #-----------------------------------------------
@@ -185,7 +185,7 @@ function Get-Record {
                 #-----------------------------------------------
 
                 # Add path
-                $callParams.Add("Path", $TableName)                
+                $callParams.Add("Path", $TableName)
 
                 # Activate paging, if used
                 If ( $Paging -eq $true ) {
@@ -217,7 +217,7 @@ function Get-Record {
                 #-----------------------------------------------
 
                 If ( $DeltaTracking -eq $true ) {
-                    
+
                     # Overwrite existing value or create a new one
                     If ( $deltaLinks.PSObject.Properties.Name -contains $TableName ) {
                         $deltaLinks.$TableName = $records."@odata.deltaLink"
@@ -289,7 +289,7 @@ function Get-Record {
                 #-----------------------------------------------
                 # SAVE DELTA LINK, IF USED
                 #-----------------------------------------------
-                    
+
                 # Overwrite existing value or create a new one
                 If ( $deltaLinks.PSObject.Properties.Name -contains $TableName ) {
                     $deltaLinks.$TableName = $records."@odata.deltaLink"

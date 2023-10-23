@@ -1,4 +1,4 @@
-
+﻿
 function Get-PicklistOptions {
 
     [CmdletBinding()]
@@ -39,7 +39,7 @@ function Get-PicklistOptions {
         }
 
         # return
-        $formattedOptions #| Sort-Object -ContentType    
+        $formattedOptions #| Sort-Object -ContentType
 
     }
 

@@ -20,7 +20,7 @@ function Get-ApiUsage {
         #}
 
         #https://api.hubapi.com/crm/v3/objects/contacts?limit=1&archived=false
-        
+
         # Put a message on the console
         Write-Verbose "Remaining $( $Script:variableCache.api_rate_remaining )" -verbose
 
