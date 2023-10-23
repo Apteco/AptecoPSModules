@@ -95,6 +95,7 @@ function Get-Record {
             }
             $callParams.Add("Headers", $header)
         }
+        
 
         #-----------------------------------------------
         # GET DELTALINKS
@@ -105,7 +106,7 @@ function Get-Record {
             
             # Load the file, if existing, otherwise create a new object
             If ( (Test-Path -Path $deltaTrackingFile) -eq $true ) {
-                $deltaLinks = Get-Content -Path $deltaTrackingFile -Encoding UTF8 -Raw | convertfrom-json -Depth 99
+                $deltaLinks = Get-Content -Path $deltaTrackingFile -Encoding UTF8 -Raw | convertfrom-json
             } else {
                 $deltaLinks = [PSCustomObject]@{}
             }
@@ -202,11 +203,12 @@ function Get-Record {
                 If ( $Count -eq $true ) {
                     $return = $records."@odata.count"
                 } else {
-                    If ( $Paging -eq $true ) {
-                        $return = $records
-                    } else {
-                        $return = $records.value
-                    }                    
+                    $return = $records.value
+                    # If ( $Paging -eq $true ) {
+                    #     $return = $records
+                    # } else {
+                    #     $return = $records.value
+                    # }
                 }
 
 
@@ -254,6 +256,10 @@ function Get-Record {
                     $query | Add-Member -MemberType NoteProperty -Name '$select' -Value $deltaQuery['$select']
                     $query | Add-Member -MemberType NoteProperty -Name '$deltatoken' -Value $deltaQuery['$deltatoken']
 
+                    If (( $query.psobject.properties ).count -gt 0 ) {
+                        $callParams.Add("Query", $query)
+                    }
+
                     # Activate paging for deltaload
                     $callParams.Add("Paging", $true)
 
@@ -276,6 +282,9 @@ function Get-Record {
                 # Execute the call
                 $records = Invoke-Dynamics @callParams #@( ( Invoke-Dynamics @callParams ).value )
 
+                # Return value
+                $return = $records.value
+                #$Script:pluginDebug = $records
 
                 #-----------------------------------------------
                 # SAVE DELTA LINK, IF USED

@@ -182,14 +182,47 @@ get-record -TableName contacts -select fullname,lastname -verbose -paging
 Some objects support delta tracking, which is really a nice way to load changes instead of timestamps, so doing this at the first step
 
 ```PowerShell
+# Find out which tables support deltatracking
+Get-Record -TableName EntityDefinitions -filter "ChangeTrackingEnabled eq true and IsCustomEntity eq false" -select LogicalName
 
 # At the first call, define your recordset
 # This will create a deltatracking.json file in your current directory which saves the deltalink for the next call
-Get-Record -TableName contacts -Select fullname, lastname -DeltaTracking
+Get-Record -TableName contacts -Select fullname, lastname -DeltaTracking -Paging
 
 # This call will look for a deltatracking.json file in your current directory and will reuse that link and save the new one
 Get-Record -TableName contacts -LoadDelta
 
+```
+
+For example here you can see the results of new/updated records (first object) and a deleted objects (second object):
+
+```PowerShell
+$e = Get-Record -TableName contacts -LoadDelta
+$e | convertto-json
+[
+    {
+        "@odata.etag":  "W/\"5105446\"",
+        "fullname":  "Christoph Braun",
+        "lastname":  "Braun",
+        "contactid":  "075de5a8-56d0-ea11-a812-000d3a1bbd52"
+    },
+    {
+        "@odata.context":  "https://orgbdda5a9d.crm11.dynamics.com/api/data/v9.2/$metadata#contacts/$deletedEntity",
+        "id":  "2dd54287-c371-ee11-8179-6045bdc1ef70",
+        "reason":  "deleted"
+    }
+]
+
+# So to differentiate this command is helpful
+# Load deletes
+$e | where { $_."@odata.context" -like "*deletedEntity" } | select id, reason
+
+id                                   reason
+--                                   ------
+2dd54287-c371-ee11-8179-6045bdc1ef70 deleted
+
+# Load new/updated
+$e | where { $_."@odata.context" -notlike "*deletedEntity" }
 ```
 
 Good explanations on delta tracking: https://bengribaudo.com/blog/2021/05/06/5704/dataverse-web-api-tip-deltas-tracking-changes

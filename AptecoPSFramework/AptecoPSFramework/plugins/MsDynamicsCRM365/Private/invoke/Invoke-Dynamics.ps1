@@ -293,8 +293,18 @@ Function Invoke-Dynamics {
         # RETURN
         #-----------------------------------------------
 
+        # Always return the deltalink, if it is present
         If ( $Paging -eq $true ) {
-            $res
+            If ( $wrContent.psobject.properties.name -contains "@odata.deltaLink" ) {
+                [PSCustomObject]@{
+                    "@odata.deltaLink" = $wrContent."@odata.deltaLink"
+                    "value" = $res
+                }
+            } else {
+                [PSCustomObject]@{
+                    "value" = $res
+                }
+            }
         } else {
             $wrContent
         }
