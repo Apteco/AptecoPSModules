@@ -25,6 +25,7 @@ Name|Type|Repository/Version|Platform|Downloads|
 [Import-Dependencies](Import-Dependencies/)|Script|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/Import-Dependencies)](https://www.powershellgallery.com/packages/Import-Dependencies)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/Import-Dependencies)](https://www.powershellgallery.com/packages/Import-Dependencies)<br/>[![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)](https://github.com/PlagueHO/PSAuth)|[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/Import-Dependencies)](https://www.powershellgallery.com/packages/Import-Dependencies)
 [PSOAuth](PSOAuth/)|Module|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/PSOAuth)](https://www.powershellgallery.com/packages/PSOAuth)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/PSOAuth)](https://www.powershellgallery.com/packages/PSOAuth)<br/>[![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)](https://github.com/PlagueHO/PSAuth)|[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/PSOAuth)](https://www.powershellgallery.com/packages/PSOAuth)
 [TestCredential](TestCredential/)|Module|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/TestCredential)](https://www.powershellgallery.com/packages/TestCredential)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/TestCredential)](https://www.powershellgallery.com/packages/TestCredential)<br/>[![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)](https://github.com/PlagueHO/TestCredential)|[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/TestCredential)](https://www.powershellgallery.com/packages/TestCredential)
+[PSNotify](PSNotify/)|Module|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/PSNotify)](https://www.powershellgallery.com/packages/PSNotify)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/PSNotify)](https://www.powershellgallery.com/packages/PSNotify)<br/>[![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)](https://github.com/PlagueHO/PSAuth)|[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/PSNotify)](https://www.powershellgallery.com/packages/PSNotify)
 
 
 Here are some high level descriptions. Please follow the links from the table or go into the subdirectories to get more detailed information.
@@ -216,6 +217,13 @@ $oauthParam = [Hashtable]@{
 }
 Request-OAuthApp @oauthParam -Verbose
 ```
+
+## PSNotify
+
+Use Telegram, Email, Teams and Slack to get notifications via commandline. This can be used to be notified when important things happen like
+successful campaigns or maybe occured problems. Different channels can be bound together as groups so you can send the same message through
+different channels.
+
 
 ## SyncExtractOptions
 
