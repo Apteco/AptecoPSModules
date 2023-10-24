@@ -15,6 +15,21 @@ The installation needs to be done on the "Apteco APP Server", so the "Apteco Ser
 
 This is the easier option if your machine is allowed to talk to the internet. If not, look at the next option, because you can also build a local repository that can be used for installation and updates.
 
+Let us check if you have the needed prerequisites
+
+```PowerShell
+# Check your executionpolicy: https:/go.microsoft.com/fwlink/?LinkID=135170
+Get-ExecutionPolicy
+
+# Either set it to Bypass to generally allow scripts for current user
+Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope CurrentUser
+# or
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+
+# Make sure to have PowerShellGet >= 1.6.0
+Get-InstalledModule -Name PowerShellGet -MinimumVersion 1.6.0
+```
+
 ### Installation via Install-Module
 
 For installation execute this for all users scope (or with a users scope, but this needs to be the exact user that executes the "Apteco Service").
@@ -34,7 +49,10 @@ install-module powershellget -Verbose -AllowClobber -force
 to update that module. Now proceed with installing apteco modules:
 
 ```PowerShell
-Find-Module -Repository "PSGallery" -Name "AptecoPSFramework" -IncludeDependencies | Install-Module -Verbose -Scope AllUsers
+# Execute this with elevated rights or with the user you need to execute it with, e.g. the apteco service user
+install-script install-dependencies, import-dependencies
+install-module writelog
+Install-Dependencies -module aptecopsframework
 ```
 
 You can check the installed module with
@@ -76,6 +94,9 @@ Find-Module -Repository LocalRepo
 Then install the script like 
 
 ```PowerShell
+# Execute this with elevated rights or with the user you need to execute it with, e.g. the apteco service user
+install-script install-dependencies, import-dependencies
+install-module writelog
 Find-Module -Repository LocalRepo -Name AptecoPSFramework -IncludeDependencies | Install-Module -Scope CurrentUser -Verbose
 ```
 
@@ -125,7 +146,7 @@ If you get error messages during the import, that is normal, because there are m
 Please go ahead to a directory where the script files should be placed like `D:\Scripts\AptecoPSFramework`. Then you can now start the installation
 
 ```PowerShell
-Install-AptecoPSFramework
+Install-AptecoPSFramework -Verbose
 ```
 
 This command installs dependencies like scripts, modules and nuget packages. After installing the dependencies it copies a "Boilerplate" into your current directory and gives you more hints about how to connect this "Boilerplate" with a PeopleStage PowerShell channel.
