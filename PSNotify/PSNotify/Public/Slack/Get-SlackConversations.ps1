@@ -1,15 +1,15 @@
-
+﻿
 
 function Get-SlackConversations {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory=$true)][String]$Name                                # The telegram channel to use
     )
-    
+
     begin {
-        
+
     }
-    
+
     process {
 
         $conversations = Invoke-Slack -Name $Name -Path "conversations.list" -Query @{"pretty"=1} -Method "Get"
@@ -33,7 +33,7 @@ function Get-SlackConversations {
             pending_shared             : {}
             context_team_id            : T03FYT9PL
             updated                    : 1638367400082
-            parent_conversation        : 
+            parent_conversation        :
             creator                    : UUEXXXXXX
             is_ext_shared              : False
             shared_team_ids            : {T03XXXXXX}
@@ -49,8 +49,8 @@ function Get-SlackConversations {
         $conversations.channels
 
     }
-    
+
     end {
-        
+
     }
 }

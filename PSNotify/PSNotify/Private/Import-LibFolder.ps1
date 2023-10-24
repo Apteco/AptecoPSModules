@@ -1,19 +1,19 @@
-
+﻿
 
 
 function Import-LibFolder {
     [CmdletBinding()]
     param (
-        
+
     )
-    
+
     begin {
-        
+
     }
-    
+
     process {
-    
-        #install-script install-dependencies, import-dependencies -force -verbose 
+
+        #install-script install-dependencies, import-dependencies -force -verbose
         #Install-Dependencies -LocalPackage MailKit -verbose
 
         # This installation includes Mimekit
@@ -24,8 +24,8 @@ function Import-LibFolder {
         $Script:libFolderLoadedIndicator = $true
 
     }
-    
+
     end {
-        
+
     }
 }

@@ -1,16 +1,16 @@
-function Remove-Target {
+﻿function Remove-Target {
     [CmdletBinding()]
     param (
          [Parameter(Mandatory = $true)][String]$Name
         ,[Parameter(Mandatory = $true)][String]$TargetName
     )
-    
+
     begin {
-        
+
     }
-    
+
     process {
-        
+
         $channel = Get-Channel -Name $Name
 
         $channel.targets = $channel.targets | Where-Object { $_.Name -ne $TargetName }
@@ -20,8 +20,8 @@ function Remove-Target {
         Update-Channel -Name $Name -NewChannel $channel
 
     }
-    
+
     end {
-        
+
     }
 }

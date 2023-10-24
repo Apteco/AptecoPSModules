@@ -1,4 +1,4 @@
-function Add-SlackChannel {
+﻿function Add-SlackChannel {
 
 
     [CmdletBinding()]
@@ -6,13 +6,13 @@ function Add-SlackChannel {
          [Parameter(Mandatory = $true)][string]$Name        # Give the channel a name, this is the "identifier for this channel"
         ,[Parameter(Mandatory = $true)][string]$Token
     )
-    
+
     begin {
-        
+
     }
-    
+
     process {
-        
+
         # Encrypt the token
         #$encryptedToken = Convert-PlaintextToSecure -String $Token
 
@@ -24,8 +24,8 @@ function Add-SlackChannel {
         Add-Channel -Type "Slack" -Name $Name -Definition $definition
 
     }
-    
+
     end {
-        
+
     }
 }

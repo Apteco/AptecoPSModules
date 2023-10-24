@@ -1,17 +1,17 @@
-function Add-Channel {
+﻿function Add-Channel {
     [CmdletBinding()]
     param (
          [Parameter(Mandatory = $true)][String]$Name
         ,[Parameter(Mandatory = $true)][String]$Type
         ,[Parameter(Mandatory = $true)][PSCustomObject]$Definition
     )
-    
+
     begin {
-        
+
     }
-    
+
     process {
-        
+
         # Check if the channel already exists
         try {
             $channel = @( Get-Channel -Name $Name )
@@ -38,8 +38,8 @@ function Add-Channel {
         Set-Store
 
     }
-    
+
     end {
-        
+
     }
 }

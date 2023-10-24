@@ -1,4 +1,4 @@
-function Add-EmailChannel {
+﻿function Add-EmailChannel {
 
 
     [CmdletBinding()]
@@ -12,13 +12,13 @@ function Add-EmailChannel {
         ,[Parameter(Mandatory = $false)][Switch]$UseSSL = $false
         #,[Parameter(Mandatory = $true)][string]$Token
     )
-    
+
     begin {
-        
+
     }
-    
+
     process {
-        
+
         # Load mailkit lib
         If ( ( Confirm-MailKitLoaded ) -eq $true ) {
             Write-Verbose "MailKit loaded successfully"
@@ -58,7 +58,7 @@ function Add-EmailChannel {
         $definition = [PSCustomObject]@{
             "from" = $From
             "username" = $Username
-            "password" = Convert-PlaintextToSecure -String $Password 
+            "password" = Convert-PlaintextToSecure -String $Password
             "port" = $Port
             "host" = $Host
             "ssl" = $valueUseSSL
@@ -68,9 +68,9 @@ function Add-EmailChannel {
         Add-Channel -Type "Email" -Name $Name -Definition $definition
 
     }
-    
+
     end {
-        
+
     }
 
 }

@@ -1,17 +1,17 @@
-# Create a function to read all notification channels
+﻿# Create a function to read all notification channels
 
 function Get-NotificationTargets {
     [CmdletBinding()]
     param (
-        
+
     )
-    
+
     begin {
-        
+
     }
-    
+
     process {
-        
+
         $targets = [System.Collections.ArrayList]@()
 
         $script:store.channels | ForEach-Object {
@@ -41,8 +41,8 @@ function Get-NotificationTargets {
         $targets
 
     }
-    
+
     end {
-        
+
     }
 }

@@ -1,4 +1,4 @@
-
+﻿
 
 function Add-NotificationGroupTarget {
     [CmdletBinding()]
@@ -7,13 +7,13 @@ function Add-NotificationGroupTarget {
         ,[Parameter(Mandatory = $true)][String]$Channel
         ,[Parameter(Mandatory = $true)][String]$Target
     )
-    
+
     begin {
-        
+
     }
-    
+
     process {
-        
+
         # Get all the data
         $chosenGroup = Get-NotificationGroup -Name $Group
         $chosenChannel = Get-Channel -Name $Channel
@@ -25,8 +25,8 @@ function Add-NotificationGroupTarget {
         Update-Channel -Name $Channel -NewChannel $chosenChannel
 
     }
-    
+
     end {
-        
+
     }
 }

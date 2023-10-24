@@ -1,18 +1,18 @@
-function Get-Debug {
+﻿function Get-Debug {
     [CmdletBinding()]
     param (
-        
+
     )
-    
+
     begin {
-        
+
     }
-    
+
     process {
         $Script:Debug
     }
-    
+
     end {
-        
+
     }
 }

@@ -1,4 +1,4 @@
-function Add-TelegramTarget {
+﻿function Add-TelegramTarget {
 
 
     [CmdletBinding()]
@@ -6,13 +6,13 @@ function Add-TelegramTarget {
          [Parameter(Mandatory = $true)][string]$Name        # Give the channel a name, this is the "identifier for this channel"
         ,[Parameter(Mandatory = $true)][string]$TargetName
     )
-    
+
     begin {
-        
+
     }
-    
+
     process {
-        
+
         Write-Verbose "Please make sure to write a message to your bot in the right chat" -Verbose
 
         Read-Host "Press any key to continue..."
@@ -33,10 +33,10 @@ function Add-TelegramTarget {
 
         # Get the channel to extend it
         #$channel = Get-TelegramChannel -Name $Name
-        
+
     }
-    
+
     end {
-        
+
     }
 }

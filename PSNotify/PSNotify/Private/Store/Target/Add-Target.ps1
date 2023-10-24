@@ -1,17 +1,17 @@
-function Add-Target {
+﻿function Add-Target {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true)][String]$Name
         ,[Parameter(Mandatory = $true)][String]$TargetName
         ,[Parameter(Mandatory = $true)][PSCustomObject]$Definition
     )
-    
+
     begin {
-        
+
     }
-    
+
     process {
-        
+
 
         $channel = Get-Channel -Name $Name
 
@@ -25,8 +25,8 @@ function Add-Target {
         Update-Channel -Name $Name -NewChannel $channel
 
     }
-    
+
     end {
-        
+
     }
 }

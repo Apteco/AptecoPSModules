@@ -1,15 +1,15 @@
-function Remove-Channel {
+﻿function Remove-Channel {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true)][String]$Name
     )
-    
+
     begin {
-        
+
     }
-    
+
     process {
-        
+
         $channel = Get-Channel -Name $Name
 
         # Exclude the channel
@@ -19,8 +19,8 @@ function Remove-Channel {
         Set-Store
 
     }
-    
+
     end {
-        
+
     }
 }

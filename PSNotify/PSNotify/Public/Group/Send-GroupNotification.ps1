@@ -1,4 +1,4 @@
-function Send-GroupNotification {
+﻿function Send-GroupNotification {
 
 
     [CmdletBinding()]
@@ -7,13 +7,13 @@ function Send-GroupNotification {
         ,[Parameter(Mandatory = $true)][string]$Message     # Main message to send
         ,[Parameter(Mandatory = $false)][string]$Subject    # Used for teams and email
     )
-    
+
     begin {
-        
+
     }
-    
+
     process {
-        
+
         $group = Get-NotificationGroups | Where-Object { $_.Name -eq $Name }
 
         # Check
@@ -43,12 +43,12 @@ function Send-GroupNotification {
                     Send-MailNotification -Name $target.Name -Target $target.targetname -Text $Message -Subject $Subject
                 }
             }
-            
+
         }
 
     }
-    
+
     end {
-        
+
     }
 }

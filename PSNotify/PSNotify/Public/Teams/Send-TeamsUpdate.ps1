@@ -1,4 +1,4 @@
-
+﻿
 
 function Send-TeamsNotification {
     [CmdletBinding()]
@@ -9,15 +9,15 @@ function Send-TeamsNotification {
         ,[Parameter(Mandatory=$true)][String]$Text                                # The telegram channel to use
         #,[Parameter(Mandatory=$false)][Switch]$DisableNotification = $false                        # The chat id to use
     )
-    
+
     begin {
-        
+
     }
-    
+
     process {
 
         # Get the right target for this channel
-        $channel = Get-Channel -Name $Name 
+        $channel = Get-Channel -Name $Name
         #$channelTarget = $channel.Targets | where-object { $_.TargetName -eq $Target }
         #$Script:debug = $target
         #Write-Verbose -Message ( ConvertTo-Json -Depth 99 -InputObject $target -compress) -Verbose
@@ -40,13 +40,13 @@ function Send-TeamsNotification {
             #     }
             # )
         }
-                
+
         Invoke-Teams -Name $Name -Method "POST" -Body $body
 
     }
-    
+
     end {
-        
+
     }
 }
 

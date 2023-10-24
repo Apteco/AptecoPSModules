@@ -1,15 +1,15 @@
-function Confirm-MailKitLoaded {
+﻿function Confirm-MailKitLoaded {
     [CmdletBinding()]
     param (
-        
+
     )
-    
+
     begin {
-        
+
     }
-    
+
     process {
-        
+
         $success = $false
 
         # Check, if lib folder exists
@@ -35,8 +35,8 @@ function Confirm-MailKitLoaded {
         $success
 
     }
-    
+
     end {
-        
+
     }
 }

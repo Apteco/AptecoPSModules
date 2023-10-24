@@ -1,4 +1,4 @@
-function Remove-TelegramTarget {
+﻿function Remove-TelegramTarget {
 
 
     [CmdletBinding()]
@@ -6,18 +6,18 @@ function Remove-TelegramTarget {
         [Parameter(Mandatory = $true)][string]$Name        # Give the channel a name, this is the "identifier for this channel"
         ,[Parameter(Mandatory = $true)][string]$TargetName
     )
-    
+
     begin {
-        
+
     }
-    
+
     process {
 
         Remove-Target -Name $Name -TargetName $TargetName
 
     }
-    
+
     end {
-        
+
     }
 }

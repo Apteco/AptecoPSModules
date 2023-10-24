@@ -1,4 +1,4 @@
-function Send-Mailnotification {
+﻿function Send-Mailnotification {
 
     [CmdletBinding()]
     param (
@@ -7,15 +7,15 @@ function Send-Mailnotification {
         ,[Parameter(Mandatory=$true)][String]$Subject                                # The telegram channel to use
         ,[Parameter(Mandatory=$true)][String]$Text                                # The telegram channel to use
     )
-    
+
     begin {
-        
+
     }
-    
+
     process {
-        
+
         # Get the right target for this channel
-        $channel = Get-Channel -Name $Name 
+        $channel = Get-Channel -Name $Name
         $channelTarget = $channel.Targets | where-object { $_.TargetName -eq $Target }
         #$Script:debug = $target
 
@@ -43,7 +43,7 @@ function Send-Mailnotification {
             throw "Authentication to host '$( $Host )' failed!"
         }
 
-        # Create the mail        
+        # Create the mail
         $message = [MimeKit.MimeMessage]::new()
         $message.From.Add($channel.Definition.from)
         $channelTarget.Definition.Receivers | ForEach-Object {
@@ -53,7 +53,7 @@ function Send-Mailnotification {
         $textPart = [MimeKit.TextPart]::new("plain")
         $textPart.Text = $Text
         $message.Body = $TextPart
-        
+
         # Send the message
         $msg = $smtpClient.Send($message)
         Write-Verbose $msg
@@ -63,8 +63,8 @@ function Send-Mailnotification {
         $smtpClient.Dispose()
 
     }
-    
+
     end {
-        
+
     }
 }

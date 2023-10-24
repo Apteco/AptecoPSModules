@@ -1,4 +1,4 @@
-function Add-TelegramChannel {
+﻿function Add-TelegramChannel {
 
 
     [CmdletBinding()]
@@ -6,13 +6,13 @@ function Add-TelegramChannel {
          [Parameter(Mandatory = $true)][string]$Name        # Give the channel a name, this is the "identifier for this channel"
         ,[Parameter(Mandatory = $true)][string]$Token
     )
-    
+
     begin {
-        
+
     }
-    
+
     process {
-        
+
         # Encrypt the token
         #$encryptedToken = Convert-PlaintextToSecure -String $Token
 
@@ -24,8 +24,8 @@ function Add-TelegramChannel {
         Add-Channel -Type "Telegram" -Name $Name -Definition $definition
 
     }
-    
+
     end {
-        
+
     }
 }

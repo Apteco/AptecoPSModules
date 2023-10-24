@@ -1,4 +1,4 @@
-
+﻿
 
 function Send-TelegramNotification {
     [CmdletBinding()]
@@ -8,15 +8,15 @@ function Send-TelegramNotification {
         ,[Parameter(Mandatory=$true)][String]$Text                                # The text to send
         ,[Parameter(Mandatory=$false)][Switch]$DisableNotification = $false                        # The chat id to use
     )
-    
+
     begin {
-        
+
     }
-    
+
     process {
 
         # Get the right target for this channel
-        $channel = Get-Channel -Name $Name 
+        $channel = Get-Channel -Name $Name
         $channelTarget = $channel.Targets | where-object { $_.TargetName -eq $Target }
         #$Script:debug = $target
 
@@ -35,14 +35,14 @@ function Send-TelegramNotification {
             "text" = $Text
             "disable_notification" = $disable
         }
-        
+
         # Send the message
         Invoke-Telegram -Name $Name -Path "sendMessage" -Method "POST" -Body $body
 
     }
-    
+
     end {
-        
+
     }
 }
 

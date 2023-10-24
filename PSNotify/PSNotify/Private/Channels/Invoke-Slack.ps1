@@ -1,4 +1,4 @@
-
+﻿
 
 function Invoke-Slack {
 
@@ -134,13 +134,13 @@ function Invoke-Slack {
                  #Write-verbose -message "$( $updatedParameters.Body )" -verbose
             # }
             $wr = Invoke-RestMethod @updatedParameters
-            
+
             If ( $wr.ok -eq $true ) {
                 $return = $wr.result
             } else {
                 throw "Error at slack request"
             }
-            
+
             #$finished = $true
 
         } catch {

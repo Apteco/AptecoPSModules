@@ -1,4 +1,4 @@
-function Add-TelegramTarget {
+﻿function Add-TelegramTarget {
 
 
     [CmdletBinding()]
@@ -6,13 +6,13 @@ function Add-TelegramTarget {
          [Parameter(Mandatory = $true)][string]$Name        # Give the channel a name, this is the "identifier for this channel"
         ,[Parameter(Mandatory = $true)][string]$TargetName
     )
-    
+
     begin {
-        
+
     }
-    
+
     process {
-        
+
         # Get updates
         $conversations = Get-SlackConversations -Name $Name
 
@@ -26,10 +26,10 @@ function Add-TelegramTarget {
 
         # Get the channel to extend it
         #$channel = Get-TelegramChannel -Name $Name
-        
+
     }
-    
+
     end {
-        
+
     }
 }

@@ -1,4 +1,4 @@
-function Add-TeamsChannel {
+﻿function Add-TeamsChannel {
 
 
     [CmdletBinding()]
@@ -6,13 +6,13 @@ function Add-TeamsChannel {
          [Parameter(Mandatory = $true)][string]$Name        # Give the channel a name, this is the "identifier for this channel"
         ,[Parameter(Mandatory = $true)][string]$Webhook
     )
-    
+
     begin {
-        
+
     }
-    
+
     process {
-        
+
         # Encrypt the token
         #$encryptedToken = Convert-PlaintextToSecure -String $Token
 
@@ -27,8 +27,8 @@ function Add-TeamsChannel {
         Add-Target -Name $Name -TargetName $Name -Definition ([PSCustomObject]@{})
 
     }
-    
+
     end {
-        
+
     }
 }

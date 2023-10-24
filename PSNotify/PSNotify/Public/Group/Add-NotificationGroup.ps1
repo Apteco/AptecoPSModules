@@ -1,15 +1,15 @@
-function Add-NotificationGroup {
+﻿function Add-NotificationGroup {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true)][String]$Name
     )
-    
+
     begin {
-        
+
     }
-    
-    process { 
-        
+
+    process {
+
         # Check if the group already exists
         try {
             $group = @( Get-NotificationGroup -Name $Name )
@@ -33,8 +33,8 @@ function Add-NotificationGroup {
         Set-Store
 
     }
-    
+
     end {
-        
+
     }
 }

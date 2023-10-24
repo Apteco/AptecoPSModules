@@ -1,4 +1,4 @@
-function Add-EmailTarget {
+﻿function Add-EmailTarget {
 
 
     [CmdletBinding()]
@@ -7,13 +7,13 @@ function Add-EmailTarget {
         ,[Parameter(Mandatory = $true)][string]$TargetName  # Give this group a name
         ,[Parameter(Mandatory = $true)][string[]]$Receivers # Array of email addresses that should be targeted
     )
-    
+
     begin {
-        
+
     }
-    
+
     process {
-        
+
         # TODO maybe directly send to all receivers and confirm the email was received
 
         # Build the target object
@@ -23,10 +23,10 @@ function Add-EmailTarget {
 
         # Get the channel to extend it
         #$channel = Get-TelegramChannel -Name $Name
-        
+
     }
-    
+
     end {
-        
+
     }
 }

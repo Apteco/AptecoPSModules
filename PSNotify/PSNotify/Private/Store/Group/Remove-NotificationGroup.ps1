@@ -1,15 +1,15 @@
-function Remove-NotificationGroup {
+﻿function Remove-NotificationGroup {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true)][String]$Name
     )
-    
+
     begin {
-        
+
     }
-    
+
     process {
-        
+
         $group = Get-NotificationGroup -Name $Name
 
         # Exclude the group
@@ -21,8 +21,8 @@ function Remove-NotificationGroup {
         Set-Store
 
     }
-    
+
     end {
-        
+
     }
 }

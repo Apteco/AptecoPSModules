@@ -1,13 +1,13 @@
-function Get-NotificationGroups {
+﻿function Get-NotificationGroups {
     [CmdletBinding()]
     param (
-        
+
     )
-    
+
     begin {
-        
+
     }
-    
+
     process {
 
         $groups = $script:store.groups.psobject.copy()
@@ -30,8 +30,8 @@ function Get-NotificationGroups {
         $groups
 
     }
-    
+
     end {
-        
+
     }
 }
