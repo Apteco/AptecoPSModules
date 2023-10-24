@@ -103,11 +103,6 @@ If ( (Test-Path -Path $localLibFolder -IsValid) -eq $true ) {
     }
 }
 
-# Some verbose information
-Write-Verbose -Message "Default path for keyfile:$( $defaultStorefile )" -Verbose
-#Write-Verbose -Message "If you want to use another path, use 'Export-Keyfile -Path' to save it." -Verbose
-#Write-Verbose -Message "Use 'Import-Keyfile -Path' for loading that file" -Verbose
-
 # Setting it to null for now
 #$Script:keyfile = $null
 
@@ -117,6 +112,10 @@ If ( (Test-Path -Path $defaultStorefile) -eq $true ) {
 } Else {
     Set-Store
 }
+
+# Some verbose information
+$resolvedStorefile = Resolve-Path -Path $defaultStorefile
+Write-Verbose -Message "Default path for keyfile:$( $resolvedStorefile.Path )"
 
 
 #-----------------------------------------------
@@ -130,7 +129,7 @@ If ( (Test-Path -Path $defaultStorefile) -eq $true ) {
 #-----------------------------------------------
 
 Export-ModuleMember -Function $Public.Basename
-Export-ModuleMember -Function $Private.Basename # TODO remove this later
+#Export-ModuleMember -Function $Private.Basename
 
 
 #-----------------------------------------------

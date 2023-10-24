@@ -13,7 +13,7 @@ Function Update-Channel {
 
         # Modify the updated channel and add it back
         $NewChannel."DateModified" = [datetime]::Now.ToString("yyyyMMddHHmmss")
-        $script:store.channels += $NewChannel
+        $script:store.channels = @( $script:store.channels ) + $NewChannel
 
         # Now save that to the store
         Set-Store

@@ -75,7 +75,7 @@ function Invoke-Telegram {
         }
 
         # Add the contenttype
-        $updatedParameters.ContentType = "application/json"
+        $updatedParameters.ContentType = "application/json; charset=utf-8"
 
     }
 

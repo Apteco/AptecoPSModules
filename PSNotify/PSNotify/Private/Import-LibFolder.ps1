@@ -1,7 +1,7 @@
 
 
 
-function Load-LibFolder {
+function Import-LibFolder {
     [CmdletBinding()]
     param (
         

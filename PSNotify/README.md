@@ -1,6 +1,25 @@
 
 
-Install-Module PSNotification
+# Quickstart
+
+```PowerShell
+# Check your executionpolicy: https:/go.microsoft.com/fwlink/?LinkID=135170
+Get-ExecutionPolicy
+
+# Either set it to Bypass to generally allow scripts for current user
+Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope CurrentUser
+# or
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+
+# Then install this module and other dependencies
+install-script install-dependencies, import-dependencies
+install-module writelog
+Install-Dependencies -module PSNotify
+
+
+# Then you can import the module and it will tell you the path for your channel store, when using -verbose flag
+Import-Module PSNotify -Verbose
+```
 
 This will install the module. After installation there will be an automatic "store" file created in the current user account. Then you can add different channels to that module.
 
@@ -25,11 +44,10 @@ Import-Module PSNotification
 Add-TelegramChannel -Name "MyNewChannel" -Token "tokenfromtelegram"
 Add-TelegramTarget -Name "MyNewChannel" -TargetName "MyNewTarget"
 
-
+# Send two messages - One with notification, another one without notification
 Send-TelegramNotification -Name "MyNewChannel" -Target "MyNewTarget" -Text "Hello World"
 Send-TelegramNotification -Name "MyNewChannel" -Target "MyNewTarget" -Text "Hello World" -DisableNotification
 ```
-
 
 More telegram specific commands
 
@@ -115,4 +133,46 @@ More Slack specific commands
 
 ```PowerShell
 Get-SlackConversations -Name "MyNewSlackChannel"
+```
+
+
+# Email
+
+## Pre-Requisites
+
+To make this happen, we need `MailKit` and `MimeKit` first. You can install it with
+
+```PowerShell
+Install-MailKit -Verbose
+```
+
+This will automatically install it into `%LOCALAPPDATA%\AptecoPSModules\PSNotification\lib`. As this loads also all dependencies, this can be something around 440MB. When you are sure you only need MailKit and MimeKit, then you can manually delete all other packages in that folder. This can also improve performance.
+
+## Add channel to PSNotification
+
+
+Add the channel now to this module
+
+```PowerShell
+Import-Module PSNotification
+
+$emailParams = [Hashtable]@{
+    "Name" = "example" # TODO rename this entry
+    "From" = "sender@example.com"
+    "Username" = "sender@example.com"
+    "Password" = "k3j4SFN5n=b0tdXun0hV+G=" # TODO remove this!
+    "Host" = "smtp.ionos.de"
+    "Port" = 465
+    "UseSSL" = $true
+}
+
+# Add the email channel with the parameters above
+# Note: The @ is correct!
+Add-EmailChannel @emailParams
+
+# Now add targets, which is a group of receivers
+Add-EmailTarget -Name "example" -TargetName "Email1" -Receivers "florian.von.bracht@apteco.de", "user@example.com" # TODO rename this entry
+
+# And send an email
+Send-Mailnotification -Name ionos -Target Email1 -Subject "Achtung Test!" -Text "Beware of the text"
 ```

@@ -24,7 +24,7 @@ function Add-Channel {
         }
 
         # Add the channel to the store
-        $script:store.channels += [PSCustomObject]@{
+        $script:store.channels =  @( $script:store.channels ) + [PSCustomObject]@{
             "ChannelId" = [guid]::NewGuid().ToString()
             "Name" = $Name
             "Type" = $Type # Telegram, Teams, Email, Slack

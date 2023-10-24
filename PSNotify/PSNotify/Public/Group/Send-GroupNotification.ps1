@@ -39,7 +39,7 @@ function Send-GroupNotification {
                 "Slack" {
                     Send-SlackNotification -Name $target.Name -Target $target.targetname -Text $Message
                 }
-                "Mail" {
+                "EMail" {
                     Send-MailNotification -Name $target.Name -Target $target.targetname -Text $Message -Subject $Subject
                 }
             }

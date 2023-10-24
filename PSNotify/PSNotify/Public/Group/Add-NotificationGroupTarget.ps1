@@ -17,10 +17,10 @@ function Add-NotificationGroupTarget {
         # Get all the data
         $chosenGroup = Get-NotificationGroup -Name $Group
         $chosenChannel = Get-Channel -Name $Channel
-        $chosenTarget = $chosenChannel.Targets | where { $_.TargetName -eq $Target }
+        $chosenTarget = $chosenChannel.Targets | where-object { $_.TargetName -eq $Target }
         #$Script:debug = $newTarget
         # Modify the target and add the group id to it
-        $chosenTarget."MemberOf" += $chosenGroup.GroupId
+        $chosenTarget."MemberOf" = @( $chosenTarget."MemberOf" ) + $chosenGroup.GroupId
 
         Update-Channel -Name $Channel -NewChannel $chosenChannel
 

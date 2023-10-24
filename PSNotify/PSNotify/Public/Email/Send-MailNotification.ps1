@@ -6,7 +6,6 @@ function Send-Mailnotification {
         ,[Parameter(Mandatory=$true)][String]$Target                                # The email target to use
         ,[Parameter(Mandatory=$true)][String]$Subject                                # The telegram channel to use
         ,[Parameter(Mandatory=$true)][String]$Text                                # The telegram channel to use
-        ,[Parameter(Mandatory=$false)][Switch]$DisableNotification = $false                        # The chat id to use
     )
     
     begin {
@@ -21,7 +20,7 @@ function Send-Mailnotification {
         #$Script:debug = $target
 
         # Load mailkit lib
-        If ( Confirm-MailKitLoaded -eq $true ) {
+        If ( ( Confirm-MailKitLoaded ) -eq $true ) {
             Write-Verbose "MailKit loaded successfully"
         } else {
             throw "You need to install MailKit first. Please execute Install-Mailkit!" # TODO maybe the throw is not needed here
@@ -47,16 +46,17 @@ function Send-Mailnotification {
         # Create the mail        
         $message = [MimeKit.MimeMessage]::new()
         $message.From.Add($channel.Definition.from)
-        $channelTarget.Receivers | ForEach-Object {
+        $channelTarget.Definition.Receivers | ForEach-Object {
             $message.To.Add($_) # TODO not checking if the email is valid
         }
         $message.Subject = $Subject
         $textPart = [MimeKit.TextPart]::new("plain")
         $textPart.Text = $Text
-        $message.Body    = $TextPart
+        $message.Body = $TextPart
         
         # Send the message
-        $SMTP.Send($message)
+        $msg = $smtpClient.Send($message)
+        Write-Verbose $msg
 
         # Kill that connection
         $smtpClient.Disconnect($true)

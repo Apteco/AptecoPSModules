@@ -20,9 +20,10 @@ function Add-EmailChannel {
     process {
         
         # Load mailkit lib
-        If ( Confirm-MailKitLoaded -eq $true ) {
+        If ( ( Confirm-MailKitLoaded ) -eq $true ) {
             Write-Verbose "MailKit loaded successfully"
         } else {
+            Write-Error $_.Exception
             throw "You need to install MailKit first. Please execute Install-Mailkit!" # TODO maybe the throw is not needed here
         }
 
@@ -32,6 +33,7 @@ function Add-EmailChannel {
             $smtpClient = [MailKit.Net.Smtp.SmtpClient]::new()
             $smtpClient.Connect($Host, $Port, $UseSSL) # $SMTP.Connect('smtp.gmail.com', 587, $False)
         } catch {
+            Write-Error $_.Exception
             throw "Connection to host '$( $Host )' failed!"
         }
 
@@ -40,6 +42,7 @@ function Add-EmailChannel {
             Write-Verbose "Authentication to mailserver"
             $smtpClient.Authenticate($Username, $Password) # $SMTP.Authenticate('myemail1@gmail.com', 'appspecificpassword' )
         } catch {
+            Write-Error $_.Exception
             throw "Authentication to host '$( $Host )' failed!"
         }
 
@@ -48,13 +51,17 @@ function Add-EmailChannel {
         $smtpClient.Dispose()
 
         # This is customised for email
+        $valueUseSSL = $false
+        If ( $UseSSL -eq $true ) {
+            $valueUseSSL = $true
+        }
         $definition = [PSCustomObject]@{
             "from" = $From
             "username" = $Username
             "password" = Convert-PlaintextToSecure -String $Password 
             "port" = $Port
             "host" = $Host
-            "ssl" = $UseSSL
+            "ssl" = $valueUseSSL
         }
 
         # Add the channel
