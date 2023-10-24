@@ -6,11 +6,11 @@
 
         # general information about this plugin
         "name" = "Microsoft Dynamics CRM 365"
-        "version" = "0.1.0"
-        "lastUpdate" = "2023-10-23"
+        "version" = "0.1.1"
+        "lastUpdate" = "2023-10-24"
         "category" = "data"
         "type" = "crm"
-        "stage" = "dev"
+        "stage" = "test"
 
         # have a look at ./bin/dependencies if you need more information about how to define this
         "dependencies" = [PSCustomObject]@{

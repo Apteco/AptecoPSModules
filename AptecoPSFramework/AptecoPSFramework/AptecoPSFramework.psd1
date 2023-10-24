@@ -148,6 +148,7 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.1.3 Changed Microsoft Dynamics Dataverse Integration to pagesize of 4500 instead of 3 for testing
 0.1.2 New hashtable variable "variableCache" for plugins to share data/variables between functions
       Fix of saving oauth settings file path in the settings.json file
       Read-Only Support for Microsoft Dynamics DataVerse Web API

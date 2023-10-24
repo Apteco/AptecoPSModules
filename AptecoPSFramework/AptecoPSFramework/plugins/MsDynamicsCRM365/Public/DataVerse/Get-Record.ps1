@@ -81,7 +81,7 @@ function Get-Record {
         }
 
         If ( $Paging -eq $true ) {
-            [void]$preferOptions.add("odata.maxpagesize=3")
+            [void]$preferOptions.add("odata.maxpagesize=4500")
         }
 
         If ( $DeltaTracking -eq $true ) {
