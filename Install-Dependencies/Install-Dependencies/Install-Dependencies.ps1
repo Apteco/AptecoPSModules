@@ -1,7 +1,7 @@
 ﻿
 <#PSScriptInfo
 
-.VERSION 0.0.7
+.VERSION 0.0.8
 
 .GUID 4c029c8e-09fa-48ee-9d62-10895150ce83
 
@@ -26,6 +26,7 @@
 .EXTERNALSCRIPTDEPENDENCIES
 
 .RELEASENOTES
+0.0.8 Fixed wrong formatted output
 0.0.7 Allowed empty arrays for wrapping the script into other modules
       Changed internal function prompt-choice to request-choice to only allow approved verbs
 0.0.6 Admin privileges are now checked in another way and is not needed for local packages anymore
