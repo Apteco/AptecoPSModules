@@ -7,10 +7,10 @@ function Get-CRMData {
         #[Parameter(Mandatory=$false)][Hashtable] $InputHashtable
          [Parameter(Mandatory=$true)][String]$Object
         ,[Parameter(Mandatory=$false)][int]$Limit = 10
-        ,[Parameter(Mandatory=$false)][Array]$Properties = [Array]@()
         ,[Parameter(Mandatory=$false)][Switch]$Archived = $false
         ,[Parameter(Mandatory=$false)][Switch]$LoadAllRecords = $false
-        ,[Parameter(Mandatory=$false)][Switch]$LoadAllProperties = $false
+        ,[Parameter(Mandatory=$false,ParameterSetName='SingleProps')][Array]$Properties = [Array]@()
+        ,[Parameter(Mandatory=$false,ParameterSetName='AllProps')][Switch]$LoadAllProperties = $false
     )
 
     begin {
@@ -23,16 +23,32 @@ function Get-CRMData {
             $loadArchived = $true
         }
 
-        If ( $LoadAllProperties -eq $true ) {
+        $propertiesString = ""
+        Switch ( $PSCmdlet.ParameterSetName ) {
+
+            "AllProps" {
+
+                If ( $LoadAllProperties -eq $true ) {
+                    $propertiesString = ( get-property -Object contacts ).name -join ","
+                } else {
+                    throw "No properties used" # In theory this case shouldn't happen
+                }
+
+            }
+
+            "SingleProps" {
+                $propertiesString = $Properties -join ","
+            }
 
         }
+
 
         # TODO after is a parameter for paging
         # TODO if $LoadAllRecords then use paging
 
         $query = [PSCustomObject]@{
             "archived" = $loadArchived
-            "properties" = $Properties -join ","
+            "properties" = $propertiesString
             "limit" = $Limit
         }
 

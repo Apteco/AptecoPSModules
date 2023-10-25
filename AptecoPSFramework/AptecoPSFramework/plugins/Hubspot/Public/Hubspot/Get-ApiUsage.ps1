@@ -22,11 +22,11 @@ function Get-ApiUsage {
         #https://api.hubapi.com/crm/v3/objects/contacts?limit=1&archived=false
         
         # Put a message on the console
-        Write-Verbose "Remaining $( $Script:variableCache.api_rate_remaining )/$( $Script:variableCache.api_rate_limit )" -verbose
+        Write-Verbose "Used $( $Script:variableCache.api_rate_remaining )/$( $Script:variableCache.api_rate_limit )" -verbose
 
         # Return
         #$Script:variableCache.api_rate_remaining
-        #$usage
+        $usage
 
     }
 
