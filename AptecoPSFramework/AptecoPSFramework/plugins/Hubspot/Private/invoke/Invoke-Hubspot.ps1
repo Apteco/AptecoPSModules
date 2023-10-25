@@ -9,14 +9,14 @@ function Invoke-Hubspot {
         ,[Parameter(Mandatory=$false)][Switch]$Paging = $false                      # Automatic paging through the result, only needed for a few calls
         ,[Parameter(Mandatory=$false)][Int]$Pagesize = 0                          # Pagesize, if not defined in settings. For reports the max is 100.
         ,[Parameter(Mandatory=$false)][ValidateScript({
-             If ($_ -is [PSCustomObject]) {
+            If ($_ -is [PSCustomObject]) {
                  [PSCustomObject]$_
               # } elseif ($_ -is [System.Collections.Specialized.OrderedDictionary]) {
               #     [System.Collections.Specialized.OrderedDictionary]$_
               # }
-        #      } ElseIf ($_ -is [System.Collections.ArrayList] -or $_ -is [Array]) {
-        #         [System.Collections.ArrayList]$_
-             }
+            } ElseIf ($_ -is [System.Collections.ArrayList] -or $_ -is [Array]) {
+                [System.Collections.ArrayList]$_
+            }
          })]$Body = [PSCustomObject]@{}   # Body to upload, e.g. for POST and PUT requests, will automatically transformed into JSON
     )
     DynamicParam {
@@ -101,13 +101,13 @@ function Invoke-Hubspot {
         $rawToken = ""
 
         # Add auth header or just set it
-        If ( $updatedParameters.ContainsKey("Headers") -eq $true ) {
+        If ( $updatedParameters.ContainsKey("Header") -eq $true ) {
             $header.Keys | ForEach-Object {
                 $key = $_
-                $updatedParameters.Headers.Add( $key, $header.$key )
+                $updatedParameters.Header.Add( $key, $header.$key )
             }
         } else {
-            $updatedParameters.add("Headers",$header)
+            $updatedParameters.add("Header",$header)
         }
 
 
@@ -117,7 +117,7 @@ function Invoke-Hubspot {
 
         # Add additional headers from the settings, e.g. for api gateways or proxies
         $Script:settings.additionalHeaders.PSObject.Properties | ForEach-Object {
-            $updatedParameters.Headers.add($_.Name, $_.Value)
+            $updatedParameters.add($_.Name, $_.Value)
         }
 
 
@@ -127,7 +127,7 @@ function Invoke-Hubspot {
 
         # Set content type, if not present yet
         If ( $updatedParameters.ContainsKey("ContentType") -eq $false) {
-            $updatedParameters.add("ContentType",$ContentType)
+            $updatedParameters.add("ContentType",$Script:settings.contentType)
         }
 
 
@@ -145,6 +145,11 @@ function Invoke-Hubspot {
             }
         }
 
+
+        #-----------------------------------------------
+        # PAGING
+        #-----------------------------------------------
+
         # set the pagesize
         <#
         If ( $Pagesize -gt 0 ) {
@@ -155,9 +160,10 @@ function Invoke-Hubspot {
         #>
 
         # set paging parameters
-        <#
+        
         If ( $Paging -eq $true ) {
 
+            <#
             Switch ( $updatedParameters.Method ) {
 
                 "GET"{
@@ -177,48 +183,54 @@ function Invoke-Hubspot {
                 }
 
             }
+            #>
+
+            # Parameter for paging
+            If ( $updatedParameters.Method -eq "POST") {
+                $Body | Add-Member -MemberType NoteProperty -Name "after" -Value 0
+            }
 
             # Add a collection instead of a single object for the return
             $res = [System.Collections.ArrayList]@()
 
         }
-        #>
+        
 
     }
 
     Process {
 
+        #-----------------------------------------------
+        # PREPARE QUERY
+        #-----------------------------------------------
+
+        $nvCollection = [System.Web.HttpUtility]::ParseQueryString([String]::Empty)
+        $Query.PSObject.Properties | ForEach-Object {
+            $nvCollection.Add( $_.Name, $_.Value )
+        }
+
+
+        #-----------------------------------------------
+        # PREPARE URL
+        #-----------------------------------------------
+
+        $uriRequest = [System.UriBuilder]::new("$( $base )$( $Path )")
+        $uriRequest.Query = $nvCollection.ToString()
+        $updatedParameters.Uri = $uriRequest.Uri.OriginalString
+
+
         $finished = $false
         $continueAfterTokenRefresh = $false
         Do {
-
-            
-            #-----------------------------------------------
-            # PREPARE QUERY
-            #-----------------------------------------------
-
-            $nvCollection = [System.Web.HttpUtility]::ParseQueryString([String]::Empty)
-            $Query.PSObject.Properties | ForEach-Object {
-                $nvCollection.Add( $_.Name, $_.Value )
-            }
-
-
-            #-----------------------------------------------
-            # PREPARE URL
-            #-----------------------------------------------
-
-            $uriRequest = [System.UriBuilder]::new("$( $base )$( $Path )")
-            $uriRequest.Query = $nvCollection.ToString()
-            $updatedParameters.Uri = $uriRequest.Uri.OriginalString
-
             
             #-----------------------------------------------
             # PREPARE BODY
             #-----------------------------------------------
 
             If ( $updatedParameters.ContainsKey("Body") -eq $true ) {
-                $bodyJson = ConvertTo-Json -InputObject $Body -Depth 99
+                $bodyJson = ConvertTo-Json -InputObject $Body -Depth 99 -compress
                 $updatedParameters.Body = $bodyJson
+                write-verbose $bodyJson -verbose
             }
 
             
@@ -233,9 +245,11 @@ function Invoke-Hubspot {
                     Write-Host "REST: $( Convertto-json -InputObject $updatedParameters -Depth 99 )"
                 }
 
-                If ( $Script:logAPIrequests -eq $true ) {
+                #If ( $Script:logAPIrequests -eq $true ) {
                     Write-Log -Message "$( $updatedParameters.Method.ToString().ToUpper() ) $( $updatedParameters.Uri )" -severity verbose
-                }
+                #}
+
+                #Write-Verbose ( $updatedParameters | convertto-json -depth 99 ) -verbose
 
                 #Write-Host ( convertto-json $updatedParameters )
                 $wrInput = [Hashtable]@{
@@ -265,7 +279,7 @@ function Invoke-Hubspot {
                     try {
                         $newToken = Save-NewToken
                         Write-Log -Severity WARNING -Message "Successful token refresh"
-                        $wrInput.Params.Headers.Authorization = "Bearer $( $newToken )"
+                        $wrInput.Params.Header.Authorization = "Bearer $( $newToken )"
                         $continueAfterTokenRefresh = $true
                     } catch {
                         Write-Log -Severity ERROR -Message "Token refresh not successful"
@@ -277,6 +291,15 @@ function Invoke-Hubspot {
 
                 }
 
+                # Wait if we had too many requests
+                # if ( $errResponse.StatusCode.value__ -eq 429 ) {
+
+                #     Write-Log -Severity WARNING -Message "429 Too Many Requests"
+                #     Continue
+
+                # }
+
+
                 # $responseStream = $_.Exception.Response.GetResponseStream()
                 # $responseReader = [System.IO.StreamReader]::new($responseStream)
                 # $responseBody = $responseReader.ReadToEnd()
@@ -286,75 +309,81 @@ function Invoke-Hubspot {
 
             }
 
-            # Increase page and add results to the collection
-            <#
+            # Parse the content directly
+            If ( $wr.Content -eq $null ) {
+                $content = [Array]@()
+            } else {
+                If ( $wr.headers.'Content-Type' -like "application/json*" ) {
+                    $content = convertfrom-json -InputObject $wr.content #-Depth 99
+                } else {
+                    $content = $wr.content
+                }
+            }
+            
+            # Handle paging
             If ( $Paging -eq $true ) {
 
-                # If the result equals the pagesize, try it one more time with the next page
-                If ( $wr.count -eq $currentPagesize ) {
+                # If we have a paging link, just place it
+                If ( $content.paging ) {
 
                     Switch ( $updatedParameters.Method ) {
 
                         "GET"{
-                            $Query.page += 1
+                            #Write-verbose ( $content.paging | convertto-json -depth 99) -verbose
+                            $updatedParameters.Uri = $content.paging.next.link
+                            #Write-Verbose $content.paging.next.link -verbose
                         }
-
+    
                         "POST" {
-                            $Body.page += 1
+                            $Body.after = $content.paging.next.after
                         }
-                    }
 
+                    }
+                    
                 } else {
 
-                    # If this is less than the page size -> done!
+                    # Otherwise -> done!
                     $finished = $true
 
                 }
 
                 # Add result to return collection
-                [void]$res.AddRange($wr)
+                [void]$res.Add($content)
 
             } else {
-                #>
-
+                                
                 # If this is only one request without paging -> done!
                 $finished = $true
 
-            #}
-
-            If ( $Verbose -eq $true ) {
-                Write-log $wr.Headers."Sforce-Limit-Info" -severity verbose #api-usage=2/15000
             }
 
-
-            #-----------------------------------------------
-            # SAVE CURRENT RATE
-            #-----------------------------------------------
-
-            If ( $Script:variableCache.Keys -contains "api_rate_limit" ) {
-                $Script:variableCache.api_rate_limit = $wr.Headers."X-HubSpot-RateLimit-Daily"
-                $Script:variableCache.api_rate_remaining = $wr.Headers."X-HubSpot-RateLimit-Daily-Remaining"
-            } else {
-                $Script:variableCache.Add("api_rate_limit",$wr.Headers."X-HubSpot-RateLimit-Daily")
-                $Script:variableCache.Add("api_rate_remaining", $wr.Headers."X-HubSpot-RateLimit-Daily-Remaining")
-            }
 
         } Until ( $finished -eq $true )
+
+
+        #-----------------------------------------------
+        # SAVE CURRENT RATE AFTER LAST CALL
+        #-----------------------------------------------
+
+        If ( $Script:variableCache.Keys -contains "api_rate_limit" ) {
+            $Script:variableCache.api_rate_limit = $wr.Headers."X-HubSpot-RateLimit-Daily"
+            $Script:variableCache.api_rate_remaining = $wr.Headers."X-HubSpot-RateLimit-Daily-Remaining"
+        } else {
+            $Script:variableCache.Add("api_rate_limit",$wr.Headers."X-HubSpot-RateLimit-Daily")
+            $Script:variableCache.Add("api_rate_remaining", $wr.Headers."X-HubSpot-RateLimit-Daily-Remaining")
+        }
 
 
         #-----------------------------------------------
         # RETURN
         #-----------------------------------------------
 
-        If ( $wr.Content -eq $null ) {
-            $ret = [Array]@()
+        # TODO this could maybe be more performant returning the data directly instead of writing it into a variable
+        If ( $Paging -eq $true ) {
+            $ret = $res
         } else {
             # TODO check with utf8 in returned header
-            If ( $wr.headers.'Content-Type' -like "application/json*" ) {
-                $ret = convertfrom-json -InputObject $wr.content #-Depth 99
-            } else {
-                $ret = $wr.content
-            }
+            $ret = $content
         }
 
         #return

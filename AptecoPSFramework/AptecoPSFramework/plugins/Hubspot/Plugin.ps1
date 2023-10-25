@@ -6,8 +6,8 @@
 
         # general information about this plugin
         "name" = "Hubspot"
-        "version" = "0.0.1"
-        "lastUpdate" = "2023-10-19"
+        "version" = "0.0.2"
+        "lastUpdate" = "2023-10-25"
         "category" = "channel"
         "type" = "email"
         "stage" = "dev"
@@ -26,11 +26,11 @@
         # Supported functions
         "functions" = [PSCustomObject]@{
             "mailings" = $true
-            "lists" = $true
-            "preview" = $true
+            "lists" = $false
+            "preview" = $false
             "upload" = $true
             "broadcast" = $true
-            "responses" = $true
+            "responses" = $false
         }
 
     }
