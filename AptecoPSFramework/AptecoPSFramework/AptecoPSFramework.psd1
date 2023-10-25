@@ -150,6 +150,9 @@ PrivateData = @{
         ReleaseNotes = '
 0.1.2 New hashtable variable "variableCache" for plugins to share data/variables between functions
       Fix of saving oauth settings file path in the settings.json file
+      Removed -MergeArrays flag when merging settings in module and plugin -> now the arrays from the settings file are the important ones
+      Adding hubspot to load CRM data with properties and search/filter, sync all of your data now!
+      Hubspot list upload is now implemented through a manual `ILS List ID` you need to enter and with use of the email address
 0.1.1 New version jump with more dependencies that have been implemented now: Install-Dependencies and Import-Dependencies, make sure to install those scripts before updating
       Fix for http calls so generic problematic are not repeating infinite
       Loading assemblies as dependencies, too

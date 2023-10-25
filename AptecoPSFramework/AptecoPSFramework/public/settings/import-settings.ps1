@@ -52,7 +52,7 @@ Function Import-Settings {
                     #$script:debug = $joinedSettings
 
                     try {
-                        $joinedSettings = Join-PSCustomObject -Left $Script:defaultSettings -Right $settings -AddPropertiesFromRight -MergePSCustomObjects -MergeArrays -MergeHashtables
+                        $joinedSettings = Join-PSCustomObject -Left $Script:defaultSettings -Right $settings -AddPropertiesFromRight -MergePSCustomObjects -MergeHashtables #-MergeArrays
                     } catch {
                         Write-Error -Message "Settings cannot be joined"
                     }
