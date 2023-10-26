@@ -245,9 +245,9 @@ function Invoke-Hubspot {
                     Write-Host "REST: $( Convertto-json -InputObject $updatedParameters -Depth 99 )"
                 }
 
-                #If ( $Script:logAPIrequests -eq $true ) {
+                If ( $Script:logAPIrequests -eq $true ) {
                     Write-Log -Message "$( $updatedParameters.Method.ToString().ToUpper() ) $( $updatedParameters.Uri )" -severity verbose
-                #}
+                }
 
                 #Write-Verbose ( $updatedParameters | convertto-json -depth 99 ) -verbose
 

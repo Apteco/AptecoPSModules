@@ -179,6 +179,7 @@ function Invoke-Upload{
             $reader = [System.IO.StreamReader]::new($file.FullName, [System.Text.Encoding]::UTF8)
             [void]$reader.ReadLine() # Skip first line.
 
+            $emailIndex = $headers.IndexOf($InputHashtable.EmailFieldName)
             $i = 0  # row counter
             $v = 0  # valid counter
             $j = 0  # uploaded entries counter
@@ -186,6 +187,10 @@ function Invoke-Upload{
             $checkObject = [System.Collections.ArrayList]@()
             $uploadObject = [System.Collections.ArrayList]@()
             while ($reader.Peek() -ge 0) {
+
+                #-----------------------------------------------
+                # CREATE THE OBJECT/ROW TO UPLOAD
+                #-----------------------------------------------
 
                 # raw empty receivers template: https://rest.cleverreach.com/explorer/v3/#!/groups-v3/upsertplus_post
                 $uploadEntry = [PSCustomObject]@{
@@ -202,11 +207,15 @@ function Invoke-Upload{
                 $values = $reader.ReadLine().split("`t")
 
                 # put in email address
-                $emailIndex = $headers.IndexOf($InputHashtable.EmailFieldName)
                 $uploadEntry.email = ($values[$emailIndex]).ToLower()
 
                 # Add entry to the check object
                 [void]$checkObject.Add( $uploadEntry )
+
+
+                #-----------------------------------------------
+                # VALIDATE AND CHECK ROWS EVERY N ROWS OR AT END
+                #-----------------------------------------------
 
                 # Do an validation every n records when threshold is reached or if it is the last row
                 $i += 1
@@ -222,7 +231,7 @@ function Invoke-Upload{
                         [Ordered]@{
                             "propertyName"="email"
                             "operator"="IN"
-                            "values"=$checkObject.email.ToLower()
+                            "values"= [Array]@( $checkObject.email.ToLower() )
                         }
                     )
 
@@ -230,17 +239,22 @@ function Invoke-Upload{
                     $v += $validatedAddresses.count                    
                     
                     # Transform the result
-                    $checkObject = $validatedAddresses.hs_object_id
+                    $checkedObject = [Array]@( $validatedAddresses.hs_object_id )
 
-                    Write-Log "  $( $checkObject.count ) left rows"
+                    Write-Log "  $( $checkedObject.count ) left rows"
 
                     # Add checked objects to uploadobject
-                    [void]$uploadObject.AddRange( $checkObject )
+                    [void]$uploadObject.AddRange( $checkedObject )
 
                     # Clear the current object completely
                     $checkObject.Clear()
 
                 }
+
+
+                #-----------------------------------------------
+                # UPLOAD ROWS EVERY N ROWS OR AT END
+                #-----------------------------------------------
 
                 # Do an upload when threshold is reached
                 if ( $uploadObject.Count -ge $uploadSize -or $reader.EndOfStream -eq $true ) { # Commit, when size is reached
@@ -265,11 +279,26 @@ function Invoke-Upload{
                                 Set-Content -Value ( ConvertTo-Json $uploadBody -Depth 99 ) -Encoding UTF8 -Path $tempFile
                             }
 
-                            # As a response we get the full profiles of the receivers back
-                            $upload = @( Add-ListMember -ListId 355 -AddMemberships $uploadObject )
+                            # As a response we get the id of added/removed members back
+                            Switch ( $mailing.mailingId ) {
 
-                            # Count the successful upserted profiles
-                            $j += $upload.count
+                                "add" {
+                                    $upload = @( Add-ListMember -ListId 355 -AddMemberships $uploadObject )
+                                    $j += $upload.recordsIdsAdded.count
+                                }
+
+                                "del" {
+                                    $upload = @( Remove-ListMember -ListId 355 -RemoveMemberships $uploadObject )
+                                    $j += $upload.recordIdsRemoved.count
+                                }
+
+                                default {
+                                    throw "This upload mode is not supported yet"   # should not happen!
+                                }
+
+                            }
+                            
+                            # Count the batches
                             $k += 1
 
                             # Output the response body for debug purposes
@@ -334,10 +363,22 @@ function Invoke-Upload{
             $processDuration = New-TimeSpan -Start $processStart -End $processEnd
             Write-Log -Message "Needed $( [int]$processDuration.TotalSeconds ) seconds in total"
 
-            If ( $tags.length -gt 0 ) {
-                Write-Log "Uploaded $( $j ) record. Confirmed $( $tagcount ) receivers with tag '$( $tags )'" -severity INFO
-            }
 
+            #-----------------------------------------------
+            # SEND STATUS TO ORBIT
+            #-----------------------------------------------
+
+            Switch ( $mailing.mailingId ) {
+
+                "add" {
+                    Write-Log "Added $( $j ) records in $( $k ) batches." -severity INFO
+                }
+
+                "del" {
+                    Write-Log "Removed $( $j ) records in $( $k ) batches." -severity INFO                }
+
+            }
+            
         }
 
 
@@ -349,7 +390,7 @@ function Invoke-Upload{
         $recipients = $j #$dataCsv.Count # TODO work out what to be saved
 
         # put in the source id as the listname
-        $transactionId = "$( $groupId ) => $( $tags )" #$Script:processId #$targetGroup.targetGroupId # TODO or try to log the used tag?
+        $transactionId = Get-ProcessId
 
         # return object
         $return = [Hashtable]@{

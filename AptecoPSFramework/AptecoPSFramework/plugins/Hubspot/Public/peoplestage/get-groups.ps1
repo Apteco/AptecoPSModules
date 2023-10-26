@@ -43,7 +43,7 @@ function Get-Groups {
     process {
 
         # Load lists data from Hubspot
-        $groups = Get-List -LoadAllLists
+        $groups = Get-List -LoadAllLists | where-object { $_.processingType -eq "MANUAL" }
         Write-Log "Loaded $( $groups.Count ) groups from Hubspot" -severity INFO #-WriteToHostToo $false
 
         # Load and filter list into array of mailings objects
