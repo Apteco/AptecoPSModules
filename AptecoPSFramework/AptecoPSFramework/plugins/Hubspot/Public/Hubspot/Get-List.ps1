@@ -1,4 +1,4 @@
-
+﻿
 function Get-List {
 
     [CmdletBinding()]
@@ -26,7 +26,7 @@ function Get-List {
             hs_list_reference_count
             hs_list_size_week_delta
         #>
-        
+
 
         #-----------------------------------------------
         # CREATE THE BASIC BODY FIRST
@@ -44,7 +44,7 @@ function Get-List {
         If ( $Query -ne "" ) {
             $body | Add-Member -MemberType NoteProperty -Name "query" -Value $Query
         }
-        
+
 
     }
     process {

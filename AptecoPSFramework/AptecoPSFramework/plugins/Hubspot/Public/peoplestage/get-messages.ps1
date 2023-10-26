@@ -45,7 +45,7 @@ function Get-Messages {
         # Load options from the settings
         $options = $Script:settings.upload.options
         Write-Log "Loaded $( $options.Count ) options from settings" -severity INFO #-WriteToHostToo $false
-        
+
         # Transform into the first format
         $mailingsList = [System.Collections.ArrayList]@()
         $options | ForEach-Object {

@@ -2,12 +2,12 @@
     [PSCustomObject]@{
 
         # identifier for this plugin - please do not change or use this twice
-        "guid" = "a0eadcb8-0eb3-4b19-88c3-9b64b1c18e88"
+        "guid" = "a99cccda-a2e4-4ba6-b554-00f106e8b150"
 
         # general information about this plugin
         "name" = "Hubspot"
-        "version" = "0.0.2"
-        "lastUpdate" = "2023-10-25"
+        "version" = "0.1.0"
+        "lastUpdate" = "2023-10-26"
         "category" = "channel"
         "type" = "email"
         "stage" = "dev"

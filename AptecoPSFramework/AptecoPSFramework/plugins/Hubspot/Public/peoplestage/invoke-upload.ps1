@@ -236,8 +236,8 @@ function Invoke-Upload{
                     )
 
                     $validatedAddresses = @(, ( get-crmdata -Object contacts -Filter $filter )) #-properties email, firstname, lastname
-                    $v += $validatedAddresses.count                    
-                    
+                    $v += $validatedAddresses.count
+
                     # Transform the result
                     $checkedObject = [Array]@( $validatedAddresses.hs_object_id )
 
@@ -297,7 +297,7 @@ function Invoke-Upload{
                                 }
 
                             }
-                            
+
                             # Count the batches
                             $k += 1
 
@@ -378,7 +378,7 @@ function Invoke-Upload{
                     Write-Log "Removed $( $j ) records in $( $k ) batches." -severity INFO                }
 
             }
-            
+
         }
 
 

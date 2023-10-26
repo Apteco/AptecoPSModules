@@ -3,7 +3,14 @@
 
 This framework is mainly created for installing and using custom channels in Apteco Orbit and PeopleStage. The channel implementations are written in PowerShell and already implemented as "Plugins" in this module. But there is a function implemented so you can refer to your own channels that are not getting overwritten if you update this module. The development of this module is done here, but it is published through [PowerShell Gallery](https://www.powershellgallery.com/packages?q=%23apteco).
 
+# Current integrations
 
+Type|Vendor|API name|Technology|Features
+-|-|-|-|-
+Email|CleverReach|v3|REST|Tagging, Upload, Broadcast-Preparation, Broadcast, Receiver- and Response-Download
+CRM|SalesForce SalesCloud|REST/Bulk API|REST|Load CRM Data, Upload to CampaignMembers
+CRM|Hubspot|CRM API v3|REST|Download all CRM object data full/delta, Upload to Marketing Lists
+CRM|Microsoft Dynamics 365 CRM|DataVerse oData WebAPI|REST|Download all CRM object data and picklists full/delta
 
 # Installation
 

@@ -160,7 +160,7 @@ function Invoke-Hubspot {
         #>
 
         # set paging parameters
-        
+
         If ( $Paging -eq $true ) {
 
             <#
@@ -194,7 +194,7 @@ function Invoke-Hubspot {
             $res = [System.Collections.ArrayList]@()
 
         }
-        
+
 
     }
 
@@ -222,7 +222,7 @@ function Invoke-Hubspot {
         $finished = $false
         $continueAfterTokenRefresh = $false
         Do {
-            
+
             #-----------------------------------------------
             # PREPARE BODY
             #-----------------------------------------------
@@ -233,7 +233,7 @@ function Invoke-Hubspot {
                 write-verbose $bodyJson -verbose
             }
 
-            
+
             #-----------------------------------------------
             # EXECUTE THE REQUEST
             #-----------------------------------------------
@@ -319,7 +319,7 @@ function Invoke-Hubspot {
                     $content = $wr.content
                 }
             }
-            
+
             # Handle paging
             If ( $Paging -eq $true ) {
 
@@ -333,13 +333,13 @@ function Invoke-Hubspot {
                             $updatedParameters.Uri = $content.paging.next.link
                             #Write-Verbose $content.paging.next.link -verbose
                         }
-    
+
                         "POST" {
                             $Body.after = $content.paging.next.after
                         }
 
                     }
-                    
+
                 } else {
 
                     # Otherwise -> done!
@@ -351,7 +351,7 @@ function Invoke-Hubspot {
                 [void]$res.Add($content)
 
             } else {
-                                
+
                 # If this is only one request without paging -> done!
                 $finished = $true
 

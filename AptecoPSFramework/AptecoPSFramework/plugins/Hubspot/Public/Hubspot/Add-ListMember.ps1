@@ -1,4 +1,4 @@
-
+﻿
 
 function Add-ListMember {
 
@@ -14,11 +14,11 @@ function Add-ListMember {
 
     process {
 
-        
+
         #-----------------------------------------------
         # UPLOAD THE DATA
         #-----------------------------------------------
-        
+
         $records = Invoke-Hubspot -Method PUT -Object "crm" -Path "lists/$( $ListId )/memberships/add" -Body $AddMemberships
 
 

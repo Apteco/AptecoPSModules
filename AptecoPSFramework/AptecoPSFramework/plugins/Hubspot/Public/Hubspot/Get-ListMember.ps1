@@ -1,4 +1,4 @@
-
+﻿
 
 function Get-ListMember {
 
@@ -24,7 +24,7 @@ function Get-ListMember {
 
     process {
 
-        
+
         #-----------------------------------------------
         # LOAD THE DATA
         #-----------------------------------------------
@@ -34,7 +34,7 @@ function Get-ListMember {
         } else {
             $records = Invoke-Hubspot -Method GET -Object "crm" -Path "lists/$( $ListId )/memberships" -Query $query
         }
-        
+
 
         #-----------------------------------------------
         # RETURN

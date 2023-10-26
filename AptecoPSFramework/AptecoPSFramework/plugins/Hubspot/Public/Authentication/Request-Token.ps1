@@ -125,7 +125,7 @@
             #"crm.schemas.companies.read"
             #"crm.schemas.deals.read"
         )
-        
+
 
         #-----------------------------------------------
         # SET THE PARAMETERS
