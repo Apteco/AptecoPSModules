@@ -149,6 +149,10 @@ PrivateData = @{
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
 0.1.3 Changed Microsoft Dynamics Dataverse Integration to pagesize of 4500 instead of 3 for testing
+      Removed -MergeArrays flag when merging settings in module and plugin -> now the arrays from the settings file are the important ones
+      Adding hubspot to load CRM data with properties and search/filter, sync all of your data now!
+      Hubspot list upload is now implemented through a list chooser in Orbit/PeopleStage and with use of the email address
+      Changed the behaviour at Import-Settings, which looks now automatically for settings.json, otherwise you have to refer to it
 0.1.2 New hashtable variable "variableCache" for plugins to share data/variables between functions
       Fix of saving oauth settings file path in the settings.json file
       Read-Only Support for Microsoft Dynamics DataVerse Web API

@@ -49,7 +49,7 @@
         #$Script:debug = $Script:settings
         #$scriptSettings = $Script:settings.psobject.copy()
         #$extendedSettings = Add-PropertyRecurse -source $pluginSettings -toExtend $scriptSettings
-        $extendedSettings = Join-PSCustomObject -Left $pluginSettings -Right $Script:settings -AddPropertiesFromRight -MergePSCustomObjects -MergeArrays -MergeHashtables
+        $extendedSettings = Join-PSCustomObject -Left $pluginSettings -Right $Script:settings -AddPropertiesFromRight -MergePSCustomObjects -MergeHashtables #-MergeArrays
 
         # Now harmonise them if there are the same attributes with different values
         #$joinedSettings = Join-Objects -source $extendedSettings -extend $pluginSettings

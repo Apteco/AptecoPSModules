@@ -1,20 +1,23 @@
 Function Import-Settings {
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory=$true)][string]$Path
+        [Parameter(Mandatory=$false)][string]$Path = "./settings.json"
     )
 
     Process {
 
+        # Try to resolve the path
+        $absolutePath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Path)
+
         try {
 
-            If ( ( Test-Path -Path $Path -IsValid ) -eq $true ) {
+            If ( ( Test-Path -Path $absolutePath -IsValid ) -eq $true ) {
 
-                If (( Test-Path -Path $Path ) -eq $true) {
+                If (( Test-Path -Path $absolutePath ) -eq $true) {
 
                     # Load the new settings file
                     try {
-                        $settings = Get-Content -Path $Path -Encoding utf8 -Raw | ConvertFrom-Json
+                        $settings = Get-Content -Path $absolutePath -Encoding utf8 -Raw | ConvertFrom-Json
                     } catch {
                         Write-Error "There is a problem loading the settings file"
                     }
@@ -52,7 +55,7 @@ Function Import-Settings {
                     #$script:debug = $joinedSettings
 
                     try {
-                        $joinedSettings = Join-PSCustomObject -Left $Script:defaultSettings -Right $settings -AddPropertiesFromRight -MergePSCustomObjects -MergeArrays -MergeHashtables
+                        $joinedSettings = Join-PSCustomObject -Left $Script:defaultSettings -Right $settings -AddPropertiesFromRight -MergePSCustomObjects -MergeHashtables #-MergeArrays
                     } catch {
                         Write-Error -Message "Settings cannot be joined"
                     }
@@ -82,13 +85,13 @@ Function Import-Settings {
 
             } else {
 
-                Write-Error -Message "The settings file '$( $Path )' cannot be loaded."
+                Write-Error -Message "The settings file '$( $absolutePath )' cannot be loaded."
 
             }
 
         } catch {
 
-            Write-Error -Message "The path '$( $Path )' is invalid."
+            Write-Error -Message "The path '$( $absolutePath )' is invalid."
 
         }
 
