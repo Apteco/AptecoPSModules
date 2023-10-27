@@ -7,10 +7,10 @@
         # general information about this plugin
         "name" = "Hubspot"
         "version" = "0.1.0"
-        "lastUpdate" = "2023-10-26"
+        "lastUpdate" = "2023-10-27"
         "category" = "channel"
         "type" = "email"
-        "stage" = "dev"
+        "stage" = "test"
 
         # have a look at ./bin/dependencies if you need more information about how to define this
         "dependencies" = [PSCustomObject]@{

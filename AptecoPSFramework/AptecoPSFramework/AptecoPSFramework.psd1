@@ -5,7 +5,7 @@
 RootModule = 'AptecoPSFramework.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.1.3'
+ModuleVersion = '0.1.4'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -149,6 +149,7 @@ PrivateData = @{
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
 0.1.4 Changed the uploadsize from 2 to 80 for Hubspot
+      Fix for loading properties of objects other than contacts in Hubspot
 0.1.3 Changed Microsoft Dynamics Dataverse Integration to pagesize of 4500 instead of 3 for testing
       Removed -MergeArrays flag when merging settings in module and plugin -> now the arrays from the settings file are the important ones
       Adding hubspot to load CRM data with properties and search/filter, sync all of your data now!

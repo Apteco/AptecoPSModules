@@ -46,7 +46,7 @@ function Get-CRMData {
             "AllProps" {
 
                 If ( $LoadAllProperties -eq $true ) {
-                    $propertiesArray = ( get-property -Object contacts ).name
+                    $propertiesArray = ( get-property -Object $object ).name
                 } else {
                     throw "No properties used" # In theory this case shouldn't happen
                 }
