@@ -55,7 +55,7 @@ $Private = @( Get-ChildItem -Path "$( $PSScriptRoot )/Private/*.ps1" -ErrorActio
 # READ IN CONFIG FILES AND VARIABLES
 #-----------------------------------------------
 
-# ...
+$Script:rnd = [Random]::new()
 
 
 #-----------------------------------------------

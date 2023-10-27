@@ -17,7 +17,7 @@
         Use one of these encodings header names for input and output
         Especially for Pwsh7 make sure to use the HeaderName of the encoding like "Windows-1252" instead of "iso-8859-1"
         [System.Text.Encoding]::GetEncodings()
-        
+
 
         More explanation of this function and the background
 

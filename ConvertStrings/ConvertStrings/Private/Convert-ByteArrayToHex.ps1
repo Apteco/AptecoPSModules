@@ -1,4 +1,4 @@
-Function Convert-ByteArrayToHex {
+﻿Function Convert-ByteArrayToHex {
 
     <#
     .SYNOPSIS
@@ -23,7 +23,7 @@ Function Convert-ByteArrayToHex {
 
     .EXAMPLE
         Convert-ByteArrayToHex -ByteArray @(72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100)
-        
+
     .INPUTS
         Byte[]
 
@@ -41,7 +41,7 @@ Function Convert-ByteArrayToHex {
     )
 
     Process {
-        
+
         # Create StringBuilder
         $stringBuilder = [System.Text.StringBuilder]::new($ByteArray.Length * 2)
 
