@@ -73,7 +73,7 @@
     # Upload settings
     "upload" = [PSCustomObject]@{
         "countRowsInputFile" = $true
-        "uploadSize" = 300                                  # Max no of rows per batch upload call, max of 1000
+        "uploadSize" = 80                                  # Max no of rows per batch upload call, max of 1000
         "options" = [Array]@(
             [PSCustomObject]@{
                 "key" = "add"

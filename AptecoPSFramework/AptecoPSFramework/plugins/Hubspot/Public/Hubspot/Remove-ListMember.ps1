@@ -4,8 +4,8 @@ function Remove-ListMember {
 
     [CmdletBinding(DefaultParameterSetName='SingleProps')]
     param (
-         [Parameter(Mandatory=$true)][String]$ListId                            # The ILS-List-ID
-        ,[Parameter(Mandatory=$true)][Array]$RemoveMemberships = [Array]@()        # Array of IDs to remove of the marketing list
+         [Parameter(Mandatory=$true)][String]$ListId              # The ILS-List-ID
+        ,[Parameter(Mandatory=$true)][Array]$RemoveMemberships    # Array of IDs to remove of the marketing list
     )
 
     begin {

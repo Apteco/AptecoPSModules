@@ -79,7 +79,7 @@ function Invoke-Upload{
         # DEFAULT VALUES
         #-----------------------------------------------
 
-        $uploadSize = 2 # TODO put this later into settings and increase it
+        $uploadSize = $Script:settings.upload.uploadSize #2 # TODO put this later into settings and increase it
 
 
         #-----------------------------------------------

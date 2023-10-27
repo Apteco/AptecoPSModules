@@ -4,8 +4,8 @@ function Add-ListMember {
 
     [CmdletBinding(DefaultParameterSetName='SingleProps')]
     param (
-         [Parameter(Mandatory=$true)][String]$ListId                            # The ILS-List-ID
-        ,[Parameter(Mandatory=$true)][Array]$AddMemberships = [Array]@()        # Array of IDs to add to the marketing list
+         [Parameter(Mandatory=$true)][String]$ListId           # The ILS-List-ID
+        ,[Parameter(Mandatory=$true)][Array]$AddMemberships    # Array of IDs to add to the marketing list
     )
 
     begin {
@@ -14,6 +14,7 @@ function Add-ListMember {
 
     process {
 
+        # Paging is handled through the Invoke-Upload.ps1
 
         #-----------------------------------------------
         # UPLOAD THE DATA
