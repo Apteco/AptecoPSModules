@@ -13,8 +13,8 @@ function Invoke-OSM {
     
     begin {
 
-        Add-Type -AssemblyName System.Web # outcomment later
-        Import-Module ConvertStrings
+        #Add-Type -AssemblyName System.Web # outcomment later
+        #Import-Module ConvertStrings
 
         $i = 0
         $start = [datetime]::Now # fill this variable
