@@ -100,7 +100,8 @@ Function Measure-Rows {
             Exit
         }
 
-        $reader = [System.IO.StreamReader]::new($Path, $Encoding)
+        $absolutePath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Path)
+        $reader = [System.IO.StreamReader]::new($absolutePath, $Encoding)
 
         <#
         Get-Content -Path $Path -ReadCount 1000 | ForEach {
