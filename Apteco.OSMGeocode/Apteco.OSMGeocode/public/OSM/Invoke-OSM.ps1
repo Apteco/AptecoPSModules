@@ -65,7 +65,7 @@ function Invoke-OSM {
         #-----------------------------------------------
 
         $global:nvCollection = [System.Web.HttpUtility]::ParseQueryString([String]::Empty) #, [System.Text.Encoding]::UTF8)
-        $Address.PSObject.Properties | ForEach-Object {
+        $Address.PSObject.Properties | where-object { $_.Name -in $Script:allowedQueryParameters } | ForEach-Object {
             $nvCollection.Add( $_.Name, $_.Value )
         }
 
@@ -159,15 +159,11 @@ function Invoke-OSM {
         If ( $AddMetaData -eq $true ) {
 
             # Build hash value
-            $inputStringToHash = [System.Text.StringBuilder]::new()        
-            $Address.PSObject.Properties | ForEach-Object {
-                $prop = $_.Name
-                [void]$inputStringToHash.Append( $Address.$prop.toLower() )
-            }
-            $hashedInput = Get-StringHash -salt "" -InputString $inputStringToHash.ToString() -HashName "sha256"
+            $hashedInput = Get-AddressHash -Address $Address
 
             [PSCustomObject]@{
                 "inputHash" = $hashedInput
+                "inputObject" = $Address
                 "results" = $ret
                 "total" = $res.count
             }

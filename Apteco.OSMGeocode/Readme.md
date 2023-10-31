@@ -85,3 +85,44 @@ If you get error messages during the import, that is normal, because there are m
 ```PowerShell
 Install-AptecoOSMGeocode -Verbose
 ```
+
+
+
+
+
+
+You can get and set other query parameters via 
+
+```PowerShell
+$g = Get-AllowedQueryParameter # default is: street, city, postalcode, countrycodes
+$g += "wow"
+Set-AllowedQueryParameter $g
+```
+
+
+# Quickstart
+
+```PowerShell
+
+# Import your module
+Import-module Apteco.OSMGeocode
+
+# Import some address data and filter it
+$c = Import-Csv '.\ac_adressen(2).csv' -Encoding UTF8 -Delimiter "," | Select -first 10
+
+# Map your columns from the original data to the needed parameters
+# The original parameters can be requested via Get-AllowedQueryParameter
+$mapping = @(
+    @{name="street";expression={ $_.adresse }}
+    @{name="city";expression={ "Aachen" }}
+    @{name="postalcode";expression={ $_.plz }}
+    @{name="countrycodes";expression={ "de" }}
+)
+
+# Calculate and show your result
+$c | select $mapping | Add-HashColumn
+
+# To calculate your addresses, use
+$results = $c | select $mapping | invoke-osm -UserAgent "testuser@example.com" -AddressDetails -ExtraTags -ReturnOnlyFirstPosition -AddMetaData -verbose
+$results | Out-GridView
+```

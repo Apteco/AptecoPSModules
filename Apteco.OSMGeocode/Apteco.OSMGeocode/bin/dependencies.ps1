@@ -7,6 +7,7 @@ $psScripts = [Array]@(
 $psModules = [Array]@(
     "WriteLog"
     "SimplySql"
+    "ConvertStrings"
     #"MeasureRows"
     #"EncryptCredential"
     #"ExtendFunction"

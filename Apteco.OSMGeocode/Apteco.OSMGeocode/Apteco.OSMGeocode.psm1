@@ -135,11 +135,14 @@ New-Variable -Name timestamp -Value $null -Scope Script -Force      # Start time
 New-Variable -Name logDivider -Value $null -Scope Script -Force     # String of dashes to use in logs
 New-Variable -Name moduleRoot -Value $null -Scope Script -Force     # Current location root of this module
 New-Variable -Name debug -Value $null -Scope Script -Force          # Debug variable where you can put in any variables to read after executing the script, good for debugging
+New-Variable -Name allowedQueryParameters -Value $null -Scope Script -Force          # Debug variable where you can put in any variables to read after executing the script, good for debugging
+
 
 # Set the variables now
 $Script:timestamp = [datetime]::Now
 $Script:logDivider = "----------------------------------------------------" # String used to show a new part of the log
 $Script:moduleRoot = $PSScriptRoot.ToString()
+$Script:allowedQueryParameters = @("street", "city", "postalcode","countrycodes") # TODO maybe put these into settings, if needed
 
 
 #-----------------------------------------------
