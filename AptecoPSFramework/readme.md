@@ -121,6 +121,8 @@ Install-AptecoPSFramework
 
 More information about the update is in the installation section above.
 
+If the channel does not work after an update, you should try to restart the FastStats service.
+
 ### Uninstall
 
 If you don't want to use the script anymore, just remove it with 
@@ -382,6 +384,8 @@ Path|Setting|Default|Explanation
 
 # Errors
 
+## Die Eingabezeichenfolge hat das falsche Format.
+
 When you get this error
 
 ```PowerShell
@@ -396,10 +400,13 @@ Please install a newer version of `PowerShellGet`
 Install-Module PowerShellGet -Force -AllowClobber
 ```
 
+## Channel not working after update
+
+Please restart your FastStats service if you have problems after an update.
 
 # TODO / TEST
 
 - [x] support external plugin folder => done! Test it!
-- [ ] implement dependencies
-- [ ] Add more explanations for settings
+- [x] implement dependencies
+- [x] Add more explanations for settings
 - [ ] Add a hint that you should create one channel per table level
