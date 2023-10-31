@@ -199,3 +199,266 @@ Remove-ListMember -ListId 355 -AddMemberships 463451
 
 ```
 
+# Example for loading Hubspot data and properties into a SQLITE
+
+```PowerShell
+
+
+try {
+
+    #-----------------------------------------------
+    # PREPARATION
+    #-----------------------------------------------
+
+    # Load module, settings and plugin
+    Set-Location -Path "D:\Apteco\Build\Hubspot\preload\HubspotExtract_v2" #"D:\Scripts\AptecoPSFramework_HubspotLoadData"
+    Import-Module AptecoPSFramework, SimplySql, WriteLog
+    Import-Settings "D:\Scripts\AptecoPSFramework_HubspotLoadData\settings.json"
+
+    # Hubspot settings
+    $objectsToLoad = [array]@( "companies" , "contacts", "deals", "notes", "meetings", "tasks", "calls" )
+
+    # Database settings
+    $dbname = "D:\Apteco\Build\Hubspot\data\hubspot_v2.sqlite"
+    $backupDb = "$( $dbname ).$( [datetime]::Now.toString("yyyyMMddHHmmss") )"
+
+    # Other settings
+    Set-Logfile ".\hubspot.log"
+
+    # Current time
+    $startTime = [DateTime]::Now
+
+
+    #-----------------------------------------------
+    # CHECK DATABASE
+    #-----------------------------------------------
+
+    # Rename existing database
+    If ( ( Test-Path -Path $dbname ) -eq $true ) {
+        Move-Item -Path $dbname -Destination $backupDb
+    }
+
+    # Make connection to a new database
+    Open-SQLiteConnection -DataSource $dbname
+
+    # Create table and define query
+    Invoke-SqlUpdate -Query "CREATE TABLE items (object TEXT, id INTEGER, properties TEXT, createdAt TEXT, updatedAt TEXT, archived TEXT, associations TEXT)" | Out-Null
+    $insertQuery = "INSERT INTO items (object, id, properties, createdAt, updatedAt, archived, associations) VALUES (@object, @id, @properties, @createdAt, @updatedAt, @archived, @associations)"
+
+
+    #-----------------------------------------------
+    # LOAD HUBSPOT DATA AND LOAD INTO NEW DATABASE
+    #-----------------------------------------------
+
+    [int]$recordsInsertedTotal = 0
+    Write-Log "Loading and inserting data"
+    $objectsToLoad | ForEach-Object {
+        
+        # Use the current object and reset the counter
+        $object = $_
+        [int]$recordsInserted = 0
+        
+        Start-Transaction
+
+        # Load data from Hubspot
+        Get-CRMData -Object $object -LoadAllProperties -AddWrapper -LoadAllRecords -Associations companies, contacts | ForEach-Object {
+            $params = [Hashtable]@{
+                "id" = $_.id
+                "object" = $object
+                "properties" = Convertto-json -InputObject $_.properties -Depth 99
+                "createdAt" = $_.createdAt
+                "updatedAt" = $_.updatedAt
+                "archived" = $_.archived
+                "associations" = Convertto-json -InputObject $_.associations -Depth 99
+            }
+            $recordsInserted += Invoke-SqlUpdate -Query $insertQuery -Parameters $params #| Out-Null
+        }
+
+        If ( $recordsInserted -gt 0 ) {
+            Complete-Transaction
+        }
+
+        $recordsInsertedTotal += $recordsInserted
+
+        Write-Log "  $( $object ): $( $recordsInserted )"
+
+    }
+
+    Write-Log "Inserted $( $recordsInsertedTotal ) in total"
+
+    <#
+    # Load main data from Hubspot
+    $companies = Get-CRMData -Object companies -LoadAllProperties -AddWrapper -limit 10 #-LoadAllRecords
+    $contacts = Get-CRMData -Object contacts -LoadAllProperties -AddWrapper -Associations companies -limit 10 #-LoadAllRecords
+    $deals = Get-CRMData -Object deals -LoadAllProperties -AddWrapper -Associations companies, contacts -limit 10
+
+    # Load engagement data
+    $notes = Get-CRMData -Object notes -LoadAllProperties -AddWrapper -Associations companies, contacts -limit 10
+    $meetings = Get-CRMData -Object meetings -LoadAllProperties -AddWrapper -Associations companies, contacts -limit 10
+    $tasks = Get-CRMData -Object tasks -LoadAllProperties -AddWrapper -Associations companies, contacts -limit 10
+    $calls = Get-CRMData -Object calls -LoadAllProperties -AddWrapper -Associations companies, contacts -limit 10
+    #$communications = Get-CRMData -Object communications -LoadAllProperties -AddWrapper -Associations companies, contacts -limit 10
+    #$emails = Get-CRMData -Object emails -LoadAllProperties -AddWrapper -Associations companies, contacts -limit 10
+    #>
+
+
+    #-----------------------------------------------
+    # LOAD PROPERTIES
+    #-----------------------------------------------
+
+    # Create table and define query
+    Invoke-SqlUpdate -Query "CREATE TABLE properties (object TEXT, updatedAt TEXT, createdAt TEXT, name TEXT, label TEXT, type TEXT, fieldType TEXT, description TEXT, groupName TEXT, options TEXT, displayOrder INTEGER, calculated TEXT, externalOptions TEXT, hasUniqueValue TEXT, hidden TEXT, hubspotDefined TEXT, showCurrencySymbol TEXT, modificationMetadata TEXT, formField TEXT, calculationFormula TEXT)" | Out-Null
+    $insertQuery = "INSERT INTO properties (object, updatedAt, createdAt, name, label, type, fieldType, description, groupName, options, displayOrder, calculated, externalOptions, hasUniqueValue, hidden, hubspotDefined, showCurrencySymbol, modificationMetadata, formField, calculationFormula) VALUES (@object, @updatedAt, @createdAt, @name, @label, @type, @fieldType, @description, @groupName, @options, @displayOrder, @calculated, @externalOptions, @hasUniqueValue, @hidden, @hubspotDefined, @showCurrencySymbol, @modificationMetadata, @formField, @calculationFormula)"
+
+    [int]$recordsInsertedTotal = 0
+    Write-Log "Loading and inserting properties"
+    $objectsToLoad | ForEach-Object {
+        
+        # Use the current object and reset the counter
+        $object = $_
+        [int]$recordsInserted = 0
+        
+        Start-Transaction
+
+        # Load data from Hubspot
+        Get-Property -Object $object | ForEach-Object {
+            $params = [Hashtable]@{
+                "object" = $object
+                "updatedAt" = $_.updatedAt
+                "createdAt" = $_.createdAt
+                "name" = $_.name
+                "label" = $_.label
+                "type" = $_.type
+                "fieldType" = $_.fieldType
+                "description" = $_.description
+                "groupName" = $_.groupName
+                "options" = Convertto-json -InputObject $_.options -Depth 99
+                "displayOrder" = $_.displayOrder
+                "calculated" = $_.calculated
+                "externalOptions" = $_.externalOptions
+                "hasUniqueValue" = $_.hasUniqueValue
+                "hidden" = $_.hidden
+                "hubspotDefined" = $_.hubspotDefined
+                "showCurrencySymbol" = $_.showCurrencySymbol
+                "modificationMetadata" = Convertto-json -InputObject $_.modificationMetadata -Depth 99
+                "formField" = $_.formField
+                "calculationFormula" = $_.calculationFormula
+            }
+            $recordsInserted += Invoke-SqlUpdate -Query $insertQuery -Parameters $params #| Out-Null
+        }
+
+        If ( $recordsInserted -gt 0 ) {
+            Complete-Transaction
+        } else {
+            Stop-Transaction
+        }
+
+        $recordsInsertedTotal += $recordsInserted
+
+        Write-Log "  $( $object ): $( $recordsInserted )"
+
+    }
+
+
+    #-----------------------------------------------
+    # CHECK AND CLOSE CONNECTION
+    #-----------------------------------------------
+
+    $itemsCount = Invoke-SqlScalar -Query "SELECT count(*) FROM items"
+    $propertiesCount = Invoke-SqlScalar -Query "SELECT count(*) FROM properties"
+
+    Write-Log "Confirmed $( $itemsCount ) items"
+    Write-Log "Confirmed $( $propertiesCount ) properties"
+
+
+    #-----------------------------------------------
+    # MEASURE
+    #-----------------------------------------------
+
+    $ts = New-TimeSpan -Start $startTime -End ( [DateTime]::Now )
+
+    Write-Log "Needed $( $ts.TotalSeconds ) in total" -severity INFO
+
+
+    #-----------------------------------------------
+    # REMOVE DATABASE
+    #-----------------------------------------------
+
+    # Rename existing database
+    If ( ( Test-Path -Path $backupDb ) -eq $true ) {
+        Remove-Item -Path $backupDb
+    }
+
+
+    #-----------------------------------------------
+    # GENERATE QUERIES TO USE
+    #-----------------------------------------------
+
+    #Invoke-SqlQuery -Query "SELECT id, createdAt, updatedAt FROM items where item = 'contacts' limit 10" | Out-GridView
+
+
+    $objectsToLoad | ForEach-Object {
+        
+        # Use the current object and reset the counter
+        $object = $_
+
+        $objectProperties = Invoke-SqlQuery -Query "SELECT name, label FROM properties where object = '$( $object )'" #| Out-GridView
+
+        $propsList = [System.Collections.ArrayList]@()
+        $objectProperties | ForEach-Object {
+            [void]$propsList.add("  json_extract(i.properties, '$.$( $_.name )') ""$( $_.label.replace('"','').replace("'",'') )""")
+        }
+
+        # General query for the object/table
+        $queryString = [System.Text.StringBuilder]::new()        
+        [void]$queryString.Append( "SELECT" )
+        [void]$queryString.AppendLine( "  id, createdAt, updatedAt, archived," )
+        [void]$queryString.AppendLine( "$(( $propsList -join ", `r`n" ))" )
+        [void]$queryString.AppendLine( "FROM items i where object = '$( $object )'" )
+        $queryString.toString() | Set-Content ".\query_$( $object ).sql" -Encoding UTF8 -force
+
+        # Lookup queries
+        $queryLookups = @"
+            SELECT p.name
+            , json_extract(j.value, '$.value') code
+            , json_extract(j.value, '$.label') description
+        FROM properties p
+            , json_each(p.options) j
+        WHERE p.OBJECT = '$( $object )'
+            AND p.fieldType = 'select'
+            AND json_extract(j.value, '$.value') IS NOT NULL
+            AND json_extract(j.value, '$.value') != ''
+            AND json_extract(j.value, '$.hidden') = 0
+            AND p.name IS NOT NULL
+        ORDER BY name
+            , json_extract(j.value, '$.displayOrder')
+"@
+
+        $objectLookups = Invoke-SqlQuery -Query $queryLookups
+
+        $objectLookups | group name | ForEach-Object {
+            $name = $_.name
+            $queryLookups -replace ("p.name IS NOT NULL", "p.name = '$( $name )'") | Set-Content ".\lookup_$( $object )_$( $name ).sql" -Encoding UTF8 -force
+        }
+
+
+    }
+
+} catch {
+
+    Write-Log $_.Exception -severity ERROR
+    throw $_.Exception
+
+} finally {
+
+    #-----------------------------------------------
+    # CLOSE THE CONNECTION
+    #-----------------------------------------------
+
+    Close-SqlConnection
+
+}
+
+
+
+```
