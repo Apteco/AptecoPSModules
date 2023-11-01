@@ -6,8 +6,8 @@
 
         # general information about this plugin
         "name" = "CleverReach"
-        "version" = "0.1.2"
-        "lastUpdate" = "2023-10-16"
+        "version" = "0.1.3"
+        "lastUpdate" = "2023-11-01"
         "category" = "channel"
         "type" = "email"
         "stage" = "test"

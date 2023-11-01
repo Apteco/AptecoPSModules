@@ -148,6 +148,8 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.1.5 Fixed a problem in CleverReach when reading and parsing the headers from the csv
+      Improved the CleverReach logging when something aborts
 0.1.4 Changed the uploadsize from 2 to 80 for Hubspot
       Fix for loading properties of objects other than contacts in Hubspot
 0.1.3 Changed Microsoft Dynamics Dataverse Integration to pagesize of 4500 instead of 3 for testing

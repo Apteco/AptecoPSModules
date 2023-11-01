@@ -89,6 +89,9 @@ function Invoke-Upload{
         # Currently CleverReach support 40 attributes
         $maxAttributesCount = 40
 
+        # Initiate row counter
+        $i = 0  # row counter
+
 
         #-----------------------------------------------
         # CHECK INPUT FILE
@@ -254,7 +257,7 @@ function Invoke-Upload{
             #-----------------------------------------------
 
             # Read first 100 rows
-            $deliveryFileHead = Get-Content -Path $file.FullName -ReadCount 100 -TotalCount 201 -Encoding utf8
+            $deliveryFileHead = Get-Content -Path $file.FullName -TotalCount 201 -Encoding UTF8
             $deliveryFileCsv =  ConvertFrom-Csv $deliveryFileHead -Delimiter "`t"
 
             $headers = [Array]@( $deliveryFileCsv[0].psobject.properties.name )
@@ -797,7 +800,7 @@ function Invoke-Upload{
 
         } catch {
 
-            $msg = "Error during uploading data in line $( $_.InvocationInfo.ScriptLineNumber ). Abort!"
+            $msg = "Error during uploading data in code line $( $_.InvocationInfo.ScriptLineNumber ). Reached record $( $i ) Abort!"
             Write-Log -Message $msg -Severity ERROR -WriteToHostToo $false
             Write-Log -Message $_.Exception -Severity ERROR
             throw $_.Exception
