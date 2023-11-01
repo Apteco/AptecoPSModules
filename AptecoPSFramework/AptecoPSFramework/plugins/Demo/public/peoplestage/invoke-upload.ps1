@@ -245,7 +245,7 @@ function Invoke-Upload{
             #-----------------------------------------------
 
             # Read first 100 rows
-            $deliveryFileHead = Get-Content -Path $file.FullName -ReadCount 100 -TotalCount 201 -Encoding utf8
+            $deliveryFileHead = Get-Content -Path $file.FullName -TotalCount 201 -Encoding utf8
             $deliveryFileCsv =  ConvertFrom-Csv $deliveryFileHead -Delimiter "`t"
 
             $headers = [Array]@( $deliveryFileCsv[0].psobject.properties.name )
