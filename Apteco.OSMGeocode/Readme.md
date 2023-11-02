@@ -108,11 +108,12 @@ Set-AllowedQueryParameter $g
 Import-module Apteco.OSMGeocode
 
 # Import some address data and filter it
-$c = Import-Csv '.\ac_adressen(2).csv' -Encoding UTF8 -Delimiter "," | Select -first 10
+$c = Get-Content -Path '.\ac_adressen(2).csv' -Encoding UTF8 -TotalCount 1000 | ConvertFrom-Csv -Delimiter ","
 
 # Map your columns from the original data to the needed parameters
 # The original parameters can be requested via Get-AllowedQueryParameter
 $mapping = @(
+    @{name="id";expression={ $_.FID }}
     @{name="street";expression={ $_.adresse }}
     @{name="city";expression={ "Aachen" }}
     @{name="postalcode";expression={ $_.plz }}
@@ -120,7 +121,7 @@ $mapping = @(
 )
 
 # Calculate and show your result
-$c | select $mapping | Add-HashColumn
+$hashedAddresses = $c | select $mapping | Add-HashColumn -AddToHashCache
 
 # To calculate your addresses, use
 $results = $c | select $mapping | invoke-osm -UserAgent "testuser@example.com" -AddressDetails -ExtraTags -ReturnOnlyFirstPosition -AddMetaData -verbose
