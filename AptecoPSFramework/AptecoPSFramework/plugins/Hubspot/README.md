@@ -95,6 +95,25 @@ Herr   2020-06-18T06:40:47.992Z ex.ample@example.com             41101        20
        2019-03-14T16:17:54.478Z abcdef.ddfasdf@ggg.de            108802       2023-08-07T09:50:06.778Z
        2019-03-14T16:17:54.507Z lkdhsa.aslsie@abc.de             108804       2023-08-07T09:50:09.493Z
 
+
+# Load all records with associations, so for every extension you add on the list, a new column will be created
+# and it will be either $null or filled with an id
+Get-CRMData -Object contacts -LoadAllRecords -Properties firstname -Associations companies -ExtendAssociations "contact_to_company"
+
+createdate               hs_object_id lastmodifieddate         contact_to_company
+----------               ------------ ----------------         ------------------
+2020-06-18T06:40:47.992Z 41101        2023-10-19T14:39:15.495Z 7981616015
+2019-03-14T16:17:54.478Z 108802       2023-08-07T09:50:06.778Z
+2019-03-14T16:17:54.507Z 108804       2023-08-07T09:50:09.493Z
+2019-03-14T16:17:54.457Z 108852       2023-10-16T14:25:46.942Z 10944278300
+2019-03-14T16:17:54.490Z 109251       2023-08-07T10:30:02.657Z
+2019-03-14T16:17:54.858Z 109552       2023-08-07T10:30:12.820Z
+2019-03-14T16:17:54.938Z 109602       2023-08-07T09:50:19.458Z
+2019-04-04T09:00:28.040Z 173101       2023-08-07T10:30:01.473Z 9015900279
+2019-04-16T09:23:55.665Z 185901       2023-08-07T10:30:13.103Z
+2019-04-16T12:59:13.701Z 200652       2023-10-13T09:56:21.754Z 4764279460
+
+
 # To get the wrapped data (like it is sent from hubspot) just add the flag -AddWrapper, shwon as a list
 get-crmdata -Object contacts -Properties anrede, email -limit 3 -AddWrapper | fl
 
