@@ -18,7 +18,7 @@ Calling with one of the Flags, just does this part
         # LOAD DEPENDENCY VARIABLES
         #-----------------------------------------------
 
-        . "$( $Script:moduleRoot )/bin/dependencies.ps1"
+        . $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath("$( $Script:moduleRoot )/bin/dependencies.ps1")
 
 
         #-----------------------------------------------
