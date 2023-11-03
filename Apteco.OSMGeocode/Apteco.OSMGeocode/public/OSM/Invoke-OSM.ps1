@@ -2,16 +2,36 @@
 function Invoke-OSM {
     [CmdletBinding()]
     param (
+
+        # Input parameter
          [Parameter(Mandatory = $true, ValueFromPipeline = $true)][PSCustomObject]$Address  # the address to geocode (should include street, city, postalcode, countrycodes)
-        ,[Parameter(Mandatory = $true)][String]$UserAgent                                   # the useragent is a kind of identification for the current process
+        ,[Parameter(Mandatory = $true)][String]$Email                                       # the email is a kind of useragent for identification for the current process
         ,[Parameter(Mandatory = $false)][String]$ResultsLanguage = "de"                     # language for the results
+        ,[Parameter(Mandatory = $false)][Switch]$ExcludeKnownHashes = $false                # this parameter leads to exclude hashes that are already in the cache
+                                                                                            # Be aware, that this parameter kills known records that come in
+                                                                                            # so if your input is a combination of id and address, this object won't
+                                                                                            # be forwarded for known addresses
+
+        # More OSM data
         ,[Parameter(Mandatory = $false)][Switch]$AddressDetails = $false                    # load more details from osm
         ,[Parameter(Mandatory = $false)][Switch]$ExtraTags = $false                         # load extra tags from osm
+        ,[Parameter(Mandatory = $false)][Switch]$NameDetails = $false                       # load name details from osm like opening hours etc.
+
+        # Options for return
         ,[Parameter(Mandatory = $false)][Switch]$ReturnOnlyFirstPosition = $false           # if there are multiple addresses in the result, return only the entry at position 1
         ,[Parameter(Mandatory = $false)][Switch]$AddMetaData = $false                       # wraps the result with more metadata
+        ,[Parameter(Mandatory = $false)][Switch]$AddToHashCache = $false                    # Directly puts the new hash value into the cache so it can be used to exclude some records
+        ,[Parameter(Mandatory = $false)][Switch]$ReturnHashTable = $false                   # Instead of PSCustomObject, only works together with -AddMetaData
+        ,[Parameter(Mandatory = $false)][Switch]$ReturnJson = $false                        # Formats the returned addresses as json rather than PSCustomObjects, only works together with -AddMetaData
+
     )
     
     begin {
+
+        #-----------------------------------------------
+        # START
+        #-----------------------------------------------
+
 
         #Add-Type -AssemblyName System.Web # outcomment later
         #Import-Module ConvertStrings
@@ -22,7 +42,7 @@ function Invoke-OSM {
         $maxMillisecondsPerRequest = 1000 #$settings.millisecondsPerRequest
         #Write-Log "Will create 1 request per $( $maxMillisecondsPerRequest ) milliseconds" -Severity VERBOSE
 
-        $base = "https://nominatim.openstreetmap.org/"
+        $base = "https://nominatim.openstreetmap.org/" # TODO put this into settings
 
         If ( $AddressDetails -eq $true ) {
             $loadAddressDetails = 1
@@ -35,6 +55,20 @@ function Invoke-OSM {
         } else {
             $loadExtraTags = 0
         }
+
+        If ( $NameDetails -eq $true ) {
+            $loadNameDetails = 1
+        } else {
+            $loadNameDetails = 0
+        }
+
+
+        #-----------------------------------------------
+        # VALIDATE EMAIL
+        #-----------------------------------------------
+
+        # This throws an exception, if it is not able to parse it
+        $emailAddress = [mailaddress]$Email
 
 
         #-----------------------------------------------
@@ -61,166 +95,173 @@ function Invoke-OSM {
     process {
 
         #-----------------------------------------------
-        # PREPARE QUERY
+        # BUILD THE HASH OF ADDRESS
         #-----------------------------------------------
 
-        $global:nvCollection = [System.Web.HttpUtility]::ParseQueryString([String]::Empty) #, [System.Text.Encoding]::UTF8)
-        $Address.PSObject.Properties | where-object { $_.Name -in $Script:allowedQueryParameters } | ForEach-Object {
-            $nvCollection.Add( $_.Name, $_.Value )
-        }
-
-        # Create address parameter string like streetSchaumainkai%2087&city=Frankfurt&postalcode=60589&countrycodes=de
-        # $addrParams = [System.Collections.ArrayList]@()
-        # $paramMap.Keys | ForEach {
-        #     $key = $_
-        #     $value = $addr[$paramMap[$key]]
-        #     [void]$addrParams.add("$( $key )=$( [uri]::EscapeDataString($value) )")
-        # }
+        # Build hash value
+        $hashedInput = Get-AddressHash -Address $Address
 
 
         #-----------------------------------------------
-        # ADD MORE TO QUERY
+        # CHECK IF THIS REQUEST SHOULD BE DONE
         #-----------------------------------------------
 
-        $nvCollection.Add( "format", "jsonv2" )
-        $nvCollection.Add( "accept-language", $ResultsLanguage )
-        $nvCollection.Add( "addressdetails", $loadAddressDetails )
-        $nvCollection.Add( "extratags", $loadExtraTags )
+        If ( $ExcludeKnownHashes -eq $false -or ( $ExcludeKnownHashes -eq $true -and $Script:knownHashes -notcontains $hashedInput )) {
 
 
-        #-----------------------------------------------
-        # PREPARE URL
-        #-----------------------------------------------
+            #-----------------------------------------------
+            # PREPARE QUERY
+            #-----------------------------------------------
 
-        $uriRequest = [System.UriBuilder]::new("$( $base )search")
-        $uriRequest.Query = [System.Web.HttpUtility]::UrlDecode( $nvCollection.ToString() )
-        # Using an alternative way becaue umlauts can create massive problems in queries
-        # $queryArray = [Array]@()
-        # $nvCollection.GetEnumerator() | ForEach-Object {
-        #     $key = $_
-        #     $queryArray += "$( $key )=$( [uri]::EscapeDataString( $nvCollection[$key] ) )"
-        # }
-        # $uriRequest.Query = $queryArray -join "&"
-
-
-        #-----------------------------------------------
-        # LOOP THROUGH DATA
-        #-----------------------------------------------
-
-        # Parameters for call
-        $restParams = @{
-            #"Uri" = $uriRequest.Uri.OriginalString
-            "Method" = "Get"
-            "UserAgent" = $UserAgent #$script:settings.useragent
-            "ContentType" = "application/json; charset=utf-8"
-            #Verbose = $false
-        }
-
-        # Wait until 1 second is full, then proceed
-        # This is only relevant for all calls after the first one
-        If ( $i -gt 0) {            
-            $ts = New-TimeSpan -Start $start -End ( [datetime]::Now )
-            if ( $ts.TotalMilliseconds -lt $maxMillisecondsPerRequest ) {
-                $waitLonger = [math]::ceiling( $maxMillisecondsPerRequest - $ts.TotalMilliseconds )
-                Write-Verbose "Waiting $( $waitLonger ) ms"
-                Start-Sleep -Milliseconds $waitLonger
-            }
-        }
-
-        Write-Verbose $uriRequest.Uri.OriginalString
-
-        # Request to OSM
-        $start = [datetime]::Now
-        $t = Measure-Command {
-            # TODO [ ] possibly implement proxy, if needed
-            # TODO add try catch here
-            $res = Invoke-RestMethod -Uri $uriRequest.Uri.OriginalString @restParams
-        }
-        $i += 1
-        
-        #$pl = ConvertTo-Json -InputObject $res -Depth 99 -Compress
-        
-
-        #-----------------------------------------------
-        # DECIDE TO RETURN WHOLE RESULT OR FIRST ENTRY
-        #-----------------------------------------------
-
-        If ( $ReturnOnlyFirstPosition -eq $true ) {
-            $ret = $res[0]
-        } else {
-            $ret = $res
-        }
-
-
-        #-----------------------------------------------
-        # RETURN RAW OR ADD SOME METADATA
-        #-----------------------------------------------
-
-        If ( $AddMetaData -eq $true ) {
-
-            # Build hash value
-            $hashedInput = Get-AddressHash -Address $Address
-
-            [PSCustomObject]@{
-                "inputHash" = $hashedInput
-                "inputObject" = $Address
-                "results" = $ret
-                "total" = $res.count
+            $global:nvCollection = [System.Web.HttpUtility]::ParseQueryString([String]::Empty) #, [System.Text.Encoding]::UTF8)
+            $Address.PSObject.Properties | where-object { $_.Name -in $Script:allowedQueryParameters } | ForEach-Object {
+                $nvCollection.Add( $_.Name, $_.Value )
             }
 
-        } else {
+            # Create address parameter string like streetSchaumainkai%2087&city=Frankfurt&postalcode=60589&countrycodes=de
+            # $addrParams = [System.Collections.ArrayList]@()
+            # $paramMap.Keys | ForEach {
+            #     $key = $_
+            #     $value = $addr[$paramMap[$key]]
+            #     [void]$addrParams.add("$( $key )=$( [uri]::EscapeDataString($value) )")
+            # }
 
-            $ret
+
+            #-----------------------------------------------
+            # ADD MORE TO QUERY
+            #-----------------------------------------------
+
+            # refers to: https://nominatim.org/release-docs/latest/api/Search/
+            $nvCollection.Add( "format", "jsonv2" )
+            $nvCollection.Add( "layer", "address" )
+            #$nvCollection.Add( "featureType", "city" )
+            $nvCollection.Add( "dedupe", "1" )
+            $nvCollection.Add( "debug", "0" )
+
+            $nvCollection.Add( "accept-language", $ResultsLanguage )
+            $nvCollection.Add( "addressdetails", $loadAddressDetails )
+            $nvCollection.Add( "extratags", $loadExtraTags )
+            $nvCollection.Add( "namedetails", $loadNameDetails )
+            $nvCollection.Add( "email", $emailAddress.Address )
+
+
+            #-----------------------------------------------
+            # PREPARE URL
+            #-----------------------------------------------
+
+            $uriRequest = [System.UriBuilder]::new("$( $base )search")
+            $uriRequest.Query = [System.Web.HttpUtility]::UrlDecode( $nvCollection.ToString() )
+            # Using an alternative way becaue umlauts can create massive problems in queries
+            # $queryArray = [Array]@()
+            # $nvCollection.GetEnumerator() | ForEach-Object {
+            #     $key = $_
+            #     $queryArray += "$( $key )=$( [uri]::EscapeDataString( $nvCollection[$key] ) )"
+            # }
+            # $uriRequest.Query = $queryArray -join "&"
+
+
+            #-----------------------------------------------
+            # LOOP THROUGH DATA
+            #-----------------------------------------------
+
+            # Parameters for call
+            $restParams = @{
+                "Uri" = $uriRequest.Uri.OriginalString
+                "Method" = "GET"
+                "UserAgent" = $emailAddress.Address #$script:settings.useragent
+                "ContentType" = "application/json; charset=utf-8"
+                #Verbose = $false
+            }
+
+            # Wait until 1 second is full, then proceed
+            # This is only relevant for all calls after the first one
+            If ( $i -gt 0) {            
+                $ts = New-TimeSpan -Start $start -End ( [datetime]::Now )
+                if ( $ts.TotalMilliseconds -lt $maxMillisecondsPerRequest ) {
+                    $waitLonger = [math]::ceiling( $maxMillisecondsPerRequest - $ts.TotalMilliseconds )
+                    Write-Verbose "Waiting $( $waitLonger ) ms"
+                    Start-Sleep -Milliseconds $waitLonger
+                }
+            }
+
+            Write-Verbose $uriRequest.Uri.OriginalString
+
+            # Request to OSM
+            $start = [datetime]::Now
+            $t = Measure-Command {
+                # TODO [ ] possibly implement proxy, if needed
+                # TODO add try catch here
+                $res = Invoke-RestMethod @restParams #-Uri $uriRequest.Uri.OriginalString
+            }
+            $i += 1
+            
+            #$pl = ConvertTo-Json -InputObject $res -Depth 99 -Compress
+            
+
+            #-----------------------------------------------
+            # DECIDE TO RETURN WHOLE RESULT OR FIRST ENTRY
+            #-----------------------------------------------
+
+            If ( $ReturnOnlyFirstPosition -eq $true ) {
+                $ret = $res[0]
+            } else {
+                $ret = $res
+            }
+
+            #-----------------------------------------------
+            # CACHE HASHVALUE
+            #-----------------------------------------------
+
+            If ( $AddToHashCache -eq $true ) {
+                Add-ToHashCache -InputHash $hashedInput
+            }
+
+
+            #-----------------------------------------------
+            # RETURN RAW OR ADD SOME METADATA
+            #-----------------------------------------------
+
+            If ( $AddMetaData -eq $true ) {
+
+                If ( $ReturnJson -eq $true ) {
+                    $returnAddress = ConvertTo-Json -InputObject $Address -Depth 99
+                    $returnResults = ConvertTo-Json -InputObject $ret -Depth 99
+                } else {
+                    $returnAddress = $Address
+                    $returnResults = $ret
+                }
+                
+
+                If ( $ReturnHashTable -eq $true ) {
+                    [Hashtable]@{
+                        "inputHash" = $hashedInput
+                        "inputObject" = $returnAddress
+                        "results" = $returnResults
+                        "total" = $res.count
+                    }
+                } else {
+                    [PSCustomObject]@{
+                        "inputHash" = $hashedInput
+                        "inputObject" = $returnAddress
+                        "results" = $returnResults
+                        "total" = $res.count
+                    }
+                }
+
+                
+
+            } else {
+
+                $ret
+
+            }
 
         }
-        
-
-        
-
-        
-
 
     }
     
     end {
         
     }
+
 }
-
-
-# Geocode a single address
-<#
-$addr = [PSCustomObject]@{
-    "street" = "Schaumainkai 87"
-    "city" = "Frankfurt"
-    "postalcode" = 60589
-    "countrycodes" = "de"
-}
-
-Invoke-OSM -Address $addr -UserAgent "florian.von.bracht@apteco.de" -AddressDetails -ExtraTags -verbose
-# OR
-$addr | Invoke-OSM -UserAgent "florian.von.bracht@apteco.de" -AddressDetails -ExtraTags -verbose
-#>
-
-
-# Geocode a multiple addresses, but be aware, there could be problems with the encoding if not reading directly from databases or files
-<#
-$addresses = @(
-    [PSCustomObject]@{
-        "street" = "Schaumainkai 87"
-        "city" = "Frankfurt"
-        "postalcode" = 60589
-        "countrycodes" = "de"
-    }
-    [PSCustomObject]@{
-        "street" = "Kaiserstrasse 35"
-        "city" = "Frankfurt"
-        #"postalcode" = 60589
-        "countrycodes" = "de"
-    }
-)
-
-$addresses = Import-csv ".\test.csv" -Encoding UTF8 -Delimiter "`t"
-#$addresses | Invoke-OSM -UserAgent "florian.von.bracht@apteco.de" -AddressDetails -ExtraTags -verbose
-$addresses | Invoke-OSM -UserAgent "florian.von.bracht@apteco.de" -AddressDetails -ExtraTags -AddMetaData -ReturnOnlyFirstPosition -ResultsLanguage "de" | Out-GridView
-#>

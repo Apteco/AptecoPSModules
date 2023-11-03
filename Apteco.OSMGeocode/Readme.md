@@ -1,4 +1,8 @@
 
+# Introduction
+
+This module is intended to show the value of external data and make "appetite" on more data that is out there.
+
 # Installation
 
 You can just download the whole repository here and pick this script or your can use PSGallery through PowerShell commands directly.
@@ -87,10 +91,6 @@ Install-AptecoOSMGeocode -Verbose
 ```
 
 
-
-
-
-
 You can get and set other query parameters via 
 
 ```PowerShell
@@ -100,14 +100,76 @@ Set-AllowedQueryParameter $g
 ```
 
 
-# Quickstart
+## Quickstart examples
+
+### Geocode a single address
 
 ```PowerShell
+$addr = [PSCustomObject]@{
+    "street" = "Schaumainkai 87"
+    "city" = "Frankfurt"
+    "postalcode" = 60589
+    "countrycodes" = "de"
+}
 
+Invoke-OSM -Address $addr -Email "florian.von.bracht@apteco.de" -AddressDetails -ExtraTags -verbose
+# OR
+$addr | Invoke-OSM -Email "florian.von.bracht@apteco.de" -AddressDetails -ExtraTags -verbose
+```
+
+### Geocode multiple addresses
+
+```PowerShell
+$addresses = @(
+    [PSCustomObject]@{
+        "street" = "Schaumainkai 87"
+        "city" = "Frankfurt"
+        "postalcode" = 60589
+        "countrycodes" = "de"
+    }
+    [PSCustomObject]@{
+        "street" = "Kaiserstrasse 35"
+        "city" = "Frankfurt"
+        #"postalcode" = 60589
+        "countrycodes" = "de"
+    }
+)
+
+$addresses = Import-csv ".\test.csv" -Encoding UTF8 -Delimiter "`t"
+#$addresses | Invoke-OSM -Email "florian.von.bracht@apteco.de" -AddressDetails -ExtraTags -verbose
+$addresses | Invoke-OSM -Email "florian.von.bracht@apteco.de" -AddressDetails -ExtraTags -AddMetaData -ReturnOnlyFirstPosition -ResultsLanguage "de" | Out-GridView
+```
+
+
+### Working with hashes to identify known addresses
+
+```PowerShell
+sl C:\Users\Florian\downloads\20231030
 # Import your module
-Import-module Apteco.OSMGeocode
+Import-module Apteco.OSMGeocode, SimplySQL
 
-# Import some address data and filter it
+
+#-----------------------------------------------
+# PREPARE THE DATABASE AND FILL HASH CACHE
+#-----------------------------------------------
+
+# Open a new database
+Open-SQLiteConnection -DataSource ".\addresses.sqlite"
+
+# Create a table for inserting the data
+Invoke-SqlUpdate -Query "CREATE TABLE IF NOT EXISTS addresses (inputHash TEXT, inputObject TEXT, results TEXT, total INT, updatedAt DATE DEFAULT (datetime('now','localtime')))" | Out-Null
+
+# The original output uses inputHash, inputObject, results, total
+$insertQuery = "INSERT INTO addresses (inputHash, inputObject, results, total) VALUES (@inputHash, @inputObject, @results, @total)"
+
+# This does not need to be done for the first run, it is used for exclusions on subsequent runs
+Invoke-SqlQuery -Query "Select inputHash from addresses" -Stream | ForEach-Object { Add-ToHashCache $_.inputHash }
+
+
+#-----------------------------------------------
+# PREPARE THE INPUT DATA
+#-----------------------------------------------
+
 $c = Get-Content -Path '.\ac_adressen(2).csv' -Encoding UTF8 -TotalCount 1000 | ConvertFrom-Csv -Delimiter ","
 
 # Map your columns from the original data to the needed parameters
@@ -120,10 +182,28 @@ $mapping = @(
     @{name="countrycodes";expression={ "de" }}
 )
 
-# Calculate and show your result
-$hashedAddresses = $c | select $mapping | Add-HashColumn -AddToHashCache
 
-# To calculate your addresses, use
-$results = $c | select $mapping | invoke-osm -UserAgent "testuser@example.com" -AddressDetails -ExtraTags -ReturnOnlyFirstPosition -AddMetaData -verbose
-$results | Out-GridView
+#-----------------------------------------------
+# GEOCODE YOUR DATA
+#-----------------------------------------------
+
+$geocodedAddresses = 0
+
+# Use the addresses | transform the data | geocode data | save it into a database
+# The input variable could also be replace with the definition of $c to allow better streaming
+$c | select-object $mapping | Invoke-OSM -Email "florian.von.bracht@apteco.de" -ResultsLanguage "de" -AddressDetails -ExtraTags -NameDetails -ReturnOnlyFirstPosition -AddMetaData -AddToHashCache -ExcludeKnownHashes -ReturnHashTable -ReturnJson -Verbose | ForEach-Object { $geocodedAddresses += Invoke-SqlUpdate -Query $insertQuery -Parameters $_ }
+
+Write-Verbose "Geocoded $( $geocodedAddresses ) addresses" -verbose
+
+
+#-----------------------------------------------
+# CLOSE THE CONNECTION
+#-----------------------------------------------
+
+Close-SqlConnection
+
 ```
+
+# TODO
+
+- [ ]TODO needs more explanations on parameter
