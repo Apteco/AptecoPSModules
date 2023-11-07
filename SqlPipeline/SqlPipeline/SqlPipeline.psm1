@@ -165,7 +165,7 @@ Export-ModuleMember -Function $Public.Basename
 #-----------------------------------------------
 
 # Set a new process id first, but this can be overridden later
-Set-ProcessId -Id ( [guid]::NewGuid().toString() )
+#Set-ProcessId -Id ( [guid]::NewGuid().toString() )
 
 # the path for the log file will be set with loading the settings
 #Set-Logfile -Path ( Join-Path $Env:Temp -ChildPath "/psoauth.log" )
