@@ -26,6 +26,7 @@ Name|Type|Repository/Version|Platform|Downloads|
 [PSOAuth](PSOAuth/)|Module|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/PSOAuth)](https://www.powershellgallery.com/packages/PSOAuth)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/PSOAuth)](https://www.powershellgallery.com/packages/PSOAuth)<br/>[![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)](https://github.com/PlagueHO/PSAuth)|[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/PSOAuth)](https://www.powershellgallery.com/packages/PSOAuth)
 [TestCredential](TestCredential/)|Module|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/TestCredential)](https://www.powershellgallery.com/packages/TestCredential)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/TestCredential)](https://www.powershellgallery.com/packages/TestCredential)<br/>[![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)](https://github.com/PlagueHO/TestCredential)|[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/TestCredential)](https://www.powershellgallery.com/packages/TestCredential)
 [PSNotify](PSNotify/)|Module|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/PSNotify)](https://www.powershellgallery.com/packages/PSNotify)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/PSNotify)](https://www.powershellgallery.com/packages/PSNotify)<br/>[![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)](https://github.com/PlagueHO/PSAuth)|[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/PSNotify)](https://www.powershellgallery.com/packages/PSNotify)
+[SqlPipeline](SqlPipeline/)|Module|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/SqlPipeline)](https://www.powershellgallery.com/packages/SqlPipeline)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/SqlPipeline)](https://www.powershellgallery.com/packages/SqlPipeline)<br/>[![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)](https://github.com/PlagueHO/PSAuth)|[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/SqlPipeline)](https://www.powershellgallery.com/packages/SqlPipeline)
 
 
 Here are some high level descriptions. Please follow the links from the table or go into the subdirectories to get more detailed information.
@@ -235,6 +236,23 @@ This example just changes the behaviour of the extract options and saves it in t
 ```PowerShell
 SyncExtractOptions -DesignFile "C:\Apteco\Build\20220714\designs\20220714.xml" -Include "Bookings", "People"
 ```
+
+## SqlPipeline
+
+To allow easier import of data into databases like PostgreSQL, SQLite, MariaDB/MySQL, SQLServer, Oracle and more there is a pretty handy
+module named `SimplySql`. As this module does not support pipeline input yet, I have created this wrapper with high flexibility. So
+this module allows importing csv file import like
+
+```PowerShell
+Import-Module SqlPipeline, SimplySql
+Open-SQLiteConnection -DataSource ".\db.sqlite"
+Measure-Command {
+    import-csv -Path '.ac_adressen.csv' -Encoding UTF8 -Delimiter "," | Add-RowsToSql -TableName "addresses" -UseTransaction -Verbose
+}
+Close-SqlConnection
+```
+
+But there is much more. Just go to that subdirectory to view the [README](SqlPipeline/) file.
 
 # TestCredential
 
