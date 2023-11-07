@@ -4,3 +4,4 @@
 *.json
 *.zip
 *_archive*
+tests.ps1
