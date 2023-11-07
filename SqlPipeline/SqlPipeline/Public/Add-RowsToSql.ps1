@@ -1,4 +1,4 @@
-
+﻿
 function Add-RowsToSql {
     [CmdletBinding()]
 
@@ -16,7 +16,7 @@ function Add-RowsToSql {
         Open-SQLiteConnection -DataSource ":memory:"
 
         and add rows from pipeline to the database
-        
+
         get-childitem "*.*" | Add-RowsToSql -TableName "childitem" -UseTransaction -IgnoreInputValidation -verbose
 
         Then you can use a query like
@@ -65,16 +65,13 @@ function Add-RowsToSql {
         Get-ChildItem "*.*" | Add-RowsToSql -TableName "childitem" -UseTransaction -IgnoreInputValidation -verbose
 
     .EXAMPLE
-        Measure-Rows -Path "C:\Temp\Example.csv" -Encoding UTF8
-
-    .EXAMPLE
         $psCustoms1 = @(
             [PSCustomObject]@{
                 "firstname" = "Florian"
                 "lastname" = "von Bracht"
                 "score" = 10
                 "object" = [PSCustomObject]@{
-                    
+
                 }
             }
             [PSCustomObject]@{
@@ -82,7 +79,7 @@ function Add-RowsToSql {
                 #"lastname" = "von Bracht"
                 "score" = 10
                 "object" = [Hashtable]@{
-                    
+
                 }
             }
         )
@@ -104,7 +101,7 @@ function Add-RowsToSql {
         $psCustoms2 | Add-RowsToSql -TableName pscustoms -UseTransaction -FormatObjectAsJson -verbose -CreateColumnsInExistingTable
         Invoke-SqlQuery -Query "Select * from pscustoms" | ft
         Close-SqlConnection
-        
+
     .INPUTS
         Objects
 
@@ -136,7 +133,7 @@ function Add-RowsToSql {
         ,[Parameter(Mandatory=$false)][Switch]$PassThru = $false                        # Pass the input object to the next pipeline step
 
     )
-    
+
     begin {
 
         #-----------------------------------------------
@@ -152,7 +149,7 @@ function Add-RowsToSql {
         #-----------------------------------------------
         # CHECK THE CONNECTION
         #-----------------------------------------------
-        
+
         $sqlTest = Test-SqlConnection -ConnectionName $SQLConnectionName
 
         If ( $sqlTest -eq $true ) {
@@ -161,7 +158,7 @@ function Add-RowsToSql {
             Write-Error "Connection test not successful"
             throw "Problem with SQL connection"
         }
-        
+
 
         #-----------------------------------------------
         # START TRANSACTION, IF SET
@@ -173,7 +170,7 @@ function Add-RowsToSql {
 
 
     }
-    
+
     process {
 
         try {
@@ -210,7 +207,7 @@ function Add-RowsToSql {
 
                     #write-verbose "$(( $InputObject | ConvertTo-Json -Depth 99 ))"
                     #write-verbose "$(( $columns -join "," ))"
-                    
+
                     $columnCreationText = [Array]@()
                     $columnParameterText = [Array]@()
                     For ($c = 0; $c -lt $columns.Count; $c++) {
@@ -225,7 +222,7 @@ function Add-RowsToSql {
                         Invoke-sqlQuery -Query "SELECT * FROM ""$( $TableName )"" LIMIT 1" -ConnectionName $SQLConnectionName
                         $isTableExisting = $true
                     } catch {
-                        Write-Verbose "Table $( $TableName ) not existing. Creating it!" 
+                        Write-Verbose "Table $( $TableName ) not existing. Creating it!"
                     }
 
                     # Create table if it is not existing
@@ -281,7 +278,7 @@ function Add-RowsToSql {
 
                     If ($FormatObjectAsJson -eq $true ) {
                         $rawValue = $InputObject.$key
-                        If ( $rawValue -ne $null ) {
+                        If ( $null -ne $rawValue ) {
                             If ( $rawValue.GetType().Name -in @( "PSCustomObject", "Hashtable" ) ) {
                                 $parameterObject["@f$( $i )"] = ConvertTo-Json $rawValue -Depth 99 -Compress
                             } else {
@@ -290,7 +287,7 @@ function Add-RowsToSql {
                         } else {
                             $parameterObject["@f$( $i )"] = $null   # this is when some columns are missing in the processing
                         }
-                        
+
                     } else {
                         $parameterObject["@f$( $i )"] = $InputObject.$key
                     }
@@ -338,7 +335,7 @@ function Add-RowsToSql {
         }
 
     }
-    
+
     end {
 
         # Undo, if there is an error
@@ -362,6 +359,6 @@ function Add-RowsToSql {
         }
 
         Write-Verbose "Inserted $( $recordsInserted ) records"
-        
+
     }
 }
