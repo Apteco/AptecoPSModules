@@ -85,14 +85,14 @@ function Add-RowsToSql {
             $columnParameterText = [Array]@()
             For ($c = 0; $c -lt $columns.Count; $c++) {
                 $column = $columns[$c]
-                $columnCreationText += "$( $column ) TEXT" # TODO Later this could automatically check the DATATYPES
+                $columnCreationText += """$( $column )"" TEXT" # TODO Later this could automatically check the DATATYPES
                 $columnParameterText += "@$( $column )"
             }
 
             # Just try to find out if the table exists
             $isTableExisting = $false
             try {
-                Invoke-sqlQuery -Query "Select * from $( $TableName ) LIMIT 1"
+                Invoke-sqlQuery -Query "SELECT * FROM ""$( $TableName )"" LIMIT 1"
                 $isTableExisting = $true
             } catch {
                 Write-Verbose "Table $( $TableName ) not existing" 
@@ -100,13 +100,13 @@ function Add-RowsToSql {
 
             # Create table if it is not existing
             If ( $isTableExisting -eq $false ) {
-                $createQueryText = "CREATE TABLE IF NOT EXISTS $( $TableName ) ( $(( $columnCreationText -join ", " )) )"
-                #Write-Verbose $createQueryText
+                $createQueryText = "CREATE TABLE IF NOT EXISTS ""$( $TableName )"" ( $(( $columnCreationText -join ', ' )) )"
+                Write-Verbose $createQueryText
                 Invoke-SqlUpdate -Query $createQueryText | Out-Null
             } else {
 
                 # Read a record from that table and return as PSObject
-                $firstRow = Invoke-SqlQuery -Query "SELECT * FROM $( $TableName ) LIMIT 1" -Stream
+                $firstRow = Invoke-SqlQuery -Query "SELECT * FROM ""$( $TableName )"" LIMIT 1" -Stream
                 $firstRowColumns = $firstRow.PSObject.Properties.Name
 
                 # If the table is existing, create new columns, if parameter is set
@@ -116,7 +116,7 @@ function Add-RowsToSql {
                     For ($c = 0; $c -lt $columns.Count; $c++) {
                         $column = $columns[$c]
                         If ( $firstRowColumns -notcontains $column ) {
-                            Invoke-SqlUpdate -Query "ALTER TABLE $( $TableName ) ADD $( $column )" | Out-Null
+                            Invoke-SqlUpdate -Query "ALTER TABLE ""$( $TableName )"" ADD ""$( $column )""" | Out-Null
                         }
                     }
 
@@ -135,8 +135,8 @@ function Add-RowsToSql {
             }
 
             # Create the insert query
-            $insertQuery = "INSERT INTO $( $TableName ) ($(( $columns -join ", " ))) VALUES ($(( $columnParameterText -join ", " )))"
-            #Write-Verbose $insertQuery
+            $insertQuery = "INSERT INTO ""$( $TableName )"" (""$(( $columns -join '", "' ))"") VALUES ($(( $columnParameterText -join ', ' )))"
+            Write-Verbose $insertQuery
 
         }
 
