@@ -18,7 +18,11 @@ function Get-AddressHash {
             $propName = $_
             $propValue = $Address.$propName
             If ( $null -ne $propValue ) {
-                [void]$inputStringToHash.Append( $propValue.toLower() )
+                If ( $inputStringToHash -is [String] ) {
+                    [void]$inputStringToHash.Append( $propValue.toLower() )
+                } else {
+                    [void]$inputStringToHash.Append( $propValue )
+                }
             }
         }
 

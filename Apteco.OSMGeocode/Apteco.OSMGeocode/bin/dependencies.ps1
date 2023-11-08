@@ -8,6 +8,7 @@ $psModules = [Array]@(
     "WriteLog"
     "SimplySql"
     "ConvertStrings"
+    "SqlPipeline"
     #"MeasureRows"
     #"EncryptCredential"
     #"ExtendFunction"

@@ -1,16 +1,96 @@
+<#
+    .SYNOPSIS
+        Wrapper for OpenStreetMaps to input address data and get back geocoded and fixed addresses and maybe some
+        more information.
 
+    .DESCRIPTION
+        Apteco PS Modules - PowerShell OSM Geocoding
+
+        Just define an address like
+
+        $addr = [PSCustomObject]@{
+            "street" = "Schaumainkai 87"
+            "city" = "Frankfurt"
+            "postalcode" = 60589
+            "countrycodes" = "de"
+        }
+
+        and geocode it
+
+        $addr | Invoke-OSM -Email "user@example.com" -AddressDetails -ExtraTags -ResultsLanguage "de"
+
+        If you put in multiple objects, the geocoding will do 1 request per second like it should do to
+        cover OSM terms and conditions.
+
+    .PARAMETER Address
+        The address to geocode (should include street, city, postalcode, countrycodes)
+
+    .PARAMETER Email
+        The email is a kind of useragent for identification for the current process
+
+    .PARAMETER ResultsLanguage
+        Language for the results
+
+    .PARAMETER ExcludeKnownHashes
+        This parameter leads to exclude hashes that are already in the cache
+        Be aware, that this parameter kills known records that come in
+        so if your input is a combination of id and address, this object won't
+        be forwarded for known addresses
+
+    .PARAMETER AddressDetails
+        Load more details from OSM
+
+    .PARAMETER ExtraTags
+        Load extra tags from OSM
+
+    .PARAMETER NameDetails
+        Load name details from OSM like opening hours etc.
+
+    .PARAMETER ReturnOnlyFirstPosition
+        If there are multiple addresses in the result, return only the entry at position 1
+
+    .PARAMETER AddMetaData
+        Wraps the result with more metadata
+
+    .PARAMETER AddToHashCache
+        Directly puts the new hash value into the cache so it can be used to exclude some records
+
+    .PARAMETER ReturnHashTable
+        Instead of PSCustomObject, only works together with -AddMetaData
+
+    .PARAMETER ReturnJson
+        Formats the returned addresses as json rather than PSCustomObjects, only works together with -AddMetaData
+
+    .PARAMETER Verbose
+        Shows you more information about the current status
+
+    .EXAMPLE
+        $addr = [PSCustomObject]@{"street" = "Schaumainkai 87";"city" = "Frankfurt";"postalcode" = 60589;"countrycodes" = "de"}
+        $addr | Invoke-OSM -Email "user@example.com" -AddressDetails -ExtraTags -ResultsLanguage "de"
+        
+    .INPUTS
+        Objects
+
+    .OUTPUTS
+        Objects
+
+    .NOTES
+        Author:  florian.von.bracht@apteco.de
+
+#>
 function Invoke-OSM {
     [CmdletBinding()]
+
     param (
 
         # Input parameter
-         [Parameter(Mandatory = $true, ValueFromPipeline = $true)][PSCustomObject]$Address  # the address to geocode (should include street, city, postalcode, countrycodes)
-        ,[Parameter(Mandatory = $true)][String]$Email                                       # the email is a kind of useragent for identification for the current process
-        ,[Parameter(Mandatory = $false)][String]$ResultsLanguage = "de"                     # language for the results
-        ,[Parameter(Mandatory = $false)][Switch]$ExcludeKnownHashes = $false                # this parameter leads to exclude hashes that are already in the cache
-                                                                                            # Be aware, that this parameter kills known records that come in
-                                                                                            # so if your input is a combination of id and address, this object won't
-                                                                                            # be forwarded for known addresses
+         [Parameter(Mandatory = $true, ValueFromPipeline = $true, Position=0)][PSCustomObject]$Address  # the address to geocode (should include street, city, postalcode, countrycodes)
+        ,[Parameter(Mandatory = $true)][String]$Email                                                   # the email is a kind of useragent for identification for the current process
+        ,[Parameter(Mandatory = $false)][String]$ResultsLanguage = "de"                                 # language for the results
+        ,[Parameter(Mandatory = $false)][Switch]$ExcludeKnownHashes = $false                            # this parameter leads to exclude hashes that are already in the cache
+                                                                                                        # Be aware, that this parameter kills known records that come in
+                                                                                                        # so if your input is a combination of id and address, this object won't
+                                                                                                        # be forwarded for known addresses
 
         # More OSM data
         ,[Parameter(Mandatory = $false)][Switch]$AddressDetails = $false                    # load more details from osm
@@ -31,7 +111,6 @@ function Invoke-OSM {
         #-----------------------------------------------
         # START
         #-----------------------------------------------
-
 
         #Add-Type -AssemblyName System.Web # outcomment later
         #Import-Module ConvertStrings
@@ -175,7 +254,7 @@ function Invoke-OSM {
 
             # Wait until 1 second is full, then proceed
             # This is only relevant for all calls after the first one
-            If ( $i -gt 0) {            
+            If ( $i -gt 0 ) {            
                 $ts = New-TimeSpan -Start $start -End ( [datetime]::Now )
                 if ( $ts.TotalMilliseconds -lt $maxMillisecondsPerRequest ) {
                     $waitLonger = [math]::ceiling( $maxMillisecondsPerRequest - $ts.TotalMilliseconds )
@@ -261,7 +340,7 @@ function Invoke-OSM {
     }
     
     end {
-        
+        Write-Verbose "Geocoded $( $i ) addresses"
     }
 
 }

@@ -144,10 +144,6 @@ $addresses | Invoke-OSM -Email "florian.von.bracht@apteco.de" -AddressDetails -E
 ### Working with hashes to identify known addresses
 
 ```PowerShell
-sl C:\Users\Florian\downloads\20231030
-# Import your module
-Import-module Apteco.OSMGeocode, SimplySQL
-
 
 #-----------------------------------------------
 # PREPARE THE DATABASE AND FILL HASH CACHE
@@ -160,7 +156,7 @@ Open-SQLiteConnection -DataSource ".\addresses.sqlite"
 Invoke-SqlUpdate -Query "CREATE TABLE IF NOT EXISTS addresses (inputHash TEXT, inputObject TEXT, results TEXT, total INT, updatedAt DATE DEFAULT (datetime('now','localtime')))" | Out-Null
 
 # The original output uses inputHash, inputObject, results, total
-$insertQuery = "INSERT INTO addresses (inputHash, inputObject, results, total) VALUES (@inputHash, @inputObject, @results, @total)"
+#$insertQuery = "INSERT INTO addresses (inputHash, inputObject, results, total) VALUES (@inputHash, @inputObject, @results, @total)"
 
 # This does not need to be done for the first run, it is used for exclusions on subsequent runs
 Invoke-SqlQuery -Query "Select inputHash from addresses" -Stream | ForEach-Object { Add-ToHashCache $_.inputHash }
@@ -170,7 +166,7 @@ Invoke-SqlQuery -Query "Select inputHash from addresses" -Stream | ForEach-Objec
 # PREPARE THE INPUT DATA
 #-----------------------------------------------
 
-$c = Get-Content -Path '.\ac_adressen(2).csv' -Encoding UTF8 -TotalCount 1000 | ConvertFrom-Csv -Delimiter ","
+$c = Get-Content -Path '.\ac_adressen(2).csv' -Encoding UTF8 -TotalCount 10 | ConvertFrom-Csv -Delimiter ","
 
 # Map your columns from the original data to the needed parameters
 # The original parameters can be requested via Get-AllowedQueryParameter
@@ -187,13 +183,9 @@ $mapping = @(
 # GEOCODE YOUR DATA
 #-----------------------------------------------
 
-$geocodedAddresses = 0
-
 # Use the addresses | transform the data | geocode data | save it into a database
 # The input variable could also be replace with the definition of $c to allow better streaming
-$c | select-object $mapping | Invoke-OSM -Email "florian.von.bracht@apteco.de" -ResultsLanguage "de" -AddressDetails -ExtraTags -NameDetails -ReturnOnlyFirstPosition -AddMetaData -AddToHashCache -ExcludeKnownHashes -ReturnHashTable -ReturnJson -Verbose | ForEach-Object { $geocodedAddresses += Invoke-SqlUpdate -Query $insertQuery -Parameters $_ }
-
-Write-Verbose "Geocoded $( $geocodedAddresses ) addresses" -verbose
+$c | select-object $mapping | Invoke-OSM -Email "florian.von.bracht@apteco.de" -ResultsLanguage "de" -AddressDetails -ExtraTags -NameDetails -ReturnOnlyFirstPosition -AddMetaData -AddToHashCache -ExcludeKnownHashes -Verbose | Add-RowsToSql -TableName addresses -FormatObjectAsJson -Verbose #ForEach-Object { $geocodedAddresses += Invoke-SqlUpdate -Query $insertQuery -Parameters $_ }
 
 
 #-----------------------------------------------
@@ -201,7 +193,6 @@ Write-Verbose "Geocoded $( $geocodedAddresses ) addresses" -verbose
 #-----------------------------------------------
 
 Close-SqlConnection
-
 ```
 
 # TODO
