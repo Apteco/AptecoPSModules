@@ -166,7 +166,7 @@ Invoke-SqlQuery -Query "Select inputHash from addresses" -Stream | ForEach-Objec
 # PREPARE THE INPUT DATA
 #-----------------------------------------------
 
-$c = Get-Content -Path '.\ac_adressen(2).csv' -Encoding UTF8 -TotalCount 10 | ConvertFrom-Csv -Delimiter ","
+$c = Get-Content -Path '.\ac_adressen.csv' -Encoding UTF8 -TotalCount 10 | ConvertFrom-Csv -Delimiter ","
 
 # Map your columns from the original data to the needed parameters
 # The original parameters can be requested via Get-AllowedQueryParameter
@@ -185,7 +185,7 @@ $mapping = @(
 
 # Use the addresses | transform the data | geocode data | save it into a database
 # The input variable could also be replace with the definition of $c to allow better streaming
-$c | select-object $mapping | Invoke-OSM -Email "florian.von.bracht@apteco.de" -ResultsLanguage "de" -AddressDetails -ExtraTags -NameDetails -ReturnOnlyFirstPosition -AddMetaData -AddToHashCache -ExcludeKnownHashes -Verbose | Add-RowsToSql -TableName addresses -FormatObjectAsJson -Verbose #ForEach-Object { $geocodedAddresses += Invoke-SqlUpdate -Query $insertQuery -Parameters $_ }
+$c | select-object $mapping | Invoke-OSM -Email "florian.von.bracht@apteco.de" -ResultsLanguage "de" -AddressDetails -ExtraTags -NameDetails -ReturnOnlyFirstPosition -AddMetaData -AddToHashCache -ExcludeKnownHashes -Verbose | Add-RowsToSql -TableName addresses -FormatObjectAsJson -Verbose
 
 
 #-----------------------------------------------
@@ -197,4 +197,4 @@ Close-SqlConnection
 
 # TODO
 
-- [ ]TODO needs more explanations on parameter
+- [x] needs more explanations on parameter
