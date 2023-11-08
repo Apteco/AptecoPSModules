@@ -219,11 +219,11 @@ function Add-RowsToSql {
                     # Just try to find out if the table exists
                     # If it cannot be created, it automatically jumps into the catch part
                     # If it was able to create it, delete it directly for proper creation later
-                    # 
+                    #
                     $isTableExisting = $true
                     try {
-                        Invoke-sqlQuery -Query "CREATE TABLE ""$( $TableName )"" (id TEXT)" -ConnectionName $SQLConnectionName
-                        Invoke-sqlQuery -Query "DROP TABLE ""$( $TableName )""" -ConnectionName $SQLConnectionName
+                        Invoke-SqlUpdate -Query "CREATE TABLE ""$( $TableName )"" (id TEXT)" -ConnectionName $SQLConnectionName | Out-Null
+                        Invoke-SqlUpdate -Query "DROP TABLE ""$( $TableName )""" -ConnectionName $SQLConnectionName | Out-Null
                         #Invoke-sqlQuery -Query "SELECT * FROM ""$( $TableName )"" LIMIT 1" -ConnectionName $SQLConnectionName
                         $isTableExisting = $false
                     } catch {
@@ -251,18 +251,6 @@ function Add-RowsToSql {
                                 If ( $firstRowColumns -notcontains $column ) {
                                     Invoke-SqlUpdate -Query "ALTER TABLE ""$( $TableName )"" ADD ""$( $column )""" -ConnectionName $SQLConnectionName | Out-Null
                                 }
-                            }
-
-                        } else {
-
-                            # Otherwise just use existing columns for insert query
-                            If ( $firstRowColumns.Count -gt 0 ) {
-                                $columns = $firstRowColumns
-                            }
-                            $columnParameterText = [Array]@()
-                            For ($c = 0; $c -lt $columns.Count; $c++) {
-                                $column = $columns[$c]
-                                $columnParameterText += "@f$( $c )" #"@$( $column )"
                             }
 
                         }

@@ -4,7 +4,7 @@ $psScripts = @(
 )
 
 $psModules = @(
-    "SimplySql"
+    #"SimplySql"
     #"WriteLog"
     #"MeasureRows"
     #"EncryptCredential"
