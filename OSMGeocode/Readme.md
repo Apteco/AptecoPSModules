@@ -87,7 +87,7 @@ Import-Module OSMGeocode -Verbose
 If you get error messages during the import, that is normal, because there are modules missing yet. They need to be installed with `Install-AptecoOSMGeocode`
 
 ```PowerShell
-Install-AptecoOSMGeocode -Verbose
+Install-OSMGeocode -Verbose
 ```
 
 
@@ -193,6 +193,21 @@ $c | select-object $mapping | Invoke-OSM -Email "florian.von.bracht@apteco.de" -
 #-----------------------------------------------
 
 Close-SqlConnection
+```
+
+## Adding a hash column to a csv
+
+This is kind of intense and needs around 206 seconds for 45k objects/records:
+
+```PowerShell
+$mapping = @(
+    @{name="id";expression={ $_.FID }}
+    @{name="street";expression={ $_.adresse }}
+    @{name="city";expression={ "Aachen" }}
+    @{name="postalcode";expression={ $_.plz }}
+    @{name="countrycodes";expression={ "de" }}
+)
+$c = import-csv -Path .\ac.csv -Delimiter "," -Encoding UTF8 | select $mapping | Add-HashColumn -HashColumnName hash
 ```
 
 # TODO
