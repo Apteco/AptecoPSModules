@@ -1,8 +1,4 @@
-﻿
-function Add-RowsToSql {
-    [CmdletBinding()]
-
-    <#
+﻿<#
     .SYNOPSIS
         Wrapper for [SimplySql](https://github.com/mithrandyr/SimplySql/) to allow pipeline input and
         set the parameters automatically and it accepts also PSCustomObject input. It supports all the
@@ -111,7 +107,9 @@ function Add-RowsToSql {
     .NOTES
         Author:  florian.von.bracht@apteco.de
 
-    #>
+#>
+function Add-RowsToSql {
+    [CmdletBinding()]
 
     param (
          [Parameter(Mandatory=$true,ValueFromPipeline=$true,Position=0)]$InputObjects
