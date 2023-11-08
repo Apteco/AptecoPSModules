@@ -1,4 +1,4 @@
-<#
+﻿<#
     .SYNOPSIS
         Wrapper for OpenStreetMaps to input address data and get back geocoded and fixed addresses and maybe some
         more information.
@@ -67,7 +67,7 @@
     .EXAMPLE
         $addr = [PSCustomObject]@{"street" = "Schaumainkai 87";"city" = "Frankfurt";"postalcode" = 60589;"countrycodes" = "de"}
         $addr | Invoke-OSM -Email "user@example.com" -AddressDetails -ExtraTags -ResultsLanguage "de"
-        
+
     .INPUTS
         Objects
 
@@ -105,7 +105,7 @@ function Invoke-OSM {
         ,[Parameter(Mandatory = $false)][Switch]$ReturnJson = $false                        # Formats the returned addresses as json rather than PSCustomObjects, only works together with -AddMetaData
 
     )
-    
+
     begin {
 
         #-----------------------------------------------
@@ -170,7 +170,7 @@ function Invoke-OSM {
 
 
     }
-    
+
     process {
 
         #-----------------------------------------------
@@ -192,7 +192,7 @@ function Invoke-OSM {
             # PREPARE QUERY
             #-----------------------------------------------
 
-            $global:nvCollection = [System.Web.HttpUtility]::ParseQueryString([String]::Empty) #, [System.Text.Encoding]::UTF8)
+            $nvCollection = [System.Web.HttpUtility]::ParseQueryString([String]::Empty) #, [System.Text.Encoding]::UTF8)
             $Address.PSObject.Properties | where-object { $_.Name -in $Script:allowedQueryParameters } | ForEach-Object {
                 $nvCollection.Add( $_.Name, $_.Value )
             }
@@ -254,7 +254,7 @@ function Invoke-OSM {
 
             # Wait until 1 second is full, then proceed
             # This is only relevant for all calls after the first one
-            If ( $i -gt 0 ) {            
+            If ( $i -gt 0 ) {
                 $ts = New-TimeSpan -Start $start -End ( [datetime]::Now )
                 if ( $ts.TotalMilliseconds -lt $maxMillisecondsPerRequest ) {
                     $waitLonger = [math]::ceiling( $maxMillisecondsPerRequest - $ts.TotalMilliseconds )
@@ -267,15 +267,15 @@ function Invoke-OSM {
 
             # Request to OSM
             $start = [datetime]::Now
-            $t = Measure-Command {
+            #$t = Measure-Command {
                 # TODO [ ] possibly implement proxy, if needed
                 # TODO add try catch here
                 $res = Invoke-RestMethod @restParams #-Uri $uriRequest.Uri.OriginalString
-            }
+            #}
             $i += 1
-            
+
             #$pl = ConvertTo-Json -InputObject $res -Depth 99 -Compress
-            
+
 
             #-----------------------------------------------
             # DECIDE TO RETURN WHOLE RESULT OR FIRST ENTRY
@@ -309,7 +309,7 @@ function Invoke-OSM {
                     $returnAddress = $Address
                     $returnResults = $ret
                 }
-                
+
 
                 If ( $ReturnHashTable -eq $true ) {
                     [Hashtable]@{
@@ -327,7 +327,7 @@ function Invoke-OSM {
                     }
                 }
 
-                
+
 
             } else {
 
@@ -338,7 +338,7 @@ function Invoke-OSM {
         }
 
     }
-    
+
     end {
         Write-Verbose "Geocoded $( $i ) addresses"
     }

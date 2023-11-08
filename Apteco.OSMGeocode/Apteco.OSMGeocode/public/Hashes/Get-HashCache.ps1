@@ -1,9 +1,9 @@
-function Get-HashCache {
+﻿function Get-HashCache {
     [CmdletBinding()]
       param(
            #[parameter(Mandatory = $true, ValueFromPipeline)][String]$InputHash
       )
-  
+
     begin {
       #[Collections.ArrayList]$inputObjects = @()
     }
@@ -15,7 +15,7 @@ function Get-HashCache {
     end {
       #$inputObjects | Foreach-Object -Parallel {
           #$row = $_
-  
+
       #}
     }
   }

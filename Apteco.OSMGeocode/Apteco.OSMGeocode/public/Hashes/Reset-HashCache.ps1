@@ -1,8 +1,8 @@
-function Reset-HashCache {
+﻿function Reset-HashCache {
     [CmdletBinding()]
     param(
     )
-  
+
     begin {
 
     }
@@ -13,7 +13,7 @@ function Reset-HashCache {
     }
 
     end {
-      
+
     }
 
 }

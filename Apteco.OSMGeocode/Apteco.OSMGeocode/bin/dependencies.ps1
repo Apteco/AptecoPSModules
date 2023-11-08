@@ -1,4 +1,4 @@
-
+﻿
 $psScripts = [Array]@(
     "Install-Dependencies"
     "Import-Dependencies"
@@ -25,7 +25,7 @@ $psGlobalPackages = [Array]@(
 
 # Define either a simple string or provide a pscustomobject with a specific version number
 $psLocalPackages = [Array]@(
-    
+
     <#
     [PSCustomObject]@{
         name="Npgsql"

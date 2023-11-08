@@ -1,4 +1,4 @@
-
+﻿
 #-----------------------------------------------
 # NOTES
 #-----------------------------------------------
@@ -22,7 +22,7 @@ Current policies:
     limited to 1 machine only, no distributed scripts (including multiple Amazon EC2 instances or similar)
     Results must be cached on your side. Clients sending repeatedly the same query may be classified as faulty and blocked.
 
-    
+
     No heavy uses (an absolute maximum of 1 request per second).
     Provide a valid HTTP Referer or User-Agent identifying the application (stock User-Agents as set by http libraries will not do).
     Clearly display attribution as suitable for your medium.
