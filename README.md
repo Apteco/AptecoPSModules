@@ -27,6 +27,7 @@ Name|Type|Repository/Version|Platform|Downloads|
 [TestCredential](TestCredential/)|Module|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/TestCredential)](https://www.powershellgallery.com/packages/TestCredential)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/TestCredential)](https://www.powershellgallery.com/packages/TestCredential)<br/>[![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)](https://github.com/PlagueHO/TestCredential)|[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/TestCredential)](https://www.powershellgallery.com/packages/TestCredential)
 [PSNotify](PSNotify/)|Module|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/PSNotify)](https://www.powershellgallery.com/packages/PSNotify)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/PSNotify)](https://www.powershellgallery.com/packages/PSNotify)<br/>[![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)](https://github.com/PlagueHO/PSAuth)|[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/PSNotify)](https://www.powershellgallery.com/packages/PSNotify)
 [SqlPipeline](SqlPipeline/)|Module|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/SqlPipeline)](https://www.powershellgallery.com/packages/SqlPipeline)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/SqlPipeline)](https://www.powershellgallery.com/packages/SqlPipeline)<br/>[![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)](https://github.com/PlagueHO/PSAuth)|[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/SqlPipeline)](https://www.powershellgallery.com/packages/SqlPipeline)
+[OSMGeocode](OSMGeocode/)|Module|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/OSMGeocode)](https://www.powershellgallery.com/packages/OSMGeocode)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/OSMGeocode)](https://www.powershellgallery.com/packages/OSMGeocode)<br/>[![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)](https://github.com/PlagueHO/PSAuth)|[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/OSMGeocode)](https://www.powershellgallery.com/packages/OSMGeocode)
 
 
 Here are some high level descriptions. Please follow the links from the table or go into the subdirectories to get more detailed information.
@@ -186,6 +187,15 @@ This module merges two Hashtables into one. It is able to handle nested structur
 ## MergePSCustomObject
 
 This module merges PSCustomObjects into one. It is able to handle nested structures like hashtables, arrays and PSCustomObjects.
+
+## OSMGeocode
+
+Geocode single or multiple addresses on the fly via OpenStreetMaps like 
+
+```PowerShell
+$addr = [PSCustomObject]@{"street" = "Schaumainkai 87";"city" = "Frankfurt";"postalcode" = 60589;"countrycodes" = "de"}
+$addr | Invoke-OSM -Email "user@example.com" -AddressDetails -ExtraTags -ResultsLanguage "de"
+```
 
 ## PSOAuth
 
