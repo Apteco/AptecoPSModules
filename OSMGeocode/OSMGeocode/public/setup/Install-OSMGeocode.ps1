@@ -1,4 +1,4 @@
-﻿Function Install-AptecoOSMGeocode {
+﻿Function Install-OSMGeocode {
 
 <#
 
