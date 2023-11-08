@@ -14,8 +14,9 @@ function Get-AddressHash {
 
         # Do it alway in the same order of $allowedProperties
         $inputStringToHash = [System.Text.StringBuilder]::new()
-        $Script:allowedQueryParameters | ForEach-Object {
-            $propName = $_
+
+        For ( $i = 0; $i -lt $Script:allowedQueryParameters.Count; $i++ ) {
+            $propName = $Script:allowedQueryParameters[$i]
             $propValue = $Address.$propName
             If ( $null -ne $propValue ) {
                 If ( $inputStringToHash -is [String] ) {
