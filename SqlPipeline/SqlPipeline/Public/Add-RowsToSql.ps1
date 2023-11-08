@@ -1,4 +1,8 @@
-﻿<#
+﻿
+function Add-RowsToSql {
+    [CmdletBinding()]
+
+    <#
     .SYNOPSIS
         Wrapper for [SimplySql](https://github.com/mithrandyr/SimplySql/) to allow pipeline input and
         set the parameters automatically and it accepts also PSCustomObject input. It supports all the
@@ -107,9 +111,7 @@
     .NOTES
         Author:  florian.von.bracht@apteco.de
 
-#>
-function Add-RowsToSql {
-    [CmdletBinding()]
+    #>
 
     param (
          [Parameter(Mandatory=$true,ValueFromPipeline=$true,Position=0)]$InputObjects
@@ -215,16 +217,22 @@ function Add-RowsToSql {
                     }
 
                     # Just try to find out if the table exists
-                    $isTableExisting = $false
+                    # If it cannot be created, it automatically jumps into the catch part
+                    # If it was able to create it, delete it directly for proper creation later
+                    # 
+                    $isTableExisting = $true
                     try {
-                        Invoke-sqlQuery -Query "SELECT * FROM ""$( $TableName )"" LIMIT 1" -ConnectionName $SQLConnectionName
-                        $isTableExisting = $true
+                        Invoke-sqlQuery -Query "CREATE TABLE ""$( $TableName )"" (id TEXT)" -ConnectionName $SQLConnectionName
+                        Invoke-sqlQuery -Query "DROP TABLE ""$( $TableName )""" -ConnectionName $SQLConnectionName
+                        #Invoke-sqlQuery -Query "SELECT * FROM ""$( $TableName )"" LIMIT 1" -ConnectionName $SQLConnectionName
+                        $isTableExisting = $false
                     } catch {
-                        Write-Verbose "Table $( $TableName ) not existing. Creating it!"
+                        Write-Verbose "Table $( $TableName ) existing."
                     }
 
                     # Create table if it is not existing
                     If ( $isTableExisting -eq $false ) {
+                        Write-Verbose "Create table ""$( $TableName )"""
                         $createQueryText = "CREATE TABLE IF NOT EXISTS ""$( $TableName )"" ( $(( $columnCreationText -join ', ' )) )"
                         #Write-Verbose $createQueryText
                         Invoke-SqlUpdate -Query $createQueryText -ConnectionName $SQLConnectionName | Out-Null
@@ -235,7 +243,7 @@ function Add-RowsToSql {
                         $firstRowColumns = $firstRow.PSObject.Properties.Name
 
                         # If the table is existing, create new columns, if parameter is set
-                        If ( $CreateColumnsInExistingTable -eq $true ) {
+                        If ( $CreateColumnsInExistingTable -eq $true -and $firstRowColumns.Count -gt 0 ) {
 
                             # Check the input colums against the existing table colums
                             For ($c = 0; $c -lt $columns.Count; $c++) {
@@ -248,7 +256,9 @@ function Add-RowsToSql {
                         } else {
 
                             # Otherwise just use existing columns for insert query
-                            $columns = $firstRowColumns
+                            If ( $firstRowColumns.Count -gt 0 ) {
+                                $columns = $firstRowColumns
+                            }
                             $columnParameterText = [Array]@()
                             For ($c = 0; $c -lt $columns.Count; $c++) {
                                 $column = $columns[$c]
