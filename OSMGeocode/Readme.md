@@ -51,13 +51,13 @@ to update that module. Now proceed with installing apteco modules:
 # Execute this with elevated rights or with the user you need to execute it with, e.g. the apteco service user
 install-script install-dependencies, import-dependencies
 install-module writelog
-Install-Dependencies -module Apteco.OSMGeocode
+Install-Dependencies -module OSMGeocode
 ```
 
 You can check the installed module with
 
 ```PowerShell
-Get-InstalledModule Apteco.OSMGeocode
+Get-InstalledModule OSMGeocode
 ```
 
 If you want to find more [Apteco scripts in PSGallery](https://www.powershellgallery.com/packages?q=Tags%3A%22Apteco%22), please search with
@@ -69,7 +69,7 @@ Find-Module -Repository "PSGallery" -Tag "Apteco"
 To update the module, just execute the `Install-Module` command again with `-Force` like
 
 ```PowerShell
-Find-Module -Repository "PSGallery" -Name "Apteco.OSMGeocode" -IncludeDependencies | Install-Module -Verbose -Scope AllUsers -Force
+Find-Module -Repository "PSGallery" -Name "OSMGeocode" -IncludeDependencies | Install-Module -Verbose -Scope AllUsers -Force
 ```
 
 
@@ -81,7 +81,7 @@ Find-Module -Repository "PSGallery" -Name "Apteco.OSMGeocode" -IncludeDependenci
 
 
 ```PowerShell
-Import-Module Apteco.OSMGeocode -Verbose
+Import-Module OSMGeocode -Verbose
 ```
 
 If you get error messages during the import, that is normal, because there are modules missing yet. They need to be installed with `Install-AptecoOSMGeocode`
