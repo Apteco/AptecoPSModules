@@ -37,6 +37,13 @@
         so if your input is a combination of id and address, this object won't
         be forwarded for known addresses
 
+    .PARAMETER CombineIdAndHash
+        Combine ID and address hash value so you definitely have every
+        ID of your input data, even if hashed addresses are the same.
+        This is useful when you later join OSM geocodes via an ID rather
+        than a hashed address. Only works, if the inputobject has a
+        property with the name ID or Id or id.
+
     .PARAMETER AddressDetails
         Load more details from OSM
 
@@ -91,6 +98,10 @@ function Invoke-OSM {
                                                                                                         # Be aware, that this parameter kills known records that come in
                                                                                                         # so if your input is a combination of id and address, this object won't
                                                                                                         # be forwarded for known addresses
+        ,[Parameter(Mandatory = $false)][Switch]$CombineIdAndHash = $false                              # Combine ID and address hash value so you definitely have every
+                                                                                                        # ID of your input data, even if hashed addresses are the same
+                                                                                                        # This is useful when you later join OSM geocodes via an ID rather
+                                                                                                        # than a hashed address
 
         # More OSM data
         ,[Parameter(Mandatory = $false)][Switch]$AddressDetails = $false                    # load more details from osm
@@ -178,7 +189,12 @@ function Invoke-OSM {
         #-----------------------------------------------
 
         # Build hash value
-        $hashedInput = Get-AddressHash -Address $Address
+        $hashValue = Get-AddressHash -Address $Address
+        If ( $CombineIdAndHash -eq $true ) { # TODO check case sensitivity
+            $hashedInput = "$( $Address.id )#$( $hashValue )"
+        } else {
+            $hashedInput = $hashValue
+        }
 
 
         #-----------------------------------------------

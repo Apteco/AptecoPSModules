@@ -185,7 +185,7 @@ $mapping = @(
 
 # Use the addresses | transform the data | geocode data | save it into a database
 # The input variable could also be replace with the definition of $c to allow better streaming
-$c | select-object $mapping | Invoke-OSM -Email "florian.von.bracht@apteco.de" -ResultsLanguage "de" -AddressDetails -ExtraTags -NameDetails -ReturnOnlyFirstPosition -AddMetaData -AddToHashCache -ExcludeKnownHashes -Verbose | Add-RowsToSql -TableName addresses -FormatObjectAsJson -Verbose
+$c | select-object $mapping | Invoke-OSM -Email "florian.von.bracht@apteco.de" -ResultsLanguage "de" -AddressDetails -ExtraTags -NameDetails -ReturnOnlyFirstPosition -AddMetaData -AddToHashCache -ExcludeKnownHashes -CombineIdAndHash -Verbose | Add-RowsToSql -TableName addresses -FormatObjectAsJson -Verbose
 
 
 #-----------------------------------------------
@@ -208,6 +208,34 @@ $mapping = @(
     @{name="countrycodes";expression={ "de" }}
 )
 $c = import-csv -Path .\ac.csv -Delimiter "," -Encoding UTF8 | select $mapping | Add-HashColumn -HashColumnName hash
+```
+
+## Working with IDs rather than hashes
+
+When you later join your geocoded addresses and locations via ID rather than a hash value (which needs some time to calculate)
+you should follow these strategy
+
+1. Load a smaller set that you think could have changed. Like addresses that have a changedate in the last two days. Overlapping with previous runs is allowed.
+1. Fill your known hash values from your database.
+1. Include a property/field in your input objects with the name `id` and geocode your addresses and don't forget to use the `-CombineIdAndHash` flag.
+1. Voila! Now you have all IDs and can use that field to join the data. Please be aware that if an address has changed, the ID can be multiple times in your database. So you need a window function to select the most recent record or the one with the highest ROWID per ID or similar.
+
+For the example above in sqlite you could use this query to get the newest address per id:
+
+```SQL
+SELECT *
+FROM (
+	SELECT *
+		, row_number() OVER (
+			PARTITION BY id ORDER BY updatedAt DESC
+			) rownum
+	FROM (
+		SELECT json_extract(inputObject, '$.id') "id"
+			, *
+		FROM addresses
+		) a1
+	)
+WHERE rownum = 1
 ```
 
 # TODO
