@@ -126,7 +126,9 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
-0.0.2 
+0.0.2 Adding a new parameter -CombineIdAndHash for working with IDs rather than hash values
+      More examples in readme
+      Some performance improvements and fixes
 0.0.1 Initial release of Apteco PS module through psgallery
 '
 
