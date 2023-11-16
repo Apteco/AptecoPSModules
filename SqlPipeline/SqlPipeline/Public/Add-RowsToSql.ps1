@@ -51,6 +51,9 @@ function Add-RowsToSql {
     .PARAMETER IgnoreInputValidation
         Ignore validation on PSCustomObject or Hashtable to also allow input like processes or file items
 
+    .PARAMETER DisableTrim
+        Values will be trimmed automatically on input, you can turn this off with this flag
+
     .PARAMETER PassThru
         Using this flag passes the input object to the next pipeline step
 
@@ -128,6 +131,7 @@ function Add-RowsToSql {
         # Column specific parameters
         ,[Parameter(Mandatory=$false)][Switch]$CreateColumnsInExistingTable = $false    # Create new columns if there are new fields in the first row
         ,[Parameter(Mandatory=$false)][Switch]$FormatObjectAsJson = $false              # If column contents are hashtable or pscustomobject, they could be formatted and loaded as JSON
+        ,[Parameter(Mandatory=$false)][Switch]$DisableTrim = $false                     # Values will be trimmed automatically on input, you can turn this off with this flag
 
         # Return/Pipeline parameters
         ,[Parameter(Mandatory=$false)][Switch]$PassThru = $false                        # Pass the input object to the next pipeline step
@@ -177,6 +181,9 @@ function Add-RowsToSql {
 
             # Support for parameter input
             foreach ($InputObject in $InputObjects) {
+            #for ( $x = 0; $x -lt $InputObjects.Count; $x++ ) {
+
+                #$InputObject = $InputObjects[$x]
 
                 #-----------------------------------------------
                 # VALIDATE THE INPUT
@@ -275,10 +282,14 @@ function Add-RowsToSql {
                     If ($FormatObjectAsJson -eq $true ) {
                         $rawValue = $InputObject.$key
                         If ( $null -ne $rawValue ) {
-                            If ( $rawValue.GetType().Name -in @( "PSCustomObject", "Hashtable" ) ) {
+                            If ( $rawValue.GetType().Name -in @( "PSCustomObject", "Hashtable", "Object[]", "ArrayList" ) ) {
                                 $parameterObject["@f$( $i )"] = ConvertTo-Json $rawValue -Depth 99 -Compress
                             } else {
-                                $parameterObject["@f$( $i )"] = $rawValue
+                                If ($DisableTrim -eq $true -or $rawValue.GetType().Name -ne "String" ) {
+                                    $parameterObject["@f$( $i )"] = $rawValue
+                                } else {
+                                    $parameterObject["@f$( $i )"] = $rawValue.trim()
+                                }
                             }
                         } else {
                             $parameterObject["@f$( $i )"] = $null   # this is when some columns are missing in the processing
