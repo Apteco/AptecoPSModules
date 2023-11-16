@@ -5,7 +5,7 @@
 RootModule = 'OSMGeocode.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.0.3'
+ModuleVersion = '0.0.5'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -126,6 +126,8 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.0.5 Remembering last OSM call in module now to make sure to also have 1 call per second also in loops
+0.0.4 Adding an id to be used and output/saved with Reverse Geocoding
 0.0.3 Support of Reverse Geocoding
       Checking the status of OSM before starting
 0.0.2 Adding a new parameter -CombineIdAndHash for working with IDs rather than hash values

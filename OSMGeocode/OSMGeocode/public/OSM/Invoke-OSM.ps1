@@ -38,6 +38,9 @@
     .PARAMETER Lon
         To reverse geocode, you could just insert lat and lon
 
+    .PARAMETER Id
+        To allow using an id and saving it, there is an optional parameter for that
+
     .PARAMETER Email
         The email is a kind of useragent for identification for the current process
 
@@ -107,6 +110,7 @@ function Invoke-OSM {
          [Parameter(Mandatory = $true, ValueFromPipeline = $true, Position=0, ParameterSetName="search")][PSCustomObject]$Address  # the address to geocode (should include street, city, postalcode, countrycodes)
         ,[Parameter(Mandatory = $true, ValueFromPipeline = $false, Position=0, ParameterSetName="reverse")][Double]$Lat
         ,[Parameter(Mandatory = $true, ValueFromPipeline = $false, Position=1, ParameterSetName="reverse")][Double]$Lon
+        ,[Parameter(Mandatory = $false, ValueFromPipeline = $false, Position=2, ParameterSetName="reverse")][String]$Id = ""  # To allow using an id and saving it, there is an optional parameter for that
         ,[Parameter(Mandatory = $true)][String]$Email                                                   # the email is a kind of useragent for identification for the current process
         ,[Parameter(Mandatory = $false)][String]$ResultsLanguage = "de"                                 # language for the results
         ,[Parameter(Mandatory = $false)][Switch]$ExcludeKnownHashes = $false                            # this parameter leads to exclude hashes that are already in the cache
@@ -142,7 +146,6 @@ function Invoke-OSM {
         #Import-Module ConvertStrings
 
         $i = 0
-        $start = [datetime]::Now # fill this variable
 
         $maxMillisecondsPerRequest = 1000 #$settings.millisecondsPerRequest
         #Write-Log "Will create 1 request per $( $maxMillisecondsPerRequest ) milliseconds" -Severity VERBOSE
@@ -171,24 +174,29 @@ function Invoke-OSM {
 
 
         #-----------------------------------------------
-        # CHECK THE STATUS OF OSM SERVER
+        # CHECK THE STATUS OF OSM SERVER AT FIRST CALL OF MODULE
         #-----------------------------------------------
 
+        If ( $null -eq $Script:statusOk ) {
 
-        $osmStatus = Invoke-RestMethod -uri "$( $base )status?format=json" -Method GET
+            $osmStatus = Invoke-RestMethod -uri "$( $base )status?format=json" -Method GET
 
-        <#
-            status           : 0
-            message          : OK
-            data_updated     : 2023-11-16T08:59:45+00:00
-            software_version : 4.3.0-0
-            database_version : 4.3.0-0
-        #>
+            <#
+                status           : 0
+                message          : OK
+                data_updated     : 2023-11-16T08:59:45+00:00
+                software_version : 4.3.0-0
+                database_version : 4.3.0-0
+            #>
 
-        Write-Verbose "OSM Server status: $( $osmStatus.message )"
+            Write-Verbose "OSM Server status: $( $osmStatus.message )"
 
-        If ( $osmStatus.message -ne "OK" ) {
-            throw "There is a problem with OSM server status"
+            If ( $osmStatus.message -ne "OK" ) {
+                throw "There is a problem with OSM server status"
+            }
+
+            $Script:statusOk = $osmStatus.message
+
         }
 
 
@@ -235,6 +243,7 @@ function Invoke-OSM {
             "reverse" {
                 $decimalSeparator = (Get-Culture).NumberFormat.NumberDecimalSeparator
                 $Address = [PSCustomObject]@{
+                    "id" = $Id
                     "lat" = $Lat.toString().replace($decimalSeparator, ".")
                     "lon" = $Lon.toString().replace($decimalSeparator, ".")
                 }
@@ -322,8 +331,8 @@ function Invoke-OSM {
 
             # Wait until 1 second is full, then proceed
             # This is only relevant for all calls after the first one
-            If ( $i -gt 0 ) {
-                $ts = New-TimeSpan -Start $start -End ( [datetime]::Now )
+            If ( $null -ne $script:lastCallTimestamp ) {
+                $ts = New-TimeSpan -Start $script:lastCallTimestamp -End ( [datetime]::Now )
                 if ( $ts.TotalMilliseconds -lt $maxMillisecondsPerRequest ) {
                     $waitLonger = [math]::ceiling( $maxMillisecondsPerRequest - $ts.TotalMilliseconds )
                     Write-Verbose "Waiting $( $waitLonger ) ms"
@@ -334,7 +343,7 @@ function Invoke-OSM {
             Write-Verbose $uriRequest.Uri.OriginalString
 
             # Request to OSM
-            $start = [datetime]::Now
+            $Script:lastCallTimestamp = [datetime]::Now
             #$t = Measure-Command {
                 # TODO [ ] possibly implement proxy, if needed
                 # TODO add try catch here

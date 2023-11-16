@@ -137,6 +137,9 @@ New-Variable -Name moduleRoot -Value $null -Scope Script -Force     # Current lo
 New-Variable -Name debug -Value $null -Scope Script -Force          # Debug variable where you can put in any variables to read after executing the script, good for debugging
 New-Variable -Name allowedQueryParameters -Value $null -Scope Script -Force          # Debug variable where you can put in any variables to read after executing the script, good for debugging
 New-Variable -Name knownHashes -Value $null -Scope Script -Force    # Arraylist to save known hashes
+New-Variable -Name statusOk -Value $null -Scope Script -Force    # Arraylist to save known hashes
+New-Variable -Name lastCallTimestamp -Value $null -Scope Script -Force    # Arraylist to save known hashes
+
 
 # Set the variables now
 $Script:timestamp = [datetime]::Now
@@ -162,7 +165,7 @@ try {
         Import-Module -Name $mod -ErrorAction Stop
     }
 } catch {
-    Write-Error "Error loading dependencies. Please execute 'Install-AptecoOSMGeocode' now"
+    Write-Error "Error loading dependencies. Please execute 'Install-OSMGeocode' now"
     Exit 0
 }
 

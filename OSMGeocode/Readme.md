@@ -84,7 +84,7 @@ Find-Module -Repository "PSGallery" -Name "OSMGeocode" -IncludeDependencies | In
 Import-Module OSMGeocode -Verbose
 ```
 
-If you get error messages during the import, that is normal, because there are modules missing yet. They need to be installed with `Install-AptecoOSMGeocode`
+If you get error messages during the import, that is normal, because there are modules missing yet. They need to be installed with `Install-OSMGeocode`
 
 ```PowerShell
 Install-OSMGeocode -Verbose
