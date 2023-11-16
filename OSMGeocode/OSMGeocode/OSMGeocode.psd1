@@ -127,6 +127,7 @@ PrivateData = @{
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
 0.0.3 Support of Reverse Geocoding
+      Checking the status of OSM before starting
 0.0.2 Adding a new parameter -CombineIdAndHash for working with IDs rather than hash values
       More examples in readme
       Some performance improvements and fixes

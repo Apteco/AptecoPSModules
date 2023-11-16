@@ -152,6 +152,27 @@ function Invoke-OSM {
             $loadNameDetails = 0
         }
 
+        #-----------------------------------------------
+        # CHECK THE STATUS OF OSM SERVER
+        #-----------------------------------------------
+
+
+        $osmStatus = Invoke-RestMethod -uri "$( $base )status?format=json" -Method GET
+
+        <#
+            status           : 0
+            message          : OK
+            data_updated     : 2023-11-16T08:59:45+00:00
+            software_version : 4.3.0-0
+            database_version : 4.3.0-0
+        #>
+
+        Write-Verbose "OSM Server status: $( $osmStatus.message )"
+
+        If ( $osmStatus.message -ne "OK" ) {
+            throw "There is a problem with OSM server status"
+        }
+
 
         #-----------------------------------------------
         # VALIDATE EMAIL
