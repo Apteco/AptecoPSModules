@@ -142,7 +142,10 @@ New-Variable -Name knownHashes -Value $null -Scope Script -Force    # Arraylist 
 $Script:timestamp = [datetime]::Now
 $Script:logDivider = "----------------------------------------------------" # String used to show a new part of the log
 $Script:moduleRoot = $PSScriptRoot.ToString()
-$Script:allowedQueryParameters = @("street", "city", "postalcode","countrycodes") # TODO maybe put these into settings, if needed
+$Script:allowedQueryParameters = [Hashtable]@{
+    "search" = @("street", "city", "postalcode","countrycodes")
+    #"reverse" = @()
+} # TODO maybe put these into settings, if needed
 $Script:knownHashes = [System.Collections.ArrayList]@()
 
 

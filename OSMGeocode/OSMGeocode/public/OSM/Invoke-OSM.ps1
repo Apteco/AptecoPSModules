@@ -189,7 +189,7 @@ function Invoke-OSM {
         #-----------------------------------------------
 
         # Build hash value
-        $hashValue = Get-AddressHash -Address $Address
+        $hashValue = Get-AddressHash -Address $Address -ParameterSetName "search"
         If ( $CombineIdAndHash -eq $true ) { # TODO check case sensitivity
             $hashedInput = "$( $Address.id )#$( $hashValue )"
         } else {
@@ -209,7 +209,7 @@ function Invoke-OSM {
             #-----------------------------------------------
 
             $nvCollection = [System.Web.HttpUtility]::ParseQueryString([String]::Empty) #, [System.Text.Encoding]::UTF8)
-            $Address.PSObject.Properties | where-object { $_.Name -in $Script:allowedQueryParameters } | ForEach-Object {
+            $Address.PSObject.Properties | where-object { $_.Name -in $Script:allowedQueryParameters.search } | ForEach-Object {
                 $nvCollection.Add( $_.Name, $_.Value )
             }
 

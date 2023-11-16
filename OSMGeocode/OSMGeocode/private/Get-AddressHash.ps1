@@ -4,6 +4,7 @@ function Get-AddressHash {
     [CmdletBinding()]
     param (
          [Parameter(Mandatory = $true, ValueFromPipeline = $true)][PSCustomObject]$Address  # the address to geocode (should include street, city, postalcode, countrycodes)
+        ,[Parameter(Mandatory = $false)][String]$ParameterSetName = "search" # get the params for search or reverse
         ,[Parameter(Mandatory = $false)][String]$Salt = ""  # add a salt for the hash, if you wish to
     )
 
@@ -15,8 +16,8 @@ function Get-AddressHash {
         # Do it alway in the same order of $allowedProperties
         $inputStringToHash = [System.Text.StringBuilder]::new()
 
-        For ( $i = 0; $i -lt $Script:allowedQueryParameters.Count; $i++ ) {
-            $propName = $Script:allowedQueryParameters[$i]
+        For ( $i = 0; $i -lt $Script:allowedQueryParameters.$ParameterSetName.Count; $i++ ) {
+            $propName = $Script:allowedQueryParameters.$ParameterSetName[$i]
             $propValue = $Address.$propName
             If ( $null -ne $propValue ) {
                 If ( $inputStringToHash -is [String] ) {

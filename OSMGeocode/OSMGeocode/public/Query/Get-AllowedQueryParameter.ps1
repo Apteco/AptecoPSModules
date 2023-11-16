@@ -3,7 +3,7 @@
 function Get-AllowedQueryParameter {
     [CmdletBinding()]
     param (
-
+        [Parameter(Mandatory = $false)][String]$ParameterSetName = "search" # get the params for search or reverse
     )
 
     begin {
@@ -11,7 +11,7 @@ function Get-AllowedQueryParameter {
     }
 
     process {
-        $Script:allowedQueryParameters
+        $Script:allowedQueryParameters.$ParameterSetName
     }
 
     end {
