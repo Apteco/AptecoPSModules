@@ -238,6 +238,43 @@ FROM (
 WHERE rownum = 1
 ```
 
+or a bit more advanced
+
+```SQL
+SELECT *
+FROM (
+	SELECT json_extract(inputObject, '$.id') AS "ID"
+		, total
+		, updatedAt
+		, json_extract(results, '$.address.road') || ' ' || json_extract(results, '$.address.house_number') "Straße"
+		, json_extract(results, '$.address.postcode') "Plz-5"
+		, json_extract(results, '$.address.village') "Dorf"
+		, json_extract(results, '$.address.suburb') "Stadtteil"
+		, json_extract(results, '$.address.town') "Ort"
+		, json_extract(results, '$.address.county') "Landkreis"
+		, json_extract(results, '$.address.state') "Bundesland"
+		, json_extract(results, '$.address.country') "Land"
+		, json_extract(results, '$.address.country_code') "ISO-Code"
+		, json_extract(results, '$.lat') "Breitengrad Lat"
+		, json_extract(results, '$.lon') "Längengrad Lon"
+		, json_extract(results, '$.licence') "OSM-Lizenz"
+		, json_extract(results, '$.osm_type') "OSM-Typ"
+		, json_extract(results, '$.osm_id') "OSM-ID"
+		, json_extract(results, '$.type') "Typ"
+		, json_extract(results, '$.category') "Kategorie"
+		, json_extract(results, '$.name') "Name"
+		, json_extract(results, '$.extratags.contact:phone') "Telefon 1"
+		, json_extract(results, '$.extratags.phone') "Telefon 2"
+		, row_number() OVER (
+			PARTITION BY json_extract(inputObject, '$.id') ORDER BY updatedAt DESC
+			) rownum
+	FROM addresses
+	)
+WHERE rownum = 1
+	AND Straße IS NOT NULL
+	--limit 10
+```
+
 # TODO
 
 - [x] needs more explanations on parameter
