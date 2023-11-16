@@ -140,6 +140,16 @@ $addresses = Import-csv ".\test.csv" -Encoding UTF8 -Delimiter "`t"
 $addresses | Invoke-OSM -Email "florian.von.bracht@apteco.de" -AddressDetails -ExtraTags -AddMetaData -ReturnOnlyFirstPosition -ResultsLanguage "de" | Out-GridView
 ```
 
+### Reverse Geocoding
+
+If you have coordinates you want to get the next location to, just use
+
+```PowerShell
+Invoke-OSM -Lat 50.1011058 -Lon 8.6696359 -Email "user@example.com" -AddressDetails -ExtraTags -ResultsLanguage "de"
+```
+
+Pipeline support is at the moment only for address search geocoding, not reverse geocoding
+
 
 ### Working with hashes to identify known addresses
 

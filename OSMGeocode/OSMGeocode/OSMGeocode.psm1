@@ -144,7 +144,7 @@ $Script:logDivider = "----------------------------------------------------" # St
 $Script:moduleRoot = $PSScriptRoot.ToString()
 $Script:allowedQueryParameters = [Hashtable]@{
     "search" = @("street", "city", "postalcode","countrycodes")
-    #"reverse" = @()
+    "reverse" = @("lat","lon")
 } # TODO maybe put these into settings, if needed
 $Script:knownHashes = [System.Collections.ArrayList]@()
 

@@ -22,8 +22,21 @@
         If you put in multiple objects, the geocoding will do 1 request per second like it should do to
         cover OSM terms and conditions.
 
+        To reverse geocode, do something like
+
+        Invoke-OSM -Lat 50.1011058 -Lon 8.6696359 -Email "user@example.com" -AddressDetails -ExtraTags -ResultsLanguage "de"
+
+        Pipeline support is at the moment only for address search geocoding, not reverse geocoding
+
+
     .PARAMETER Address
         The address to geocode (should include street, city, postalcode, countrycodes)
+
+    .PARAMETER Lat
+        To reverse geocode, you could just insert lat and lon
+
+    .PARAMETER Lon
+        To reverse geocode, you could just insert lat and lon
 
     .PARAMETER Email
         The email is a kind of useragent for identification for the current process
@@ -86,12 +99,14 @@
 
 #>
 function Invoke-OSM {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName='search')]
 
     param (
 
         # Input parameter
-         [Parameter(Mandatory = $true, ValueFromPipeline = $true, Position=0)][PSCustomObject]$Address  # the address to geocode (should include street, city, postalcode, countrycodes)
+         [Parameter(Mandatory = $true, ValueFromPipeline = $true, Position=0, ParameterSetName="search")][PSCustomObject]$Address  # the address to geocode (should include street, city, postalcode, countrycodes)
+        ,[Parameter(Mandatory = $true, ValueFromPipeline = $false, Position=0, ParameterSetName="reverse")][Double]$Lat
+        ,[Parameter(Mandatory = $true, ValueFromPipeline = $false, Position=1, ParameterSetName="reverse")][Double]$Lon
         ,[Parameter(Mandatory = $true)][String]$Email                                                   # the email is a kind of useragent for identification for the current process
         ,[Parameter(Mandatory = $false)][String]$ResultsLanguage = "de"                                 # language for the results
         ,[Parameter(Mandatory = $false)][Switch]$ExcludeKnownHashes = $false                            # this parameter leads to exclude hashes that are already in the cache
@@ -152,6 +167,9 @@ function Invoke-OSM {
             $loadNameDetails = 0
         }
 
+        $paramSet = $PSCmdlet.ParameterSetName # is search or reverse
+
+
         #-----------------------------------------------
         # CHECK THE STATUS OF OSM SERVER
         #-----------------------------------------------
@@ -210,7 +228,20 @@ function Invoke-OSM {
         #-----------------------------------------------
 
         # Build hash value
-        $hashValue = Get-AddressHash -Address $Address -ParameterSetName "search"
+        Switch ( $paramSet ) {
+            "search" {
+                $hashValue = Get-AddressHash -Address $Address -ParameterSetName "search"
+            }
+            "reverse" {
+                $decimalSeparator = (Get-Culture).NumberFormat.NumberDecimalSeparator
+                $Address = [PSCustomObject]@{
+                    "lat" = $Lat.toString().replace($decimalSeparator, ".")
+                    "lon" = $Lon.toString().replace($decimalSeparator, ".")
+                }
+                $hashValue = Get-AddressHash -Address $Address -ParameterSetName "reverse"
+            }
+        }
+
         If ( $CombineIdAndHash -eq $true ) { # TODO check case sensitivity
             $hashedInput = "$( $Address.id )#$( $hashValue )"
         } else {
@@ -230,7 +261,7 @@ function Invoke-OSM {
             #-----------------------------------------------
 
             $nvCollection = [System.Web.HttpUtility]::ParseQueryString([String]::Empty) #, [System.Text.Encoding]::UTF8)
-            $Address.PSObject.Properties | where-object { $_.Name -in $Script:allowedQueryParameters.search } | ForEach-Object {
+            $Address.PSObject.Properties | where-object { $_.Name -in $Script:allowedQueryParameters.$paramSet } | ForEach-Object {
                 $nvCollection.Add( $_.Name, $_.Value )
             }
 
@@ -265,7 +296,7 @@ function Invoke-OSM {
             # PREPARE URL
             #-----------------------------------------------
 
-            $uriRequest = [System.UriBuilder]::new("$( $base )search")
+            $uriRequest = [System.UriBuilder]::new("$( $base )$( $paramSet )")
             $uriRequest.Query = [System.Web.HttpUtility]::UrlDecode( $nvCollection.ToString() )
             # Using an alternative way becaue umlauts can create massive problems in queries
             # $queryArray = [Array]@()
@@ -377,7 +408,16 @@ function Invoke-OSM {
     }
 
     end {
-        Write-Verbose "Geocoded $( $i ) addresses"
+
+        Switch ( $paramSet ) {
+            "search" {
+                Write-Verbose "Geocoded $( $i ) addresses"
+            }
+            "reverse" {
+                Write-Verbose "Geocoded $( $i ) coordinates"
+            }
+        }
+
     }
 
 }
