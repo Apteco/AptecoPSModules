@@ -30,17 +30,17 @@ A "channel" is something like `Teams|Slack|Email|Telegram`. A target specifies a
 ## Pre-Requisites
 
 1. Go to the @Botfather Account 
-1. Create a new bot with `/newbot` and follow the steps like giving it a name `PSNotification` and a username `PSNotifBot`. You are completely free with this naming. The username must be unique in Telegram, so this can take a moment to find a free one.
+1. Create a new bot with `/newbot` and follow the steps like giving it a name `PSNotify` and a username `PSNotifBot`. You are completely free with this naming. The username must be unique in Telegram, so this can take a moment to find a free one.
 1. After that you are getting the token that you will need. To get your token, it is easier with [https://desktop.telegram.org/](Telegram Desktop) or [https://web.telegram.org/k/](Telegram Web)
     1. Optionally you can define a password for the bot via `/p password`
 1. Then click in the same message on the link for the bot and you can chat with it. This module is not intended to receive something, so only broadcasting messages for now. If you want to use a group with colleagues, just create a new group and add your bot.
 
-## Add channel to PSNotification
+## Add channel to PSNotify
 
 Add the channel now to this module
 
 ```PowerShell
-Import-Module PSNotification
+Import-Module PSNotify
 Add-TelegramChannel -Name "MyNewChannel" -Token "tokenfromtelegram"
 Add-TelegramTarget -Name "MyNewChannel" -TargetName "MyNewTarget"
 
@@ -93,12 +93,12 @@ Good resource: https://learn.microsoft.com/en-us/azure/data-factory/how-to-send-
 1. With that url you are able to send a post and add this url to this module.
 
 
-## Add channel to PSNotification
+## Add channel to PSNotify
 
 Add the channel now to this module
 
 ```PowerShell
-Import-Module PSNotification
+Import-Module PSNotify
 Add-TeamsChannel -Name "MyNewTeamsChannel" -Webhook "https://apteco365.webhook.office.com/webhookb2/71d1c7d7-xxxx-xxxx-xxxx-xxxxxxxxxxxx@131c9905-xxxx-xxxx-xxxx-xxxxxxxxxxxx/IncomingWebhook/cb6e6cxxxxxxxxxxxxxxxxxxxx/801883d2-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 
 Send-TeamsUpdate -Name "MyNewTeamsChannel" -Title "Great title!" -Text "Hello World"
@@ -114,12 +114,12 @@ Send-TeamsUpdate -Name "MyNewTeamsChannel" -Title "Great title!" -Text "Hello Wo
 1. When you scroll down to Step 1 on that page, tadaa.... there is the token you can use now in this module. It is easy like that!
 
 
-## Add channel to PSNotification
+## Add channel to PSNotify
 
 Add the channel now to this module
 
 ```PowerShell
-Import-Module PSNotification
+Import-Module PSNotify
 Add-SlackChannel -Name "MyNewSlackChannel" -Token "xoxb-not-a-real-token-this-will-not-work"
 Add-SlackTarget -Name "MyNewSlackChannel" -TargetName "MyNewSlackTarget"
 
@@ -146,21 +146,21 @@ To make this happen, we need `MailKit` and `MimeKit` first. You can install it w
 Install-MailKit -Verbose
 ```
 
-This will automatically install it into `%LOCALAPPDATA%\AptecoPSModules\PSNotification\lib`. As this loads also all dependencies, this can be something around 440MB. When you are sure you only need MailKit and MimeKit, then you can manually delete all other packages in that folder. This can also improve performance.
+This will automatically install it into `%LOCALAPPDATA%\AptecoPSModules\PSNotify\lib`. As this loads also all dependencies, this can be something around 440MB. When you are sure you only need MailKit and MimeKit, then you can manually delete all other packages in that folder. This can also improve performance.
 
-## Add channel to PSNotification
+## Add channel to PSNotify
 
 
 Add the channel now to this module
 
 ```PowerShell
-Import-Module PSNotification
+Import-Module PSNotify
 
 $emailParams = [Hashtable]@{
     "Name" = "example" # TODO rename this entry
     "From" = "sender@example.com"
     "Username" = "sender@example.com"
-    "Password" = "k3j4SFN5n=b0tdXun0hV+G=" # TODO remove this!
+    "Password" = "acbdefg" # TODO remove this!
     "Host" = "smtp.ionos.de"
     "Port" = 465
     "UseSSL" = $true

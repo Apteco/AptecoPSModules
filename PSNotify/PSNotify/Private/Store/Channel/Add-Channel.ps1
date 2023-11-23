@@ -23,8 +23,14 @@
             # Do nothing
         }
 
+        If ( $script:store.channels.count -ge 1 ) {
+            $existingChannels = [Array]@( $script:store.channels )
+        } else {
+            $existingChannels = [Array]@()
+        }
+
         # Add the channel to the store
-        $script:store.channels =  @( $script:store.channels ) + [PSCustomObject]@{
+        $script:store.channels =  $existingChannels + [PSCustomObject]@{
             "ChannelId" = [guid]::NewGuid().ToString()
             "Name" = $Name
             "Type" = $Type # Telegram, Teams, Email, Slack

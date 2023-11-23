@@ -85,7 +85,7 @@ $Script:store = [PSCustomObject]@{
 
 # Default folders and files
 $localAppData = [Environment]::GetFolderPath("LocalApplicationData")
-$localTargetFolder = "$( $localAppData )/AptecoPSModules/PSNotification"
+$localTargetFolder = "$( $localAppData )/AptecoPSModules/PSNotify"
 $Script:defaultStorefile = "$( $localTargetFolder )/store.json"
 $Script:localLibFolder = "$( $localTargetFolder )/lib"
 
