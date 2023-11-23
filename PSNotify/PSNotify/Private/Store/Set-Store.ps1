@@ -17,7 +17,7 @@ Function Set-Store {
 
                 # TODO [x] Handle overwriting the file, currently it will be overwritten
                 If ( Test-Path -Path $absolutePath ) {
-                    $backupPath = "$( $absolutePath ).$( [Datetime]::Now.ToString("yyyyMMddHHmmss") )"
+                    $backupPath = "$( $absolutePath ).$( [Datetime]::Now.ToString("yyyyMMddHHmmssffff") )"
                     Write-Verbose -message "Moving previous store file '$( $absolutePath )' to $( $backupPath )" #-Verbose
                     Move-Item -Path $absolutePath -Destination $backupPath #-Verbose
                 }

@@ -1,4 +1,4 @@
-﻿function Remove-TelegramTarget {
+﻿function Remove-SlackTarget {
 
 
     [CmdletBinding()]

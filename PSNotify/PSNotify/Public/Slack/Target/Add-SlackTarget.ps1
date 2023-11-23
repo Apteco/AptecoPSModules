@@ -1,4 +1,4 @@
-﻿function Add-TelegramTarget {
+﻿function Add-SlackTarget {
 
 
     [CmdletBinding()]

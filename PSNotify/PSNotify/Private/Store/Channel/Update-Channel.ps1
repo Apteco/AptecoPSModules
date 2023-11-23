@@ -1,3 +1,4 @@
+
 Function Update-Channel {
     [CmdletBinding()]
     param(
@@ -9,11 +10,11 @@ Function Update-Channel {
 
         # Remove the channel and add it afterwards
         $channel = Get-Channel -Name $Name
-        $script:store.channels = $script:store.channels | Where-Object { $_.Name -ne $channel.Name }
+        $script:store.channels = [Array]@( $script:store.channels | Where-Object { $_.Name -ne $channel.Name } )
 
         # Modify the updated channel and add it back
         $NewChannel."DateModified" = [datetime]::Now.ToString("yyyyMMddHHmmss")
-        $script:store.channels = @( $script:store.channels ) + $NewChannel
+        $script:store.channels += $NewChannel
 
         # Now save that to the store
         Set-Store
