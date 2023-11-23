@@ -1,7 +1,7 @@
-
+﻿
 <#PSScriptInfo
 
-.VERSION 0.1.1
+.VERSION 0.2.1
 
 .GUID 41f30667-962f-4796-a080-017c0debadeb
 
@@ -19,13 +19,18 @@
 
 .ICONURI https://www.apteco.de/sites/default/files/favicon_3.ico
 
-.EXTERNALMODULEDEPENDENCIES 
+.EXTERNALMODULEDEPENDENCIES
 
 .REQUIREDSCRIPTS
 
 .EXTERNALSCRIPTDEPENDENCIES
 
 .RELEASENOTES
+0.3.0 Adding a new parameter for extract only: -ExtractOnly
+0.2.1 Fix for loading XML from a variable
+0.2.0 Preverse Whitespace in XML
+      Small improvements
+      Allow wildcards for matching tablenames with -like
 0.1.1 Adding icon for info
       Adding Apteco tag to info
 0.1.0 Initial release of SyncExtractOptions script through psgallery
@@ -34,9 +39,9 @@
 
 #>
 
-<# 
+<#
 
-.DESCRIPTION 
+.DESCRIPTION
 
 This script is used to switch off or switch on some data sources in FastStats Designer to allow a build with only a few tables (like customer data)
 and then later do a bigger build with customer and transactional data.
@@ -70,7 +75,11 @@ Use the -Verbose flag if you want to get more details
 
 Don't forget that if you turn off some tables with -Exclude than they are turned off until you actively turn them on again.
 
-#> 
+Wildcards are supported now, too, so you could do
+SyncExtractOptions -DesignFile "C:\Apteco\Build\20220714\designs\20220714.xml" -Include "Bookings*"
+if you have multiple tables that begin with 'Bookings'
+
+#>
 
 #-----------------------------------------------
 # SCRIPT INPUT
@@ -80,6 +89,7 @@ param(
      [String]$DesignFile
     ,[String[]]$Include
     ,[String[]]$Exclude
+    ,[Switch]$ExtractOnly
     ,[Switch]$StartDesigner
     ,[Switch]$Verbose
 )
@@ -90,16 +100,23 @@ param(
 #-----------------------------------------------
 
 $settings = [PSCustomObject]@{
+    "designFile" = $DesignFile
+    "include" = $Include
+    "exclude" = $Exclude
+    "startDesignerConsole" = $false
+    "designerConsolePath" = "$( $Env:PROGRAMFILES )\Apteco\FastStats Designer\DesignerConsole.exe"
+}
 
-    designFile = $DesignFile
+# Set Designer start option
+If ( $StartDesigner -eq $true ) {
+    $settings.startDesignerConsole = $true
+}
 
-    include = $Include
-
-    exclude = $Exclude
-
-    startDesignerConsole = $StartDesigner #$true
-    designerConsolePath = "$( $Env:PROGRAMFILES )\Apteco\FastStats Designer\DesignerConsole.exe"
-
+# Check Designer Console
+If ( (Test-Path -Path $settings.designerConsolePath ) -eq $true ) {
+    Write-Verbose "Designer Console found at: '$( $settings.designerConsolePath )'"
+} else {
+    Write-Verbose "Designer Console not found at: '$( $settings.designerConsolePath )'"
 }
 
 
@@ -135,24 +152,67 @@ $resolvedDesignFilePath = Resolve-Path -Path $settings.designFile
 
 # Load xml of design
 Write-Verbose "Load the xml from '$( $resolvedDesignFilePath.Path )'"
-$x = [xml](Get-Content -Path $resolvedDesignFilePath.Path -Encoding utf8 -Raw)
+$x = [xml]::new()
+$x.PreserveWhitespace = $true
+$x.LoadXml((Get-Content -Path $resolvedDesignFilePath.Path -Encoding utf8 -Raw))
 
 
 #-----------------------------------------------
-# CHANGE THE NEEDED OPTIONS
+# CHANGE THE NEEDED EXTRACT OPTIONS
 #-----------------------------------------------
 
 # Pick the tables
-$x.FastStatsDesign.DataSources.DatabaseDataSource | where { $_.TableName -in ( $settings.include + $settings.exclude ) } | ForEach {
+$x.FastStatsDesign.DataSources.DatabaseDataSource | ForEach-Object {
+
     $databaseDataSource = $_
-    If ( $settings.include -contains $databaseDataSource.TableName ) {
+
+    $settings.include | Where-Object { $databaseDataSource.TableName -like $_ } | ForEach-Object {
         Write-Verbose "Setting $( $databaseDataSource.TableName ) to 'EveryTime'"
         $databaseDataSource.ExtractOptions = 'EveryTime' # Never|EveryTime
-    } else {
+    }
+
+    $settings.exclude | Where-Object { $databaseDataSource.TableName -like $_ } | ForEach-Object {
         Write-Verbose "Setting $( $databaseDataSource.TableName ) to 'Never'"
         $databaseDataSource.ExtractOptions = 'Never' # Never|EveryTime
     }
+
 }
+
+
+#-----------------------------------------------
+# SET EXTRACT ONLY IF SET
+#-----------------------------------------------
+
+# TODO to get this work for 1:n relations, you need to change the keys from "Auto" to either "String" or "Numeric"
+
+If ( $ExtractOnly -eq $true ) {
+
+    # Run auto discovery
+    $x.FastStatsDesign.SystemConfig.Automated.Selector_Codes = "False"
+
+    # Load system if no errors found finding selector codes
+    $x.FastStatsDesign.SystemConfig.Automated.Compile_System = "False"
+
+} else {
+
+    # Set this back to defaults
+
+    # Run auto discovery
+    $x.FastStatsDesign.SystemConfig.Automated.Selector_Codes = "True"
+
+    # Load system if no errors found finding selector codes
+    $x.FastStatsDesign.SystemConfig.Automated.Compile_System = "True"
+
+}
+
+
+#-----------------------------------------------
+# POSTEXTRACT
+#-----------------------------------------------
+
+# to deactivate this, those two would need to be emptied
+#$x.FastStatsDesign.SystemConfig.DataExtract.PostExtractCommand
+#$x.FastStatsDesign.SystemConfig.DataExtract.PostExtractArgs
 
 
 #-----------------------------------------------
@@ -161,6 +221,7 @@ $x.FastStatsDesign.DataSources.DatabaseDataSource | where { $_.TableName -in ( $
 
 # Save the xml
 Write-Verbose "Save the xml to '$( $resolvedDesignFilePath.Path )'"
+$x.PreserveWhitespace = $true # maybe not needed
 $x.Save($resolvedDesignFilePath.Path) # you need absolute paths
 
 
