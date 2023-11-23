@@ -1,4 +1,4 @@
-﻿function Get-TelegramChannel {
+﻿function Get-TeamsChannel {
 
 
     [CmdletBinding()]

@@ -176,3 +176,18 @@ Add-EmailTarget -Name "example" -TargetName "Email1" -Receivers "florian.von.bra
 # And send an email
 Send-Mailnotification -Name ionos -Target Email1 -Subject "Achtung Test!" -Text "Beware of the text"
 ```
+
+
+# FAQ
+
+## Using PSNotify with Teams in Apteco FastStats Designer
+
+If you want to get an update, e.g. if a build starts or is finished, you could simply enter something like this in the arguments
+
+```
+ -Command "Import-Module PSNotify; Send-TeamsNotification -Name 'CRM Notifications' -Title '[CRM] Designer' -Text 'Updated SCV successfully'"
+```
+
+So it looks like this:
+
+![grafik](https://github.com/Apteco/AptecoPSModules/assets/14135678/f0e40664-85d8-4392-b8a4-cba519d0ca73)

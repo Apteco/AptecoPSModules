@@ -22,7 +22,7 @@ function Invoke-Teams {
     )
     DynamicParam {
         # All parameters, except Uri and body (needed as an object)
-        $p = Get-BaseParameters "Invoke-RestMethod"
+        $p = Get-BaseParameters "Invoke-WebRequest"
         [void]$p.remove("Uri")
         [void]$p.remove("Body")
         $p
@@ -57,7 +57,7 @@ function Invoke-Teams {
         # }
 
         # Reduce input parameters to only allowed ones
-        $updatedParameters = Skip-UnallowedBaseParameters -Base "Invoke-RestMethod" -Parameters $PSBoundParameters
+        $updatedParameters = Skip-UnallowedBaseParameters -Base "Invoke-WebRequest" -Parameters $PSBoundParameters
 
         # Add additional headers from the settings, e.g. for api gateways or proxies
         $Script:store.additionalHeaders.PSObject.Properties | ForEach-Object {
@@ -74,9 +74,6 @@ function Invoke-Teams {
         #     }
         # }
 
-        # Add the contenttype
-        $updatedParameters.ContentType = "application/json"
-
     }
 
     Process {
@@ -89,6 +86,9 @@ function Invoke-Teams {
         # $Query.PSObject.Properties | ForEach-Object {
         #     $nvCollection.Add( $_.Name, $_.Value )
         # }
+                
+        # Add the contenttype
+        $updatedParameters.ContentType = "application/json;charset=utf-8" #"application/json"
 
         # Prepare URL
         #Write-Verbose $Path -verbose
@@ -98,8 +98,8 @@ function Invoke-Teams {
 
         # Prepare Body
         If ( $updatedParameters.ContainsKey("Body") -eq $true ) {
-            $bodyJson = ConvertTo-Json -InputObject $Body -Depth 99
-            $updatedParameters.Body = $bodyJson
+            #$bodyJson = ConvertTo-Json -InputObject $Body -Depth 99
+            $updatedParameters.Body = ConvertTo-Json -InputObject $Body -Depth 99
         }
 
         # Execute the request
@@ -115,10 +115,10 @@ function Invoke-Teams {
                  #Write-Verbose -Message "$( $updatedParameters.Method.ToString().ToUpper() ) $( $updatedParameters.Uri )" -verbose
                  #Write-verbose -message "$( $updatedParameters.Body )" -verbose
             # }
-            $wr = Invoke-RestMethod @updatedParameters
+            $wr = Invoke-WebRequest @updatedParameters -UseBasicParsing
 
-            If ( $wr.ok -eq $true ) {
-                $return = $wr.result
+            If ( $wr.StatusDescription -eq "OK" ) {
+                $return = $wr.Content
             } else {
                 throw "Error at teams request"
             }
