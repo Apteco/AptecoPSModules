@@ -86,7 +86,7 @@ function Invoke-Teams {
         # $Query.PSObject.Properties | ForEach-Object {
         #     $nvCollection.Add( $_.Name, $_.Value )
         # }
-                
+
         # Add the contenttype
         $updatedParameters.ContentType = "application/json;charset=utf-8" #"application/json"
 
