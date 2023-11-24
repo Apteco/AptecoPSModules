@@ -198,9 +198,17 @@ So if you have log files and want to scan all new lines for some keywords and th
 
 
 
+https://github.com/Apteco/AptecoPSModules/assets/14135678/858bb92c-7c23-4988-acfd-c8a5fad86f9c
+
+
+
 ## Reading messages from Telegram
 
 There is also a use case to use this module to receive commands via Telegram and do something with it. The code from the video below can be found here.
+
+
+
+https://github.com/Apteco/AptecoPSModules/assets/14135678/c431d908-fcdb-42e2-be76-e1956462d6b2
 
 
 
