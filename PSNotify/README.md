@@ -191,3 +191,34 @@ If you want to get an update, e.g. if a build starts or is finished, you could s
 So it looks like this:
 
 ![grafik](https://github.com/Apteco/AptecoPSModules/assets/14135678/f0e40664-85d8-4392-b8a4-cba519d0ca73)
+
+## Getting notified when a line with a keyword appears
+
+So if you have log files and want to scan all new lines for some keywords and then got notified, you can see it is pretty easy like in this video
+
+
+
+## Reading messages from Telegram
+
+There is also a use case to use this module to receive commands via Telegram and do something with it. The code from the video below can be found here.
+
+
+
+```PowerShell
+$updateId = 0
+Do {
+    $msg = Get-TelegramUpdates -Name "MyNewChannel" -Offset $updateId -verbose
+    If ( $msg.Count -gt 0 ) {
+        $msg | where-object { $_.update_id -gt $updateId } | ForEach-Object {
+            $m = $_
+            Write-Verbose "Update $( $m.update_id ) with '$( $m.message.Text )" -Verbose
+            If ( $m.message.Text -like "*do*" ) {
+                Write-Warning "Hurry up! You need to DO something!!!"
+            }
+        }
+        $updateId = [long]$msg[-1].update_id
+        Write-Verbose "Changed `$updateId to $( $updateId )" -Verbose
+    }
+    Start-Sleep -Seconds 5
+} While (1 -ne 2)
+```
