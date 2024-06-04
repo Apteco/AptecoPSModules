@@ -66,7 +66,7 @@ Function Write-Log {
 
         # If the variable is not present, it will create a temporary file
         If ( $null -eq $Script:logfile ) {
-            $f = New-TemporaryFile
+            $f = Join-Path -Path $Env:tmp -ChildPath "$( [guid]::newguid().toString() ).tmp" #New-TemporaryFile
             $Script:logfile = $f.FullName
             Write-Verbose -Message "There is no variable '`$logfile' present on 'Script' scope. Created one at '$( $Script:logfile )'" -InformationAction Continue -Verbose
         }
