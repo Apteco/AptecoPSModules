@@ -12,7 +12,7 @@
 RootModule = 'ConvertStrings.psm1'
 
 # Die Versionsnummer dieses Moduls
-ModuleVersion = '0.0.3'
+ModuleVersion = '0.0.4'
 
 # Unterstützte PSEditions
 # CompatiblePSEditions = @()
@@ -123,6 +123,7 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.0.4 Fixed the function name for Set-Token (removed the plural)
 0.0.3 Small performance improvement for hash calculation
 0.0.2 The Get-RandomString was producing the same values when in the same milliseconds, this is now fixed
 0.0.1 Initial release of ConvertStrings module through psgallery
