@@ -1,7 +1,7 @@
 ﻿
 <#PSScriptInfo
 
-.VERSION 0.0.5
+.VERSION 0.0.6
 
 .GUID 06dbc814-edfe-4571-a01f-f4091ff5f3c2
 
@@ -137,7 +137,7 @@ If ( ( Get-LogfileOverride ) -eq $false ) {
     Write-Log -message "----------------------------------------------------" -Severity VERBOSE
 }
 
-# Remember process id
+# Remember the current processID
 $processId = Get-ProcessId
 
 #-----------------------------------------------
@@ -187,6 +187,10 @@ if ($os -eq "Windows") {
     Write-Log -Message "No user and elevation check due to OS"
 }
 
+# Check environment and process
+Write-Log -Message "OS is 64bit: $( [System.Environment]::Is64BitOperatingSystem )"
+Write-Log -Message "Process is 64bit: $( [System.Environment]::Is64BitProcess )"
+
 
 #-----------------------------------------------
 # LOAD SCRIPTS
@@ -228,19 +232,27 @@ Write-Log -Message "Loaded $( $modCount ) modules" #-Severity VERBOSE
 $kernel32Loaded = $false
 If ( ( $LocalPackage.Count -gt 0 -or $GlobalPackage.Count -gt 0 -or $LoadWholePackageFolder -eq $true ) -and $os -eq "Windows" ) {
 
-    Add-Type @"
+    Add-Type -Language CSharp -TypeDefinition @"
     using System;
     using System.Runtime.InteropServices;
 
     public static class Kernel32 {
-        [DllImport("kernel32")]
+        [DllImport("kernel32.dll", SetLastError = true)]
         public static extern IntPtr LoadLibrary(string lpFileName);
+        public static string GetError() { return Marshal.GetLastWin32Error().ToString(); }
+        public static bool GetEnv() { return Environment.Is64BitProcess; }
+        
     }
 "@
 
     $kernel32Loaded = $true
 
+    # Log Kernel32 environment
+    Write-Log -Message "[kernel32] is 64bit: $( [Kernel32]::GetEnv() )"
+
 }
+
+Write-Log "[kernel32] loaded: $( $kernel32Loaded )"
 
 
 # Taken from https://www.powershellgallery.com/packages/Az.Storage/5.10.0/Content/Az.Storage.psm1
@@ -402,8 +414,9 @@ If ( $LocalPackage.Count -gt 0 -or $GlobalPackage.Count -gt 0 -or $LoadWholePack
                         } catch [System.BadImageFormatException] {
                             # Try it one more time with LoadLibrary through Kernel, if the kernel was loaded
                             If ( $kernel32Loaded -eq $true ) {
-                                Write-Verbose -Message "Failed! Using kernel32 for loading package runtime '$( $f.FullName )'"
+                                Write-Log -Message "Failed! Using kernel32 for loading package runtime '$( $f.FullName )'"
                                 [void][Kernel32]::LoadLibrary($f.FullName)
+                                Write-Log "Last kernel32 error: $( [Kernel32]::GetError() )" # Error list: https://learn.microsoft.com/en-us/windows/win32/debug/system-error-codes--0-499-
                                 $runtimeLoaded = 1
                             }
                             #$useKernel32 = 1
