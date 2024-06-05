@@ -244,7 +244,6 @@ If ( ( $LocalPackage.Count -gt 0 -or $GlobalPackage.Count -gt 0 -or $LoadWholePa
         public static extern IntPtr LoadLibrary(string lpFileName);
         public static string GetError() { return Marshal.GetLastWin32Error().ToString(); }
         public static bool GetEnv() { return Environment.Is64BitProcess; }
-        
     }
 "@
 
