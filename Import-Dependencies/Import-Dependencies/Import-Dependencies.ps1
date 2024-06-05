@@ -26,6 +26,9 @@
 .EXTERNALSCRIPTDEPENDENCIES
 
 .RELEASENOTES
+0.0.6 Checking 64bit of OS and process
+      Output last error when using Kernel32
+      Adding runtime errors to log instead of console
 0.0.5 Make sure Get-Package is from PackageManagement and NOT VS
 0.0.4 Make sure to reuse a log, if already set
 0.0.3 Minor Improvements
