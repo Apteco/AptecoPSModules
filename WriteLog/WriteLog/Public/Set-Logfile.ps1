@@ -31,6 +31,9 @@ Function Set-Logfile {
 
         }
 
+        # Set override value so we know it was set
+        $Script:logfileOverride = $true
+
         # Return
         $Script:logfile
 

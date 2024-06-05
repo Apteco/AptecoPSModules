@@ -80,4 +80,16 @@ Export-ModuleMember -Function $Public.Basename
 # SET SOME VARIABLES ONLY VISIBLE TO MODULE AND FUNCTIONS
 #-----------------------------------------------
 
-New-Variable -Name logfile  -Value $null -Scope Script -Force
+New-Variable -Name logfile -Value $null -Scope Script -Force
+New-Variable -Name processId -Value $null -Scope Script -Force
+New-Variable -Name logfileOverride  -Value $null -Scope Script -Force
+New-Variable -Name processIdOverride  -Value $null -Scope Script -Force
+
+# This will be overridden later
+$Script:processId = [guid]::NewGuid().ToString()
+$f = Join-Path -Path $Env:tmp -ChildPath "$( $Script:processId ).tmp" #New-TemporaryFile
+$Script:logfile = $f.FullName
+
+# This will be changed with the first override
+$Script:logfileOverride = $false
+$Script:processIdOverride = $false

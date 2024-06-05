@@ -65,11 +65,11 @@ Function Write-Log {
     Begin {
 
         # If the variable is not present, it will create a temporary file
-        If ( $null -eq $Script:logfile ) {
-            $f = Join-Path -Path $Env:tmp -ChildPath "$( [guid]::newguid().toString() ).tmp" #New-TemporaryFile
-            $Script:logfile = $f.FullName
-            Write-Verbose -Message "There is no variable '`$logfile' present on 'Script' scope. Created one at '$( $Script:logfile )'" -InformationAction Continue -Verbose
-        }
+        # If ( $null -eq $Script:logfile ) {
+        #     $f = Join-Path -Path $Env:tmp -ChildPath "$( [guid]::newguid().toString() ).tmp" #New-TemporaryFile
+        #     $Script:logfile = $f.FullName
+        #     Write-Verbose -Message "There is no variable '`$logfile' present on 'Script' scope. Created one at '$( $Script:logfile )'" -InformationAction Continue -Verbose
+        # }
 
         # Testing the path
         If ( ( Test-Path -Path $Script:logfile -IsValid ) -eq $false ) {
@@ -77,10 +77,10 @@ Function Write-Log {
         }
 
         # If a process id (to identify this session by a guid) it will be set automatically here
-        If ( $null -eq $Script:processId ) {
-            $Script:processId = [guid]::NewGuid().ToString()
-            Write-Verbose -Message "There is no variable '`$processId' present on 'Script' scope. Created one with '$( $Script:processId )'" -InformationAction Continue -Verbose
-        }
+        # If ( $null -eq $Script:processId ) {
+        #     $Script:processId = [guid]::NewGuid().ToString()
+        #     Write-Verbose -Message "There is no variable '`$processId' present on 'Script' scope. Created one with '$( $Script:processId )'" -InformationAction Continue -Verbose
+        # }
 
     }
 
