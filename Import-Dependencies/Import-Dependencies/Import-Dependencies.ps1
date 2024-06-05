@@ -1,7 +1,7 @@
 ﻿
 <#PSScriptInfo
 
-.VERSION 0.0.3
+.VERSION 0.0.5
 
 .GUID 06dbc814-edfe-4571-a01f-f4091ff5f3c2
 
@@ -9,7 +9,7 @@
 
 .COMPANYNAME Apteco GmbH
 
-.COPYRIGHT (c) 2023 Apteco GmbH. All rights reserved.
+.COPYRIGHT (c) 2024 Apteco GmbH. All rights reserved.
 
 .TAGS "PSEdition_Desktop", "Windows", "Apteco"
 
@@ -26,6 +26,8 @@
 .EXTERNALSCRIPTDEPENDENCIES
 
 .RELEASENOTES
+0.0.5 Make sure Get-Package is from PackageManagement and NOT VS
+0.0.4 Make sure to reuse a log, if already set
 0.0.3 Minor Improvements
       Status information at the end
       Differentiation between .net core and windows/desktop priorities
@@ -130,9 +132,13 @@ $runtimes = @("win-x64","win-x86","win10","win7","win")
 
 # TODO use the parent logfile if used by a module
 $processStart = [datetime]::now
-Set-Logfile -Path ".\dependencies_import.log"
-Write-Log -message "----------------------------------------------------" -Severity VERBOSE
+If ( ( Get-LogfileOverride ) -eq $false ) {
+    Set-Logfile -Path ".\dependencies_import.log"
+    Write-Log -message "----------------------------------------------------" -Severity VERBOSE
+}
 
+# Remember process id
+$processId = Get-ProcessId
 
 #-----------------------------------------------
 # DOING SOME CHECKS
@@ -209,6 +215,9 @@ $Module | ForEach-Object {
     $modCount += 1
 }
 
+# Make sure that the processId is not reset
+Set-ProcessId -Id $processId
+
 Write-Log -Message "Loaded $( $modCount ) modules" #-Severity VERBOSE
 
 
@@ -278,9 +287,9 @@ If ( $LocalPackage.Count -gt 0 -or $GlobalPackage.Count -gt 0 -or $LoadWholePack
 
     # Load the packages we can find
     If ( $LocalPackage.Count -gt 0 -or $LoadWholePackageFolder -eq $true) {
-        $localPackages = Get-Package -Destination $LocalPackageFolder
+        $localPackages = PackageManagement\Get-Package -Destination $LocalPackageFolder
     }
-    $globalPackages = Get-Package -ProviderName NuGet
+    $globalPackages = PackageManagement\Get-Package -ProviderName NuGet
 
     # Filter the packages
     $packagesToLoad = [System.Collections.ArrayList]@()
