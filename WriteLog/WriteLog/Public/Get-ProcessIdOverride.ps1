@@ -4,6 +4,6 @@ Function Get-ProcessIdOverride {
     param(
     )
 
-    return $Script:processIdOverride
+    $Script:processIdOverride
 
 }

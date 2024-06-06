@@ -35,7 +35,7 @@ Function Set-Logfile {
         $Script:logfileOverride = $true
 
         # Return
-        $Script:logfile
+        Write-Verbose "Using the file: $( $Script:logfile )"
 
     }
 

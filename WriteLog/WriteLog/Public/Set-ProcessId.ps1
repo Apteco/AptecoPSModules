@@ -10,4 +10,8 @@ Function Set-ProcessId {
 
     $Script:processId = $Id
 
+    # Return
+    Write-Verbose "Using the process id: $( $Id )"
+
+
 }

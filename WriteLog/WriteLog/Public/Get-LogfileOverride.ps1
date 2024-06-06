@@ -4,6 +4,6 @@ Function Get-LogfileOverride {
     param(
     )
 
-    return $Script:logfileOverride
+    $Script:logfileOverride
 
 }
