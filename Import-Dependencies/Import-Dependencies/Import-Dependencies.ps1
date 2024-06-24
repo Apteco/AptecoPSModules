@@ -1,7 +1,7 @@
 ﻿
 <#PSScriptInfo
 
-.VERSION 0.0.6
+.VERSION 0.0.7
 
 .GUID 06dbc814-edfe-4571-a01f-f4091ff5f3c2
 
@@ -26,6 +26,7 @@
 .EXTERNALSCRIPTDEPENDENCIES
 
 .RELEASENOTES
+0.0.7 Added a note in the log that a runtime was only possibly loaded
 0.0.6 Checking 64bit of OS and process
       Output last error when using Kernel32
       Adding runtime errors to log instead of console
@@ -143,6 +144,7 @@ If ( ( Get-LogfileOverride ) -eq $false ) {
 # Remember the current processID
 $processId = Get-ProcessId
 
+
 #-----------------------------------------------
 # DOING SOME CHECKS
 #-----------------------------------------------
@@ -222,7 +224,6 @@ $Module | ForEach-Object {
     $modCount += 1
 }
 
-# Make sure that the processId is not reset
 Set-ProcessId -Id $processId
 
 Write-Log -Message "Loaded $( $modCount ) modules" #-Severity VERBOSE
@@ -244,6 +245,7 @@ If ( ( $LocalPackage.Count -gt 0 -or $GlobalPackage.Count -gt 0 -or $LoadWholePa
         public static extern IntPtr LoadLibrary(string lpFileName);
         public static string GetError() { return Marshal.GetLastWin32Error().ToString(); }
         public static bool GetEnv() { return Environment.Is64BitProcess; }
+        
     }
 "@
 
@@ -293,6 +295,7 @@ function Preload-Assembly {
 $successCounter = 0
 $failureCounter = 0
 $runtimeSuccessCounter = 0
+$runtimePossibleSuccessCounter = 0
 $runtimeFailureCounter = 0
 
 If ( $LocalPackage.Count -gt 0 -or $GlobalPackage.Count -gt 0 -or $LoadWholePackageFolder -eq $true) {
@@ -396,6 +399,7 @@ If ( $LocalPackage.Count -gt 0 -or $GlobalPackage.Count -gt 0 -or $LoadWholePack
 
         # Check the runtimes folder
         $runtimeLoaded = 0
+        $runtimePossiblyLoaded = 0
         $runtimeLoadError = 0
         #$useKernel32 = 0
         if ( ( Test-Path -Path "$( $package.FullName )/runtimes" ) -eq $true -and $runtimeLoaded -eq 0) {
@@ -416,10 +420,11 @@ If ( $LocalPackage.Count -gt 0 -or $GlobalPackage.Count -gt 0 -or $LoadWholePack
                         } catch [System.BadImageFormatException] {
                             # Try it one more time with LoadLibrary through Kernel, if the kernel was loaded
                             If ( $kernel32Loaded -eq $true ) {
-                                Write-Log -Message "Failed! Using kernel32 for loading package runtime '$( $f.FullName )'"
+                                Write-Log -Severity "WARNING" -Message "Failed! Using kernel32 for loading package runtime '$( $f.FullName )'"
                                 [void][Kernel32]::LoadLibrary($f.FullName)
-                                Write-Log "Last kernel32 error: $( [Kernel32]::GetError() )" # Error list: https://learn.microsoft.com/en-us/windows/win32/debug/system-error-codes--0-499-
-                                $runtimeLoaded = 1
+                                Write-Log -Severity "WARNING" -Message "Last kernel32 error: $( [Kernel32]::GetError() )" # Error list: https://learn.microsoft.com/en-us/windows/win32/debug/system-error-codes--0-499-
+                                #Write-Log "$( [Kernel32]::GetEnv() )"
+                                $runtimePossiblyLoaded = 1
                             }
                             #$useKernel32 = 1
                         }  catch {
@@ -434,6 +439,8 @@ If ( $LocalPackage.Count -gt 0 -or $GlobalPackage.Count -gt 0 -or $LoadWholePack
         # Log stats
         If ( $runtimeLoaded -eq 1 ) {
             $runtimeSuccessCounter += 1
+        } elseif ( $runtimePossiblyLoaded -eq 1 ) {
+            $runtimePossibleSuccessCounter += 1
         } elseif ( $runtimeLoadError -eq 1 ) {
             $runtimeFailureCounter += 1
         } else {
@@ -460,6 +467,7 @@ Write-Log -Message "  Modules loaded: $( $modCount )" #-Severity VERBOSE
 Write-Log -Message "  Lib/ref loaded: $( $successCounter )"
 Write-Log -Message "  Lib/ref failed: $( $failureCounter )"
 Write-Log -Message "  Runtime loaded: $( $runtimeSuccessCounter )"
+Write-Log -Message "  Runtime possibly loaded: $( $runtimePossibleSuccessCounter )"
 Write-Log -Message "  Runtime failed: $( $runtimeFailureCounter )"
 
 #Add-Type -AssemblyName System.Security
