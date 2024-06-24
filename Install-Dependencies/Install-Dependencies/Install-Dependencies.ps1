@@ -9,7 +9,7 @@
 
 .COMPANYNAME Apteco GmbH
 
-.COPYRIGHT (c) 2023 Apteco GmbH. All rights reserved.
+.COPYRIGHT (c) 2024 Apteco GmbH. All rights reserved.
 
 .TAGS "PSEdition_Desktop", "Windows", "Apteco"
 
@@ -26,6 +26,7 @@
 .EXTERNALSCRIPTDEPENDENCIES
 
 .RELEASENOTES
+0.0.9 Bumped the copyright year to 2024
 0.0.8 Fixed wrong formatted output
 0.0.7 Allowed empty arrays for wrapping the script into other modules
       Changed internal function prompt-choice to request-choice to only allow approved verbs

@@ -12,7 +12,7 @@
 RootModule = 'MergePSCustomObject.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.0.2'
+ModuleVersion = '0.0.3'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -27,7 +27,7 @@ Author = 'florian.von.bracht@apteco.de'
 CompanyName = 'Apteco GmbH'
 
 # Copyright statement for this module
-Copyright = '(c) 2023 Apteco GmbH. All rights reserved.'
+Copyright = '(c) 2024 Apteco GmbH. All rights reserved.'
 
 # Description of the functionality provided by this module
 Description = 'Apteco PS Modules - PowerShell merge PSCustomObject
@@ -115,13 +115,13 @@ FunctionsToExport = @(
 )
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
-CmdletsToExport = '*'
+CmdletsToExport = @() #'*'
 
 # Variables to export from this module
-VariablesToExport = '*'
+VariablesToExport = @() #'*'
 
 # Aliases to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no aliases to export.
-AliasesToExport = '*'
+AliasesToExport = @() #'*'
 
 # DSC resources to export from this module
 # DscResourcesToExport = @()
@@ -151,7 +151,8 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
-0.0.2 Add dependency for MergeHashtable module        
+0.0.3 Bumped the copyright year to 2024
+0.0.2 Add dependency for MergeHashtable module
 0.0.1 Initial release of merge pscustomobject module through psgallery
 '
         # Prerelease string of this module
