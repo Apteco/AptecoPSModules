@@ -1,7 +1,7 @@
 ﻿
 <#PSScriptInfo
 
-.VERSION 0.0.8
+.VERSION 0.0.10
 
 .GUID 4c029c8e-09fa-48ee-9d62-10895150ce83
 
@@ -26,6 +26,7 @@
 .EXTERNALSCRIPTDEPENDENCIES
 
 .RELEASENOTES
+0.0.10 Added the flag -ExcludeDependencies
 0.0.9 Bumped the copyright year to 2024
 0.0.8 Fixed wrong formatted output
 0.0.7 Allowed empty arrays for wrapping the script into other modules
@@ -82,6 +83,8 @@
     Folder name of the local package folder. Default is "lib".
 .PARAMETER InstallScriptAndModuleForCurrentUser
     By default, the modules and scripts will be installed for all users. If you want to install them only for the current user, then set this parameter to $true.
+.PARAMETER ExcludeDependencies
+    By default, this script is installing dependencies for every nuget package. This can be deactivated with this switch
 .NOTES
     Created by : gitfvb
 .LINK
@@ -97,6 +100,7 @@ Param(
     ,[Parameter(Mandatory=$false)][String[]]$LocalPackage = [Array]@()
     ,[Parameter(Mandatory=$false)][String]$LocalPackageFolder = "lib"
     ,[Parameter(Mandatory=$false)][Switch]$InstallScriptAndModuleForCurrentUser = $false
+    ,[Parameter(Mandatory=$false)][Switch]$ExcludeDependencies = $false
 )
 
 
@@ -402,7 +406,12 @@ If ( $Script.Count -gt 0 ) {
             # TODO [ ] possibly add dependencies on version number
             # This is using -force to allow updates
 
-            $psScriptDependencies = Find-Script -Name $psScript -IncludeDependencies
+            If ( $ExcludeDependencies -eq $true ) {
+                $psScriptDependencies = Find-Script -Name $psScript
+            } else {
+                $psScriptDependencies = Find-Script -Name $psScript -IncludeDependencies
+            }
+
             #$psScriptDependencies | Where-Object { $_.Name -notin $installedScripts.Name } | Install-Script -Scope AllUsers -Verbose -Force
             $psScriptDependencies | ForEach-Object {
                 $scr = $_
@@ -450,7 +459,11 @@ If ( $Module.count -gt 0 ) {
 
             # TODO [ ] possibly add dependencies on version number
             # This is using -force to allow updates
-            $psModuleDependencies = Find-Module -Name $psModule -IncludeDependencies
+            If ( $ExcludeDependencies -eq $true ) {
+                $psModuleDependencies = Find-Module -Name $psModule #-IncludeDependencies
+            } else {
+                $psModuleDependencies = Find-Module -Name $psModule -IncludeDependencies
+            }
             $psModuleDependencies | ForEach-Object {
                 $mod = $_
                 $mod | Install-Module -Scope $psScope -Force
@@ -608,17 +621,26 @@ If ( $LocalPackage.count -gt 0 -or $GlobalPackage.Count -gt 0) {
             If ( ($psPackage.gettype()).Name -eq "PsCustomObject" ) {
                 If ( $null -eq $psPackage.version ) {
                     Write-Verbose "Looking for $( $psPackage.name ) without specific version."
-                    #$pkg = Find-Package $psPackage.name -IncludeDependencies -Source $packageSource.Name -ErrorAction Continue
-                    [void]@( Find-Package $psPackage.name -IncludeDependencies -Source $packageSource.Name -ErrorAction Continue ).foreach({$pkg.add($_)}) # add elements directly instead of saving everything into a variable
+                    If ( $ExcludeDependencies -eq $true ) {
+                        [void]@( Find-Package $psPackage.name -Source $packageSource.Name -ErrorAction Continue ).foreach({$pkg.add($_)}) # add elements directly instead of saving everything into a variable
+                    } else {
+                        [void]@( Find-Package $psPackage.name -IncludeDependencies -Source $packageSource.Name -ErrorAction Continue ).foreach({$pkg.add($_)}) # add elements directly instead of saving everything into a variable
+                    }
                 } else {
                     Write-Verbose "Looking for $( $psPackage.name ) with version $( $psPackage.version )"
-                    #$pkg = Find-Package $psPackage.name -IncludeDependencies -Source $packageSource.Name -ErrorAction Continue -RequiredVersion $psPackage.version
-                    [void]@( Find-Package $psPackage.name -IncludeDependencies -Source $packageSource.Name -ErrorAction Continue -RequiredVersion $psPackage.version ).foreach({$pkg.add($_)}) # add elements directly instead of saving everything into a variable
+                    If ( $ExcludeDependencies -eq $true ) {
+                        [void]@( Find-Package $psPackage.name -Source $packageSource.Name -ErrorAction Continue -RequiredVersion $psPackage.version ).foreach({$pkg.add($_)}) # add elements directly instead of saving everything into a variable
+                    } else {
+                        [void]@( Find-Package $psPackage.name -IncludeDependencies -Source $packageSource.Name -ErrorAction Continue -RequiredVersion $psPackage.version ).foreach({$pkg.add($_)}) # add elements directly instead of saving everything into a variable
+                    }
                 }
             } else {
                 Write-Verbose "Looking for $( $psPackage ) without specific version"
-                [void]@( Find-Package $psPackage -IncludeDependencies -Source $packageSource.Name -ErrorAction Continue ).foreach({$pkg.add($_)}) # add elements directly instead of saving everything into a variable
-                #$pkg = Find-Package $psPackage -IncludeDependencies -Source $packageSource.Name -ErrorAction Continue
+                If ( $ExcludeDependencies -eq $true ) {
+                    [void]@( Find-Package $psPackage -Source $packageSource.Name -ErrorAction Continue ).foreach({$pkg.add($_)}) # add elements directly instead of saving everything into a variable
+                } else {
+                    [void]@( Find-Package $psPackage -IncludeDependencies -Source $packageSource.Name -ErrorAction Continue ).foreach({$pkg.add($_)}) # add elements directly instead of saving everything into a variable                }
+                }
             }
 
             $pkg | ForEach-Object { # | Where-Object { $_.Name -notin $installedPackages.Name } # | Sort-Object Name, Version -Unique -Descending
