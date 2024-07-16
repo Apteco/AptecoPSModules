@@ -13,5 +13,4 @@ Function Set-ProcessId {
     # Return
     Write-Verbose "Using the process id: $( $Id )"
 
-
 }
