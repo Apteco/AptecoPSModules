@@ -1,7 +1,7 @@
 ﻿
 <#PSScriptInfo
 
-.VERSION 0.0.7
+.VERSION 0.0.8
 
 .GUID 06dbc814-edfe-4571-a01f-f4091ff5f3c2
 
@@ -26,6 +26,7 @@
 .EXTERNALSCRIPTDEPENDENCIES
 
 .RELEASENOTES
+0.0.8 Added a parameter switch to suppress warnings to host
 0.0.7 Added a note in the log that a runtime was only possibly loaded
 0.0.6 Checking 64bit of OS and process
       Output last error when using Kernel32
@@ -97,6 +98,7 @@ Param(
     ,[Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][String[]]$LocalPackage = [Array]@()        # Define a specific local package to load
     ,[Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][String]$LocalPackageFolder = "lib"         # Where to find local packages
     ,[Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][Switch]$LoadWholePackageFolder = $false    # Load whole local package folder
+    ,[Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][Switch]$SuppressWarnings = $false           # Flag to log warnings, but not put redirect to the host
     #,[Parameter(Mandatory=$false)][Switch]$InstallScriptAndModuleForCurrentUser = $false
 )
 
@@ -143,6 +145,11 @@ If ( ( Get-LogfileOverride ) -eq $false ) {
 
 # Remember the current processID
 $processId = Get-ProcessId
+
+$writeToHost = $true
+If ( $SuppressWarnings -eq $true ) {
+    $writeToHost = $false
+}
 
 
 #-----------------------------------------------
@@ -420,9 +427,9 @@ If ( $LocalPackage.Count -gt 0 -or $GlobalPackage.Count -gt 0 -or $LoadWholePack
                         } catch [System.BadImageFormatException] {
                             # Try it one more time with LoadLibrary through Kernel, if the kernel was loaded
                             If ( $kernel32Loaded -eq $true ) {
-                                Write-Log -Severity "WARNING" -Message "Failed! Using kernel32 for loading package runtime '$( $f.FullName )'"
+                                Write-Log -Severity "WARNING" -Message "Failed! Using kernel32 for loading package runtime '$( $f.FullName )'" -WriteToHostToo $writeToHost
                                 [void][Kernel32]::LoadLibrary($f.FullName)
-                                Write-Log -Severity "WARNING" -Message "Last kernel32 error: $( [Kernel32]::GetError() )" # Error list: https://learn.microsoft.com/en-us/windows/win32/debug/system-error-codes--0-499-
+                                Write-Log -Severity "WARNING" -Message "Last kernel32 error: $( [Kernel32]::GetError() )" -WriteToHostToo $writeToHost # Error list: https://learn.microsoft.com/en-us/windows/win32/debug/system-error-codes--0-499-
                                 #Write-Log "$( [Kernel32]::GetEnv() )"
                                 $runtimePossiblyLoaded = 1
                             }
