@@ -10,6 +10,14 @@ function Request-TokenRefresh {
 
     begin {
 
+        If ( $NewAccessToken -eq $null ) {
+            throw "Accesstoken is null"
+        } else {
+            If ( $NewAccessToken.Trim().Length -eq 0 ) {
+                throw "Accesstoken has no length"
+            }
+        }
+
     }
 
     process {

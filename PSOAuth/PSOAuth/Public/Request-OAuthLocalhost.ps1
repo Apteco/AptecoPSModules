@@ -417,7 +417,7 @@ function Request-OAuthLocalhost {
         } catch {
 
             Write-Log -message "API call was not successful. Aborting the whole script now!" -severity ( [Logseverity]::WARNING )
-            throw $_.Exception
+            throw $_
 
         }
         #>

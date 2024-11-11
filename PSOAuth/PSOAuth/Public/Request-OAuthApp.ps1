@@ -330,7 +330,7 @@ function Request-OAuthApp {
             } catch {
 
                 Write-Log -message "API call was not successful. Aborting the whole script now!" -severity ( [Logseverity]::WARNING )
-                throw $_.Exception
+                throw $_
 
             }
             #>
@@ -413,7 +413,7 @@ function Request-OAuthApp {
         } catch {
 
             Write-Log "ERROR: $( $_.Exception.Message )" -Severity ERROR
-            throw $_.Exception
+            throw $_
 
         } finally {
 
