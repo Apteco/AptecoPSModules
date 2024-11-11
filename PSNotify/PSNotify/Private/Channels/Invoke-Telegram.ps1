@@ -127,7 +127,7 @@ function Invoke-Telegram {
 
         } catch {
             #Write-Log -Message $_.Exception.Message -Severity ERROR
-            throw $_.Exception
+            throw $_
         }
 
         $return
