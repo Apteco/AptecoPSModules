@@ -77,6 +77,8 @@
     Folder name of the local package folder. Default is "lib".
 .PARAMETER InstallScriptAndModuleForCurrentUser
     By default, the modules and scripts will be installed for all users. If you want to install them only for the current user, then set this parameter to $true.
+.PARAMETER SuppressWarnings
+    Flag to log warnings, but not put redirect to the host
 .NOTES
     Created by : gitfvb
 .LINK
