@@ -16,12 +16,22 @@ install-script install-dependencies, import-dependencies
 install-module writelog
 Install-Dependencies -module PSNotify
 
-
 # Then you can import the module and it will tell you the path for your channel store, when using -verbose flag
 Import-Module PSNotify -Verbose
 ```
 
 This will install the module. After installation there will be an automatic "store" file created in the current user account. Then you can add different channels to that module.
+
+When you have problems with the installation, please add the script folder in your session first. This can be done via
+
+```PowerShell
+$scriptPath = @( [System.Environment]::GetEnvironmentVariable("Path") -split ";" ) + @(
+    "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles") )\WindowsPowerShell\Scripts"
+    "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles(x86)") )\WindowsPowerShell\Scripts"
+    "$( [System.Environment]::GetEnvironmentVariable("USERPROFILE") )\Documents\WindowsPowerShell\Scripts"
+)
+$Env:Path = ( $scriptPath | Sort-Object -unique ) -join ";"
+```
 
 A "channel" is something like `Teams|Slack|Email|Telegram`. A target specifies a defined #channel in slack or a chat in telegram. A group is a combination of different targets
 
