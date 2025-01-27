@@ -227,14 +227,12 @@ function Add-RowsToSql {
                     # If it cannot be created, it automatically jumps into the catch part
                     # If it was able to create it, delete it directly for proper creation later
                     #
-                    $isTableExisting = $true
-                    try {
-                        Invoke-SqlUpdate -Query "CREATE TABLE ""$( $TableName )"" (id TEXT)" -ConnectionName $SQLConnectionName | Out-Null
-                        Invoke-SqlUpdate -Query "DROP TABLE ""$( $TableName )""" -ConnectionName $SQLConnectionName | Out-Null
-                        #Invoke-sqlQuery -Query "SELECT * FROM ""$( $TableName )"" LIMIT 1" -ConnectionName $SQLConnectionName
-                        $isTableExisting = $false
-                    } catch {
-                        Write-Verbose "Table $( $TableName ) existing."
+                    $isTableExisting = $false
+                    $allTables = Invoke-SqlQuery -Query "SELECT * FROM sqlite_master WHERE type='table';"
+                    If ( $allTables -ne $null ) {
+                        If ( $allTables.name -contains $TableName ) {
+                            $isTableExisting = $true
+                        }
                     }
 
                     # Create table if it is not existing
@@ -245,17 +243,17 @@ function Add-RowsToSql {
                         Invoke-SqlUpdate -Query $createQueryText -ConnectionName $SQLConnectionName | Out-Null
                     } else {
 
-                        # Read a record from that table and return as PSObject
-                        $firstRow = Invoke-SqlQuery -Query "SELECT * FROM ""$( $TableName )"" LIMIT 1" -Stream -ConnectionName $SQLConnectionName
-                        $firstRowColumns = $firstRow.PSObject.Properties.Name
+                        # Read the columns of the table
+                        $tableColumnTable = Invoke-SqlQuery -Query "PRAGMA table_info(""$( $TableName )"");" -Stream -ConnectionName $SQLConnectionName
+                        $tableColumns = @( $tableColumnTable.name )
 
                         # If the table is existing, create new columns, if parameter is set
-                        If ( $CreateColumnsInExistingTable -eq $true -and $firstRowColumns.Count -gt 0 ) {
+                        If ( $CreateColumnsInExistingTable -eq $true -and $tableColumns.Count -gt 0 ) {
 
                             # Check the input colums against the existing table colums
                             For ($c = 0; $c -lt $columns.Count; $c++) {
                                 $column = $columns[$c]
-                                If ( $firstRowColumns -notcontains $column ) {
+                                If ( $tableColumns -notcontains $column ) {
                                     Invoke-SqlUpdate -Query "ALTER TABLE ""$( $TableName )"" ADD ""$( $column )""" -ConnectionName $SQLConnectionName | Out-Null
                                 }
                             }
