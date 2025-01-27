@@ -229,7 +229,7 @@ function Add-RowsToSql {
                     #
                     $isTableExisting = $false
                     $allTables = Invoke-SqlQuery -Query "SELECT * FROM sqlite_master WHERE type='table';"
-                    If ( $allTables -ne $null ) {
+                    If ( $null -ne $allTables ) {
                         If ( $allTables.name -contains $TableName ) {
                             $isTableExisting = $true
                         }
