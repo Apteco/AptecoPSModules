@@ -18,7 +18,7 @@
             $channel = $_
         }
 
-        If ( $channel -eq $null ) {
+        If ( $null -eq $channel ) {
             throw "Channel $( $Name ) not found!"
         }
 
