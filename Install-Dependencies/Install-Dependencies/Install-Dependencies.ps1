@@ -1,7 +1,7 @@
 ﻿
 <#PSScriptInfo
 
-.VERSION 0.0.11
+.VERSION 0.1.0
 
 .GUID 4c029c8e-09fa-48ee-9d62-10895150ce83
 
@@ -26,6 +26,7 @@
 .EXTERNALSCRIPTDEPENDENCIES
 
 .RELEASENOTES
+0.1.0 Bumping to new version and checking PowerShellGet and PackageManagement dependencies
 0.0.11 Fixed the way to install scripts and modules with names instead of pipeline
 0.0.10 Added the flag -ExcludeDependencies
 0.0.9 Bumped the copyright year to 2024
@@ -46,6 +47,16 @@
 #>
 
 #Requires -Module WriteLog
+#Requires -Module @{ModuleName = 'PowerShellGet'; ModuleVersion = '2.0'}
+#Requires -Module @{ModuleName = 'PackageManagement'; ModuleVersion = '1.4'}
+
+<#
+
+.DESCRIPTION
+ Downloads and installs the latest versions of some scripts, modules and packages (saved in current folder of machine folder) from the PowerShell Gallery and NuGet.
+
+#>
+
 
 # The admin rights are only needed for modules and scripts and global packages, but not local packages, but this way we can ensure everythings in the right place
 
@@ -307,6 +318,21 @@ If ( $Script.Count -gt 0 -or $Module.Count -gt 0 ) {
     }
 }
 
+# Install newer PackageManagement
+$currentPM = get-installedmodule | where-object { $_.Name -eq "PackageManagement" }
+If ( $currentPM.Version -eq "1.0.0.1" -or $currentPSGet.Count -eq 0 ) {
+    Write-Log "PackageManagement is outdated with v$( $currentPSGet.Version ). This is updating it now." -Severity WARNING
+    #Install-Module PackageManagement -Force -Verbose -AllowClobber
+    Install-Package -Name PackageManagement -Force
+}
+
+# Install newer PowerShellGet version when it is the default at 1.0.0.1
+$currentPSGet = get-installedmodule | where-object { $_.Name -eq "PowerShellGet" }
+If ( $currentPSGet.Version -eq "1.0.0.1" -or $currentPSGet.Count -eq 0 ) {
+    Write-Log "PowerShellGet is outdated with v$( $currentPSGet.Version ). This is updating it now." -Severity WARNING
+    #Install-Module PowerShellGet -Force -Verbose -AllowClobber
+    Install-Package -Name PowerShellGet -Force
+}
 
 If ( $Script.Count -gt 0 -or $Module.Count -gt 0 ) {
 
@@ -404,6 +430,8 @@ If ( $Script.Count -gt 0 ) {
 
             Write-Log "Checking script: $( $psScript )" -Severity VERBOSE
 
+            $installedScripts = Get-InstalledScript
+
             # TODO [ ] possibly add dependencies on version number
             # This is using -force to allow updates
 
@@ -415,9 +443,25 @@ If ( $Script.Count -gt 0 ) {
 
             #$psScriptDependencies | Where-Object { $_.Name -notin $installedScripts.Name } | Install-Script -Scope AllUsers -Verbose -Force
             $psScriptDependencies | ForEach-Object {
+
                 $scr = $_
-                Install-Script -Name $scr.Name -Scope $psScope -Force
-                $s += 1
+                
+                If ( $installedModules.Name -contains $scr.Name ) {
+                    Write-Log -Message "Script $( $scr.Name ) is already installed" -Severity VERBOSE
+                    
+                    If ( $mod.Version -gt $installedModules.Version ) {
+                        Write-Log -Message "Script $( $scr.Name ) is installed with an older version $( $installedModules.Version ) than the available version $( $scr.Version )" -Severity VERBOSE
+                        Update-Script -Name $scr.Name
+                        $s += 1
+                    } else {
+                        Write-Log -Message "No need to update $( $scr.Name )" -Severity VERBOSE
+                    }
+                } else {
+                    Write-Log -Message "Installing Script $( $scr.Name )" -Severity VERBOSE
+                    Install-Script -Name $scr.Name -Scope $psScope #-Force
+                    $s += 1
+                }
+
             }
 
         }
@@ -452,11 +496,13 @@ If ( $Module.count -gt 0 ) {
         Write-Log "Checking Module dependencies" -Severity VERBOSE
 
         #$installedModules = Get-InstalledModule
-        $Module | ForEach-Object {
+        $Module | Where-Object { $_ -notin @("PowerShellGet","PackageManagement") } | ForEach-Object {
 
             $psModule = $_
 
             Write-Log "Checking module: $( $psModule )" -Severity VERBOSE
+
+            $installedModules = Get-InstalledModule
 
             # TODO [ ] possibly add dependencies on version number
             # This is using -force to allow updates
@@ -466,9 +512,25 @@ If ( $Module.count -gt 0 ) {
                 $psModuleDependencies = Find-Module -Name $psModule -IncludeDependencies
             }
             $psModuleDependencies | ForEach-Object {
+
                 $mod = $_
-                Install-Module -Name $mod.Name -Scope $psScope -Force
-                $m += 1
+                
+                If ( $installedModules.Name -contains $mod.Name ) {
+                    Write-Log -Message "Module $( $mod.Name ) is already installed" -Severity VERBOSE
+                    
+                    If ( $mod.Version -gt $installedModules.Version ) {
+                        Write-Log -Message "Module $( $mod.Name ) is installed with an older version $( $installedModules.Version ) than the available version $( $mod.Version )" -Severity VERBOSE
+                        Update-Module -Name $mod.Name
+                        $m += 1
+                    } else {
+                        Write-Log -Message "No need to update $( $mod.Name )" -Severity VERBOSE
+                    }
+                } else {
+                    Write-Log -Message "Installing Module $( $mod.Name )" -Severity VERBOSE
+                    Install-Module -Name $mod.Name -Scope $psScope #-Force
+                    $m += 1
+                }
+                
             }
             #$psModuleDependencies | where { $_.Name -notin $installedModules.Name } | Install-Module -Scope AllUsers -Verbose -Force
 
