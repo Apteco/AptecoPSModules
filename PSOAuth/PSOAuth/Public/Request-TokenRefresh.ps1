@@ -10,7 +10,7 @@ function Request-TokenRefresh {
 
     begin {
 
-        If ( $NewAccessToken -eq $null ) {
+        If ( $null -eq $NewAccessToken ) {
             throw "Accesstoken is null"
         } else {
             If ( $NewAccessToken.Trim().Length -eq 0 ) {
