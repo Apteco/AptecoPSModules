@@ -1,7 +1,7 @@
 ﻿
 <#PSScriptInfo
 
-.VERSION 0.0.10
+.VERSION 0.0.11
 
 .GUID 4c029c8e-09fa-48ee-9d62-10895150ce83
 
@@ -26,6 +26,7 @@
 .EXTERNALSCRIPTDEPENDENCIES
 
 .RELEASENOTES
+0.0.11 Fixed the way to install scripts and modules with names instead of pipeline
 0.0.10 Added the flag -ExcludeDependencies
 0.0.9 Bumped the copyright year to 2024
 0.0.8 Fixed wrong formatted output
@@ -415,7 +416,7 @@ If ( $Script.Count -gt 0 ) {
             #$psScriptDependencies | Where-Object { $_.Name -notin $installedScripts.Name } | Install-Script -Scope AllUsers -Verbose -Force
             $psScriptDependencies | ForEach-Object {
                 $scr = $_
-                $scr | Install-Script -Scope $psScope -Force
+                Install-Script -Name $scr.Name -Scope $psScope -Force
                 $s += 1
             }
 
@@ -466,7 +467,7 @@ If ( $Module.count -gt 0 ) {
             }
             $psModuleDependencies | ForEach-Object {
                 $mod = $_
-                $mod | Install-Module -Scope $psScope -Force
+                Install-Module -Name $mod.Name -Scope $psScope -Force
                 $m += 1
             }
             #$psModuleDependencies | where { $_.Name -notin $installedModules.Name } | Install-Module -Scope AllUsers -Verbose -Force
