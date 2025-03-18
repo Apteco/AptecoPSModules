@@ -247,7 +247,7 @@ function Merge-Hashtable {
 
                 $propEqual = $_.InputObject
 
-                If ( $MergePSCustomObjects -eq $true -and $Left.($propEqual) -is [PSCustomObject] -and $Right.($propEqual) -is [PSCustomObject] -and @( $Right.($propEqual).psobject.properties ).Count -gt 0) {
+                If ( $MergePSCustomObjects -eq $true -and ( $Left.($propEqual) -is [PSCustomObject] -or $Left.($propEqual) -is [System.Collections.Specialized.OrderedDictionary] ) -and ( $Right.($propEqual) -is [PSCustomObject] -or $Right.($propEqual) -is [System.Collections.Specialized.OrderedDictionary] ) -and $Right.($propEqual).Keys.Count -gt 0 ) {
 
                     Write-Verbose "Going recursively into '$( $propEqual )'"
 
@@ -262,8 +262,8 @@ function Merge-Hashtable {
 
                     # Recursively call this function, if it is nested ps custom
                     $params = [Hashtable]@{
-                        "Left" = $Left.($propEqual)
-                        "Right" = $Right.($propEqual)
+                        "Left" = [PSCustomObject]( $Left.($propEqual) )
+                        "Right" = [PSCustomObject]( $Right.($propEqual) )
                         "AddPropertiesFromRight" = $AddKeysFromRight
                         "MergePSCustomObjects" = $MergePSCustomObjects
                         "MergeArrays" = $MergeArrays
