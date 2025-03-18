@@ -445,10 +445,10 @@ If ( $Script.Count -gt 0 ) {
             $psScriptDependencies | ForEach-Object {
 
                 $scr = $_
-                
+
                 If ( $installedModules.Name -contains $scr.Name ) {
                     Write-Log -Message "Script $( $scr.Name ) is already installed" -Severity VERBOSE
-                    
+
                     If ( $mod.Version -gt $installedModules.Version ) {
                         Write-Log -Message "Script $( $scr.Name ) is installed with an older version $( $installedModules.Version ) than the available version $( $scr.Version )" -Severity VERBOSE
                         Update-Script -Name $scr.Name
@@ -514,7 +514,7 @@ If ( $Module.count -gt 0 ) {
             $psModuleDependencies | ForEach-Object {
 
                 $mod = $_
-                
+
                 If ( $installedModules.Name -contains $mod.Name ) {
                     Write-Log -Message "Module $( $mod.Name ) is already installed" -Severity VERBOSE
                     
@@ -530,7 +530,7 @@ If ( $Module.count -gt 0 ) {
                     Install-Module -Name $mod.Name -Scope $psScope #-Force
                     $m += 1
                 }
-                
+
             }
             #$psModuleDependencies | where { $_.Name -notin $installedModules.Name } | Install-Module -Scope AllUsers -Verbose -Force
 
