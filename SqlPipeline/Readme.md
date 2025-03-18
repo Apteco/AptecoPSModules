@@ -32,6 +32,8 @@ Open-SQLiteConnection -DataSource ":memory:"
 
 made my import then in 18 seconds, which is still a nice improvement!
 
+I have imported another file with the size of 1.5GB and 300k rows in 216 seconds. Every line consists of columns with a total line length of (including tabs as delimiter).
+
 # Examples
 
 All the examples are done with SQLite, but are also valid for all other databases that are supported in SimplySql.
