@@ -5,7 +5,7 @@
 RootModule = 'TestCredential.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.0.2'
+ModuleVersion = '0.0.3'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -124,6 +124,7 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+0.0.3 Fixed a $null comparison order
 0.0.2 Bumped the copyright year to 2024
 0.0.1 Initial release of test credentials
 '

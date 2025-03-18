@@ -57,7 +57,7 @@ function Test-Credential {
         }
 
         # Leave script if the non interactive mode is active and no credentials provided
-        If ($NonInteractive -eq $true -and $Credentials -eq $null) {
+        If ($NonInteractive -eq $true -and $null -eq $Credentials) {
             #Write-Host
             throw [Exception] "Please make sure to provide -Credentials when in NonInteractive mode"
         }
@@ -71,7 +71,7 @@ function Test-Credential {
 
             # At the first try, request the whole string
 
-            If ( $retries -eq 0 -and $Credentials -eq $null) {
+            If ( $retries -eq 0 -and $null -eq $Credentials ) {
                 $cred = Get-Credential -UserName $initialUsername -Message $message
             } elseif ( $retries -eq 0 -and $Credentials -ne $null ) {
                 $cred = $Credentials
