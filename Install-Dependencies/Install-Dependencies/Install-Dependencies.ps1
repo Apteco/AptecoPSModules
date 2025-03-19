@@ -1,7 +1,7 @@
 ﻿
 <#PSScriptInfo
 
-.VERSION 0.1.0
+.VERSION 0.1.1
 
 .GUID 4c029c8e-09fa-48ee-9d62-10895150ce83
 
@@ -26,6 +26,7 @@
 .EXTERNALSCRIPTDEPENDENCIES
 
 .RELEASENOTES
+0.1.1 Fixed check of PackageManagement. Fixed Scripts check. Fixed version check for scripts and modules
 0.1.0 Bumping to new version and checking PowerShellGet and PackageManagement dependencies
 0.0.11 Fixed the way to install scripts and modules with names instead of pipeline
 0.0.10 Added the flag -ExcludeDependencies
@@ -446,11 +447,13 @@ If ( $Script.Count -gt 0 ) {
 
                 $scr = $_
 
-                If ( $installedModules.Name -contains $scr.Name ) {
+                If ( $installedScripts.Name -contains $scr.Name ) {
                     Write-Log -Message "Script $( $scr.Name ) is already installed" -Severity VERBOSE
 
-                    If ( $mod.Version -gt $installedModules.Version ) {
-                        Write-Log -Message "Script $( $scr.Name ) is installed with an older version $( $installedModules.Version ) than the available version $( $scr.Version )" -Severity VERBOSE
+                    $alreadyInstalledScript = $installedScripts.Name | Where-Object { $_.Name -eq $scr.Name } #| Select -first 1
+
+                    If ( $mod.Version -gt $alreadyInstalledScript.Version ) {
+                        Write-Log -Message "Script $( $scr.Name ) is installed with an older version $( $alreadyInstalledScript.Version ) than the available version $( $scr.Version )" -Severity VERBOSE
                         Update-Script -Name $scr.Name
                         $s += 1
                     } else {
@@ -517,9 +520,11 @@ If ( $Module.count -gt 0 ) {
 
                 If ( $installedModules.Name -contains $mod.Name ) {
                     Write-Log -Message "Module $( $mod.Name ) is already installed" -Severity VERBOSE
-                    
-                    If ( $mod.Version -gt $installedModules.Version ) {
-                        Write-Log -Message "Module $( $mod.Name ) is installed with an older version $( $installedModules.Version ) than the available version $( $mod.Version )" -Severity VERBOSE
+
+                    $alreadyInstalledModule = $installedModules.Name | Where-Object { $_.Name -eq $mod.Name } #| Select -first 1
+
+                    If ( $alreadyInstalledModule.Version -gt $installedModules.Version ) {
+                        Write-Log -Message "Module $( $mod.Name ) is installed with an older version $( $alreadyInstalledModule.Version ) than the available version $( $mod.Version )" -Severity VERBOSE
                         Update-Module -Name $mod.Name
                         $m += 1
                     } else {
