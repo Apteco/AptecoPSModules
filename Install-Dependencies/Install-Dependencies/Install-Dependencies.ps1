@@ -1,7 +1,7 @@
 ﻿
 <#PSScriptInfo
 
-.VERSION 0.1.4
+.VERSION 0.1.6
 
 .GUID 4c029c8e-09fa-48ee-9d62-10895150ce83
 
@@ -26,6 +26,8 @@
 .EXTERNALSCRIPTDEPENDENCIES
 
 .RELEASENOTES
+0.1.6 Fixed script and m odule version checking
+0.1.5 Fixed script version checking
 0.1.4 Fixed temporary module and script path loading
 0.1.3 Added common module and script paths
 0.1.2 Fixed another check of PackageManagement
@@ -512,9 +514,9 @@ If ( $Script.Count -gt 0 ) {
                 If ( $installedScripts.Name -contains $scr.Name ) {
                     Write-Log -Message "Script $( $scr.Name ) is already installed" -Severity VERBOSE
 
-                    $alreadyInstalledScript = $installedScripts.Name | Where-Object { $_.Name -eq $scr.Name } #| Select -first 1
+                    $alreadyInstalledScript = $installedScripts | Where-Object { $_.Name -eq $scr.Name } #| Select -first 1
 
-                    If ( $mod.Version -gt $alreadyInstalledScript.Version ) {
+                    If ( $scr.Version -gt $alreadyInstalledScript.Version ) {
                         Write-Log -Message "Script $( $scr.Name ) is installed with an older version $( $alreadyInstalledScript.Version ) than the available version $( $scr.Version )" -Severity VERBOSE
                         Update-Script -Name $scr.Name
                         $s += 1
@@ -583,9 +585,9 @@ If ( $Module.count -gt 0 ) {
                 If ( $installedModules.Name -contains $mod.Name ) {
                     Write-Log -Message "Module $( $mod.Name ) is already installed" -Severity VERBOSE
 
-                    $alreadyInstalledModule = $installedModules.Name | Where-Object { $_.Name -eq $mod.Name } #| Select -first 1
+                    $alreadyInstalledModule = $installedModules | Where-Object { $_.Name -eq $mod.Name } #| Select -first 1
 
-                    If ( $alreadyInstalledModule.Version -gt $installedModules.Version ) {
+                    If ( $mod.Version -gt $alreadyInstalledModule.Version ) {
                         Write-Log -Message "Module $( $mod.Name ) is installed with an older version $( $alreadyInstalledModule.Version ) than the available version $( $mod.Version )" -Severity VERBOSE
                         Update-Module -Name $mod.Name
                         $m += 1
