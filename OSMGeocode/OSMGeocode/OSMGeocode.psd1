@@ -5,7 +5,7 @@
 RootModule = 'OSMGeocode.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.0.6'
+ModuleVersion = '0.0.7'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -20,7 +20,7 @@ Author = 'florian.von.bracht@apteco.de'
 CompanyName = 'Apteco GmbH'
 
 # Copyright statement for this module
-Copyright = '(c) 2024 Apteco GmbH. All rights reserved.'
+Copyright = '(c) 2025 Apteco GmbH. All rights reserved.'
 
 # Description of the functionality provided by this module
 Description = 'Apteco PS Modules - OpenStreetMaps Geocoding
@@ -126,6 +126,7 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.0.7 Fixed temporary module and script path loading
 0.0.6 Bumped the copyright year to 2024
 0.0.5 Remembering last OSM call in module now to make sure to also have 1 call per second also in loops
 0.0.4 Adding an id to be used and output/saved with Reverse Geocoding

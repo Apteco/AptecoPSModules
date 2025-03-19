@@ -1,7 +1,7 @@
 ﻿
 <#PSScriptInfo
 
-.VERSION 0.0.8
+.VERSION 0.1.2
 
 .GUID 06dbc814-edfe-4571-a01f-f4091ff5f3c2
 
@@ -9,7 +9,7 @@
 
 .COMPANYNAME Apteco GmbH
 
-.COPYRIGHT (c) 2024 Apteco GmbH. All rights reserved.
+.COPYRIGHT (c) 2025 Apteco GmbH. All rights reserved.
 
 .TAGS "PSEdition_Desktop", "Windows", "Apteco"
 
@@ -26,6 +26,9 @@
 .EXTERNALSCRIPTDEPENDENCIES
 
 .RELEASENOTES
+0.1.2 Fixed temporary module and script path loading
+0.1.1 Improved the missing module load
+0.1.0 Improving documentation, adding PATH variables, missing modules will not throw an error anymore
 0.0.8 Added a parameter switch to suppress warnings to host
 0.0.7 Added a note in the log that a runtime was only possibly loaded
 0.0.6 Checking 64bit of OS and process
@@ -54,19 +57,14 @@
     Please make sure to have the Modules WriteLog and PowerShellGet (>= 2.2.4) installed.
 
 .EXAMPLE
-    Install-Dependencies -Module "WriteLog" -LocalPackage "SQLitePCLRaw.core", "Npgsql" -Verbose
+    Import-Dependencies -Module WriteLog, AptecoPSFramework
 .EXAMPLE
-    $packages = [Array]@(
-        [PSCustomObject]@{
-            name="Npgsql"
-            version = "4.1.12"
-            includeDependencies = $true
-        }
-    )
-    Install-Dependencies -Module "WriteLog" -LocalPackage $packages -Verbose
+    Import-Dependencies -GlobalPackage MailKit
+.EXAMPLE
+    Import-Dependencies -LocalPackage MimeKit, Mailkit
+.EXAMPLE
+    Import-Dependencies -LocalPackageFolder lib -LoadWholePackageFolder # the default is a lib subfolder, so that does not need to be used
 
-.PARAMETER Script
-    Array of scripts to install on local machine via PowerShellGallery.
 .PARAMETER Module
     Array of modules to install on local machine via PowerShellGallery.
 .PARAMETER GlobalPackage
@@ -84,24 +82,31 @@
 .LINK
     Project Site: https://github.com/Apteco/Install-Dependencies/tree/main/Import-Dependencies
 
-
-Import-Dependencies -Module WriteLog, AptecoPSFramework
-Import-Dependencies -GlobalPackage MailKit
-Import-Dependencies -LocalPackage MimeKit, Mailkit
-Import-Dependencies -LocalPackageFolder lib -LoadWholePackageFolder # the default is a lib subfolder, so that does not need to be used
-
 #>
 
 [CmdletBinding()]
 Param(
+
      #[Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][String[]]$Script = [Array]@()              # Define specific scripts you want to load -> not needed as PATH will be added
-    [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][String[]]$Module = [Array]@()              # Define specific modules you want to load
-    ,[Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][String[]]$GlobalPackage = [Array]@()       # Define specific global package to load
-    ,[Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][String[]]$LocalPackage = [Array]@()        # Define a specific local package to load
-    ,[Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][String]$LocalPackageFolder = "lib"         # Where to find local packages
-    ,[Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][Switch]$LoadWholePackageFolder = $false    # Load whole local package folder
-    ,[Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()][Switch]$SuppressWarnings = $false           # Flag to log warnings, but not put redirect to the host
-    #,[Parameter(Mandatory=$false)][Switch]$InstallScriptAndModuleForCurrentUser = $false
+
+     [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()]
+     [String[]]$Module = [Array]@()              # Define specific modules you want to load
+    
+    ,[Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()]
+     [String[]]$GlobalPackage = [Array]@()       # Define specific global package to load
+
+    ,[Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()]
+     [String[]]$LocalPackage = [Array]@()        # Define a specific local package to load
+
+    ,[Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()]
+     [String]$LocalPackageFolder = "lib"         # Where to find local packages
+
+    ,[Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()]
+     [Switch]$LoadWholePackageFolder = $false    # Load whole local package folder
+    
+    ,[Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()]
+     [Switch]$SuppressWarnings = $false           # Flag to log warnings, but not put redirect to the host
+
 )
 
 
@@ -223,19 +228,94 @@ $Env:Path = ( $scriptPath | Select-Object -unique ) -join ";"
 
 
 #-----------------------------------------------
+# ADD MODULE PATH, IF NOT PRESENT
+#-----------------------------------------------
+
+$modulePath = @( [System.Environment]::GetEnvironmentVariable("PSModulePath") -split ";" ) + @(
+    "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles") )\WindowsPowerShell\Modules"
+    "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles(x86)") )\WindowsPowerShell\Modules"
+    "$( [System.Environment]::GetEnvironmentVariable("USERPROFILE") )\Documents\WindowsPowerShell\Modules"
+    "$( [System.Environment]::GetEnvironmentVariable("windir") )\system32\WindowsPowerShell\v1.0\Modules"
+)
+
+# Add the 64bit path, if present. In 32bit the ProgramFiles variables only returns the x86 path
+If ( [System.Environment]::GetEnvironmentVariables().keys -contains "ProgramW6432" ) {
+    $modulePath += "$( [System.Environment]::GetEnvironmentVariable("ProgramW6432") )\WindowsPowerShell\Modules"
+}
+
+# Add pwsh core path
+If ( $isCore -eq $true ) {
+    If ( [System.Environment]::GetEnvironmentVariables().keys -contains "ProgramW6432" ) {
+        $modulePath += "$( [System.Environment]::GetEnvironmentVariable("ProgramW6432") )\powershell\7\Modules"
+    }
+    $modulePath += "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles") )\powershell\7\Modules"
+    $modulePath += "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles(x86)") )\powershell\7\Modules"
+}
+
+# Add all paths
+# Using $env:PSModulePath for only temporary override
+$Env:PSModulePath = @( $modulePath | Sort-Object -unique ) -join ";"
+
+
+#-----------------------------------------------
+# ADD SCRIPT PATH, IF NOT PRESENT
+#-----------------------------------------------
+
+#$envVariables = [System.Environment]::GetEnvironmentVariables()
+$scriptPath = @( [System.Environment]::GetEnvironmentVariable("Path") -split ";" ) + @(
+    "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles") )\WindowsPowerShell\Scripts"
+    "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles(x86)") )\WindowsPowerShell\Scripts"
+    "$( [System.Environment]::GetEnvironmentVariable("USERPROFILE") )\Documents\WindowsPowerShell\Scripts"
+)
+
+# Add the 64bit path, if present. In 32bit the ProgramFiles variables only returns the x86 path
+If ( [System.Environment]::GetEnvironmentVariables().keys -contains "ProgramW6432" ) {
+    $scriptPath += "$( [System.Environment]::GetEnvironmentVariable("ProgramW6432") )\WindowsPowerShell\Scripts"
+}
+
+# Add pwsh core path
+If ( $isCore -eq $true ) {
+    If ( [System.Environment]::GetEnvironmentVariables().keys -contains "ProgramW6432" ) {
+        $scriptPath += "$( [System.Environment]::GetEnvironmentVariable("ProgramW6432") )\powershell\7\Scripts"
+    }
+    $scriptPath += "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles") )\powershell\7\Scripts"
+    $scriptPath += "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles(x86)") )\powershell\7\Scripts"
+}
+
+# Using $env:Path for only temporary override
+$Env:Path = @( $scriptPath | Sort-Object -unique ) -join ";"
+
+
+#-----------------------------------------------
 # LOAD MODULES
 #-----------------------------------------------
 
 $modCount = 0
+$successfulModules = [Array]@()
+$failedModules = [Array]@()
 $Module | ForEach-Object {
     $mod = $_
-    Import-Module $mod #-Global
-    $modCount += 1
+    try {
+        Write-Verbose "Loading $( $mod )"
+        Import-Module -Name $mod -ErrorAction Stop
+        $successfulModules += $mod
+        $modCount += 1
+    } catch {
+        $failedModules += $mod
+        Write-Warning -Message "Failed loading module '$( $mod )'" -Verbose #-Severity WARNING
+    }
 }
+
+
+#-----------------------------------------------
+# INITIATE LOGGING
+#-----------------------------------------------
 
 Set-ProcessId -Id $processId
 
 Write-Log -Message "Loaded $( $modCount ) modules" #-Severity VERBOSE
+Write-Log -Message "  Success: $( $successfulModules -join ", " )" #-Severity VERBOSE
+Write-Log -Message "  Failed: $( $failedModules -join ", " )" #-Severity VERBOSE
 
 
 #-----------------------------------------------

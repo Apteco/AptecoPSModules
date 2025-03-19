@@ -1,7 +1,7 @@
 ﻿
 <#PSScriptInfo
 
-.VERSION 0.1.1
+.VERSION 0.1.4
 
 .GUID 4c029c8e-09fa-48ee-9d62-10895150ce83
 
@@ -26,6 +26,9 @@
 .EXTERNALSCRIPTDEPENDENCIES
 
 .RELEASENOTES
+0.1.4 Fixed temporary module and script path loading
+0.1.3 Added common module and script paths
+0.1.2 Fixed another check of PackageManagement
 0.1.1 Fixed check of PackageManagement. Fixed Scripts check. Fixed version check for scripts and modules
 0.1.0 Bumping to new version and checking PowerShellGet and PackageManagement dependencies
 0.0.11 Fixed the way to install scripts and modules with names instead of pipeline
@@ -282,6 +285,65 @@ If (($GlobalPackage.Count -gt 0 -or $Module.Count -gt 0 -or $Script.count -gt 0 
 
 
 #-----------------------------------------------
+# ADD MODULE PATH, IF NOT PRESENT
+#-----------------------------------------------
+
+$modulePath = @( [System.Environment]::GetEnvironmentVariable("PSModulePath") -split ";" ) + @(
+    "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles") )\WindowsPowerShell\Modules"
+    "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles(x86)") )\WindowsPowerShell\Modules"
+    "$( [System.Environment]::GetEnvironmentVariable("USERPROFILE") )\Documents\WindowsPowerShell\Modules"
+    "$( [System.Environment]::GetEnvironmentVariable("windir") )\system32\WindowsPowerShell\v1.0\Modules"
+)
+
+# Add the 64bit path, if present. In 32bit the ProgramFiles variables only returns the x86 path
+If ( [System.Environment]::GetEnvironmentVariables().keys -contains "ProgramW6432" ) {
+    $modulePath += "$( [System.Environment]::GetEnvironmentVariable("ProgramW6432") )\WindowsPowerShell\Modules"
+}
+
+# Add pwsh core path
+If ( $isCore -eq $true ) {
+    If ( [System.Environment]::GetEnvironmentVariables().keys -contains "ProgramW6432" ) {
+        $modulePath += "$( [System.Environment]::GetEnvironmentVariable("ProgramW6432") )\powershell\7\Modules"
+    }
+    $modulePath += "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles") )\powershell\7\Modules"
+    $modulePath += "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles(x86)") )\powershell\7\Modules"
+}
+
+# Add all paths
+# Using $env:PSModulePath for only temporary override
+$Env:PSModulePath = @( $modulePath | Sort-Object -unique ) -join ";"
+
+
+#-----------------------------------------------
+# ADD SCRIPT PATH, IF NOT PRESENT
+#-----------------------------------------------
+
+#$envVariables = [System.Environment]::GetEnvironmentVariables()
+$scriptPath = @( [System.Environment]::GetEnvironmentVariable("Path") -split ";" ) + @(
+    "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles") )\WindowsPowerShell\Scripts"
+    "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles(x86)") )\WindowsPowerShell\Scripts"
+    "$( [System.Environment]::GetEnvironmentVariable("USERPROFILE") )\Documents\WindowsPowerShell\Scripts"
+)
+
+# Add the 64bit path, if present. In 32bit the ProgramFiles variables only returns the x86 path
+If ( [System.Environment]::GetEnvironmentVariables().keys -contains "ProgramW6432" ) {
+    $scriptPath += "$( [System.Environment]::GetEnvironmentVariable("ProgramW6432") )\WindowsPowerShell\Scripts"
+}
+
+# Add pwsh core path
+If ( $isCore -eq $true ) {
+    If ( [System.Environment]::GetEnvironmentVariables().keys -contains "ProgramW6432" ) {
+        $scriptPath += "$( [System.Environment]::GetEnvironmentVariable("ProgramW6432") )\powershell\7\Scripts"
+    }
+    $scriptPath += "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles") )\powershell\7\Scripts"
+    $scriptPath += "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles(x86)") )\powershell\7\Scripts"
+}
+
+# Using $env:Path for only temporary override
+$Env:Path = @( $scriptPath | Sort-Object -unique ) -join ";"
+
+
+#-----------------------------------------------
 # NUGET SETTINGS
 #-----------------------------------------------
 
@@ -321,8 +383,8 @@ If ( $Script.Count -gt 0 -or $Module.Count -gt 0 ) {
 
 # Install newer PackageManagement
 $currentPM = get-installedmodule | where-object { $_.Name -eq "PackageManagement" }
-If ( $currentPM.Version -eq "1.0.0.1" -or $currentPSGet.Count -eq 0 ) {
-    Write-Log "PackageManagement is outdated with v$( $currentPSGet.Version ). This is updating it now." -Severity WARNING
+If ( $currentPM.Version -eq "1.0.0.1" -or $currentPM.Count -eq 0 ) {
+    Write-Log "PackageManagement is outdated with v$( $currentPM.Version ). This is updating it now." -Severity WARNING
     #Install-Module PackageManagement -Force -Verbose -AllowClobber
     Install-Package -Name PackageManagement -Force
 }
