@@ -1,7 +1,7 @@
 ﻿
 <#PSScriptInfo
 
-.VERSION 0.1.2
+.VERSION 0.1.3
 
 .GUID 06dbc814-edfe-4571-a01f-f4091ff5f3c2
 
@@ -26,6 +26,7 @@
 .EXTERNALSCRIPTDEPENDENCIES
 
 .RELEASENOTES
+0.1.3 Change the last message to VERBOSE instead of INFO
 0.1.2 Fixed temporary module and script path loading
 0.1.1 Improved the missing module load
 0.1.0 Improving documentation, adding PATH variables, missing modules will not throw an error anymore
@@ -91,7 +92,7 @@ Param(
 
      [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()]
      [String[]]$Module = [Array]@()              # Define specific modules you want to load
-    
+
     ,[Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()]
      [String[]]$GlobalPackage = [Array]@()       # Define specific global package to load
 
@@ -103,7 +104,7 @@ Param(
 
     ,[Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()]
      [Switch]$LoadWholePackageFolder = $false    # Load whole local package folder
-    
+
     ,[Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()]
      [Switch]$SuppressWarnings = $false           # Flag to log warnings, but not put redirect to the host
 
@@ -568,4 +569,4 @@ Write-Log -Message "  Runtime failed: $( $runtimeFailureCounter )"
 
 $processEnd = [datetime]::now
 $processDuration = New-TimeSpan -Start $processStart -End $processEnd
-Write-Log -Message "Done! Needed $( [int]$processDuration.TotalSeconds ) seconds in total" -Severity INFO
+Write-Log -Message "Done! Needed $( [int]$processDuration.TotalSeconds ) seconds in total" #-Severity INFO
