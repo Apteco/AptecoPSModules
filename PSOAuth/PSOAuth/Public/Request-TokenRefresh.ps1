@@ -1,4 +1,4 @@
-function Request-TokenRefresh {
+﻿function Request-TokenRefresh {
     [CmdletBinding()]
     param (
         # TODO put settingsfile and tokenfile into parameters?
@@ -27,7 +27,10 @@ function Request-TokenRefresh {
         #-----------------------------------------------
 
         # Set log file here, otherwise it could interrupt the process when launched headless from .net in System32
-        Set-Logfile -Path "./psoauth.log"
+        If ( ( Get-LogfileOverride ) -eq $false ) {
+            Set-Logfile -Path "./psoauth.log"
+            Write-Log -message "----------------------------------------------------" -Severity VERBOSE
+        }
 
 
         #-----------------------------------------------

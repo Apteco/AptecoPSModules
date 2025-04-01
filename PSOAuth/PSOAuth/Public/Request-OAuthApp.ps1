@@ -1,4 +1,4 @@
-# TODO documentation of parameters
+﻿# TODO documentation of parameters
 
 function Request-OAuthApp {
     [CmdletBinding()]
@@ -98,7 +98,10 @@ function Request-OAuthApp {
         #-----------------------------------------------
 
         # Set log file here, otherwise it could interrupt the process when launched headless from .net in System32
-        Set-Logfile -Path "./psoauth.log"
+        If ( ( Get-LogfileOverride ) -eq $false ) {
+            Set-Logfile -Path "./psoauth.log"
+            Write-Log -message "----------------------------------------------------" -Severity VERBOSE
+        }
 
 
         #-----------------------------------------------
