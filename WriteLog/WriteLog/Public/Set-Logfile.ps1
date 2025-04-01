@@ -3,6 +3,7 @@ Function Set-Logfile {
     [cmdletbinding()]
     param(
         [Parameter(Mandatory=$true)][string]$Path
+        ,[Parameter(Mandatory=$false)][switch]$DisableOverride = $False
     )
 
     Process {
@@ -32,7 +33,11 @@ Function Set-Logfile {
         }
 
         # Set override value so we know it was set
-        $Script:logfileOverride = $true
+        If ( $DisableOverride -eq $true ) {
+            $Script:logfileOverride = $false
+        } else {
+            $Script:logfileOverride = $true
+        }
 
         # Return
         Write-Verbose "Using the file: $( $Script:logfile )"
