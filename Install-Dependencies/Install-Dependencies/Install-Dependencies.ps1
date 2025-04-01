@@ -1,7 +1,7 @@
 ﻿
 <#PSScriptInfo
 
-.VERSION 0.1.6
+.VERSION 0.1.7
 
 .GUID 4c029c8e-09fa-48ee-9d62-10895150ce83
 
@@ -26,6 +26,7 @@
 .EXTERNALSCRIPTDEPENDENCIES
 
 .RELEASENOTES
+0.1.7 Added a switch when setting the logfile if it should be overridden or not
 0.1.6 Fixed script and m odule version checking
 0.1.5 Fixed script version checking
 0.1.4 Fixed temporary module and script path loading
@@ -219,8 +220,10 @@ Function Request-Choice {
 #-----------------------------------------------
 
 $processStart = [datetime]::now
-Set-Logfile -Path ".\dependencies_install.log"
-Write-Log -message "----------------------------------------------------" -Severity VERBOSE
+If ( ( Get-LogfileOverride ) -eq $false ) {
+    Set-Logfile -Path ".\dependencies_install.log"
+    Write-Log -message "----------------------------------------------------" -Severity VERBOSE
+}
 
 
 #-----------------------------------------------
