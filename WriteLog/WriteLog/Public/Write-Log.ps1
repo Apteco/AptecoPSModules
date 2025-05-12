@@ -74,6 +74,13 @@ Function Write-Log {
         # Testing the path
         If ( ( Test-Path -Path $Script:logfile -IsValid ) -eq $false ) {
             Write-Error -Message "Invalid variable '`$logfile'. The path '$( $Script:logfile )' is invalid."
+            throw "Invalid path for logfile. The path '$( $Script:logfile )' is invalid."
+        }
+
+        # Check on $Message
+        If ( $null -eq $Message ) {
+            Write-Error -Message "Invalid variable '`$Message'. The message '$( $Message )' is invalid."
+            throw "Invalid log message. The message '$( $Message )' is invalid."
         }
 
         # If a process id (to identify this session by a guid) it will be set automatically here
