@@ -1,7 +1,7 @@
 ﻿
 <#PSScriptInfo
 
-.VERSION 0.1.3
+.VERSION 0.1.4
 
 .GUID 06dbc814-edfe-4571-a01f-f4091ff5f3c2
 
@@ -26,6 +26,9 @@
 .EXTERNALSCRIPTDEPENDENCIES
 
 .RELEASENOTES
+0.1.4 Removed to not load WriteLog module as it is already required here
+      Changed Get-LogfileOverride to new parameter KeepLogfile as WriteLog is loaded
+        in this script and Get-LogfileOverride will always be the default value
 0.1.3 Change the last message to VERBOSE instead of INFO
 0.1.2 Fixed temporary module and script path loading
 0.1.1 Improved the missing module load
@@ -108,6 +111,9 @@ Param(
     ,[Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()]
      [Switch]$SuppressWarnings = $false           # Flag to log warnings, but not put redirect to the host
 
+    ,[Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()]
+     [Switch]$KeepLogfile = $false           # Flag to log warnings, but not put redirect to the host
+
 )
 
 
@@ -146,9 +152,12 @@ $runtimes = @("win-x64","win-x86","win10","win7","win")
 
 # TODO use the parent logfile if used by a module
 $processStart = [datetime]::now
-If ( ( Get-LogfileOverride ) -eq $false ) {
-    Set-Logfile -Path ".\dependencies_import.log"
+If ( $KeepLogfile -eq $false ) {
+    $currentLogfile = Get-Logfile
+	$logfile = ".\dependencies_import.log"
+    Set-Logfile -Path $logfile
     Write-Log -message "----------------------------------------------------" -Severity VERBOSE
+	Write-Log -Message "Changed logfile from '$( $currentLogfile.fullname )' to '$( $logfile )'"
 }
 
 # Remember the current processID
@@ -294,7 +303,7 @@ $Env:Path = @( $scriptPath | Sort-Object -unique ) -join ";"
 $modCount = 0
 $successfulModules = [Array]@()
 $failedModules = [Array]@()
-$Module | ForEach-Object {
+$Module | Where-Object { $_ -ne "WriteLog" } | ForEach-Object {
     $mod = $_
     try {
         Write-Verbose "Loading $( $mod )"
@@ -570,3 +579,10 @@ Write-Log -Message "  Runtime failed: $( $runtimeFailureCounter )"
 $processEnd = [datetime]::now
 $processDuration = New-TimeSpan -Start $processStart -End $processEnd
 Write-Log -Message "Done! Needed $( [int]$processDuration.TotalSeconds ) seconds in total" #-Severity INFO
+
+Write-Log -Message "Logfile override: $( Get-LogfileOverride )"
+
+If ( $KeepLogfile -eq $false ) {
+	Write-Log -Message "Changing logfile back to '$( $currentLogfile.fullname )'"
+    Set-Logfile -Path $currentLogfile.fullname
+}
