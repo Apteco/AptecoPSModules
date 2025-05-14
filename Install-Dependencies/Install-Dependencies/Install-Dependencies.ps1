@@ -1,7 +1,7 @@
 ﻿
 <#PSScriptInfo
 
-.VERSION 0.1.7
+.VERSION 0.1.8
 
 .GUID 4c029c8e-09fa-48ee-9d62-10895150ce83
 
@@ -26,6 +26,7 @@
 .EXTERNALSCRIPTDEPENDENCIES
 
 .RELEASENOTES
+0.1.8 Removed the admin elevated check for local packages/modules/scripts
 0.1.7 Added a switch when setting the logfile if it should be overridden or not
 0.1.6 Fixed script and m odule version checking
 0.1.5 Fixed script version checking
@@ -284,7 +285,8 @@ $executionPolicy = Get-ExecutionPolicy
 Write-Log -Message "Your execution policy is currently: $( $executionPolicy )" -Severity VERBOSE
 
 # Check if elevated rights are needed
-If (($GlobalPackage.Count -gt 0 -or $Module.Count -gt 0 -or $Script.count -gt 0 ) -and $isElevated -eq $false) {
+#If (( $GlobalPackage.Count -gt 0 -or $Module.Count -gt 0 -or $Script.count -gt 0 ) -and $isElevated -eq $false) {
+If ( $GlobalPackage.Count -gt 0 -and $isElevated -eq $false) {
     throw "To install global packages, you need elevated rights, so please restart PowerShell with Administrator privileges!"
 }
 
