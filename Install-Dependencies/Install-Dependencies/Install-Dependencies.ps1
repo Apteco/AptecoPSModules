@@ -1,7 +1,7 @@
 ﻿
 <#PSScriptInfo
 
-.VERSION 0.1.8
+.VERSION 0.1.9
 
 .GUID 4c029c8e-09fa-48ee-9d62-10895150ce83
 
@@ -26,6 +26,7 @@
 .EXTERNALSCRIPTDEPENDENCIES
 
 .RELEASENOTES
+0.1.9 Changing default name for NuGet repository to "NuGet v2"
 0.1.8 Removed the admin elevated check for local packages/modules/scripts
 0.1.7 Added a switch when setting the logfile if it should be overridden or not
 0.1.6 Fixed script and m odule version checking
@@ -354,7 +355,7 @@ $Env:Path = @( $scriptPath | Sort-Object -unique ) -join ";"
 # NUGET SETTINGS
 #-----------------------------------------------
 
-$packageSourceName = "NuGet" # otherwise you could create a local repository and put all dependencies in there. You can find more infos here: https://github.com/Apteco/HelperScripts/tree/master/functions/Log#installation-via-local-repository
+$packageSourceName = "NuGet v2" # otherwise you could create a local repository and put all dependencies in there. You can find more infos here: https://github.com/Apteco/HelperScripts/tree/master/functions/Log#installation-via-local-repository
 $packageSourceLocation = "https://www.nuget.org/api/v2"
 $packageSourceProviderName = "NuGet"
 
@@ -635,7 +636,7 @@ If this module is not installed via nuget, then this makes sense to check again
 
 # Add nuget first or make sure it is set
 
-Register-PackageSource -Name Nuget -Location "https://www.nuget.org/api/v2" –ProviderName Nuget
+Register-PackageSource -Name "Nuget v2" -Location "https://www.nuget.org/api/v2" –ProviderName Nuget
 
 # Make nuget trusted
 Set-PackageSource -Name NuGet -Trusted
