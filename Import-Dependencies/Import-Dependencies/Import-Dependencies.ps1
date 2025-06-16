@@ -1,7 +1,7 @@
 ﻿
 <#PSScriptInfo
 
-.VERSION 0.1.4
+.VERSION 0.2.0
 
 .GUID 06dbc814-edfe-4571-a01f-f4091ff5f3c2
 
@@ -26,6 +26,7 @@
 .EXTERNALSCRIPTDEPENDENCIES
 
 .RELEASENOTES
+0.2.0 Added support for loading runtimes with Windows ARM64 architecture
 0.1.4 Removed to not load WriteLog module as it is already required here
       Changed Get-LogfileOverride to new parameter KeepLogfile as WriteLog is loaded
         in this script and Get-LogfileOverride will always be the default value
@@ -143,7 +144,7 @@ $VerbosePreference = "Continue"
 $dotnetDesktopVersions = @("net48","net47","net462","netstandard2.1","netstandard2.0","netstandard1.5","netstandard1.3","netstandard1.1","netstandard1.0")
 $dotnetCoreVersions = @("net6.0","net6.0-windows","net5.0","net5.0-windows","netcore50")
 $targetFolders = @("ref","lib")
-$runtimes = @("win-x64","win-x86","win10","win7","win")
+#$runtimes = @("win-x64","win-x86","win10","win7","win")
 
 
 #-----------------------------------------------
@@ -204,6 +205,25 @@ if ($isCore -eq $true) {
 
 Write-Log -Message "Using OS: $( $os )"
 
+# Used code from: https://gist.github.com/asheroto/cfa26dd00177a03c81635ea774406b2b
+# Get OS details using Get-CimInstance because the registry key for Name is not always correct with Windows 11
+$osDetails = Get-CimInstance -ClassName Win32_OperatingSystem
+
+# Get architecture details of the OS (not the processor)
+$architecture = $osDetails.OSArchitecture
+
+# Normalize architecture
+if ($architecture -match "(?i)32") {
+    $architecture = "x32"
+} elseif ($architecture -match "(?i)64" -and $architecture -match "(?i)ARM") {
+    $architecture = "ARM64"
+} elseif ($architecture -match "(?i)64") {
+    $architecture = "x64"
+} else {
+    $architecture = "Unknown"
+}
+
+Write-Log -Message "Using architecture: $( $architecture )"
 
 # Check elevation
 if ($os -eq "Windows") {
@@ -391,6 +411,33 @@ function Preload-Assembly {
 # LOAD LIB FOLDER (DLLs AND ASSEMBLIES)
 #-----------------------------------------------
 
+# Find out the right runtimes folders
+if ($os -eq "Windows") {
+    # Windows specific runtimes
+    If ($architecture -eq "x64") {
+        $runtimes = @("win-x64")
+    } elseif ($architecture -eq "x32") {
+        $runtimes = @("win-x86")
+    } elseif ($architecture -eq "ARM64") {
+        $runtimes = @("win-arm64", "win10-arm64","win7-arm64")
+    } else {
+        $runtimes = @("win10","win7","win")
+    }
+} elseif ($os -eq "Linux") {
+    # Linux specific runtimes
+    $runtimes = @("linux-x64","linux-arm64","linux-arm") # TODO maybe not correct yet
+} elseif ($os -eq "MacOS") {
+    # MacOS specific runtimes
+    $runtimes = @("osx-x64","osx-arm64") # TODO maybe not correct yet
+} else {
+    # Default runtimes for other OS
+    #$runtimes = @("win10","win7","win")
+    Write-Log -Message "Unknown OS and architecture. Please check the runtimes manually." -Severity "WARNING"
+    $runtimes = [Array]@()
+}
+
+Write-Log -Message "Using runtimes in this order: $( $runtimes -join ", " )"
+
 $successCounter = 0
 $failureCounter = 0
 $runtimeSuccessCounter = 0
@@ -503,6 +550,8 @@ If ( $LocalPackage.Count -gt 0 -or $GlobalPackage.Count -gt 0 -or $LoadWholePack
         #$useKernel32 = 0
         if ( ( Test-Path -Path "$( $package.FullName )/runtimes" ) -eq $true -and $runtimeLoaded -eq 0) {
             $subfolder = "runtimes"
+
+
             $runtimes | ForEach-Object {
                 $runtime = $_
                 #"Checking $( $dotnetVersion )"
