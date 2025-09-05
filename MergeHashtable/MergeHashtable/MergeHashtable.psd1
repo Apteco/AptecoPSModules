@@ -12,7 +12,7 @@
 RootModule = 'MergeHashtable.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.1.0'
+ModuleVersion = '0.1.1'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -152,6 +152,7 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+0.1.1 Fixed a problem where values from left were overwritten with empty object from right
 0.1.0 First release after running this for a while. Small fix when using [Ordered] in the InputObject
 0.0.4 Bumped the copyright year to 2024
 0.0.3 Remove dependency for MergePSCustomObject module and add dynamically a message, when it will be needed
