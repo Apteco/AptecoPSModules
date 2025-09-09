@@ -322,14 +322,14 @@ function Merge-Hashtable {
                     }
                     $recursive = Merge-Hashtable @params
                     $joined.Add($propEqual, $recursive)
-                    
+
                 } elseif ( $countLeft -gt 0 -and $countRight -eq 0 ) {
 
                     # just overwrite existing values if datatypes of attribute are different or no merging is wished
                     $joined | Add-Member -MemberType NoteProperty -Name $propEqual -Value $Left.($propEqual)
                     Write-Verbose "Overwrite '$( $propEqual )' with value from left side"
-                    #Write-Verbose "Datatypes of '$( $propEqual )' are not the same on left and right"                    
-                
+                    #Write-Verbose "Datatypes of '$( $propEqual )' are not the same on left and right"
+
                 } else {
 
                     # just overwrite existing values if datatypes of attribute are different or no merging is wished
