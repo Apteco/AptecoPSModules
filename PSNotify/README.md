@@ -111,8 +111,11 @@ Add the channel now to this module
 Import-Module PSNotify
 Add-TeamsChannel -Name "MyNewTeamsChannel" -Webhook "https://apteco365.webhook.office.com/webhookb2/71d1c7d7-xxxx-xxxx-xxxx-xxxxxxxxxxxx@131c9905-xxxx-xxxx-xxxx-xxxxxxxxxxxx/IncomingWebhook/cb6e6cxxxxxxxxxxxxxxxxxxxx/801883d2-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 
-Send-TeamsUpdate -Name "MyNewTeamsChannel" -Title "Great title!" -Text "Hello World"
+Send-TeamsNotification -Name "MyNewTeamsChannel" -Title "Great title!" -Text "Hello World"
 ```
+
+To show all channels, use the command `Get-NotificationChannels`
+
 
 
 # Slack
