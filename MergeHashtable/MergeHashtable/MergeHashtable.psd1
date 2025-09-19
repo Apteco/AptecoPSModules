@@ -27,7 +27,7 @@ Author = 'florian.von.bracht@apteco.de'
 CompanyName = 'Apteco GmbH'
 
 # Copyright statement for this module
-Copyright = '(c) 2024 Apteco GmbH. All rights reserved.'
+Copyright = '(c) 2025 Apteco GmbH. All rights reserved.'
 
 # Description of the functionality provided by this module
 Description = 'Apteco PS Modules - PowerShell merge Hashtable
