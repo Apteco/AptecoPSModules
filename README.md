@@ -28,6 +28,7 @@ Name|Type|Repository/Version|Platform|Downloads|
 [PSNotify](PSNotify/)|Module|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/PSNotify)](https://www.powershellgallery.com/packages/PSNotify)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/PSNotify)](https://www.powershellgallery.com/packages/PSNotify)<br/>[![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)](https://github.com/PlagueHO/PSAuth)|[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/PSNotify)](https://www.powershellgallery.com/packages/PSNotify)
 [SqlPipeline](SqlPipeline/)|Module|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/SqlPipeline)](https://www.powershellgallery.com/packages/SqlPipeline)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/SqlPipeline)](https://www.powershellgallery.com/packages/SqlPipeline)<br/>[![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)](https://github.com/PlagueHO/PSAuth)|[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/SqlPipeline)](https://www.powershellgallery.com/packages/SqlPipeline)
 [OSMGeocode](OSMGeocode/)|Module|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/OSMGeocode)](https://www.powershellgallery.com/packages/OSMGeocode)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/OSMGeocode)](https://www.powershellgallery.com/packages/OSMGeocode)<br/>[![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)](https://github.com/PlagueHO/PSAuth)|[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/OSMGeocode)](https://www.powershellgallery.com/packages/OSMGeocode)
+[Import-Dependency](ImportDependency/)|Script|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/ImportDependency)](https://www.powershellgallery.com/packages/ImportDependency)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/ImportDependency)](https://www.powershellgallery.com/packages/ImportDependency)<br/>[![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)](https://github.com/PlagueHO/PSAuth)|[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/ImportDependency)](https://www.powershellgallery.com/packages/ImportDependency)
 
 
 Here are some high level descriptions. Please follow the links from the table or go into the subdirectories to get more detailed information.
@@ -292,6 +293,7 @@ OR
 
 Get-Credential | Test-Credential
 
+
 ## WriteLog
 
 This script allows to write log files pretty easy without any fuzz. It retries the write commands if parallel processes want to write into the same logfile.
@@ -317,4 +319,5 @@ Then the logfile getting written looks like
 separated by tabs.
 
 Click on the folder for more information.
+
 
