@@ -9,27 +9,28 @@ BeforeDiscovery {
             [switch]$Csv,
             [System.Text.Encoding]$Encoding = [System.Text.Encoding]::UTF8
         )
-        $lines = @()
+        $lines = [System.Collections.ArrayList]@()
+        $columns = 40
         if ($Csv) {
-            $lines += "Header1,Header2"
+            [void]$lines.add( (1..$columns | ForEach-Object { "Header$_" }) -join "," )
             for ($i=1; $i -le $Rows; $i++) {
-                $lines += "$i,Value$i"
+                [void]$lines.add( "$i,$( (1..($columns-1) | ForEach-Object { "Value$_" }) -join "," )" )
             }
         } else {
             for ($i=1; $i -le $Rows; $i++) {
-                $lines += "Line $i"
+                [void]$lines.add( "Line $i" )
             }
         }
         [System.IO.File]::WriteAllLines($Path, $lines, $Encoding)
     }
 
     $TestFiles = @(
-        @{ Path = "$PSScriptRoot/test10.csv"; Rows = 10; Csv = $true },
         @{ Path = "$PSScriptRoot/test100.csv"; Rows = 100; Csv = $true },
         @{ Path = "$PSScriptRoot/test10000.csv"; Rows = 10000; Csv = $true },
-        @{ Path = "$PSScriptRoot/test10.txt"; Rows = 10; Csv = $false },
+        @{ Path = "$PSScriptRoot/test100000.csv"; Rows = 100000; Csv = $true },
         @{ Path = "$PSScriptRoot/test100.txt"; Rows = 100; Csv = $false },
-        @{ Path = "$PSScriptRoot/test10000.txt"; Rows = 10000; Csv = $false }
+        @{ Path = "$PSScriptRoot/test10000.txt"; Rows = 10000; Csv = $false },
+        @{ Path = "$PSScriptRoot/test100000.txt"; Rows = 100000; Csv = $false }
     )
 
     foreach ($file in $TestFiles) {
@@ -51,13 +52,6 @@ BeforeAll {
     # Import the module
     Import-Module $PSScriptRoot/../"MeasureRows" -Force
 
-}
-
-AfterAll {
-    Remove-Module "MeasureRows" -Force
-    foreach ($file in $TestFiles) {
-        Remove-Item $file.Path -ErrorAction SilentlyContinue
-    }
 }
 
 Describe 'MeasureRows' -ForEach $TestFiles {
@@ -99,7 +93,7 @@ Describe 'MeasureRows' -ForEach $TestFiles {
             $result = Measure-Rows -Path $Path
             $result.GetType().Name | Should -Be 'Int64'
         }
-        It "Performance: completes under 2 seconds for up to 10000 rows" {
+        It "Performance: completes under 2 seconds for up to 100000 rows" {
             $sw = [System.Diagnostics.Stopwatch]::StartNew()
             Measure-Rows -Path $Path | Out-Null
             $sw.Stop()
@@ -117,6 +111,9 @@ Describe 'MeasureRows error handling' {
         It "Throws error for non-existent file" {
             { Measure-Rows -Path "$PSScriptRoot/doesnotexist.txt" } | Should -Throw
         }
+        It "Throws error for one non-existent file" {
+            { "$PSScriptRoot/test10.csv", "$PSScriptRoot/test999.csv" | Measure-Rows -SkipFirstRow } | Should -Throw 
+        }
     }
 
 }
@@ -125,13 +122,27 @@ Describe 'MeasureRows pipeline input' {
 
     Context "Pipeline input" {
         It "Counts rows from pipeline input" {
-            $result = "$PSScriptRoot/test10.csv" | Measure-Rows
-            $result | Should -Be 11
+            $result = "$PSScriptRoot/test100.csv" | Measure-Rows
+            $result | Should -Be 101
         }
         It "Counts rows from pipeline input with -SkipFirstRow" {
-            $result = "$PSScriptRoot/test10.csv" | Measure-Rows -SkipFirstRow
-            $result | Should -Be 10
+            $result = "$PSScriptRoot/test100.csv" | Measure-Rows -SkipFirstRow
+            $result | Should -Be 100
+        }
+        It "Counts multiple files rows from pipeline input with -SkipFirstRow" {
+            $result = "$PSScriptRoot/test100.csv", "$PSScriptRoot/test10000.csv" | Measure-Rows -SkipFirstRow
+            $result | Should -Be 10100
         }
     }
 
+}
+
+AfterAll {
+    Remove-Module "MeasureRows" -Force
+    "test*.csv","test*.txt" | ForEach-Object {
+        Get-ChildItem $PSScriptRoot -Filter $_ | ForEach-Object {
+            #Write-Host "Removing test file: $($_.FullName)"
+            Remove-Item $_.FullName -Force -ErrorAction SilentlyContinue
+        }
+    }
 }

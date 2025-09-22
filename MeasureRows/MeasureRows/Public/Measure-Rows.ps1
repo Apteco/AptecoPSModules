@@ -36,6 +36,8 @@ Function Measure-Rows {
 
         If you want to skip the first line, just use this Switch -SkipFirstRow
 
+        Putting multiple files in the pipeline is also possible, it adds up the rows of all files.
+
     .PARAMETER Path
         Path for the file to measure
 
@@ -70,6 +72,7 @@ Function Measure-Rows {
 
 
     [CmdletBinding()]
+    [OutputType([long])]
     param(
          [Parameter(Mandatory=$true,ValueFromPipeline=$true)][String]$Path
         ,[Parameter(Mandatory=$false)][switch] $SkipFirstRow = $false
@@ -78,22 +81,12 @@ Function Measure-Rows {
 
     Begin {
 
-        
+        $c = [long]0
 
     }
 
     Process {
 
-        # If you put this one into begin and do something like
-        # "C:\Users\Florian\Downloads\adressen.csv", "C:\Users\Florian\Downloads\italian.csv" | Measure-Rows
-        # the counts will be added so you will get
-        # 45475
-        # 45485
-        # instead of
-        # 45475
-        # 10
-        $c = [long]0
-        
         # Check Path
         If ((Test-Path -Path $Path ) -eq $false ) {
             #Write-Error -Message "`$Path '$( $Path )' is not valid"
@@ -102,12 +95,6 @@ Function Measure-Rows {
 
         $absolutePath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Path)
         $reader = [System.IO.StreamReader]::new($absolutePath, $Encoding)
-
-        <#
-        Get-Content -Path $Path -ReadCount 1000 | ForEach {
-            $c += $_.Count
-        }
-        #>
 
         If ( $SkipFirstRow -eq $true ) {
             [void]$reader.ReadLine() # Skip first line.
@@ -121,13 +108,13 @@ Function Measure-Rows {
         }
 
         $reader.Close()
-
-        # Return
-        $c
         
     }
     
     End {
+
+        # Return
+        $c
 
     }
 
