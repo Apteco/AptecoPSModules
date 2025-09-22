@@ -32,7 +32,7 @@ jobs:
         run: |
           Set-PSRepository psgallery -InstallationPolicy trusted
 
-      - name: Run Pester Tests (${{ matrix.shell }} on ${{ matrix.os }})
+      - name: Run Pester Tests (powershell on ${{ matrix.os }})
         if: matrix.shell == 'powershell'
         env:
           CI: true
@@ -45,7 +45,7 @@ jobs:
           Set-PSRepository psgallery -InstallationPolicy trusted
         shell: pwsh
 
-      - name: Run Pester Tests (${{ matrix.shell }} on ${{ matrix.os }})
+      - name: Run Pester Tests (pwsh on ${{ matrix.os }})
         if: matrix.shell != 'powershell'
         env:
           CI: true
