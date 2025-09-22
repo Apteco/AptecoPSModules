@@ -1,0 +1,34 @@
+name: MeasureRows Pester Tests
+
+on:
+  push:
+    branches:
+      - dev
+    paths:
+      - 'MeasureRows/**.ps1'
+      - 'MeasureRows/**.psm1'
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+        shell: [pwsh]
+        include:
+          - os: windows-latest
+            shell: powershell
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Pester
+        run: ${{ matrix.shell }} -c "Install-Module Pester -Force -SkipPublisherCheck"
+
+      - name: Run Pester Tests (${{ matrix.shell }} on ${{ matrix.os }})
+        env:
+          CI: true
+        run: ${{ matrix.shell }} -c "Invoke-Pester -Path MeasureRows/Tests -Output Detailed -EnableExit"
