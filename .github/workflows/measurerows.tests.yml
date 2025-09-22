@@ -14,8 +14,8 @@ jobs:
   test:
     strategy:
       matrix:
-        os: [ windows-latest ]
-        shell: [ pwsh, powershell ]
+        os: [ windows-latest, ubuntu-latest ]
+        shell: [ pwsh ]
 
     runs-on: ${{ matrix.os }}
 
@@ -26,10 +26,10 @@ jobs:
       - name: Set up repositories
         run: |
           Set-PSRepository psgallery -InstallationPolicy trusted
-        shell: ${{ matrix.shell }}
+        shell: pwsh
 
       - name: Run Pester Tests (${{ matrix.shell }} on ${{ matrix.os }})
         env:
           CI: true
-        shell: ${{ matrix.shell }}
+        shell: pwsh
         run: Invoke-Pester -Path MeasureRows/Tests/ -Output Detailed -Passthru
