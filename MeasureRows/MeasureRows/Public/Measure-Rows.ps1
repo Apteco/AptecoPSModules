@@ -96,8 +96,8 @@ Function Measure-Rows {
         
         # Check Path
         If ((Test-Path -Path $Path ) -eq $false ) {
-            Write-Error -Message "`$Path '$( $Path )' is not valid"
-            Exit
+            #Write-Error -Message "`$Path '$( $Path )' is not valid"
+            throw [System.IO.FileNotFoundException] "File '$( $Path )' not found"
         }
 
         $absolutePath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Path)
