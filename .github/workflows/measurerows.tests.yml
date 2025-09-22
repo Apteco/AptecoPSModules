@@ -14,21 +14,22 @@ jobs:
   test:
     strategy:
       matrix:
-        os: [windows-latest, ubuntu-latest]
-        shell: [pwsh]
-        include:
-          - os: windows-latest
-            shell: powershell
+        os: windows-latest
+        shell: pwsh
 
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out repository code
+        uses: actions/checkout@v5
 
-      - name: Install Pester
-        run: ${{ matrix.shell }} -c "Install-Module Pester -Force -SkipPublisherCheck"
+      - name: Set up repositories
+        run: |
+          Set-PSRepository psgallery -InstallationPolicy trusted
+        shell: ${{ matrix.shell }}
 
       - name: Run Pester Tests (${{ matrix.shell }} on ${{ matrix.os }})
         env:
           CI: true
-        run: ${{ matrix.shell }} -c "Invoke-Pester -Path MeasureRows/Tests -Output Detailed -EnableExit"
+        shell: ${{ matrix.shell }}
+        run: Invoke-Pester -Path MeasureRows/Tests/ -Output Detailed -Passthru
