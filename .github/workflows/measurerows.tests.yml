@@ -14,8 +14,8 @@ jobs:
   test:
     strategy:
       matrix:
-        os: windows-latest
-        shell: pwsh
+        os: [ windows-latest ]
+        shell: [ pwsh, powershell ]
 
     runs-on: ${{ matrix.os }}
 
