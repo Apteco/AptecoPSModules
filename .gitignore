@@ -6,3 +6,5 @@
 *_archive*
 tests.ps1
 *.db
+*.csv
+*.txt
