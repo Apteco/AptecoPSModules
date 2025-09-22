@@ -13,11 +13,11 @@ jobs:
   test:
     strategy:
       matrix:
-        os: [windows-latest, ubuntu-latest]   # Windows + Linux
-        shell: [pwsh]                         # nur PowerShell Core
+        os: [windows-latest, ubuntu-latest]
+        shell: [pwsh]
         include:
           - os: windows-latest
-            shell: powershell                 # Windows PowerShell 5.1 zusätzlich
+            shell: powershell
 
     runs-on: ${{ matrix.os }}
 
@@ -25,13 +25,9 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install Pester
-        shell: ${{ matrix.shell }}
-        run: |
-          Install-Module Pester -Force -SkipPublisherCheck
+        run: ${{ matrix.shell }} -c "Install-Module Pester -Force -SkipPublisherCheck"
 
       - name: Run Pester Tests (${{ matrix.shell }} on ${{ matrix.os }})
-        shell: ${{ matrix.shell }}
         env:
           CI: true
-        run: |
-          Invoke-Pester -Path MeasureRows/Tests -Output Detailed -EnableExit
+        run: ${{ matrix.shell }} -c "Invoke-Pester -Path MeasureRows/Tests -Output Detailed -EnableExit"
