@@ -25,6 +25,7 @@ Function Resize-Logfile {
 
 #>
 
+    [cmdletbinding()]
     param(
        [Parameter(Mandatory=$true)][int]$RowsToKeep #= 200000
     )
@@ -47,7 +48,7 @@ Function Resize-Logfile {
             # [Datetime]::ParseExact("20221027130112","yyyyMMddHHmmss",$null)
 
             # Create a temporary file
-            $tempFile = New-TemporaryFile
+            $tempFile = Join-Path -Path $Env:tmp -ChildPath "$( [guid]::newguid().toString() ).tmp" #New-TemporaryFile
 
             # Write only last lines to the new file
             Get-Content -Tail $RowsToKeep -Encoding utf8 -Path $Script:logfile | Set-Content -path $tempFile.FullName -Encoding utf8

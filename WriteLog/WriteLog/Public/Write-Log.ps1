@@ -65,22 +65,29 @@ Function Write-Log {
     Begin {
 
         # If the variable is not present, it will create a temporary file
-        If ( $null -eq $Script:logfile ) {
-            $f = New-TemporaryFile
-            $Script:logfile = $f.FullName
-            Write-Warning -Message "There is no variable '`$logfile' present on 'Script' scope. Created one at '$( $Script:logfile )'"
-        }
+        # If ( $null -eq $Script:logfile ) {
+        #     $f = Join-Path -Path $Env:tmp -ChildPath "$( [guid]::newguid().toString() ).tmp" #New-TemporaryFile
+        #     $Script:logfile = $f.FullName
+        #     Write-Verbose -Message "There is no variable '`$logfile' present on 'Script' scope. Created one at '$( $Script:logfile )'" -InformationAction Continue -Verbose
+        # }
 
         # Testing the path
         If ( ( Test-Path -Path $Script:logfile -IsValid ) -eq $false ) {
             Write-Error -Message "Invalid variable '`$logfile'. The path '$( $Script:logfile )' is invalid."
+            throw "Invalid path for logfile. The path '$( $Script:logfile )' is invalid."
+        }
+
+        # Check on $Message
+        If ( $null -eq $Message ) {
+            Write-Error -Message "Invalid variable '`$Message'. The message '$( $Message )' is invalid."
+            throw "Invalid log message. The message '$( $Message )' is invalid."
         }
 
         # If a process id (to identify this session by a guid) it will be set automatically here
-        If ( $null -eq $Script:processId ) {
-            $Script:processId = [guid]::NewGuid().ToString()
-            Write-Warning -Message "There is no variable '`$processId' present on 'Script' scope. Created one with '$( $Script:processId )'"
-        }
+        # If ( $null -eq $Script:processId ) {
+        #     $Script:processId = [guid]::NewGuid().ToString()
+        #     Write-Verbose -Message "There is no variable '`$processId' present on 'Script' scope. Created one with '$( $Script:processId )'" -InformationAction Continue -Verbose
+        # }
 
     }
 
@@ -116,10 +123,10 @@ Function Write-Log {
             Switch ( $Severity ) {
                 ( [LogSeverity]::VERBOSE ) {
                     #Write-Verbose $message $message -Verbose # To always show the logmessage without verbose flag, execute    $VerbosePreference = "Continue"
-                    Write-Verbose -Message $Message -Verbose #-InformationAction Continue
+                    Write-Verbose -Message $Message -InformationAction Continue -Verbose
                 }
                 ( [LogSeverity]::INFO ) {
-                    Write-Information -MessageData $Message -Tags @("Info") -Verbose # -InformationAction Continue
+                    Write-Information -MessageData "INFO: $( $Message )" -Tags @("Info") -Verbose # -InformationAction Continue
                 }
                 ( [LogSeverity]::WARNING ) {
                     Write-Warning -Message $Message

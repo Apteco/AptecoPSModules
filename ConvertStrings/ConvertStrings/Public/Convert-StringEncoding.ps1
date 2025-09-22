@@ -19,7 +19,6 @@
         [System.Text.Encoding]::GetEncodings()
 
 
-
         More explanation of this function and the background
 
         # representation as bytes from this string: žluťoučký kůň úpěl ďábelské ódy

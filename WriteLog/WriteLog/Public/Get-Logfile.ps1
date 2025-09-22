@@ -2,7 +2,8 @@ Function Get-Logfile {
 
     [cmdletbinding()]
     param(
-)
+    )
+
 
     $item = $null
     $logfile = $Script:logfile

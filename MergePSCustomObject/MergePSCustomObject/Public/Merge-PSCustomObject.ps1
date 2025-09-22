@@ -232,14 +232,29 @@ function Merge-PSCustomObject {
 
                 $propEqual = $_.InputObject
 
-                If ( $MergePSCustomObjects -eq $true -and $Left.($propEqual) -is [PSCustomObject] -and $Right.($propEqual) -is [PSCustomObject] -and @( $Right.($propEqual).psobject.properties ).Count -gt 0 ) {
+                # Count the props first
+                $countLeft = 0
+                If ( $Left.($propEqual) -is [PSCustomObject] ) {
+                    $countLeft += @( $Left.($propEqual).psobject.properties | where-object { $_.MemberType -eq "NoteProperty" } ).Count
+                } elseif ( $Left.($propEqual) -is [System.Collections.Specialized.OrderedDictionary] -or $Left.($propEqual) -is [hashtable]) {
+                    $countLeft += @( $Left.($propEqual).Keys ).Count
+                }
+                $countRight = 0
+                If ( $Right.($propEqual) -is [PSCustomObject] ) {
+                    $countRight += @( $Right.($propEqual).psobject.properties | where-object { $_.MemberType -eq "NoteProperty" } ).Count
+                } elseif ( $Right.($propEqual) -is [System.Collections.Specialized.OrderedDictionary] -or $Right.($propEqual) -is [hashtable]) {
+                    $countRight += @( $Right.($propEqual).Keys ).Count
+                }
+
+                # Go through the different cases
+                If ( $MergePSCustomObjects -eq $true -and ( $Left.($propEqual) -is [PSCustomObject] -or $Left.($propEqual) -is [System.Collections.Specialized.OrderedDictionary] ) -and ( $Right.($propEqual) -is [PSCustomObject] -or $Right.($propEqual) -is [System.Collections.Specialized.OrderedDictionary] ) -and $countRight -gt 0 ) {
 
                     Write-Verbose "Going recursively into '$( $propEqual )'"
 
                     # Recursively call this function, if it is nested ps custom
                     $params = [Hashtable]@{
-                        "Left" = $Left.($propEqual)
-                        "Right" = $Right.($propEqual)
+                        "Left" = [PSCustomObject]( $Left.($propEqual) )
+                        "Right" = [PSCustomObject]( $Right.($propEqual) )
                         "AddPropertiesFromRight" = $AddPropertiesFromRight
                         "MergePSCustomObjects" = $MergePSCustomObjects
                         "MergeArrays" = $MergeArrays
@@ -282,6 +297,13 @@ function Merge-PSCustomObject {
                     }
                     $recursive = Merge-Hashtable @params
                     $joined | Add-Member -MemberType NoteProperty -Name $propEqual -Value $recursive
+
+                } elseif ( $countLeft -gt 0 -and $countRight -eq 0 ) {
+
+                    # just overwrite existing values if datatypes of attribute are different or no merging is wished
+                    $joined | Add-Member -MemberType NoteProperty -Name $propEqual -Value $Left.($propEqual)
+                    Write-Verbose "Overwrite '$( $propEqual )' with value from left side"
+                    #Write-Verbose "Datatypes of '$( $propEqual )' are not the same on left and right"
 
                 } else {
 

@@ -65,8 +65,8 @@ If ( $null -eq $processId ) {
     Write-Warning -Message "There is no variable '`$processId' present on 'Script' scope. Please define it or it will automatically created as a [GUID]."
 }
 #>
-Write-Verbose -Message "Please setup the logfile with 'Set-Logfile -Path' or it will automatically created as a temporary file."
-Write-Verbose -Message "Please setup the process id with 'Set-ProcessId -Id'or it will automatically created as a [GUID]."
+#Write-Verbose -Message "Please setup the logfile with 'Set-Logfile -Path' or it will automatically created as a temporary file."
+#Write-Verbose -Message "Please setup the process id with 'Set-ProcessId -Id'or it will automatically created as a [GUID]."
 
 
 #-----------------------------------------------
@@ -80,4 +80,16 @@ Export-ModuleMember -Function $Public.Basename
 # SET SOME VARIABLES ONLY VISIBLE TO MODULE AND FUNCTIONS
 #-----------------------------------------------
 
-New-Variable -Name logfile  -Value $null -Scope Script -Force
+New-Variable -Name logfile -Value $null -Scope Script -Force
+New-Variable -Name processId -Value $null -Scope Script -Force
+New-Variable -Name logfileOverride  -Value $null -Scope Script -Force
+New-Variable -Name processIdOverride  -Value $null -Scope Script -Force
+
+# This will be overridden later
+$Script:processId = [guid]::NewGuid().ToString()
+$f = Join-Path -Path $Env:tmp -ChildPath "$( $Script:processId ).tmp" #New-TemporaryFile
+$Script:logfile = $f.FullName
+
+# This will be changed with the first override
+$Script:logfileOverride = $false
+$Script:processIdOverride = $false

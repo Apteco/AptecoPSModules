@@ -1,4 +1,4 @@
-Function Convert-ByteArrayToHex {
+﻿Function Convert-ByteArrayToHex {
 
     <#
     .SYNOPSIS

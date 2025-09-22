@@ -1,5 +1,5 @@
 
-# Apteco Customs - PowerShell String Conversion
+# Apteco PS Modules - PowerShell String Conversion
 
 
 This module contains multiple helpful string conversion functions like

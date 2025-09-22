@@ -15,7 +15,8 @@ Function Invoke-WebRequestUTF8 {
         $response = Invoke-WebRequest @updatedParameters
 
         # Convert Returned content
-        $fixedContent = Convert-StringEncoding -String $response.Content -InputEncoding ([Console]::OutputEncoding.HeaderName) -OutputEncoding ([System.Text.Encoding]::UTF8.HeaderName)
+        #$fixedContent = Convert-StringEncoding -String $response.Content -InputEncoding ([Console]::OutputEncoding.HeaderName) -OutputEncoding ([System.Text.Encoding]::UTF8.HeaderName)
+        $fixedContent = [Text.Encoding]::UTF8.GetString($response.RawContentStream.ToArray())
 
         # Return new object
         [PSCustomObject]@{

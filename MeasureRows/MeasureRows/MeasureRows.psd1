@@ -12,7 +12,7 @@
 RootModule = 'MeasureRows.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.9.0'
+ModuleVersion = '0.9.1'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -92,16 +92,18 @@ PowerShellVersion = '5.1'
 # NestedModules = @()
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = '*'
+FunctionsToExport = @(
+    "Measure-Rows"
+)#'*'
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
-CmdletsToExport = '*'
+CmdletsToExport = @() #'*'
 
 # Variables to export from this module
-VariablesToExport = '*'
+VariablesToExport = @() #'*'
 
 # Aliases to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no aliases to export.
-AliasesToExport = '*'
+AliasesToExport = @() #'*'
 
 # DSC resources to export from this module
 # DscResourcesToExport = @()
@@ -131,6 +133,7 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+0.9.1 Fix for resolving absolute paths
 0.9.0 Initial release of measure rows module through psgallery
 '
         # Prerelease string of this module

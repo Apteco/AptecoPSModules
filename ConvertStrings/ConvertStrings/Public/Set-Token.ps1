@@ -9,7 +9,7 @@ $ht = [hashtable]@{
     "#VERB#" = "live"
 }
 
-Set-Tokens -InputString $string -Replacements $ht
+Set-Token -InputString $string -Replacements $ht
 
 # Hello, this is a really great world to live
 

@@ -1,4 +1,4 @@
-
+﻿
 Function Convert-HexToByteArray {
 
     <#
@@ -71,8 +71,5 @@ Function Convert-HexToByteArray {
         $Bytes
 
     }
-
-
-
 
 }

@@ -92,10 +92,10 @@ Function Get-RandomString() {
     param(
          [Parameter(Mandatory=$true,ValueFromPipeline=$true)][int]$Length
         ,[Parameter(Mandatory=$false)][String[]]$AllowedCharacters = [String]@()
-        ,[Parameter(Mandatory=$false)][Switch]$ExcludeNumbers
-        ,[Parameter(Mandatory=$false)][Switch]$ExcludeLowerCase
-        ,[Parameter(Mandatory=$false)][Switch]$ExcludeUpperCase
-        ,[Parameter(Mandatory=$false)][Switch]$ExcludeSpecialChars
+        ,[Parameter(Mandatory=$false)][Switch]$ExcludeNumbers = $false
+        ,[Parameter(Mandatory=$false)][Switch]$ExcludeLowerCase = $false
+        ,[Parameter(Mandatory=$false)][Switch]$ExcludeUpperCase = $false
+        ,[Parameter(Mandatory=$false)][Switch]$ExcludeSpecialChars = $false
     )
 
     begin {
@@ -126,17 +126,17 @@ Function Get-RandomString() {
             Write-Warning -Message "No characters left for Generation of RandomString"
         }
 
+        # Create a new random variable
+        #$random = [Random]::new() # this is now declared in the module
+
     }
 
     process {
 
-        # Create a new random variable
-        $random = [Random]::new()
-
         # Put the string together
         $stringBuilder = [System.Text.StringBuilder]::new($Length)
         for ($i = 0; $i -lt $Length; $i++) {
-            [void]$stringBuilder.Append( $chars[$random.Next($chars.Length)] )
+            [void]$stringBuilder.Append( $chars[$Script:rnd.Next($chars.Length)] )
         }
 
         #return

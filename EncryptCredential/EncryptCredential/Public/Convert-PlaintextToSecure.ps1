@@ -13,7 +13,7 @@ Save this text into a variable like
 
 $t = "Hello World" | Get-PlaintextToSecure
 
-And decrypt it with 
+And decrypt it with
 
 $t | Get-SecureToPlaintext
 Hello World
@@ -59,7 +59,7 @@ Function Convert-PlaintextToSecure {
          [Parameter(Mandatory=$true,ValueFromPipeline)][String]$String
         #,[Parameter(Mandatory=$false)][String]$KeyfilePath = ".\aes.key"
     )
-    
+
     Begin {
 
         # Use the default keyfile, if not loaded yet

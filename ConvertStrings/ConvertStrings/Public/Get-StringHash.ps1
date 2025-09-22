@@ -1,4 +1,4 @@
-<#
+﻿<#
 
 This is a way of hashing strings
 Please be aware, that algorithms like HMAC need a key that
@@ -27,14 +27,7 @@ Function Get-StringHash {
         ,[Parameter(Mandatory=$false)][switch]$ReturnBytes = $false
     )
 
-    Process {
-
-        #-----------------------------------------------
-        # GENERATE BYTES HASH
-        #-----------------------------------------------
-
-        # Add salt if needed
-        $string = $InputString + $Salt
+    Begin {
 
         # Choose algorithm: https://learn.microsoft.com/de-de/dotnet/api/system.security.cryptography.hashalgorithm.create?view=net-7.0
         $alg = [System.Security.Cryptography.HashAlgorithm]::Create($HashName)
@@ -47,6 +40,17 @@ Function Get-StringHash {
                 $alg.key = [Text.Encoding]::UTF8.GetBytes($key)
             }
         }
+
+    }
+
+    Process {
+
+        #-----------------------------------------------
+        # GENERATE BYTES HASH
+        #-----------------------------------------------
+
+        # Add salt if needed
+        $string = $InputString + $Salt
 
         $bytes = $alg.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($string))
 

@@ -28,7 +28,7 @@ Function Convert-SecureToPlaintext {
 
 #>
 
-    [cmdletbinding()]    
+    [cmdletbinding()]
     param(
          [Parameter(Mandatory=$true,ValueFromPipeline)][String]$String
         #,[Parameter(Mandatory=$false)][String]$KeyfilePath = ".\aes.key"

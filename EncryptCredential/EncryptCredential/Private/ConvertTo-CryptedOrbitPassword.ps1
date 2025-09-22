@@ -1,6 +1,3 @@
-
-
-
 Function ConvertTo-CryptedOrbitPassword {
 <#
 Password encryption for Apteco Orbit
@@ -10,14 +7,14 @@ Password encryption for Apteco Orbit
     )
 
     $cryptedPassword = @()
-    $Password.ToCharArray() | %{[int][char]$_} | ForEach {    
+    $Password.ToCharArray() | ForEach-Object { [int][char]$_ } | ForEach-Object {
         If ($_ % 2 -eq 0) {
             $cryptedPassword += [char]( $_ + 1 )
         } else {
             $cryptedPassword += [char]( $_ - 1 )
-        } 
+        }
     }
-    
+
     $cryptedPassword -join ""
 
 }

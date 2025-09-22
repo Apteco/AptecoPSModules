@@ -1,5 +1,5 @@
 
-# Apteco Customs - PowerShell logging script
+# Apteco PS Modules - PowerShell logging script
 
 Execute commands like
 
@@ -61,6 +61,18 @@ Set-Location "$( $env:USERPROFILE )\Downloads"
 New-Item -Name "PSRepo" -ItemType Directory
 Register-PSRepository -Name "LocalRepo" -SourceLocation "$( $env:USERPROFILE )\Downloads\PSRepo"
 Get-PSRepository
+```
+
+To trust a local repository, use
+
+```PowerShell
+Set-PSRepository -Name LocalRepo  -InstallationPolicy Trusted
+```
+
+To remove the trust, just put it back to `Untrusted`
+
+```PowerShell
+Set-PSRepository -Name LocalRepo  -InstallationPolicy Untrusted
 ```
 
 Then put your downloaded `.nupkg` file into the new created `PSRepo` folder and you should see the module via 

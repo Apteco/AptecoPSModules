@@ -1,5 +1,5 @@
 
-# Apteco Customs - PowerShell WebRequest UTF8
+# Apteco PS Modules - PowerShell WebRequest UTF8
 
 Helpful function for APIs, that return UTF8 encoded content, but PowerShell does not recognize it as UTF8 encoded.
 
@@ -81,7 +81,7 @@ Import-Module .\InvokeWebRequestUTF8
 This module is using the ExtendFunction module and is mirroring the original `Invoke-WebRequest` so you have the exact same parameters, only the command changes to something like
 
 ```PowerShell
-Invoke-WebRequest -UseBasicParsing -Uri "https://api.chucknorris.io/jokes/random" -Method "GET"
+Invoke-WebRequestUTF8 -UseBasicParsing -Uri "https://api.chucknorris.io/jokes/random" -Method "GET"
 ```
 
 If you are using this command on a console or restricted environment, please don't forget to use `-UseBasicParsing` as you already know. This shouldn't be an issue on pwsh or linux.
