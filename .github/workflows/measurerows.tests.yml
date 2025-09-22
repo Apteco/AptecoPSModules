@@ -1,0 +1,37 @@
+name: MeasureRows Pester Tests
+
+on:
+  push:
+    branches:
+      - dev
+    paths:
+      - 'MeasureRows/**.ps1'
+      - 'MeasureRows/**.psm1'
+  pull_request:
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest]   # Windows + Linux
+        shell: [pwsh]                         # nur PowerShell Core
+        include:
+          - os: windows-latest
+            shell: powershell                 # Windows PowerShell 5.1 zusätzlich
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Pester
+        shell: ${{ matrix.shell }}
+        run: |
+          Install-Module Pester -Force -SkipPublisherCheck
+
+      - name: Run Pester Tests (${{ matrix.shell }} on ${{ matrix.os }})
+        shell: ${{ matrix.shell }}
+        env:
+          CI: true
+        run: |
+          Invoke-Pester -Path MeasureRows/Tests -Output Detailed -EnableExit
