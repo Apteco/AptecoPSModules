@@ -15,7 +15,7 @@ Import-Dependency -Module "WriteLog" -LocalPackage "System.Data.SQLite", "Npgsql
 The last way is more efficient, but could cause more problems, when important dependencies are missing. Best way is to install all needed dependencies with my other script like
 
 ```PowerShell
-Install-Dependencies -Module "WriteLog" -LocalPackage "System.Data.SQLite", "Npgsql" -Verbose
+Import-Dependency-Module "WriteLog" -LocalPackage "System.Data.SQLite", "Npgsql" -Verbose
 ```
 
 And then work out (e.g. with moving folders) which packages are not needed or are needed

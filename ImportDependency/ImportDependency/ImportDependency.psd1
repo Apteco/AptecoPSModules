@@ -120,6 +120,9 @@ PrivateData = @{
         # ReleaseNotes of this module
         ReleaseNotes = '
 0.3.0 Re-publication as module rather than a script
+      Support for PowerShell Core for Windows and Linux, possibly MacOS
+      Support for Windows ARM64 architecture
+      Added function Get-PSEnvironment to get information about the current PowerShell environment
 0.2.0 Added support for loading runtimes with Windows ARM64 architecture
 0.1.4 Removed to not load WriteLog module as it is already required here
       Changed Get-LogfileOverride to new parameter KeepLogfile as WriteLog is loaded

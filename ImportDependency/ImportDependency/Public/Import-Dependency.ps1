@@ -5,7 +5,7 @@ Function Import-Dependency {
     .SYNOPSIS
         Imports modules and global/local packages. Local packages are loaded by default from the .\lib folder in the current directory
     .DESCRIPTION
-        Script to import dependencies from the PowerShell Gallery and NuGet.
+        Module to import dependencies from the PowerShell Gallery and NuGet.
 
         Please make sure to have the Modules WriteLog and PowerShellGet (>= 2.2.4) installed.
 
