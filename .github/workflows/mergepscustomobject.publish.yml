@@ -31,7 +31,9 @@ jobs:
         shell: pwsh
         run: |
           $path = "MergePSCustomObject/MergePSCustomObject"
+          Set-PSRepository PSGallery -InstallationPolicy Trusted
           Install-Module -Name PSScriptAnalyzer -force
+          Install-Module -Name MergeHashtable
           Import-Module PSScriptAnalyzer
           Invoke-ScriptAnalyzer -Path $path -Recurse -IncludeRule PSAvoidTrailingWhitespace -Fix
           Publish-Module -Path $path -NuGetApiKey ${{ secrets.NUGET_API_KEY }} -Repository PSGallery

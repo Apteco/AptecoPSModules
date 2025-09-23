@@ -1,4 +1,4 @@
-BeforeAll {
+﻿BeforeAll {
     # Import the module
     Import-Module $PSScriptRoot/../"MergePSCustomObject"
 
@@ -61,7 +61,7 @@ Describe 'Merge-PSCustomObject' {
                 "firstname" = "Florian"
                 "lastname" = "Friedrichs"
             }
-    
+
             $right = [PSCustomObject]@{
                 "lastname" = "von Bracht"
                 "Street" = "Schaumainkai 87"
@@ -84,9 +84,9 @@ Describe 'Merge-PSCustomObject' {
 
     }
 
-    
 
-   
+
+
 
 }
 

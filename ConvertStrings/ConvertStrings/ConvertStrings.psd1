@@ -27,7 +27,7 @@ Author = 'florian.von.bracht@apteco.de'
 CompanyName = 'Apteco GmbH'
 
 # Urheberrechtserklärung für dieses Modul
-Copyright = '(c) 2024 Apteco GmbH. All rights reserved.'
+Copyright = '(c) 2025 Apteco GmbH. All rights reserved.'
 
 # Beschreibung der von diesem Modul bereitgestellten Funktionen
 Description = 'Apteco PS Modules - PowerShell String Conversion
@@ -123,6 +123,7 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.0.6 Updated copyright to 2025
 0.0.5 Bumped the copyright year to 2024
 0.0.4 Fixed the function name for Set-Token (removed the plural)
 0.0.3 Small performance improvement for hash calculation

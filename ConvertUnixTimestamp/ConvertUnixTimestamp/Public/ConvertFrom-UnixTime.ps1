@@ -1,6 +1,6 @@
-
+﻿
 Function ConvertFrom-UnixTime {
-    
+
     <#
     .SYNOPSIS
       Shows a unix timestamp as a datetime object
@@ -16,11 +16,11 @@ Function ConvertFrom-UnixTime {
 
     .PARAMETER  convertToLocalTimezone
       Convert the DateTime into the local timezone, otherwise the return value will be UTC
-      
+
     .NOTES
       Name: Get-DateTimeFromUnixtime.ps1
       Author: florian.von.bracht@apteco.de
-      DateCreated: 
+      DateCreated:
       DateUpdated: 2022-10-28
       Site: https://github.com/gitfvb/
 
@@ -63,7 +63,7 @@ Function ConvertFrom-UnixTime {
         } else {
             $timestamp = (Get-Date -Date "1970/01/01").AddSeconds($Unixtime)
         }
-        
+
         $timestamp = [System.TimeZoneInfo]::ConvertTimeFromUtc($timestamp,[System.TimeZoneInfo]::Utc) # Load the date with the utc timezone first
 
         if ( $ConvertToLocalTimezone -eq $true ) {

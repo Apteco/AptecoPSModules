@@ -1,4 +1,4 @@
-
+﻿
 BeforeDiscovery {
 
     # Helper to create test files
@@ -101,8 +101,8 @@ Describe 'MeasureRows' -ForEach $TestFiles {
         }
     }
 
-    
-    
+
+
 }
 
 Describe 'MeasureRows error handling' {
@@ -112,7 +112,7 @@ Describe 'MeasureRows error handling' {
             { Measure-Row -Path "$PSScriptRoot/doesnotexist.txt" } | Should -Throw
         }
         It "Throws error for one non-existent file" {
-            { "$PSScriptRoot/test10.csv", "$PSScriptRoot/test999.csv" | Measure-Row -SkipFirstRow } | Should -Throw 
+            { "$PSScriptRoot/test10.csv", "$PSScriptRoot/test999.csv" | Measure-Row -SkipFirstRow } | Should -Throw
         }
     }
 

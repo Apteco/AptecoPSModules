@@ -4,7 +4,7 @@
 RootModule = 'EncryptCredential.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.1.1'
+ModuleVersion = '0.1.2'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -19,7 +19,7 @@ Author = 'florian.von.bracht@apteco.de'
 CompanyName = 'Apteco GmbH'
 
 # Copyright statement for this module
-Copyright = '(c) 2024 Apteco GmbH. All rights reserved.'
+Copyright = '(c) 2025 Apteco GmbH. All rights reserved.'
 
 # Description of the functionality provided by this module
 Description = 'Apteco PS Modules - PowerShell security encryption module
@@ -134,6 +134,7 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = "
+0.1.2 Updated copyright to 2025
 0.1.1 Bumped the copyright year to 2024
 0.1.0 Making this module more mature with only explicit functions to export
       Removing not needed verbose output, use -verbose to see it again

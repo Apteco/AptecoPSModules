@@ -5,7 +5,7 @@
 RootModule = 'OSMGeocode.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.0.7'
+ModuleVersion = '0.0.8'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -126,6 +126,7 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.0.8 Updated copyright to 2025
 0.0.7 Fixed temporary module and script path loading
 0.0.6 Bumped the copyright year to 2024
 0.0.5 Remembering last OSM call in module now to make sure to also have 1 call per second also in loops
