@@ -1,18 +1,10 @@
-﻿#
-# Modulmanifest für das Modul "ConvertStrings"
-#
-# Generiert von: florian.von.bracht@apteco.de
-#
-# Generiert am: 23.08.2023
-#
-
-@{
+﻿@{
 
 # Die diesem Manifest zugeordnete Skript- oder Binärmoduldatei.
 RootModule = 'ConvertStrings.psm1'
 
 # Die Versionsnummer dieses Moduls
-ModuleVersion = '0.0.5'
+ModuleVersion = '0.0.6'
 
 # Unterstützte PSEditions
 # CompatiblePSEditions = @()
@@ -81,9 +73,9 @@ PowerShellVersion = '5.1'
 # Aus diesem Modul zu exportierende Funktionen. Um optimale Leistung zu erzielen, verwenden Sie keine Platzhalter und löschen den Eintrag nicht. Verwenden Sie ein leeres Array, wenn keine zu exportierenden Funktionen vorhanden sind.
 FunctionsToExport = @(
     'Set-Token'
-    ,'Get-StringHash'
-    ,'Convert-StringEncoding'
-    ,'Get-RandomString'
+    'Get-StringHash'
+    'Convert-StringEncoding'
+    'Get-RandomString'
 )
 
 # Aus diesem Modul zu exportierende Cmdlets. Um optimale Leistung zu erzielen, verwenden Sie keine Platzhalter und löschen den Eintrag nicht. Verwenden Sie ein leeres Array, wenn keine zu exportierenden Cmdlets vorhanden sind.
