@@ -12,7 +12,7 @@
 RootModule = 'MeasureRows.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.9.1'
+ModuleVersion = '0.9.2'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -27,7 +27,7 @@ Author = 'florian.von.bracht@apteco.de'
 CompanyName = 'Apteco GmbH'
 
 # Copyright statement for this module
-Copyright = '(c) 2022 Apteco GmbH. All rights reserved.'
+Copyright = '(c) 2025 Apteco GmbH. All rights reserved.'
 
 # Description of the functionality provided by this module
 Description = 'Apteco PS Modules - PowerShell file rows count
@@ -135,6 +135,12 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+0.9.2 Updated tests and test files
+      Renamed main function into Measure-Row and dded alias Measure-Rows
+      Fixed output type to [long]
+      Fixed pipeline input to count multiple files and return one total count
+      Throwing exception if one of multiple files does not exist instead of Write-Error
+      Invoke-ScriptAnalyzer does not return any problems anymore ;-)
 0.9.1 Fix for resolving absolute paths
 0.9.0 Initial release of measure rows module through psgallery
 '
