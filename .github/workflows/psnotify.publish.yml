@@ -39,6 +39,7 @@ jobs:
           Set-PSRepository PSGallery -InstallationPolicy Trusted
           Install-Module -Name PSScriptAnalyzer -force
           Install-Module -Name EncryptCredential
+          Install-Module -Name ExtendFunction
           Import-Module PSScriptAnalyzer
           Invoke-ScriptAnalyzer -Path $path -Recurse -IncludeRule PSAvoidTrailingWhitespace -Fix
           Publish-Module -Path $path -NuGetApiKey ${{ secrets.NUGET_API_KEY }} -Repository PSGallery
