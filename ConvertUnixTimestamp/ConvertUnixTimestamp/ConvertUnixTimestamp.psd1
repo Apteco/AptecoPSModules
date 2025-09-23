@@ -12,7 +12,7 @@
 RootModule = 'ConvertUnixTimestamp.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.0.1'
+ModuleVersion = '0.0.2'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -27,7 +27,7 @@ Author = 'florian.von.bracht@apteco.de'
 CompanyName = 'Apteco GmbH'
 
 # Copyright statement for this module
-Copyright = '(c) 2022 Apteco GmbH. All rights reserved.'
+Copyright = '(c) 2025 Apteco GmbH. All rights reserved.'
 
 # Description of the functionality provided by this module
 Description = 'Apteco PS Modules - PowerShell unix timestamp conversion
@@ -124,6 +124,7 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = "
+0.0.2 Updated copyright to 2025
 0.0.1 Initial release through PSGallery
 "
 

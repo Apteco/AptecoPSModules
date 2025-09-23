@@ -1,7 +1,7 @@
 ﻿
 
 Function Get-Unixtime {
-    
+
     <#
     .SYNOPSIS
       Shows the current time or a input datetime as a unix timestamp
@@ -18,7 +18,7 @@ Function Get-Unixtime {
     .NOTES
     Name: Get-Unixtime.ps1
     Author: florian.von.bracht@apteco.de
-    DateCreated: 
+    DateCreated:
     DateUpdated: 2022-10-28
     Site: https://github.com/gitfvb/
 

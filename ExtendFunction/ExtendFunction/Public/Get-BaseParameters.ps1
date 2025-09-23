@@ -1,4 +1,4 @@
-
+﻿
 Function Get-BaseParameters {
 
     <#
@@ -14,9 +14,9 @@ Function Get-BaseParameters {
         This can be used to extend existing functions/cmdlets with more scripting
         and possibly additional parameters like
 
-        
+
         function Invoke-CoreWebRequest {
-            
+
             [CmdletBinding()]
             param (
                 [Parameter(Mandatory=$true)][string]$AdditionalString
@@ -36,7 +36,7 @@ Function Get-BaseParameters {
 
     .EXAMPLE
         Get-BaseParameters -Base "Invoke-WebRequest"
-        
+
     .INPUTS
         String
 

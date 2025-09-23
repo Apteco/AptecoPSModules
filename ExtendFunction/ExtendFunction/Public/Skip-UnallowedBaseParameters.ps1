@@ -1,4 +1,4 @@
-
+﻿
 Function Skip-UnallowedBaseParameters {
 
 <#
@@ -13,9 +13,9 @@ Function Skip-UnallowedBaseParameters {
         This can be used to extend existing functions/cmdlets with more scripting
         and possibly additional parameters like
 
-        
+
         function Invoke-CoreWebRequest {
-            
+
             [CmdletBinding()]
             param (
                 [Parameter(Mandatory=$true)][string]$AdditionalString
@@ -38,7 +38,7 @@ Function Skip-UnallowedBaseParameters {
 
     .EXAMPLE
         Skip-UnallowedBaseParameters -Base "Invoke-WebRequest" -Parameters $PSBoundParameters
-        
+
     .INPUTS
         String
 
@@ -58,7 +58,7 @@ Function Skip-UnallowedBaseParameters {
     Process {
         $baseParameters = Get-BaseParameters -Base $Base
         $common = [CommonParameters].GetProperties().name
-        
+
         $ht = [hashtable]@{}
         $Parameters.GetEnumerator() | where { $_.Name -in @( $baseParameters.Keys + $common ) } | ForEach {
             $key = $_.Key
@@ -66,7 +66,7 @@ Function Skip-UnallowedBaseParameters {
         }
 
         # return
-        $ht 
+        $ht
     }
 
 }
