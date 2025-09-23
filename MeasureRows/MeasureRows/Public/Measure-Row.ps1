@@ -1,13 +1,4 @@
 ﻿
-<#
-
-Use it like
-
-Measure-Rows -Path "C:\Users\Florian\Downloads\Data\People.csv"
-
-# Default Encoding is utf8
-
-#>
 Function Measure-Row {
 
     <#
@@ -20,15 +11,15 @@ Function Measure-Row {
 
         Just use
 
-        Measure-Rows -Path "C:\Temp\Example.csv"
+        Measure-Row -Path "C:\Temp\Example.csv"
 
         or
 
-        "C:\Temp\Example.csv" | Measure-Rows -SkipFirstRow
+        "C:\Temp\Example.csv" | Measure-Row -SkipFirstRow
 
         or
 
-        Measure-Rows -Path "C:\Temp\Example.csv" -Encoding UTF8
+        Measure-Row -Path "C:\Temp\Example.csv" -Encoding UTF8
 
         to count the rows in a csv file. It uses a .NET streamreader and is extremly fast.
 
@@ -48,16 +39,16 @@ Function Measure-Row {
         Uses encodings for the file like [System.Text.Encoding]::UTF8. Default is UTF8
 
     .EXAMPLE
-        Measure-Rows -Path "C:\Temp\Example.csv"
+        Measure-Row -Path "C:\Temp\Example.csv"
 
     .EXAMPLE
-        "C:\Temp\Example.csv" | Measure-Rows -SkipFirstRow
+        "C:\Temp\Example.csv" | Measure-Row -SkipFirstRow
 
     .EXAMPLE
-        Measure-Rows -Path "C:\Temp\Example.csv" -Encoding UTF8
+        Measure-Row -Path "C:\Temp\Example.csv" -Encoding UTF8
 
     .EXAMPLE
-        "C:\Users\Florian\Downloads\ac_adressen.csv", "C:\Users\Florian\Downloads\italian.csv" | Measure-Rows -SkipFirstRow -Encoding ([System.Text.Encoding]::UTF8)
+        "C:\Users\Florian\Downloads\ac_adressen.csv", "C:\Users\Florian\Downloads\italian.csv" | Measure-Row -SkipFirstRow -Encoding ([System.Text.Encoding]::UTF8)
 
     .INPUTS
         String

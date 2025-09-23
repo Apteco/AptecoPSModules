@@ -64,11 +64,11 @@ Describe 'MeasureRows' -ForEach $TestFiles {
             } else {
                 $expected = $Rows
             }
-            Measure-Rows -Path $Path | Should -Be $expected
+            Measure-Row -Path $Path | Should -Be $expected
         }
         if ($Csv) {
             It "Counts rows correctly with -SkipFirstRow" {
-                Measure-Rows -Path $Path -SkipFirstRow | Should -Be $Rows
+                Measure-Row -Path $Path -SkipFirstRow | Should -Be $Rows
             }
         }
         It "Works with ASCII encoding" {
@@ -78,7 +78,7 @@ Describe 'MeasureRows' -ForEach $TestFiles {
             } else {
                 $expected = $Rows
             }
-            Measure-Rows -Path $Path -Encoding ([System.Text.Encoding]::ASCII) | Should -Be $expected
+            Measure-Row -Path $Path -Encoding ([System.Text.Encoding]::ASCII) | Should -Be $expected
         }
         It "Works with UTF8 encoding" {
             If ( $Csv ) {
@@ -87,15 +87,15 @@ Describe 'MeasureRows' -ForEach $TestFiles {
             } else {
                 $expected = $Rows
             }
-            Measure-Rows -Path $Path -Encoding ([System.Text.Encoding]::UTF8) | Should -Be $expected
+            Measure-Row -Path $Path -Encoding ([System.Text.Encoding]::UTF8) | Should -Be $expected
         }
         It "Returns a [long] type" {
-            $result = Measure-Rows -Path $Path
+            $result = Measure-Row -Path $Path
             $result.GetType().Name | Should -Be 'Int64'
         }
         It "Performance: completes under 2 seconds for up to 100000 rows" {
             $sw = [System.Diagnostics.Stopwatch]::StartNew()
-            Measure-Rows -Path $Path | Out-Null
+            Measure-Row -Path $Path | Out-Null
             $sw.Stop()
             $sw.Elapsed.TotalSeconds | Should -BeLessThan 2
         }
@@ -109,10 +109,10 @@ Describe 'MeasureRows error handling' {
 
     Context "Error handling" {
         It "Throws error for non-existent file" {
-            { Measure-Rows -Path "$PSScriptRoot/doesnotexist.txt" } | Should -Throw
+            { Measure-Row -Path "$PSScriptRoot/doesnotexist.txt" } | Should -Throw
         }
         It "Throws error for one non-existent file" {
-            { "$PSScriptRoot/test10.csv", "$PSScriptRoot/test999.csv" | Measure-Rows -SkipFirstRow } | Should -Throw 
+            { "$PSScriptRoot/test10.csv", "$PSScriptRoot/test999.csv" | Measure-Row -SkipFirstRow } | Should -Throw 
         }
     }
 
@@ -122,15 +122,15 @@ Describe 'MeasureRows pipeline input' {
 
     Context "Pipeline input" {
         It "Counts rows from pipeline input" {
-            $result = "$PSScriptRoot/test100.csv" | Measure-Rows
+            $result = "$PSScriptRoot/test100.csv" | Measure-Row
             $result | Should -Be 101
         }
         It "Counts rows from pipeline input with -SkipFirstRow" {
-            $result = "$PSScriptRoot/test100.csv" | Measure-Rows -SkipFirstRow
+            $result = "$PSScriptRoot/test100.csv" | Measure-Row -SkipFirstRow
             $result | Should -Be 100
         }
         It "Counts multiple files rows from pipeline input with -SkipFirstRow" {
-            $result = "$PSScriptRoot/test100.csv", "$PSScriptRoot/test10000.csv" | Measure-Rows -SkipFirstRow
+            $result = "$PSScriptRoot/test100.csv", "$PSScriptRoot/test10000.csv" | Measure-Row -SkipFirstRow
             $result | Should -Be 10100
         }
     }

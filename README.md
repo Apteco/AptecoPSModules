@@ -158,25 +158,25 @@ to load specific folders
 Just use
 
 ```PowerShell
-Measure-Rows -Path "C:\Temp\Example.csv"
+Measure-Row -Path "C:\Temp\Example.csv"
 ```
 
 or
 
 ```PowerShell
-"C:\Temp\Example.csv" | Measure-Rows -SkipFirstRow
+"C:\Temp\Example.csv" | Measure-Row -SkipFirstRow
 ```
 
 or
 
 ```PowerShell
-Measure-Rows -Path "C:\Temp\Example.csv" -Encoding UTF8
+Measure-Row -Path "C:\Temp\Example.csv" -Encoding UTF8
 ```
 
 or even
 
 ```PowerShell
-"C:\Users\Florian\Downloads\adressen.csv", "C:\Users\Florian\Downloads\italian.csv" | Measure-Rows -SkipFirstRow -Encoding ([System.Text.Encoding]::UTF8)
+"C:\Users\Florian\Downloads\adressen.csv", "C:\Users\Florian\Downloads\italian.csv" | Measure-Row -SkipFirstRow -Encoding ([System.Text.Encoding]::UTF8)
 ```
 
 to count the rows in a csv file. It uses a .NET streamreader and is extremly fast.

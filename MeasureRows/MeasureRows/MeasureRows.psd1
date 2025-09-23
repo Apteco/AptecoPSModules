@@ -12,7 +12,7 @@
 RootModule = 'MeasureRows.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.9.2'
+ModuleVersion = '0.9.3'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -34,19 +34,19 @@ Description = 'Apteco PS Modules - PowerShell file rows count
 
 Just use
 
-Measure-Rows -Path "C:\Temp\Example.csv"
+Measure-Row -Path "C:\Temp\Example.csv"
 
 or
 
-"C:\Temp\Example.csv" | Measure-Rows -SkipFirstRow
+"C:\Temp\Example.csv" | Measure-Row -SkipFirstRow
 
 or
 
-Measure-Rows -Path "C:\Temp\Example.csv" -Encoding UTF8
+Measure-Row -Path "C:\Temp\Example.csv" -Encoding UTF8
 
 or even
 
-"C:\Users\Florian\Downloads\adressen.csv", "C:\Users\Florian\Downloads\italian.csv" | Measure-Rows -SkipFirstRow -Encoding ([System.Text.Encoding]::UTF8)
+"C:\Users\Florian\Downloads\adressen.csv", "C:\Users\Florian\Downloads\italian.csv" | Measure-Row -SkipFirstRow -Encoding ([System.Text.Encoding]::UTF8)
 
 to count the rows in a csv file. It uses a .NET streamreader and is extremly fast.
 
@@ -135,6 +135,7 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+0.9.3 Fixed documentation from Measure-Rows to Measure-Row
 0.9.2 Updated tests and test files
       Renamed main function into Measure-Row and dded alias Measure-Rows
       Fixed output type to [long]
