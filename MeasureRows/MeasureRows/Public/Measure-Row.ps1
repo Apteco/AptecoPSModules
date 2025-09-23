@@ -1,4 +1,4 @@
-
+﻿
 <#
 
 Use it like
@@ -8,7 +8,7 @@ Measure-Rows -Path "C:\Users\Florian\Downloads\Data\People.csv"
 # Default Encoding is utf8
 
 #>
-Function Measure-Rows {
+Function Measure-Row {
 
     <#
     .SYNOPSIS
@@ -22,11 +22,11 @@ Function Measure-Rows {
 
         Measure-Rows -Path "C:\Temp\Example.csv"
 
-        or 
+        or
 
         "C:\Temp\Example.csv" | Measure-Rows -SkipFirstRow
 
-        or 
+        or
 
         Measure-Rows -Path "C:\Temp\Example.csv" -Encoding UTF8
 
@@ -45,7 +45,7 @@ Function Measure-Rows {
         Skips the first row, e.g. for use with CSV files that have a header
 
     .PARAMETER Encoding
-        Uses encodings for the file. Default is UTF8
+        Uses encodings for the file like [System.Text.Encoding]::UTF8. Default is UTF8
 
     .EXAMPLE
         Measure-Rows -Path "C:\Temp\Example.csv"
@@ -57,8 +57,8 @@ Function Measure-Rows {
         Measure-Rows -Path "C:\Temp\Example.csv" -Encoding UTF8
 
     .EXAMPLE
-        "C:\Users\Florian\Downloads\ac_adressen.csv", "C:\Users\Florian\Downloads\italian.csv" | Measure-Rows -SkipFirstRow -Encoding ([System.Text.Encoding]::UTF8) 
-        
+        "C:\Users\Florian\Downloads\ac_adressen.csv", "C:\Users\Florian\Downloads\italian.csv" | Measure-Rows -SkipFirstRow -Encoding ([System.Text.Encoding]::UTF8)
+
     .INPUTS
         String
 
@@ -89,7 +89,6 @@ Function Measure-Rows {
 
         # Check Path
         If ((Test-Path -Path $Path ) -eq $false ) {
-            #Write-Error -Message "`$Path '$( $Path )' is not valid"
             throw [System.IO.FileNotFoundException] "File '$( $Path )' not found"
         }
 
@@ -108,9 +107,9 @@ Function Measure-Rows {
         }
 
         $reader.Close()
-        
+
     }
-    
+
     End {
 
         # Return
@@ -119,3 +118,4 @@ Function Measure-Rows {
     }
 
 }
+
