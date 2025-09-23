@@ -20,7 +20,7 @@ BeforeAll {
     } elseif ($IsLinux -eq $True ) {
         # Linux user creation
         $hashedPassword = & openssl passwd -1 $password
-        & sudo useradd -m -p $hashedPassword $userName
+        & sudo useradd -m -s /bin/bash -p $hashedPassword $userName
     }
 
     #net user foo p@ssw0rd /add
