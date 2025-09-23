@@ -1,14 +1,5 @@
-
-<#
-
-Use it like
-
-Measure-Rows -Path "C:\Users\Florian\Downloads\Data\People.csv"
-
-# Default Encoding is utf8
-
-#>
-Function Measure-Rows {
+﻿
+Function Measure-Row {
 
     <#
     .SYNOPSIS
@@ -20,21 +11,23 @@ Function Measure-Rows {
 
         Just use
 
-        Measure-Rows -Path "C:\Temp\Example.csv"
+        Measure-Row -Path "C:\Temp\Example.csv"
 
-        or 
+        or
 
-        "C:\Temp\Example.csv" | Measure-Rows -SkipFirstRow
+        "C:\Temp\Example.csv" | Measure-Row -SkipFirstRow
 
-        or 
+        or
 
-        Measure-Rows -Path "C:\Temp\Example.csv" -Encoding UTF8
+        Measure-Row -Path "C:\Temp\Example.csv" -Encoding UTF8
 
         to count the rows in a csv file. It uses a .NET streamreader and is extremly fast.
 
         The default encoding is UTF8, but it uses the ones available in [System.Text.Encoding]
 
         If you want to skip the first line, just use this Switch -SkipFirstRow
+
+        Putting multiple files in the pipeline is also possible, it adds up the rows of all files.
 
     .PARAMETER Path
         Path for the file to measure
@@ -43,20 +36,20 @@ Function Measure-Rows {
         Skips the first row, e.g. for use with CSV files that have a header
 
     .PARAMETER Encoding
-        Uses encodings for the file. Default is UTF8
+        Uses encodings for the file like [System.Text.Encoding]::UTF8. Default is UTF8
 
     .EXAMPLE
-        Measure-Rows -Path "C:\Temp\Example.csv"
+        Measure-Row -Path "C:\Temp\Example.csv"
 
     .EXAMPLE
-        "C:\Temp\Example.csv" | Measure-Rows -SkipFirstRow
+        "C:\Temp\Example.csv" | Measure-Row -SkipFirstRow
 
     .EXAMPLE
-        Measure-Rows -Path "C:\Temp\Example.csv" -Encoding UTF8
+        Measure-Row -Path "C:\Temp\Example.csv" -Encoding UTF8
 
     .EXAMPLE
-        "C:\Users\Florian\Downloads\ac_adressen.csv", "C:\Users\Florian\Downloads\italian.csv" | Measure-Rows -SkipFirstRow -Encoding ([System.Text.Encoding]::UTF8) 
-        
+        "C:\Users\Florian\Downloads\ac_adressen.csv", "C:\Users\Florian\Downloads\italian.csv" | Measure-Row -SkipFirstRow -Encoding ([System.Text.Encoding]::UTF8)
+
     .INPUTS
         String
 
@@ -70,6 +63,7 @@ Function Measure-Rows {
 
 
     [CmdletBinding()]
+    [OutputType([long])]
     param(
          [Parameter(Mandatory=$true,ValueFromPipeline=$true)][String]$Path
         ,[Parameter(Mandatory=$false)][switch] $SkipFirstRow = $false
@@ -78,36 +72,19 @@ Function Measure-Rows {
 
     Begin {
 
-        
+        $c = [long]0
 
     }
 
     Process {
 
-        # If you put this one into begin and do something like
-        # "C:\Users\Florian\Downloads\adressen.csv", "C:\Users\Florian\Downloads\italian.csv" | Measure-Rows
-        # the counts will be added so you will get
-        # 45475
-        # 45485
-        # instead of
-        # 45475
-        # 10
-        $c = [long]0
-        
         # Check Path
         If ((Test-Path -Path $Path ) -eq $false ) {
-            Write-Error -Message "`$Path '$( $Path )' is not valid"
-            Exit
+            throw [System.IO.FileNotFoundException] "File '$( $Path )' not found"
         }
 
         $absolutePath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Path)
         $reader = [System.IO.StreamReader]::new($absolutePath, $Encoding)
-
-        <#
-        Get-Content -Path $Path -ReadCount 1000 | ForEach {
-            $c += $_.Count
-        }
-        #>
 
         If ( $SkipFirstRow -eq $true ) {
             [void]$reader.ReadLine() # Skip first line.
@@ -122,13 +99,14 @@ Function Measure-Rows {
 
         $reader.Close()
 
+    }
+
+    End {
+
         # Return
         $c
-        
-    }
-    
-    End {
 
     }
 
 }
+

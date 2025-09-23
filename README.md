@@ -28,7 +28,7 @@ Name|Type|Repository/Version|Platform|Downloads|
 [PSNotify](PSNotify/)|Module|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/PSNotify)](https://www.powershellgallery.com/packages/PSNotify)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/PSNotify)](https://www.powershellgallery.com/packages/PSNotify)<br/>[![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)](https://github.com/PlagueHO/PSAuth)|[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/PSNotify)](https://www.powershellgallery.com/packages/PSNotify)
 [SqlPipeline](SqlPipeline/)|Module|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/SqlPipeline)](https://www.powershellgallery.com/packages/SqlPipeline)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/SqlPipeline)](https://www.powershellgallery.com/packages/SqlPipeline)<br/>[![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)](https://github.com/PlagueHO/PSAuth)|[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/SqlPipeline)](https://www.powershellgallery.com/packages/SqlPipeline)
 [OSMGeocode](OSMGeocode/)|Module|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/OSMGeocode)](https://www.powershellgallery.com/packages/OSMGeocode)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/OSMGeocode)](https://www.powershellgallery.com/packages/OSMGeocode)<br/>[![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)](https://github.com/PlagueHO/PSAuth)|[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/OSMGeocode)](https://www.powershellgallery.com/packages/OSMGeocode)
-[Import-Dependency](ImportDependency/)|Script|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/ImportDependency)](https://www.powershellgallery.com/packages/ImportDependency)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/ImportDependency)](https://www.powershellgallery.com/packages/ImportDependency)<br/>[![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)](https://github.com/PlagueHO/PSAuth)|[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/ImportDependency)](https://www.powershellgallery.com/packages/ImportDependency)
+[ImportDependency](ImportDependency/)|Script|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/ImportDependency)](https://www.powershellgallery.com/packages/ImportDependency)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/ImportDependency)](https://www.powershellgallery.com/packages/ImportDependency)<br/>[![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)](https://github.com/PlagueHO/PSAuth)|[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/ImportDependency)](https://www.powershellgallery.com/packages/ImportDependency)
 
 
 Here are some high level descriptions. Please follow the links from the table or go into the subdirectories to get more detailed information.
@@ -158,25 +158,25 @@ to load specific folders
 Just use
 
 ```PowerShell
-Measure-Rows -Path "C:\Temp\Example.csv"
+Measure-Row -Path "C:\Temp\Example.csv"
 ```
 
 or
 
 ```PowerShell
-"C:\Temp\Example.csv" | Measure-Rows -SkipFirstRow
+"C:\Temp\Example.csv" | Measure-Row -SkipFirstRow
 ```
 
 or
 
 ```PowerShell
-Measure-Rows -Path "C:\Temp\Example.csv" -Encoding UTF8
+Measure-Row -Path "C:\Temp\Example.csv" -Encoding UTF8
 ```
 
 or even
 
 ```PowerShell
-"C:\Users\Florian\Downloads\adressen.csv", "C:\Users\Florian\Downloads\italian.csv" | Measure-Rows -SkipFirstRow -Encoding ([System.Text.Encoding]::UTF8)
+"C:\Users\Florian\Downloads\adressen.csv", "C:\Users\Florian\Downloads\italian.csv" | Measure-Row -SkipFirstRow -Encoding ([System.Text.Encoding]::UTF8)
 ```
 
 to count the rows in a csv file. It uses a .NET streamreader and is extremly fast.
@@ -320,4 +320,31 @@ separated by tabs.
 
 Click on the folder for more information.
 
+# Apteco PS Modules - PowerShell dependency import
+
+Imports modules and global/local packages from the PowerShell Gallery and NuGet. Local packages are loaded by default from the .\lib folder in the current directory
+
+Please make sure to have the Modules WriteLog and PowerShellGet (>= 2.2.4) installed.
+
+Execute commands like
+
+```PowerShell
+Import-Dependency -Module "WriteLog" -LoadWholePackageFolder -Verbose
+```
+
+or
+
+```Powershell
+Import-Dependency -Module "WriteLog" -LocalPackage "System.Data.SQLite", "Npgsql" -Verbose
+```
+
+The last way is more efficient, but could cause more problems, when important dependencies are missing. Best way is to install all needed dependencies with my other script like
+
+```PowerShell
+Import-Dependency -Module "WriteLog" -LocalPackage "System.Data.SQLite", "Npgsql" -Verbose
+```
+
+
+```PowerShell
+Import-Dependency -LocalPackageFolder "lib" -LoadWholePackageFolder -verbose```
 

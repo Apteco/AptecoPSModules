@@ -12,7 +12,7 @@
 RootModule = 'MeasureRows.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.9.1'
+ModuleVersion = '0.9.3'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -27,26 +27,26 @@ Author = 'florian.von.bracht@apteco.de'
 CompanyName = 'Apteco GmbH'
 
 # Copyright statement for this module
-Copyright = '(c) 2022 Apteco GmbH. All rights reserved.'
+Copyright = '(c) 2025 Apteco GmbH. All rights reserved.'
 
 # Description of the functionality provided by this module
 Description = 'Apteco PS Modules - PowerShell file rows count
 
 Just use
 
-Measure-Rows -Path "C:\Temp\Example.csv"
+Measure-Row -Path "C:\Temp\Example.csv"
 
 or
 
-"C:\Temp\Example.csv" | Measure-Rows -SkipFirstRow
+"C:\Temp\Example.csv" | Measure-Row -SkipFirstRow
 
 or
 
-Measure-Rows -Path "C:\Temp\Example.csv" -Encoding UTF8
+Measure-Row -Path "C:\Temp\Example.csv" -Encoding UTF8
 
 or even
 
-"C:\Users\Florian\Downloads\adressen.csv", "C:\Users\Florian\Downloads\italian.csv" | Measure-Rows -SkipFirstRow -Encoding ([System.Text.Encoding]::UTF8)
+"C:\Users\Florian\Downloads\adressen.csv", "C:\Users\Florian\Downloads\italian.csv" | Measure-Row -SkipFirstRow -Encoding ([System.Text.Encoding]::UTF8)
 
 to count the rows in a csv file. It uses a .NET streamreader and is extremly fast.
 
@@ -93,7 +93,7 @@ PowerShellVersion = '5.1'
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
 FunctionsToExport = @(
-    "Measure-Rows"
+    "Measure-Row"
 )#'*'
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
@@ -103,7 +103,9 @@ CmdletsToExport = @() #'*'
 VariablesToExport = @() #'*'
 
 # Aliases to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no aliases to export.
-AliasesToExport = @() #'*'
+AliasesToExport = @(
+    "Measure-Rows"
+) #'*'
 
 # DSC resources to export from this module
 # DscResourcesToExport = @()
@@ -133,6 +135,13 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+0.9.3 Fixed documentation from Measure-Rows to Measure-Row
+0.9.2 Updated tests and test files
+      Renamed main function into Measure-Row and dded alias Measure-Rows
+      Fixed output type to [long]
+      Fixed pipeline input to count multiple files and return one total count
+      Throwing exception if one of multiple files does not exist instead of Write-Error
+      Invoke-ScriptAnalyzer does not return any problems anymore ;-)
 0.9.1 Fix for resolving absolute paths
 0.9.0 Initial release of measure rows module through psgallery
 '

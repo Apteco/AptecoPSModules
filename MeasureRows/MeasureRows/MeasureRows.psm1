@@ -47,7 +47,20 @@ $Private = @( Get-ChildItem -Path "$( $PSScriptRoot )/Private/*.ps1" -ErrorActio
 # READ IN CONFIG FILES AND VARIABLES
 #-----------------------------------------------
 
-Export-ModuleMember -Function $Public.Basename
+$aliasDef = [Ordered]@{
+    "Measure-Rows" = "Measure-Row"
+}
+$aliasDef.GetEnumerator() | ForEach-Object {
+    $name  = $_.Name
+    $value = $_.Value
+    Try {
+        New-Alias -Name $name -Value $value -Force
+    } Catch {
+        Write-Error -Message "Failed to create alias $( $name ) for function $( $value )"
+    }
+}
+
+Export-ModuleMember -Function $Public.Basename -Alias $aliasDef.GetEnumerator().Name
 
 
 #-----------------------------------------------

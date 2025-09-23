@@ -7,15 +7,15 @@ on:
     paths:
       - 'MeasureRows/**.ps1'
       - 'MeasureRows/**.psm1'
-  pull_request:
+    
   workflow_dispatch:
 
 jobs:
   test:
     strategy:
       matrix:
-        os: [windows-latest, ubuntu-latest]
-        shell: [pwsh]
+        os: [ windows-latest, ubuntu-latest ]
+        shell: [ pwsh ]
         include:
           - os: windows-latest
             shell: powershell
@@ -23,12 +23,31 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out repository code
+        uses: actions/checkout@v5
 
-      - name: Install Pester
-        run: ${{ matrix.shell }} -c "Install-Module Pester -Force -SkipPublisherCheck"
+      - name: Set up repositories - powershell
+        if: matrix.shell == 'powershell'
+        shell: powershell
+        run: |
+          Set-PSRepository psgallery -InstallationPolicy trusted
 
-      - name: Run Pester Tests (${{ matrix.shell }} on ${{ matrix.os }})
+      - name: Run Pester Tests (powershell on ${{ matrix.os }})
+        if: matrix.shell == 'powershell'
         env:
           CI: true
-        run: ${{ matrix.shell }} -c "Invoke-Pester -Path MeasureRows/Tests -Output Detailed -EnableExit"
+        shell: powershell
+        run: Invoke-Pester -Path MeasureRows/Tests/ -Output Detailed -Passthru
+
+      - name: Set up repositories - pwsh
+        if: matrix.shell != 'powershell'
+        run: |
+          Set-PSRepository psgallery -InstallationPolicy trusted
+        shell: pwsh
+
+      - name: Run Pester Tests (pwsh on ${{ matrix.os }})
+        if: matrix.shell != 'powershell'
+        env:
+          CI: true
+        shell: pwsh
+        run: Invoke-Pester -Path MeasureRows/Tests/ -Output Detailed -Passthru
