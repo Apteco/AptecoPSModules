@@ -7,7 +7,7 @@ on:
     paths:
       - 'MeasureRows/**.ps1'
       - 'MeasureRows/**.psm1'
-  pull_request:
+    
   workflow_dispatch:
 
 jobs:
