@@ -7,6 +7,7 @@ on:
   pull_request:
     branches:
       - main
+    types: [opened, synchronize, reopened]
     paths:
       - 'OrbitDownloader/**.psd1'
 
@@ -17,6 +18,10 @@ on:
 jobs:
   # This workflow contains a single job called "build"
   psgallery_publish:
+
+    # This job will only run if the pull request is from the 'dev' branch to the 'main' branch
+    if: github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'dev'
+
     # The type of runner that the job will run on
     runs-on: windows-latest
 
