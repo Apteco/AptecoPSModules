@@ -35,6 +35,9 @@ Description = 'Apteco PS Modules - PowerShell Notify
 This module allows you to trigger messages via email, Telegram, Slack and Teams. You can use
 the channels separated from each other or combined as a group, when you want to inform via
 multiple different channels.
+
+Have a look at the GitHub repository for more information: https://github.com/Apteco/AptecoPSModules/tree/main/PSNotify
+
 '
 
 # Die für dieses Modul mindestens erforderliche Version des Windows PowerShell-Moduls
