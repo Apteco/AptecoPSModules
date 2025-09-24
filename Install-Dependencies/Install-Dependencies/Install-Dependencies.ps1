@@ -1,7 +1,7 @@
 ﻿
 <#PSScriptInfo
 
-.VERSION 0.1.9
+.VERSION 0.1.10
 
 .GUID 4c029c8e-09fa-48ee-9d62-10895150ce83
 
@@ -11,7 +11,7 @@
 
 .COPYRIGHT (c) 2024 Apteco GmbH. All rights reserved.
 
-.TAGS "PSEdition_Desktop", "Windows", "Apteco"
+.TAGS PSEdition_Desktop Windows Apteco
 
 .LICENSEURI https://gist.github.com/gitfvb/58930387ee8677b5ccef93ffc115d836
 
@@ -26,6 +26,7 @@
 .EXTERNALSCRIPTDEPENDENCIES
 
 .RELEASENOTES
+0.1.10 Fixing tags
 0.1.9 Changing default name for NuGet repository to "NuGet v2"
 0.1.8 Removed the admin elevated check for local packages/modules/scripts
 0.1.7 Added a switch when setting the logfile if it should be overridden or not

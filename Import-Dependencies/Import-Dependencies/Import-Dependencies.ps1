@@ -1,7 +1,7 @@
 ﻿
 <#PSScriptInfo
 
-.VERSION 0.2.0
+.VERSION 0.2.1
 
 .GUID 06dbc814-edfe-4571-a01f-f4091ff5f3c2
 
@@ -11,7 +11,7 @@
 
 .COPYRIGHT (c) 2025 Apteco GmbH. All rights reserved.
 
-.TAGS "PSEdition_Desktop", "Windows", "Apteco"
+.TAGS PSEdition_Desktop Windows Apteco
 
 .LICENSEURI https://gist.github.com/gitfvb/58930387ee8677b5ccef93ffc115d836
 
@@ -26,6 +26,7 @@
 .EXTERNALSCRIPTDEPENDENCIES
 
 .RELEASENOTES
+0.2.1 Fixing tags
 0.2.0 Added support for loading runtimes with Windows ARM64 architecture
 0.1.4 Removed to not load WriteLog module as it is already required here
       Changed Get-LogfileOverride to new parameter KeepLogfile as WriteLog is loaded
