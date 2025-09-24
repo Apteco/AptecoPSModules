@@ -33,7 +33,7 @@ Function Import-Dependency {
     .NOTES
         Created by : gitfvb
     .LINK
-        Project Site: https://github.com/Apteco/Install-Dependencies/tree/main/Import-Dependencies
+        Project Site: https://github.com/Apteco/Install-Dependencies/tree/main/ImportDependency
 
     #>
 

@@ -136,15 +136,17 @@ Uninstall-Script -Name "Install-Dependencies"
 ## How to use e.g. for installing MailKit into a local folder
 
 ```PowerShell
-install-script install-dependencies, import-dependencies -force
+install-script install-dependencies -Force
+Install-Module ImportDependency -Force
+Import-Module ImportDependency
 cd c:\temp
 Install-Dependencies -LocalPackage MailKit -verbose
-Import-Dependencies -LoadWholePackageFolder -LocalPackageFolder "./lib" -verbose
+Import-Dependency -LoadWholePackageFolder -LocalPackageFolder "./lib" -verbose
 ```
 
 ## How could this module be wrapped into other modules
 
-This is dependent on the script `Import-Dependencies` and uses a `./bin/dependencies.ps1` file which contains multiple arrays. This file looks like this
+This is dependent on the module `ImportDependency` and uses a `./bin/dependencies.ps1` file which contains multiple arrays. This file looks like this
 
 ```PowerShell
 $psScripts = @(
