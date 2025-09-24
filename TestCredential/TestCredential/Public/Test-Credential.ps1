@@ -56,15 +56,15 @@ function Test-Credential {
             Remove-Item -Path $tmpFile
         }
 
+    }
+
+    process {
+
         # Leave script if the non interactive mode is active and no credentials provided
         If ($NonInteractive -eq $true -and $null -eq $Credentials) {
             #Write-Host
             throw [Exception] "Please make sure to provide -Credentials when in NonInteractive mode"
         }
-
-    }
-
-    process {
 
         $retries = 0
         Do {
