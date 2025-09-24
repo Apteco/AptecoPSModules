@@ -4,24 +4,18 @@ BeforeAll {
     $password = "p@ssw0rd"
 
     # Check the operating system
-    if ($IsWindows -eq $True -or $PSVersionTable.PSEdition -eq "Desktop") {
 
-        # Execute this test only with elevated rights
-        $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
-        $principal = [Security.Principal.WindowsPrincipal]::new($identity)
-        $isElevated = $principal.IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)
+    # Execute this test only with elevated rights
+    $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+    $principal = [Security.Principal.WindowsPrincipal]::new($identity)
+    $isElevated = $principal.IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)
 
-        If ( $isElevated -eq $False ) {
-            throw "Please run the tests with elevated rights"
-        }
-        # Windows user creation
-        $securePassword = ConvertTo-SecureString $password -AsPlainText -Force
-        New-LocalUser -Name $userName -Password $securePassword -Description "New dummy user account"
-    } elseif ($IsLinux -eq $True ) {
-        # Linux user creation
-        $hashedPassword = & openssl passwd -1 $password
-        & sudo useradd -m -s /bin/bash -p $hashedPassword $userName
+    If ( $isElevated -eq $False ) {
+        throw "Please run the tests with elevated rights"
     }
+    # Windows user creation
+    $securePassword = ConvertTo-SecureString $password -AsPlainText -Force
+    New-LocalUser -Name $userName -Password $securePassword -Description "New dummy user account"
 
     #net user foo p@ssw0rd /add
 
@@ -88,10 +82,8 @@ Describe "Test-Credential" {
 }
 
 AfterAll {
+
     # Cleanup: Remove the user after tests
-    if ($IsWindows -eq $True -or $PSVersionTable.PSEdition -eq "Desktop") {
-        Remove-LocalUser -Name $userName -ErrorAction SilentlyContinue
-    } elseif ($IsLinux) {
-        & sudo userdel -r $userName
-    }
+    Remove-LocalUser -Name $userName -ErrorAction SilentlyContinue
+
 }
