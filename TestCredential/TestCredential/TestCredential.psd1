@@ -5,7 +5,7 @@
 RootModule = 'TestCredential.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.0.4'
+ModuleVersion = '0.0.5'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -111,7 +111,7 @@ PrivateData = @{
     PSData = @{
 
         # Tags applied to this module. These help with module discovery in online galleries.
-        Tags = @("PSEdition_Desktop", "PSEdition_Core", "Windows", "Apteco")
+        Tags = @('powershell', "PSEdition_Desktop", "PSEdition_Core", "Windows", "Apteco")
 
         # A URL to the license for this module.
         LicenseUri = 'https://gist.github.com/gitfvb/58930387ee8677b5ccef93ffc115d836'
@@ -124,6 +124,8 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+0.0.5 Fixed tags in the manifest
+      Fixed pipeline mode
 0.0.4 Updated copyright to 2025
 0.0.3 Fixed a $null comparison order
 0.0.2 Bumped the copyright year to 2024
