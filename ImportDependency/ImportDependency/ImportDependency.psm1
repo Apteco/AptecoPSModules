@@ -129,8 +129,9 @@ New-Variable -Name isElevated -Value $null -Scope Script -Force             # In
 New-Variable -Name packageManagement -Value $null -Scope Script -Force      # Package management system in use (e.g., NuGet, APT)
 New-Variable -Name powerShellGet -Value $null -Scope Script -Force          # Version of PowerShellGet module
 New-Variable -Name vcredist -Value $null -Scope Script -Force               # Indicates if Visual C++ Redistributable is installed (True/False)
-New-Variable -Name installedModules -Value $null -Scope Script -Force               # Indicates if Visual C++ Redistributable is installed (True/False)
-New-Variable -Name backgroundJobs -Value $null -Scope Script -Force               # Indicates if Visual C++ Redistributable is installed (True/False)
+New-Variable -Name installedModules -Value $null -Scope Script -Force               # Caches all installed PowerShell modules
+New-Variable -Name backgroundJobs -Value $null -Scope Script -Force               # Hidden variable to store background jobs
+New-Variable -Name installedGlobalPackages -Value $null -Scope Script -Force               # Caches all installed NuGet Global Packages
 
 
 $Script:psVersion = $PSVersionTable.PSVersion.ToString()
@@ -324,6 +325,13 @@ $Script:backgroundJobs = [System.Collections.ArrayList]@()
         Get-InstalledModule -ErrorAction SilentlyContinue
     } -Name "InstalledModule"
 ))
+[void]$Script:backgroundJobs.Add((
+    Start-Job -ScriptBlock {
+        # Use Get-InstalledModule to retrieve installed modules
+        PackageManagement\Get-Package -ProviderName NuGet -ErrorAction SilentlyContinue
+    } -Name "InstalledGlobalPackages"
+))
+
 
 # Check the vcredist installation
 $vcredistInstalled = $False

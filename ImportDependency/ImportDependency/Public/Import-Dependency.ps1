@@ -266,7 +266,7 @@ Function Import-Dependency {
             If ( $LocalPackage.Count -gt 0 -or $LoadWholePackageFolder -eq $true) {
                 $localPackages = PackageManagement\Get-Package -Destination $LocalPackageFolder
             }
-            $globalPackages = PackageManagement\Get-Package -ProviderName NuGet
+            $globalPackages = PackageManagement\Get-Package -ProviderName NuGet # TODO This can be replaced with Get-PSEnvironment
 
             # Filter the packages
             $packagesToLoad = [System.Collections.ArrayList]@()
