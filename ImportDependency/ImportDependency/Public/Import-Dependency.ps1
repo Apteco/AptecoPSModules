@@ -67,6 +67,8 @@ Function Import-Dependency {
 
     Begin {
 
+        Update-BackgroundJob
+
         #-----------------------------------------------
         # DEBUG
         #-----------------------------------------------
