@@ -115,18 +115,22 @@ $Private = @( Get-ChildItem -Path "$( $PSScriptRoot )/Private/*.ps1" -ErrorActio
 #-----------------------------------------------
 
 # Define the variables
-#New-Variable -Name execPath -Value $null -Scope Script -Force       # Path of the calling script
-New-Variable -Name psVersion -Value $null -Scope Script -Force      # GUID process ID to identify log messages that belong to one process
-New-Variable -Name psEdition -Value $null -Scope Script -Force      # GUID process ID to identify log messages that belong to one process
-New-Variable -Name platform -Value $null -Scope Script -Force      # GUID process ID to identify log messages that belong to one process
-New-Variable -Name frameworkPreference -Value $null -Scope Script -Force      # GUID process ID to identify log messages that belong to one process
-New-Variable -Name isCore -Value $null -Scope Script -Force      # GUID process ID to identify log messages that belong to one process
-New-Variable -Name os -Value $null -Scope Script -Force          # Operating system name
-New-Variable -Name is64BitOS -Value $null -Scope Script -Force          # Operating system name
-New-Variable -Name is64BitProcess -Value $null -Scope Script -Force          # Operating system name
-New-Variable -Name executingUser -Value $null -Scope Script -Force          # Operating system name
-New-Variable -Name isElevated -Value $null -Scope Script -Force          # Operating system name
-
+#New-Variable -Name execPath -Value $null -Scope Script -Force              # Path of the calling script
+New-Variable -Name psVersion -Value $null -Scope Script -Force              # PowerShell version being used
+New-Variable -Name psEdition -Value $null -Scope Script -Force              # Edition of PowerShell (e.g., Desktop, Core)
+New-Variable -Name platform -Value $null -Scope Script -Force               # Platform type (e.g., Windows, Linux, macOS)
+New-Variable -Name frameworkPreference -Value $null -Scope Script -Force    # Preferred .NET framework version
+New-Variable -Name isCore -Value $null -Scope Script -Force                 # Indicates if PowerShell Core is being used (True/False)
+New-Variable -Name os -Value $null -Scope Script -Force                     # Operating system name
+New-Variable -Name is64BitOS -Value $null -Scope Script -Force              # Indicates if the OS is 64-bit (True/False)
+New-Variable -Name is64BitProcess -Value $null -Scope Script -Force         # Indicates if the process is 64-bit (True/False)
+New-Variable -Name executingUser -Value $null -Scope Script -Force          # User executing the script
+New-Variable -Name isElevated -Value $null -Scope Script -Force             # Indicates if the script is running with elevated privileges (True/False)
+New-Variable -Name packageManagement -Value $null -Scope Script -Force      # Package management system in use (e.g., NuGet, APT)
+New-Variable -Name powerShellGet -Value $null -Scope Script -Force          # Version of PowerShellGet module
+New-Variable -Name vcredist -Value $null -Scope Script -Force               # Indicates if Visual C++ Redistributable is installed (True/False)
+New-Variable -Name installedModules -Value $null -Scope Script -Force               # Indicates if Visual C++ Redistributable is installed (True/False)
+New-Variable -Name backgroundJobs -Value $null -Scope Script -Force               # Indicates if Visual C++ Redistributable is installed (True/False)
 
 
 $Script:psVersion = $PSVersionTable.PSVersion.ToString()
@@ -305,18 +309,63 @@ if ( $PSVersionTable.PSEdition -eq 'Desktop' ) {
 
 }
 
-
-
-
-
-
-
 # Check elevation
 if ($Script:os -eq "Windows") {
     $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
     $Script:executingUser = $identity.Name
     $principal = [Security.Principal.WindowsPrincipal]::new($identity)
     $Script:isElevated = $principal.IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)
+}
+
+$Script:backgroundJobs = [System.Collections.ArrayList]@()
+[void]$Script:backgroundJobs.Add((
+    Start-Job -ScriptBlock {
+        # Use Get-InstalledModule to retrieve installed modules
+        Get-InstalledModule -ErrorAction SilentlyContinue
+    } -Name "InstalledModule"
+))
+
+# Check the vcredist installation
+$vcredistInstalled = $False
+$vcredist64 = $False
+$vcRedistCollection = $null
+
+# Possible registry paths for Visual C++ Redistributable installations
+If ( $Script:os -eq "Windows" ) {
+
+    # Attempt to retrieve the Visual C++ Redistributable 14 registry entry
+    $vcReg = Get-ItemProperty 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\VisualStudio\*\VC\Runtimes\*' #-ErrorAction Stop
+
+    If ( $vcReg.Count -gt 0 ) {
+        $vcredistInstalled = $True
+
+        $vcRedistCollection = [hashtable]@{}
+        $vcReg | ForEach-Object {
+            $vcRegItem = $_
+            If ( $vcRegItem.PSChildName -like "*64" -and $vcRegItem.Installed -gt 0 ) {
+                $vcredist64 = $True
+            }
+            $vcRedistCollection.Add($vcRegItem.PSChildName, ([PSCustomObject]@{
+                        "Version"   = $vcRegItem.Version
+                        "Major"     = $vcRegItem.Major
+                        "Minor"     = $vcRegItem.Minor
+                        "Build"     = $vcRegItem.Build
+                        "Installed" = $vcRegItem.Installed
+                    }
+                )
+            )
+
+        }
+
+    }
+
+
+}
+
+$Script:vcredist = [PSCustomObject]@{
+    "installed" = $vcredistInstalled
+    "is64bit"   = $vcredist64
+    "versions" = $vcRedistCollection
 }
 
 
