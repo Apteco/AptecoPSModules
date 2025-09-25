@@ -36,7 +36,11 @@ function Update-BackgroundJob {
                         $Script:powerShellGet = $_.Version.ToString()
                     }
 
-                    $jobsToRemove += $job
+                }
+
+                "InstalledGlobalPackages" {
+
+                    $Script:installedGlobalPackages = $results
 
                 }
 
@@ -45,6 +49,8 @@ function Update-BackgroundJob {
                 }
 
             }
+
+            $jobsToRemove += $job
 
         }
 

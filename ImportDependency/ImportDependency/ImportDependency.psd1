@@ -12,7 +12,7 @@
 RootModule = 'ImportDependency.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.3.1'
+ModuleVersion = '0.3.2'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -119,6 +119,7 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+0.3.2 Added functionality to load global and local packages into Get-PSEnvironment
 0.3.1 Added check of vcredist, powershellget and packagemanagement version
 0.3.0 Re-publication as module rather than a script
       Support for PowerShell Core for Windows and Linux, possibly MacOS
