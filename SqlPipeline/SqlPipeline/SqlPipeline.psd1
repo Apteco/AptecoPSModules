@@ -5,7 +5,7 @@
 RootModule = 'SqlPipeline.psm1'
 
 # Die Versionsnummer dieses Moduls
-ModuleVersion = '0.1.2'
+ModuleVersion = '0.1.3'
 
 # Unterstützte PSEditions
 # CompatiblePSEditions = @()
@@ -107,6 +107,7 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.1.3 Removing unnecessary Code
 0.1.2 Throwing an exception now, when no transaction is used and the input is not valid
 0.1.1 Fixed temporary module and script path loading
 0.1.0 Improved the check for existing tables and columns. In this case the table will not be dropped the the SimplySQL update.
