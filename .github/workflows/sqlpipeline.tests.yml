@@ -1,0 +1,55 @@
+name: SqlPipeline Pester Tests
+
+on:
+  push:
+    branches:
+      - dev
+    paths:
+      - 'SqlPipeline/**.ps1'
+      - 'SqlPipeline/**.psm1'
+    
+  workflow_dispatch:
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ windows-latest, ubuntu-latest ]
+        shell: [ pwsh ]
+        include:
+          - os: windows-latest
+            shell: powershell
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v5
+
+      - name: Set up repositories - powershell
+        if: matrix.shell == 'powershell'
+        shell: powershell
+        run: |
+          Set-PSRepository psgallery -InstallationPolicy trusted
+          Install-Module SimplySQL,ImportDependency
+
+      - name: Run Pester Tests (powershell on ${{ matrix.os }})
+        if: matrix.shell == 'powershell'
+        env:
+          CI: true
+        shell: powershell
+        run: Invoke-Pester -Path SqlPipeline/Tests/ -Output Detailed -Passthru
+
+      - name: Set up repositories - pwsh
+        if: matrix.shell != 'powershell'
+        shell: pwsh
+        run: |
+          Set-PSRepository psgallery -InstallationPolicy trusted
+          Install-Module SimplySQL,ImportDependency
+
+      - name: Run Pester Tests (pwsh on ${{ matrix.os }})
+        if: matrix.shell != 'powershell'
+        env:
+          CI: true
+        shell: pwsh
+        run: Invoke-Pester -Path SqlPipeline/Tests/ -Output Detailed -Passthru
