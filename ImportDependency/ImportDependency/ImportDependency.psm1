@@ -341,30 +341,35 @@ $vcRedistCollection = $null
 # Possible registry paths for Visual C++ Redistributable installations
 If ( $Script:os -eq "Windows" ) {
 
-    # Attempt to retrieve the Visual C++ Redistributable 14 registry entry
-    $vcReg = Get-ItemProperty 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\VisualStudio\*\VC\Runtimes\*' #-ErrorAction Stop
+    try {
 
-    If ( $vcReg.Count -gt 0 ) {
-        $vcredistInstalled = $True
+        # Attempt to retrieve the Visual C++ Redistributable 14 registry entry
+        $vcReg = Get-ItemProperty 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\VisualStudio\*\VC\Runtimes\*' -ErrorAction Stop
 
-        $vcRedistCollection = [hashtable]@{}
-        $vcReg | ForEach-Object {
-            $vcRegItem = $_
-            If ( $vcRegItem.PSChildName -like "*64" -and $vcRegItem.Installed -gt 0 ) {
-                $vcredist64 = $True
-            }
-            $vcRedistCollection.Add($vcRegItem.PSChildName, ([PSCustomObject]@{
-                        "Version"   = $vcRegItem.Version
-                        "Major"     = $vcRegItem.Major
-                        "Minor"     = $vcRegItem.Minor
-                        "Build"     = $vcRegItem.Build
-                        "Installed" = $vcRegItem.Installed
-                    }
+        If ( $vcReg.Count -gt 0 ) {
+            $vcredistInstalled = $True
+
+            $vcRedistCollection = [hashtable]@{}
+            $vcReg | ForEach-Object {
+                $vcRegItem = $_
+                If ( $vcRegItem.PSChildName -like "*64" -and $vcRegItem.Installed -gt 0 ) {
+                    $vcredist64 = $True
+                }
+                $vcRedistCollection.Add($vcRegItem.PSChildName, ([PSCustomObject]@{
+                            "Version"   = $vcRegItem.Version
+                            "Major"     = $vcRegItem.Major
+                            "Minor"     = $vcRegItem.Minor
+                            "Build"     = $vcRegItem.Build
+                            "Installed" = $vcRegItem.Installed
+                        }
+                    )
                 )
-            )
+
+            }
 
         }
-
+    } catch {
+        Write-Verbose "VCRedist is not installed"
     }
 
 
