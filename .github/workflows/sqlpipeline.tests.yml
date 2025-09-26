@@ -1,4 +1,4 @@
-name: TestCredential Pester Tests
+name: SqlPipeline Pester Tests
 
 on:
   push:
