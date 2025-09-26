@@ -187,7 +187,7 @@ try {
 
 # Load packages from current local libfolder
 If ( $psPackages.Count -gt 0 ) {
-    Import-Dependencies -LoadWholePackageFolder
+    Import-Dependency -LoadWholePackageFolder
 }
 
 # Load assemblies
