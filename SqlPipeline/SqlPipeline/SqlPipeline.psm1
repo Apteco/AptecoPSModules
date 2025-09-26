@@ -134,7 +134,7 @@ try {
         Import-Module -Name $mod -ErrorAction Stop
     }
 } catch {
-    Write-Error "Error loading dependencies. Please execute 'Install-PSOAuth' now"
+    Write-Error "Error loading dependencies at '$( $mod )'"
     Exit 0
 }
 
