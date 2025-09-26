@@ -35,9 +35,10 @@ jobs:
       - name: Publishing
         shell: pwsh
         run: |
-          $path = "SqlPipeline/SqlPipeline"
+          Set-PSRepository psgallery -InstallationPolicy trusted
           Install-Module -Name PSScriptAnalyzer -force
-          Install-Module -Name SimplySql
+          Install-Module -Name SimplySql -Force
           Import-Module PSScriptAnalyzer
+          $path = "SqlPipeline/SqlPipeline"
           Invoke-ScriptAnalyzer -Path $path -Recurse -IncludeRule PSAvoidTrailingWhitespace -Fix
           Publish-Module -Path $path -NuGetApiKey ${{ secrets.NUGET_API_KEY }} -Repository PSGallery
