@@ -117,21 +117,41 @@ function Add-RowsToSql {
     #>
 
     param (
-         [Parameter(Mandatory=$true,ValueFromPipeline=$true,Position=0)]$InputObjects
-        ,[Parameter(Mandatory=$false)][Switch]$IgnoreInputValidation = $false           # Ignore validation on PSCustomObject or Hashtable to also allow
+
+
+
+         [Parameter(Mandatory=$true,ValueFromPipeline=$true,Position=0)]
+         $InputObjects
+
+        ,[Parameter(Mandatory=$false)]
+         [Switch]$IgnoreInputValidation = $false           # Ignore validation on PSCustomObject or Hashtable to also allow
                                                                                         # input like processes or file items
 
         # Parameters for SimplySql
-        ,[Parameter(Mandatory=$true)][String]$TableName                                 # Tablename to insert data into
-        ,[Parameter(Mandatory=$false)][String]$SQLConnectionName = "default"            # Database connection to use
-        ,[Parameter(Mandatory=$false)][Switch]$CloseConnection = $false                 # Close connection after everything is finished
-        ,[Parameter(Mandatory=$false)][Switch]$UseTransaction = $false                  # Using a transaction improves your performance pretty much
-        ,[Parameter(Mandatory=$false)][Int]$CommitEvery = 10000                         # COMMIT every n rows
+        ,[Parameter(Mandatory=$true)]
+         [String]$TableName                                 # Tablename to insert data into
+        
+        ,[Parameter(Mandatory=$false)]
+         [String]$SQLConnectionName = "default"            # Database connection to use
+        
+        ,[Parameter(Mandatory=$false)]
+         [Switch]$CloseConnection = $false                 # Close connection after everything is finished
+        
+        ,[Parameter(Mandatory=$false)]
+         [Switch]$UseTransaction = $false                  # Using a transaction improves your performance pretty much
+        
+        ,[Parameter(Mandatory=$false)]
+         [Int]$CommitEvery = 10000                         # COMMIT every n rows
 
         # Column specific parameters
-        ,[Parameter(Mandatory=$false)][Switch]$CreateColumnsInExistingTable = $false    # Create new columns if there are new fields in the first row
-        ,[Parameter(Mandatory=$false)][Switch]$FormatObjectAsJson = $false              # If column contents are hashtable or pscustomobject, they could be formatted and loaded as JSON
-        ,[Parameter(Mandatory=$false)][Switch]$DisableTrim = $false                     # Values will be trimmed automatically on input, you can turn this off with this flag
+        ,[Parameter(Mandatory=$false)]
+         [Switch]$CreateColumnsInExistingTable = $false    # Create new columns if there are new fields in the first row
+        
+        ,[Parameter(Mandatory=$false)]
+         [Switch]$FormatObjectAsJson = $false              # If column contents are hashtable or pscustomobject, they could be formatted and loaded as JSON
+        
+        ,[Parameter(Mandatory=$false)]
+         [Switch]$DisableTrim = $false                     # Values will be trimmed automatically on input, you can turn this off with this flag
 
         # Return/Pipeline parameters
         ,[Parameter(Mandatory=$false)][Switch]$PassThru = $false                        # Pass the input object to the next pipeline step
@@ -192,7 +212,7 @@ function Add-RowsToSql {
                 # Doing it here instead of parameters to set the undo
                 # The validation can also be ignored to allow other objects as input
                 If ( $IgnoreInputValidation -eq $false -and $InputObject.GetType().Name -notin @( "PSCustomObject", "Hashtable" ) ) {
-                    throw "-InputObject datatype could not be valitated"
+                    throw "InputObject datatype could not be valitated"
                 }
 
 
@@ -326,6 +346,11 @@ function Add-RowsToSql {
             Write-Warning "There is a problem at row $( $recordsInserted +1 ): $( $_.Exception.message )"
             $doUndo = $true
             $e = $_.Exception
+
+            If ( $UseTransaction -eq $false ) {
+                throw $e
+            }
+
 
         }
 
