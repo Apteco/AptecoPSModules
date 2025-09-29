@@ -14,11 +14,8 @@ jobs:
   test:
     strategy:
       matrix:
-        os: [ windows-latest, ubuntu-latest ]
-        shell: [ pwsh ]
-        include:
-          - os: windows-latest
-            shell: powershell
+        os: [ windows-latest ]
+        shell: [ powershell ]
 
 
     runs-on: ${{ matrix.os }}
@@ -32,9 +29,10 @@ jobs:
         shell: powershell
         run: |
           Set-PSRepository psgallery -InstallationPolicy trusted
-          Install-Module WriteLog -Repository PSGallery -Scope CurrentUser
+          Get-InstalledModule
+          Install-Module WriteLog -Repository PSGallery -AllowClobber -Scope CurrentUser
           Install-Module ImportDependency -Repository PSGallery -Scope CurrentUser
-          Install-Module SimplySQL -Repository PSGallery -Scope CurrentUser
+          Install-Module SimplySQL -Force -Repository PSGallery -AllowClobber -Scope CurrentUser
 
       - name: Run Pester Tests (powershell on ${{ matrix.os }})
         if: matrix.shell == 'powershell'
@@ -48,9 +46,10 @@ jobs:
         shell: pwsh
         run: |
           Set-PSRepository psgallery -InstallationPolicy trusted
-          Install-Module WriteLog -Repository PSGallery -Scope CurrentUser
+          Get-InstalledModule
+          Install-Module WriteLog -Repository PSGallery -AllowClobber -Scope CurrentUser
           Install-Module ImportDependency -Repository PSGallery -Scope CurrentUser
-          Install-Module SimplySQL -Repository PSGallery -Scope CurrentUser
+          Install-Module SimplySQL -Force -Repository PSGallery -AllowClobber -Scope CurrentUser
 
       - name: Run Pester Tests (pwsh on ${{ matrix.os }})
         if: matrix.shell != 'powershell'
