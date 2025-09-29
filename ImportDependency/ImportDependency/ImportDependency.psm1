@@ -326,11 +326,15 @@ if ( $PSVersionTable.PSEdition -eq 'Desktop' ) {
 }
 
 # Check elevation
+# TODO check for MacOS
 if ($Script:os -eq "Windows") {
     $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
     $Script:executingUser = $identity.Name
     $principal = [Security.Principal.WindowsPrincipal]::new($identity)
     $Script:isElevated = $principal.IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)
+} elseif ( $Script:os -eq "Linux" ) {
+    $Script:executingUser = whoami
+    $Script:isElevated = -not [string]::IsNullOrEmpty($env:SUDO_USER)
 }
 
 # Check PowerShellGet and Packagemanagement
