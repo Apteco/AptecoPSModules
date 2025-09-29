@@ -5,7 +5,7 @@
 RootModule = 'ImportDependency.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.3.4'
+ModuleVersion = '0.3.5'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -112,6 +112,7 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+0.3.5 Adding Linux functionality for current executing user and if it is sudo/elevated
 0.3.4 Added more switches to get faster execution of Get-PSEnvironment
       Added a synopsys to Get-PSEnvironment
       Changed the approach to load the versions of PowerShellGet and PackageManagement
