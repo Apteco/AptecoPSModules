@@ -31,8 +31,8 @@ jobs:
         shell: powershell
         run: |
           Set-PSRepository psgallery -InstallationPolicy trusted
-          Install-Module SimplySQL -Force -verbose
-          Install-Module ImportDependency -Force -verbose
+          Install-Module SimplySQL -Force -verbose -Repository PSGallery
+          Install-Module ImportDependency -Force -verbose -Repository PSGallery
 
       - name: Run Pester Tests (powershell on ${{ matrix.os }})
         if: matrix.shell == 'powershell'
@@ -46,8 +46,8 @@ jobs:
         shell: pwsh
         run: |
           Set-PSRepository psgallery -InstallationPolicy trusted
-          Install-Module SimplySQL -Force -verbose
-          Install-Module ImportDependency -Force -verbose
+          Install-Module SimplySQL -Force -verbose -Repository PSGallery
+          Install-Module ImportDependency -Force -verbose -Repository PSGallery
 
       - name: Run Pester Tests (pwsh on ${{ matrix.os }})
         if: matrix.shell != 'powershell'
