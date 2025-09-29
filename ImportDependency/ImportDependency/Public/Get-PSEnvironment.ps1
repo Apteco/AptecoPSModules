@@ -1,27 +1,75 @@
 ﻿Function Get-PSEnvironment {
+
+    <#
+    .SYNOPSIS
+        Retrieves detailed information about the current PowerShell environment, including version, edition, OS, architecture,
+        user context, installed modules, and local/global packages.
+
+    .DESCRIPTION
+        The Get-PSEnvironment function collects and returns a comprehensive overview of the PowerShell runtime and environment.
+        It can optionally check for installed modules, global packages, and local packages in a specified folder. The output is
+        an ordered dictionary containing environment details, package information, and diagnostic flags.
+
+    .PARAMETER LocalPackageFolder
+        The path to the folder where local packages are stored and checked. Defaults to '.\lib'.
+
+    .PARAMETER SkipBackgroundCheck
+        If specified, skips the background check for installed modules and global packages to improve performance.
+
+    .PARAMETER SkipLocalPackageCheck
+        If specified, skips the check for local packages in the specified folder to improve performance.
+
+    .EXAMPLE
+        Get-PSEnvironment
+
+        Returns a full environment report, including installed modules and local packages in the default '.\lib' folder.
+
+    .EXAMPLE
+        Get-PSEnvironment -SkipBackgroundCheck
+
+        Returns environment information but skips the check for installed modules and global packages for faster execution.
+
+    .EXAMPLE
+        Get-PSEnvironment -LocalPackageFolder "C:\MyPackages" -SkipLocalPackageCheck
+
+        Checks environment and global packages, but skips checking for local packages in 'C:\MyPackages'.
+
+    #>
+
     [CmdletBinding()]
     param(
 
-        [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()]
-        [String]$LocalPackageFolder = ".\lib"         # Where to find local packages
+         [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()]
+         [String]$LocalPackageFolder = ".\lib"      # Where to find local packages
 
+        ,[Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()]
+         [Switch]$SkipBackgroundCheck = $false      # When installed modules and installed global packages are not needed, this step can be skipped because they cost around 1-2 seconds
 
-#        [Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()]
-#        [Switch]$DoNotCheckLocalPackages = $false           # Flag to log warnings, but not put redirect to the host
+        ,[Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()]
+         [Switch]$SkipLocalPackageCheck = $false    # When installed modules and installed local packages are not needed, this step can be skipped because they cost around 1-2 seconds
 
     )
 
     process {
 
+        $didBackgroundCheck = $False
+        $didLocalPackageCheck = $False
+
         # Update background job to gather modules and global packages
-        Update-BackgroundJob
+        If ( $SkipBackgroundCheck -ne $True ) {
+            Update-BackgroundJob
+            $didBackgroundCheck = $True
+        }
 
         # Check local lib folder
-        $libPathToCheck = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($LocalPackageFolder)
-        Write-Verbose "Checking path '$( $libPathToCheck )' for local packages"
-        If ( (Test-Path -Path $libPathToCheck) -eq $true ) {
-            $localPackages = PackageManagement\Get-Package -Destination $LocalPackageFolder
-            Write-Verbose "Found $( $localPackages.Count ) local packages"
+        If ( $SkipLocalPackageCheck -ne $True ) {
+            $libPathToCheck = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($LocalPackageFolder)
+            Write-Verbose "Checking path '$( $libPathToCheck )' for local packages"
+            If ( (Test-Path -Path $libPathToCheck) -eq $true ) {
+                $localPackages = PackageManagement\Get-Package -Destination $LocalPackageFolder
+                Write-Verbose "Found $( $localPackages.Count ) local packages"
+            }
+            $didLocalPackageCheck = $True
         }
 
         [Ordered]@{
@@ -41,8 +89,10 @@
             "PackageManagement"   = $Script:packageManagement
             "PowerShellGet"       = $Script:powerShellGet
             "VcRedist"            = $Script:vcredist
+            "BackgroundCheckCompleted" = $didBackgroundCheck
             "InstalledModules"    = $Script:installedModules
             "InstalledGlobalPackages" = $Script:installedGlobalPackages
+            "LocalPackageCheckCompleted" = $didLocalPackageCheck
             "InstalledLocalPackages" = $localPackages
         }
 

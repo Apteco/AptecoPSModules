@@ -145,6 +145,80 @@ Install-Dependencies -LocalPackage MailKit -verbose
 Import-Dependency -LoadWholePackageFolder -LocalPackageFolder "./lib" -verbose
 ```
 
+## Check the current PowerShell environment
+
+Use this to get a good overview of the current environment. This is useful information for loading dependencies or to operate on different operating systems etc.
+
+```PowerShell
+Get-PSEnvironment
+
+Name                           Value
+----                           -----
+PSVersion                      5.1.26100.6584
+PSEdition                      Desktop
+OS                             Windows
+IsCore                         False
+Architecture                   ARM64
+CurrentRuntime                 net4.0
+Is64BitOS                      True
+Is64BitProcess                 True
+ExecutingUser                  FLOPRO11\flo
+IsElevated                     False
+RuntimePreference              win-arm64, win-arm, win-x64, win-x86
+FrameworkPreference            net48, net47, net462, net461, net45, net40, netstandard2.0, netstandard1.5, netstandard1....
+PackageManagement              1.4.8.1
+PowerShellGet                  2.2.5
+VcRedist                       @{installed=True; is64bit=True; versions=System.Collections.Hashtable}
+BackgroundCheckCompleted       True
+InstalledModules               {@{Name=PackageManagement; Version=1.4.8.1; Type=Module; Description=PackageManagement (a...
+InstalledGlobalPackages        {Microsoft.PackageManagement.Packaging.SoftwareIdentity, Microsoft.PackageManagement.Pack...
+LocalPackageCheckCompleted     True
+InstalledLocalPackages
+```
+
+If you need a faster execution of the command, just skip some checks
+
+```PowerShell
+Get-PSEnvironment -SkipBackgroundCheck -SkipLocalPackageCheck
+
+Name                           Value
+----                           -----
+PSVersion                      5.1.26100.6584
+PSEdition                      Desktop
+OS                             Windows
+IsCore                         False
+Architecture                   ARM64
+CurrentRuntime                 net4.0
+Is64BitOS                      True
+Is64BitProcess                 True
+ExecutingUser                  FLOPRO11\flo
+IsElevated                     False
+RuntimePreference              win-arm64, win-arm, win-x64, win-x86
+FrameworkPreference            net48, net47, net462, net461, net45, net40, netstandard2.0, netstandard1.5, netstandard1....
+PackageManagement              1.4.8.1
+PowerShellGet                  2.2.5
+VcRedist                       @{installed=True; is64bit=True; versions=System.Collections.Hashtable}
+BackgroundCheckCompleted       False
+InstalledModules
+InstalledGlobalPackages
+LocalPackageCheckCompleted     False
+InstalledLocalPackages
+```
+
+If you have saved some nuget packages to a local folder, you can find and examine them navigating to the parent folder of the packages
+and then execute the command similar to this
+
+```PowerShell
+$ps = Get-PSEnvironment -LocalPackageFolder ".\lib"
+$ps.InstalledLocalPackages
+
+Name                           Version          Source                           ProviderName
+----                           -------          ------                           ------------
+System.Runtime.CompilerServ... 6.1.2            C:\Users\flo\Downloads\testpa... NuGet
+System.Threading.Channels      7.0.0            C:\Users\flo\Downloads\testpa... NuGet
+System.Threading.Tasks.Exte... 4.6.3            C:\Users\flo\Downloads\testpa... NuGet
+```
+
 # Contribution
 
 You are free to use this code, put in some changes and use a pull request to feedback improvements :-)
