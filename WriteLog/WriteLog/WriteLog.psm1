@@ -49,30 +49,6 @@ $Private = @( Get-ChildItem -Path "$( $PSScriptRoot )/Private/*.ps1" -ErrorActio
 # READ IN CONFIG FILES AND VARIABLES
 #-----------------------------------------------
 
-# If the variable is not present, it will create a temporary file
-<#
-If ( $null -eq $Script:logfile ) {
-    Write-Warning -Message "There is no variable '`$logfile' present on 'Script' scope. Please define it or it will automatically created as a temporary file."
-} else {
-    # Testing the path
-    If ( ( Test-Path -Path $Script:logfile -IsValid ) -eq $false ) {
-        Write-Error -Message "Invalid variable '`$logfile'. The path '$( $Script:logfile )' is invalid."
-    }
-}
-
-# If a process id (to identify this session by a guid) it will be set automatically here
-If ( $null -eq $processId ) {
-    Write-Warning -Message "There is no variable '`$processId' present on 'Script' scope. Please define it or it will automatically created as a [GUID]."
-}
-#>
-#Write-Verbose -Message "Please setup the logfile with 'Set-Logfile -Path' or it will automatically created as a temporary file."
-#Write-Verbose -Message "Please setup the process id with 'Set-ProcessId -Id'or it will automatically created as a [GUID]."
-
-
-#-----------------------------------------------
-# READ IN CONFIG FILES AND VARIABLES
-#-----------------------------------------------
-
 Export-ModuleMember -Function $Public.Basename
 
 
@@ -87,8 +63,27 @@ New-Variable -Name processIdOverride  -Value $null -Scope Script -Force
 
 # This will be overridden later
 $Script:processId = [guid]::NewGuid().ToString()
-$f = Join-Path -Path $Env:tmp -ChildPath "$( $Script:processId ).tmp" #New-TemporaryFile
-$Script:logfile = $f.FullName
+
+# Find out the temporary directory
+# TODO Support for MacOS
+$tmpdir = $null
+If ( $IsLinux -eq $true ) {
+   
+    If ( $env:TMPDIR -ne $null ) {
+        $tmpdir = $env:TMPDIR
+    } elseif ( (Test-Path -Path "/tmp") -eq $True ) {
+        $tmpdir = "/tmp"
+    } else {
+        $tmpdir = "./"
+    }
+
+} else {
+    # IsWindows
+    $tmpdir = $Env:tmp
+}
+$f = Join-Path -Path $tmpdir -ChildPath "$( $Script:processId ).tmp"
+$fAbsolute = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($f)
+$Script:logfile = $fAbsolute
 
 # This will be changed with the first override
 $Script:logfileOverride = $false
