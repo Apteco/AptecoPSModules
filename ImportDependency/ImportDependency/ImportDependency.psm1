@@ -14,62 +14,94 @@ https://github.com/RamblingCookieMonster/PSStackExchange/blob/db1277453374cb1668
 
 
 #-----------------------------------------------
+# OS CHECK
+#-----------------------------------------------
+
+$preCheckisCore = ($PSVersionTable.Keys -contains "PSEdition") -and ($PSVersionTable.PSEdition -ne 'Desktop')
+
+# Check the operating system, if Core
+if ($preCheckisCore -eq $true) {
+    If ( $IsWindows -eq $true ) {
+        $preCheckOs = "Windows"
+    } elseif ( $IsLinux -eq $true ) {
+        $preCheckOs = "Linux"
+    } elseif ( $IsMacOS -eq $true ) {
+        $preCheckOs = "MacOS"
+    } else {
+        throw "Unknown operating system"
+    }
+} else {
+    # [System.Environment]::OSVersion.VersionString()
+    # [System.Environment]::Is64BitOperatingSystem
+    $preCheckOs = "Windows"
+}
+
+
+#-----------------------------------------------
 # ADD MODULE PATH, IF NOT PRESENT
 #-----------------------------------------------
 
-$modulePath = @( [System.Environment]::GetEnvironmentVariable("PSModulePath") -split ";" ) + @(
-    "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles") )\WindowsPowerShell\Modules"
-    "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles(x86)") )\WindowsPowerShell\Modules"
-    "$( [System.Environment]::GetEnvironmentVariable("USERPROFILE") )\Documents\WindowsPowerShell\Modules"
-    "$( [System.Environment]::GetEnvironmentVariable("windir") )\system32\WindowsPowerShell\v1.0\Modules"
-)
+If ( $preCheckOs -eq "Windows" ) {
 
-# Add the 64bit path, if present. In 32bit the ProgramFiles variables only returns the x86 path
-If ( [System.Environment]::GetEnvironmentVariables().keys -contains "ProgramW6432" ) {
-    $modulePath += "$( [System.Environment]::GetEnvironmentVariable("ProgramW6432") )\WindowsPowerShell\Modules"
-}
+    $modulePath = @( [System.Environment]::GetEnvironmentVariable("PSModulePath") -split ";" ) + @(
+        "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles") )\WindowsPowerShell\Modules"
+        "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles(x86)") )\WindowsPowerShell\Modules"
+        "$( [System.Environment]::GetEnvironmentVariable("USERPROFILE") )\Documents\WindowsPowerShell\Modules"
+        "$( [System.Environment]::GetEnvironmentVariable("windir") )\system32\WindowsPowerShell\v1.0\Modules"
+    )
 
-# Add pwsh core path
-If ( $Script:isCore -eq $true ) {
+    # Add the 64bit path, if present. In 32bit the ProgramFiles variables only returns the x86 path
     If ( [System.Environment]::GetEnvironmentVariables().keys -contains "ProgramW6432" ) {
-        $modulePath += "$( [System.Environment]::GetEnvironmentVariable("ProgramW6432") )\powershell\7\Modules"
+        $modulePath += "$( [System.Environment]::GetEnvironmentVariable("ProgramW6432") )\WindowsPowerShell\Modules"
     }
-    $modulePath += "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles") )\powershell\7\Modules"
-    $modulePath += "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles(x86)") )\powershell\7\Modules"
-}
 
-# Add all paths
-# Using $env:PSModulePath for only temporary override
-$Env:PSModulePath = @( $modulePath | Sort-Object -unique ) -join ";"
+    # Add pwsh core path
+    If ( $Script:isCore -eq $true ) {
+        If ( [System.Environment]::GetEnvironmentVariables().keys -contains "ProgramW6432" ) {
+            $modulePath += "$( [System.Environment]::GetEnvironmentVariable("ProgramW6432") )\powershell\7\Modules"
+        }
+        $modulePath += "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles") )\powershell\7\Modules"
+        $modulePath += "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles(x86)") )\powershell\7\Modules"
+    }
+
+    # Add all paths
+    # Using $env:PSModulePath for only temporary override
+    $Env:PSModulePath = @( $modulePath | Sort-Object -unique ) -join ";"
+
+}
 
 
 #-----------------------------------------------
 # ADD SCRIPT PATH, IF NOT PRESENT
 #-----------------------------------------------
 
-#$envVariables = [System.Environment]::GetEnvironmentVariables()
-$scriptPath = @( [System.Environment]::GetEnvironmentVariable("Path") -split ";" ) + @(
-    "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles") )\WindowsPowerShell\Scripts"
-    "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles(x86)") )\WindowsPowerShell\Scripts"
-    "$( [System.Environment]::GetEnvironmentVariable("USERPROFILE") )\Documents\WindowsPowerShell\Scripts"
-)
+If ( $preCheckOs -eq "Windows" ) {
 
-# Add the 64bit path, if present. In 32bit the ProgramFiles variables only returns the x86 path
-If ( [System.Environment]::GetEnvironmentVariables().keys -contains "ProgramW6432" ) {
-    $scriptPath += "$( [System.Environment]::GetEnvironmentVariable("ProgramW6432") )\WindowsPowerShell\Scripts"
-}
+    #$envVariables = [System.Environment]::GetEnvironmentVariables()
+    $scriptPath = @( [System.Environment]::GetEnvironmentVariable("Path") -split ";" ) + @(
+        "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles") )\WindowsPowerShell\Scripts"
+        "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles(x86)") )\WindowsPowerShell\Scripts"
+        "$( [System.Environment]::GetEnvironmentVariable("USERPROFILE") )\Documents\WindowsPowerShell\Scripts"
+    )
 
-# Add pwsh core path
-If ( $Script:isCore -eq $true ) {
+    # Add the 64bit path, if present. In 32bit the ProgramFiles variables only returns the x86 path
     If ( [System.Environment]::GetEnvironmentVariables().keys -contains "ProgramW6432" ) {
-        $scriptPath += "$( [System.Environment]::GetEnvironmentVariable("ProgramW6432") )\powershell\7\Scripts"
+        $scriptPath += "$( [System.Environment]::GetEnvironmentVariable("ProgramW6432") )\WindowsPowerShell\Scripts"
     }
-    $scriptPath += "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles") )\powershell\7\Scripts"
-    $scriptPath += "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles(x86)") )\powershell\7\Scripts"
-}
 
-# Using $env:Path for only temporary override
-$Env:Path = @( $scriptPath | Sort-Object -unique ) -join ";"
+    # Add pwsh core path
+    If ( $Script:isCore -eq $true ) {
+        If ( [System.Environment]::GetEnvironmentVariables().keys -contains "ProgramW6432" ) {
+            $scriptPath += "$( [System.Environment]::GetEnvironmentVariable("ProgramW6432") )\powershell\7\Scripts"
+        }
+        $scriptPath += "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles") )\powershell\7\Scripts"
+        $scriptPath += "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles(x86)") )\powershell\7\Scripts"
+    }
+
+    # Using $env:Path for only temporary override
+    $Env:Path = @( $scriptPath | Sort-Object -unique ) -join ";"
+
+}
 
 
 #-----------------------------------------------
@@ -133,12 +165,14 @@ New-Variable -Name installedModules -Value $null -Scope Script -Force           
 New-Variable -Name backgroundJobs -Value $null -Scope Script -Force               # Hidden variable to store background jobs
 New-Variable -Name installedGlobalPackages -Value $null -Scope Script -Force               # Caches all installed NuGet Global Packages
 
-
+$Script:isCore = $preCheckisCore
+$Script:os = $preCheckOs
 $Script:psVersion = $PSVersionTable.PSVersion.ToString()
 $Script:psEdition = $PSVersionTable.PSEdition
 $Script:platform = $PSVersionTable.Platform
 $Script:is64BitOS = [System.Environment]::Is64BitOperatingSystem
 $Script:is64BitProcess = [System.Environment]::Is64BitProcess
+
 <#
 $Script:frameworkPreference = @(
 
@@ -160,25 +194,6 @@ $Script:frameworkPreference = @(
 
 )
 #>
-
-$Script:isCore = ($PSVersionTable.Keys -contains "PSEdition") -and ($PSVersionTable.PSEdition -ne 'Desktop')
-
-# Check the operating system, if Core
-if ($Script:isCore -eq $true) {
-    If ( $IsWindows -eq $true ) {
-        $Script:os = "Windows"
-    } elseif ( $IsLinux -eq $true ) {
-        $Script:os = "Linux"
-    } elseif ( $IsMacOS -eq $true ) {
-        $Script:os = "MacOS"
-    } else {
-        throw "Unknown operating system"
-    }
-} else {
-    # [System.Environment]::OSVersion.VersionString()
-    # [System.Environment]::Is64BitOperatingSystem
-    $Script:os = "Windows"
-}
 
 If ( $null -ne [System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture ) {
 
@@ -318,6 +333,19 @@ if ($Script:os -eq "Windows") {
     $Script:isElevated = $principal.IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)
 }
 
+# Check PowerShellGet and Packagemanagement
+Import-Module PowerShellGet -ErrorAction SilentlyContinue
+$modules = Get-Module
+
+# Check if PackageManagement and PowerShellGet are available
+$modules | where-object { $_.Name -eq "PackageManagement" } | ForEach-Object {
+    $Script:packageManagement = $_.Version.ToString()
+}
+$modules | where-object { $_.Name -eq "PowerShellGet" } | ForEach-Object {
+    $Script:powerShellGet = $_.Version.ToString()
+}
+
+# Add jobs to find out more about installed modules and packages in the background
 $Script:backgroundJobs = [System.Collections.ArrayList]@()
 [void]$Script:backgroundJobs.Add((
     Start-Job -ScriptBlock {

@@ -5,7 +5,7 @@
 RootModule = 'ImportDependency.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.3.3'
+ModuleVersion = '0.3.4'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -112,6 +112,10 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+0.3.4 Added more switches to get faster execution of Get-PSEnvironment
+      Added a synopsys to Get-PSEnvironment
+      Changed the approach to load the versions of PowerShellGet and PackageManagement
+      Loading the OS directly at the start of module import to determine if PATH needs to be extended
 0.3.3 Fixed a problem when VCRedist is not installed at all
 0.3.2 Added functionality to load global and local packages into Get-PSEnvironment
 0.3.1 Added check of vcredist, powershellget and packagemanagement version

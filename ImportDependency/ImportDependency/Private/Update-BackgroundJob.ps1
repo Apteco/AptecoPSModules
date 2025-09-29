@@ -28,14 +28,6 @@ function Update-BackgroundJob {
 
                     $Script:installedModules = $results
 
-                    # Check if PackageManagement and PowerShellGet are available
-                    $Script:installedModules | where-object { $_.Name -eq "PackageManagement" } | ForEach-Object {
-                        $Script:packageManagement = $_.Version.ToString()
-                    }
-                    $Script:installedModules | where-object { $_.Name -eq "PowerShellGet" } | ForEach-Object {
-                        $Script:powerShellGet = $_.Version.ToString()
-                    }
-
                 }
 
                 "InstalledGlobalPackages" {
