@@ -1,8 +1,11 @@
 BeforeAll {
-    Import-Module SimplySql
-    Import-Module "$PSScriptRoot/../SqlPipeline" -Force
+    Write-Host "Hello World 1"
+    Import-Module "$PSScriptRoot/../SqlPipeline" -Force -Verbose
     # Create a test SQLite connection
-    Open-SQLiteConnection -DataSource "$PSScriptRoot/test.db"
+    Write-Host "Hello World 2"
+    Open-SQLiteConnection -DataSource "$PSScriptRoot/test.db" -Verbose
+    Write-Host "Hello Worl3"
+
 }
 
 AfterAll {
