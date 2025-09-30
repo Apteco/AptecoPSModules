@@ -5,7 +5,7 @@
 RootModule = 'SqlPipeline.psm1'
 
 # Die Versionsnummer dieses Moduls
-ModuleVersion = '0.1.5'
+ModuleVersion = '0.2.0'
 
 # Unterstützte PSEditions
 # CompatiblePSEditions = @()
@@ -95,7 +95,7 @@ PrivateData = @{
     PSData = @{
 
         # 'Tags' wurde auf das Modul angewendet und unterstützt die Modulermittlung in Onlinekatalogen.
-        Tags = @("PSEdition_Desktop", "Windows", "Apteco")
+        Tags = @('powershell', "PSEdition_Desktop", "PSEdition_Core", "Windows", 'Linux', "Apteco")
 
         # Eine URL zur Lizenz für dieses Modul.
         LicenseUri = 'https://gist.github.com/gitfvb/58930387ee8677b5ccef93ffc115d836'
@@ -108,6 +108,7 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.2.0 Support of Linux
 0.1.5 Fixing case sensitive path for private and public functions
 0.1.4 Prefixing SimplySql commands
       Integration of ImportDependency module
