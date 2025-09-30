@@ -5,7 +5,7 @@
 RootModule = 'ImportDependency.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.3.6'
+ModuleVersion = '0.3.7'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -115,6 +115,7 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+0.3.7 Returning absolute logfile path rather than a relative one
 0.3.6 Adding a function Get-TemporaryPath to get a temporary path on Windows and Linux
       Adding two functions to get pwsh and python path
 0.3.5 Adding Linux functionality for current executing user and if it is sudo/elevated

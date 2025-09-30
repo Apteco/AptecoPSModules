@@ -108,9 +108,10 @@ Function Import-Dependency {
         If ( $KeepLogfile -eq $false -and $null -ne $getLogfile ) {
             $currentLogfile = Get-Logfile
             $logfile = ".\dependencies_import.log"
-            Set-Logfile -Path $logfile
+            $logfileAbsolute = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($f)
+            Set-Logfile -Path $logfileAbsolute
             Write-Log -message "----------------------------------------------------" -Severity VERBOSE
-            Write-Log -Message "Changed logfile from '$( $currentLogfile.fullname )' to '$( $logfile )'"
+            Write-Log -Message "Changed logfile from '$( $currentLogfile.fullname )' to '$( $logfileAbsolute )'"
         } else {
             $logfile = ".\dependencies_import.log"
             Set-Logfile -Path $logfile

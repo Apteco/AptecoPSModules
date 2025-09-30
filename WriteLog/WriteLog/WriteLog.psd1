@@ -5,7 +5,7 @@
 RootModule = 'WriteLog.psm1'
 
 # Die Versionsnummer dieses Moduls
-ModuleVersion = '0.9.16'
+ModuleVersion = '0.9.17'
 
 # Unterstützte PSEditions
 # CompatiblePSEditions = @()
@@ -132,6 +132,7 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.9.17 Fixing the return of a path rather than a file object in Get-Logfile
 0.9.16 Adding support for temporary path in Linux
 0.9.15 Fixing linux compatibility when importing the module
 0.9.14 If message is null, it will throw an error. Invalid path for logfile will throw an error, too

@@ -42,6 +42,8 @@ Function Set-Logfile {
         # Return
         Write-Verbose "Using the file: $( $Script:logfile )"
 
+        $True
+
     }
 
 }

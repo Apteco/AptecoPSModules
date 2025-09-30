@@ -20,11 +20,11 @@ Function Get-Logfile {
         If ( ( Test-Path -Path $logfile -IsValid ) -eq $false ) {
             Write-Error -Message "Invalid variable '`$logfile'. The path '$( $logfile )' is invalid."
         } else {
-            $item = Get-Item -Path $logfile
+            $item = $logfile
         }
 
     }
 
-    $item
+    return $item
 
 }
