@@ -64,13 +64,6 @@ Function Write-Log {
 
     Begin {
 
-        # If the variable is not present, it will create a temporary file
-        # If ( $null -eq $Script:logfile ) {
-        #     $f = Join-Path -Path $Env:tmp -ChildPath "$( [guid]::newguid().toString() ).tmp" #New-TemporaryFile
-        #     $Script:logfile = $f.FullName
-        #     Write-Verbose -Message "There is no variable '`$logfile' present on 'Script' scope. Created one at '$( $Script:logfile )'" -InformationAction Continue -Verbose
-        # }
-
         # Testing the path
         If ( ( Test-Path -Path $Script:logfile -IsValid ) -eq $false ) {
             Write-Error -Message "Invalid variable '`$logfile'. The path '$( $Script:logfile )' is invalid."
@@ -82,12 +75,6 @@ Function Write-Log {
             Write-Error -Message "Invalid variable '`$Message'. The message '$( $Message )' is invalid."
             throw "Invalid log message. The message '$( $Message )' is invalid."
         }
-
-        # If a process id (to identify this session by a guid) it will be set automatically here
-        # If ( $null -eq $Script:processId ) {
-        #     $Script:processId = [guid]::NewGuid().ToString()
-        #     Write-Verbose -Message "There is no variable '`$processId' present on 'Script' scope. Created one with '$( $Script:processId )'" -InformationAction Continue -Verbose
-        # }
 
     }
 
@@ -105,8 +92,6 @@ Function Write-Log {
         $logstring = $logarray -join "`t"
 
         # Save the string to the logfile
-        #$logstring | Out-File -FilePath $logfile -Encoding utf8 -Append -NoClobber
-        #Out-File -InputObject = $logstring
         $randomDelay = Get-Random -Maximum 3000
         $outArgs = @{
             FilePath = $script:logfile
@@ -140,9 +125,6 @@ Function Write-Log {
                 }
             }
         }
-
-        # Return
-        #$null
 
     }
 
