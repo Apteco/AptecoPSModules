@@ -12,8 +12,8 @@ Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope CurrentUser
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 
 # Then install this module and other dependencies
-install-script install-dependencies, import-dependencies
-install-module writelog
+install-script install-dependencies
+install-module writelog, ImportDependency
 Install-Dependencies -module PSNotify
 
 # Then you can import the module and it will tell you the path for your channel store, when using -verbose flag

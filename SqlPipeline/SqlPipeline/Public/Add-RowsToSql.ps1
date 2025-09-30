@@ -174,7 +174,7 @@ function Add-RowsToSql {
         # CHECK THE CONNECTION
         #-----------------------------------------------
 
-        $sqlTest = Test-SqlConnection -ConnectionName $SQLConnectionName
+        $sqlTest = SimplySql\Test-SqlConnection -ConnectionName $SQLConnectionName
 
         If ( $sqlTest -eq $true ) {
             Write-Verbose "Connection test successful"
@@ -189,7 +189,7 @@ function Add-RowsToSql {
         #-----------------------------------------------
 
         If ( $UseTransaction -eq $true ) {
-            Start-SqlTransaction -ConnectionName $SQLConnectionName
+            SimplySql\Start-SqlTransaction -ConnectionName $SQLConnectionName
         }
 
 
@@ -248,7 +248,7 @@ function Add-RowsToSql {
                     # If it was able to create it, delete it directly for proper creation later
                     #
                     $isTableExisting = $false
-                    $allTables = Invoke-SqlQuery -Query "SELECT * FROM sqlite_master WHERE type='table';"
+                    $allTables = SimplySql\Invoke-SqlQuery -Query "SELECT * FROM sqlite_master WHERE type='table';"
                     If ( $null -ne $allTables ) {
                         If ( $allTables.name -contains $TableName ) {
                             $isTableExisting = $true
@@ -260,11 +260,11 @@ function Add-RowsToSql {
                         Write-Verbose "Create table ""$( $TableName )"""
                         $createQueryText = "CREATE TABLE IF NOT EXISTS ""$( $TableName )"" ( $(( $columnCreationText -join ', ' )) )"
                         #Write-Verbose $createQueryText
-                        Invoke-SqlUpdate -Query $createQueryText -ConnectionName $SQLConnectionName | Out-Null
+                        SimplySql\Invoke-SqlUpdate -Query $createQueryText -ConnectionName $SQLConnectionName | Out-Null
                     } else {
 
                         # Read the columns of the table
-                        $tableColumnTable = Invoke-SqlQuery -Query "PRAGMA table_info(""$( $TableName )"");" -Stream -ConnectionName $SQLConnectionName
+                        $tableColumnTable = SimplySql\Invoke-SqlQuery -Query "PRAGMA table_info(""$( $TableName )"");" -Stream -ConnectionName $SQLConnectionName
                         $tableColumns = @( $tableColumnTable.name )
 
                         # If the table is existing, create new columns, if parameter is set
@@ -274,7 +274,7 @@ function Add-RowsToSql {
                             For ($c = 0; $c -lt $columns.Count; $c++) {
                                 $column = $columns[$c]
                                 If ( $tableColumns -notcontains $column ) {
-                                    Invoke-SqlUpdate -Query "ALTER TABLE ""$( $TableName )"" ADD ""$( $column )""" -ConnectionName $SQLConnectionName | Out-Null
+                                    SimplySql\Invoke-SqlUpdate -Query "ALTER TABLE ""$( $TableName )"" ADD ""$( $column )""" -ConnectionName $SQLConnectionName | Out-Null
                                 }
                             }
 
@@ -317,7 +317,7 @@ function Add-RowsToSql {
                         $parameterObject["@f$( $i )"] = $InputObject.$key
                     }
                 }
-                $recordsInserted += Invoke-SqlUpdate -Query $insertQuery -Parameters $parameterObject -ConnectionName $SQLConnectionName #| Out-Null
+                $recordsInserted += SimplySql\Invoke-SqlUpdate -Query $insertQuery -Parameters $parameterObject -ConnectionName $SQLConnectionName #| Out-Null
 
 
                 #-----------------------------------------------
@@ -335,8 +335,8 @@ function Add-RowsToSql {
 
                 If ( $recordsInserted % $CommitEvery -eq 0 -and $UseTransaction -eq $true) {
                     Write-Verbose "COMMIT at $( $recordsInserted )"
-                    Complete-SqlTransaction -ConnectionName $SQLConnectionName
-                    Start-SqlTransaction -ConnectionName $SQLConnectionName
+                    SimplySql\Complete-SqlTransaction -ConnectionName $SQLConnectionName
+                    SimplySql\Start-SqlTransaction -ConnectionName $SQLConnectionName
                 }
 
             }
@@ -373,19 +373,19 @@ function Add-RowsToSql {
         If ( $UseTransaction -eq $true ) {
             If ( $doUndo -eq $true) {
                 Write-Warning "ROLLBACK/UNDO SQL Transaction"
-                Undo-SqlTransaction -ConnectionName $SQLConnectionName
+                SimplySql\Undo-SqlTransaction -ConnectionName $SQLConnectionName
                 $recordsInserted = 0
                 throw $e
             } else {
                 If ( $recordsInserted -gt 0) {
-                    Complete-SqlTransaction -ConnectionName $SQLConnectionName
+                    SimplySql\Complete-SqlTransaction -ConnectionName $SQLConnectionName
                 }
             }
         }
 
         # Close Database connection
         If ( $CloseConnection -eq $true ) {
-            Close-SqlConnection -ConnectionName $SQLConnectionName
+            SimplySql\Close-SqlConnection -ConnectionName $SQLConnectionName
         }
 
         Write-Verbose "Inserted $( $recordsInserted ) records"

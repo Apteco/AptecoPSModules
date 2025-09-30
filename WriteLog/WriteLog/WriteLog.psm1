@@ -66,21 +66,7 @@ $Script:processId = [guid]::NewGuid().ToString()
 
 # Find out the temporary directory
 # TODO Support for MacOS
-$tmpdir = $null
-If ( $IsLinux -eq $true ) {
-   
-    If ( $env:TMPDIR -ne $null ) {
-        $tmpdir = $env:TMPDIR
-    } elseif ( (Test-Path -Path "/tmp") -eq $True ) {
-        $tmpdir = "/tmp"
-    } else {
-        $tmpdir = "./"
-    }
-
-} else {
-    # IsWindows
-    $tmpdir = $Env:tmp
-}
+$tmpdir = Get-TemporaryPath
 $f = Join-Path -Path $tmpdir -ChildPath "$( $Script:processId ).tmp"
 $fAbsolute = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($f)
 $Script:logfile = $fAbsolute

@@ -48,7 +48,8 @@ Function Resize-Logfile {
             # [Datetime]::ParseExact("20221027130112","yyyyMMddHHmmss",$null)
 
             # Create a temporary file
-            $tempFile = Join-Path -Path $Env:tmp -ChildPath "$( [guid]::newguid().toString() ).tmp" #New-TemporaryFile
+            $tmpdir = Get-TemporaryPath
+            $tempFile = Join-Path -Path $tmpdir -ChildPath "$( [guid]::newguid().toString() ).tmp" #New-TemporaryFile
 
             # Write only last lines to the new file
             Get-Content -Tail $RowsToKeep -Encoding utf8 -Path $Script:logfile | Set-Content -path $tempFile.FullName -Encoding utf8

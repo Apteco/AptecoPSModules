@@ -5,7 +5,7 @@
 RootModule = 'SqlPipeline.psm1'
 
 # Die Versionsnummer dieses Moduls
-ModuleVersion = '0.1.3'
+ModuleVersion = '0.1.4'
 
 # Unterstützte PSEditions
 # CompatiblePSEditions = @()
@@ -47,6 +47,7 @@ PowerShellVersion = '5.1'
 # Die Module, die vor dem Importieren dieses Moduls in die globale Umgebung geladen werden müssen
 RequiredModules = @(
     "SimplySQL"
+    "ImportDependency"
 )
 
 # Die Assemblys, die vor dem Importieren dieses Moduls geladen werden müssen
@@ -107,6 +108,8 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.1.4 Prefixing SimplySql commands
+      Integration of ImportDependency module
 0.1.3 Removing unnecessary Code
 0.1.2 Throwing an exception now, when no transaction is used and the input is not valid
 0.1.1 Fixed temporary module and script path loading
