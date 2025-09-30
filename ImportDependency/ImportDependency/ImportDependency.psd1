@@ -5,7 +5,7 @@
 RootModule = 'ImportDependency.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.3.5'
+ModuleVersion = '0.3.6'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -27,7 +27,7 @@ Description = 'Apteco PS Modules - PowerShell import dependencies
 
 Module to import dependencies from the PowerShell Gallery and NuGet.
 
-    Please make sure to have the Modules WriteLog and PowerShellGet (>= 2.2.4) installed.
+Please make sure to have the Modules WriteLog and PowerShellGet (>= 2.2.4) installed.
 '
 
 # Minimum version of the PowerShell engine required by this module
@@ -73,6 +73,9 @@ RequiredModules = @(
 FunctionsToExport = @(
     "Import-Dependency"
     "Get-PSEnvironment"
+    "Get-TemporaryPath"
+    "Get-PythonPath"
+    "Get-PwshPath"
 )
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
@@ -99,7 +102,7 @@ PrivateData = @{
     PSData = @{
 
         # Tags applied to this module. These help with module discovery in online galleries.
-        Tags = @("PSEdition_Desktop", "PSEdition_Core", "Windows", "Apteco")
+        Tags = @('powershell', "PSEdition_Desktop", "PSEdition_Core", "Windows", 'Linux', "Apteco")
 
         # A URL to the license for this module.
         LicenseUri = 'https://gist.github.com/gitfvb/58930387ee8677b5ccef93ffc115d836'
@@ -112,6 +115,8 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+0.3.6 Adding a function Get-TemporaryPath to get a temporary path on Windows and Linux
+      Adding two functions to get pwsh and python path
 0.3.5 Adding Linux functionality for current executing user and if it is sudo/elevated
 0.3.4 Added more switches to get faster execution of Get-PSEnvironment
       Added a synopsys to Get-PSEnvironment

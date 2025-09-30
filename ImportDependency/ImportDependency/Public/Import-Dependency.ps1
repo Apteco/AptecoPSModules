@@ -166,7 +166,7 @@ Function Import-Dependency {
         $modCount = 0
         $successfulModules = [Array]@()
         $failedModules = [Array]@()
-        $Module | Where-Object { $_ -ne "WriteLog" } | ForEach-Object {
+        $Module | Where-Object { @("WriteLog", "ImportDependency") -notcontains $_ } | ForEach-Object {
             $mod = $_
             try {
                 Write-Verbose "Loading $( $mod )"
