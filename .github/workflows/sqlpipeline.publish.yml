@@ -37,6 +37,7 @@ jobs:
         run: |
           Set-PSRepository psgallery -InstallationPolicy trusted
           Install-Module -Name PSScriptAnalyzer -force
+          Install-Module -Name ImportDependency -Force
           Install-Module -Name SimplySql -Force
           Import-Module PSScriptAnalyzer
           $path = "SqlPipeline/SqlPipeline"
