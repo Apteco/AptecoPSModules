@@ -22,16 +22,17 @@ https://github.com/RamblingCookieMonster/PSStackExchange/blob/db1277453374cb1668
 # LOAD PUBLIC AND PRIVATE FUNCTIONS
 #-----------------------------------------------
 
-$Public  = @( Get-ChildItem -Path "$( $PSScriptRoot )/Public/*.ps1" -ErrorAction SilentlyContinue )
-$Private = @( Get-ChildItem -Path "$( $PSScriptRoot )/Private/*.ps1" -ErrorAction SilentlyContinue )
+$Public  = @( Get-ChildItem -Path "$( $PSScriptRoot )/Public/*.ps1" -Recurse -ErrorAction SilentlyContinue )
+$Private = @( Get-ChildItem -Path "$( $PSScriptRoot )/Private/*.ps1" -Recurse -ErrorAction SilentlyContinue )
 
 # dot source the files
 @( $Public + $Private ) | ForEach-Object {
     $import = $_
+        Write-Verbose "Load $( $import.fullname )"
     Try {
         . $import.fullname
     } Catch {
-        Write-Error -Message "Failed to import function $($import.fullname): $_"
+        Write-Error -Message "Failed to import function $( $import.fullname ): $( $_ )"
     }
 }
 
@@ -66,5 +67,7 @@ Export-ModuleMember -Function $Public.Basename -Alias $aliasDef.GetEnumerator().
 #-----------------------------------------------
 # SET SOME VARIABLES ONLY VISIBLE TO MODULE AND FUNCTIONS
 #-----------------------------------------------
+
+Export-ModuleMember -Function $Public.Basename
 
 # ...

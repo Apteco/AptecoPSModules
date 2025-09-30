@@ -4,7 +4,7 @@
 RootModule = 'MeasureRows.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.9.4'
+ModuleVersion = '0.9.5'
 
 # Supported PSEditions
 #CompatiblePSEditions = @()
@@ -127,6 +127,7 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+0.9.5 Fixing internal function import
 0.9.4 Fixed tags in module manifest
 0.9.3 Fixed documentation from Measure-Rows to Measure-Row
 0.9.2 Updated tests and test files
