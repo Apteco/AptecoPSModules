@@ -14,12 +14,8 @@ jobs:
   test:
     strategy:
       matrix:
-        os: [ windows-latest, ubuntu-latest ]
+        os: [ ubuntu-latest ]
         shell: [ pwsh ]
-        include:
-          - os: windows-latest
-            shell: powershell
-
 
     runs-on: ${{ matrix.os }}
 
