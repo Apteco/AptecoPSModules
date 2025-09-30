@@ -63,6 +63,8 @@ Register-PSRepository -Name "LocalRepo" -SourceLocation "$( $env:USERPROFILE )\D
 Get-PSRepository
 ```
 
+On Linux you would use `Set-Location "$( $env:Home )/Downloads"` or create the `.\Downloads` directory.
+
 To trust a local repository, use
 
 ```PowerShell

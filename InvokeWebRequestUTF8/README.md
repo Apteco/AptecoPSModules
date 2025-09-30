@@ -43,6 +43,8 @@ Register-PSRepository -Name "LocalRepo" -SourceLocation "$( $env:USERPROFILE )\D
 Get-PSRepository
 ```
 
+On Linux you would use `Set-Location "$( $env:Home )/Downloads"` or create the `.\Downloads` directory.
+
 Then put your downloaded `.nupkg` file into the new created `PSRepo` folder and you should see the module via 
 
 ```PowerShell

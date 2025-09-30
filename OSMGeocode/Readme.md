@@ -49,7 +49,8 @@ to update that module. Now proceed with installing apteco modules:
 
 ```PowerShell
 # Execute this with elevated rights or with the user you need to execute it with, e.g. the apteco service user
-install-script install-dependencies, import-dependencies
+install-script install-dependencies
+install-module importdependency
 install-module writelog
 Install-Dependencies -module OSMGeocode
 ```
