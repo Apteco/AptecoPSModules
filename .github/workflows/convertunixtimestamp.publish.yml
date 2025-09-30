@@ -1,5 +1,5 @@
 # This is a basic workflow to help you get started with Actions
-name: MeasureRows Publish
+name: ConvertUnixTimestamp Publish
 
 # Controls when the workflow will run
 on:
@@ -9,7 +9,7 @@ on:
       - main
     types: [opened, synchronize, reopened]
     paths:
-      - 'MeasureRows/**.psd1'
+      - 'ConvertUnixTimestamp/**.psd1'
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -35,7 +35,7 @@ jobs:
       - name: Publishing
         shell: pwsh
         run: |
-          $path = "MeasureRows/MeasureRows"
+          $path = "ConvertUnixTimestamp/ConvertUnixTimestamp"
           Install-Module -Name PSScriptAnalyzer -force
           Import-Module PSScriptAnalyzer
           Invoke-ScriptAnalyzer -Path $path -Recurse -IncludeRule PSAvoidTrailingWhitespace -Fix
