@@ -29,8 +29,8 @@ Import-Module ImportDependency
 # LOAD PUBLIC AND PRIVATE FUNCTIONS
 #-----------------------------------------------
 
-$Public  = @( Get-ChildItem -Path "$( $PSScriptRoot )/public/*.ps1" -Recurse -ErrorAction SilentlyContinue )
-$Private = @( Get-ChildItem -Path "$( $PSScriptRoot )/private/*.ps1" -Recurse -ErrorAction SilentlyContinue )
+$Public  = @( Get-ChildItem -Path "$( $PSScriptRoot )/Public/*.ps1" -Recurse -ErrorAction SilentlyContinue )
+$Private = @( Get-ChildItem -Path "$( $PSScriptRoot )/Private/*.ps1" -Recurse -ErrorAction SilentlyContinue )
 
 # dot source the files
 @( $Public + $Private ) | ForEach-Object {

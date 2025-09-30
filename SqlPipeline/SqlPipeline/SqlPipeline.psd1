@@ -5,7 +5,7 @@
 RootModule = 'SqlPipeline.psm1'
 
 # Die Versionsnummer dieses Moduls
-ModuleVersion = '0.1.4'
+ModuleVersion = '0.1.5'
 
 # Unterstützte PSEditions
 # CompatiblePSEditions = @()
@@ -108,6 +108,7 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.1.5 Fixing case sensitive path for private and public functions
 0.1.4 Prefixing SimplySql commands
       Integration of ImportDependency module
 0.1.3 Removing unnecessary Code
