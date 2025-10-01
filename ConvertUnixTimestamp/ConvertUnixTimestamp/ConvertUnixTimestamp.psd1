@@ -12,7 +12,7 @@
 RootModule = 'ConvertUnixTimestamp.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.0.2'
+ModuleVersion = '0.1.0'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -111,7 +111,7 @@ PrivateData = @{
     PSData = @{
 
         # Tags applied to this module. These help with module discovery in online galleries.
-        Tags = @("PSEdition_Desktop", "PSEdition_Core", "Windows", "Apteco")
+        Tags = @('powershell', "PSEdition_Desktop", "PSEdition_Core", "Windows", 'Linux', "Apteco")
 
         # A URL to the license for this module.
         LicenseUri = 'https://gist.github.com/gitfvb/58930387ee8677b5ccef93ffc115d836'
@@ -124,6 +124,7 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = "
+0.1.0 Tested Unix compatibility
 0.0.2 Updated copyright to 2025
 0.0.1 Initial release through PSGallery
 "
