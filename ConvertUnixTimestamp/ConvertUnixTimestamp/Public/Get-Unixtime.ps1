@@ -39,37 +39,26 @@ Function Get-Unixtime {
 
     #>
 
-    [cmdletbinding()]
+    [CmdletBinding()]
+    [OutputType([UInt64])]
     param(
-         [Parameter(Mandatory=$false,ValueFromPipeline)][DateTime] $Timestamp = ( [Datetime]::now )
-        ,[Parameter(Mandatory=$false)][switch] $InMilliseconds = $false
+
+         [Parameter(Mandatory=$false,ValueFromPipeline)]
+         [DateTime] $Timestamp = ( [Datetime]::now )
+
+        ,[Parameter(Mandatory=$false)]
+         [Switch] $InMilliseconds = $false
+
     )
 
-    Begin {
-
-        $multiplier = 1
-
-        if ( $InMilliseconds ) {
-            $multiplier = 1000
-        }
-
-    }
-
     Process {
-
         $tsUtc = $Timestamp.ToUniversalTime()
-        $tsFormatted = Get-Date $tsUtc -UFormat %s
-        $unixtime = [UInt64]([double]::Parse($tsFormatted) * $multiplier)
-        if ( $InMilliseconds ) {
-          $unixtime += $tsUtc.Millisecond
+        $dto = [DateTimeOffset]$tsUtc
+        if ($InMilliseconds) {
+            return [UInt64]$dto.ToUnixTimeMilliseconds()
+        } else {
+            return [UInt64]$dto.ToUnixTimeSeconds()
         }
-
-        return $unixtime
-
-    }
-
-    End {
-
     }
 
 }

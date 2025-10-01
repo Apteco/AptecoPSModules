@@ -5,9 +5,9 @@ BeforeAll {
 Describe "ConvertFrom-UnixTime" {
 
     It "Datetime comparison by different timezones" {
-        $timezone = [System.TimeZoneInfo]::FindSystemTimeZoneById("Central European Standard Time")
-        $currentDateTime = [System.TimeZoneInfo]::ConvertTimeFromUtc((Get-Date).ToUniversalTime(), $timezone)
         $utcNow = [datetime]::UtcNow
+        $timezone = [System.TimeZoneInfo]::FindSystemTimeZoneById("Central European Standard Time")
+        $currentDateTime = [System.TimeZoneInfo]::ConvertTimeFromUtc($utcNow, $timezone)
         $cetUnix = Get-Unixtime -Timestamp $currentDateTime
         $utcUnix = Get-Unixtime -Timestamp $utcNow
         $utcUnix | Should -Be $cetUnix
