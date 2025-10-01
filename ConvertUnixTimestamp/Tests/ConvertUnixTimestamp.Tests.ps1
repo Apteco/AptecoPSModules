@@ -9,8 +9,8 @@ Describe "ConvertFrom-UnixTime" {
         # [DateTime] does not save the timezone that was saved via conversion
         # It only know UTC and local timezones
         $utcNow = [datetime]::UtcNow
-        $utcTZ = [System.TimeZoneInfo]::FindSystemTimeZoneById("UTC")
-        $localTZ = Get-TimeZone
+        $utcTZ = [System.Timezoneinfo]::Utc
+        $localTZ = [System.Timezoneinfo]::Local
         #$cetTZ = [System.TimeZoneInfo]::FindSystemTimeZoneById("Europe/Berlin")
         #$currentDateTime = [System.TimeZoneInfo]::ConvertTimeFromUtc($utcNow, $timezone)
         $currentDateTime = [System.TimeZoneInfo]::ConvertTime($utcNow, $utcTZ, $localTZ)
@@ -75,14 +75,16 @@ Describe "Get-Unixtime" {
     It "Returns the current unix timestamp (seconds)" {
         $now = Get-Date
         $result = Get-Unixtime -Timestamp $now
-        $expected = [int][double]::Parse((Get-Date $now.ToUniversalTime() -UFormat %s))
+        $dto = [DateTimeOffset]$now.ToUniversalTime()        
+        $expected = [UInt64]$dto.ToUnixTimeSeconds()
         $result | Should -Be $expected
     }
 
     It "Returns the current unix timestamp (milliseconds)" {
         $now = Get-Date
         $result = Get-Unixtime -Timestamp $now -InMilliseconds
-        $expected = [int][double]::Parse((Get-Date $now.ToUniversalTime() -UFormat %s)) * 1000 + $now.Millisecond
+        $dto = [DateTimeOffset]$now.ToUniversalTime()        
+        $expected = [UInt64]$dto.ToUnixTimeMilliseconds()
         $result | Should -Be $expected
     }
 
