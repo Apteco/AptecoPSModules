@@ -12,7 +12,7 @@ Describe "ConvertFrom-UnixTime" {
         #$currentDateTime = [System.TimeZoneInfo]::ConvertTimeFromUtc($utcNow, $timezone)
         $currentDateTime = [System.TimeZoneInfo]::ConvertTime($utcNow, $utcTZ, $cetTZ)
         write-verbose $currentDateTime.ToString("yyyy-MM-ddTHH:mm:ss") -verbose
-        write-verbose $currentDateTime.ToString("yyyy-MM-ddTHH:mm:ss").ToUniversalTime() -verbose
+        write-verbose $currentDateTime.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss") -verbose
         $cetUnix = Get-Unixtime -Timestamp $currentDateTime
         $utcUnix = Get-Unixtime -Timestamp $utcNow
         write-verbose $cetUnix -verbose
