@@ -248,11 +248,9 @@ function Add-RowsToSql {
                     # If it was able to create it, delete it directly for proper creation later
                     #
                     $isTableExisting = $false
-                    $allTables = SimplySql\Invoke-SqlQuery -Query "SELECT * FROM sqlite_master WHERE type='table';"
-                    If ( $null -ne $allTables ) {
-                        If ( $allTables.name -contains $TableName ) {
-                            $isTableExisting = $true
-                        }
+                    $tableCheck = SimplySql\Invoke-SqlScalar -Query "SELECT CASE WHEN EXISTS (SELECT 1 FROM sqlite_master WHERE type='table' AND lower(name)=lower('$($TableName)')) THEN 1 ELSE 0 END AS tablecheck;"
+                    If ( $tableCheck -eq 1) {
+                        $isTableExisting = $true
                     }
 
                     # Create table if it is not existing
