@@ -6,10 +6,14 @@ Describe "ConvertFrom-UnixTime" {
 
     It "Datetime comparison by different timezones" {
         $utcNow = [datetime]::UtcNow
+        write-verbose $utcNow.ToString("yyyy-MM-ddTHH:mm:ss") -verbose
         $timezone = [System.TimeZoneInfo]::FindSystemTimeZoneById("Central European Standard Time")
         $currentDateTime = [System.TimeZoneInfo]::ConvertTimeFromUtc($utcNow, $timezone)
+        write-verbose $currentDateTime.ToString("yyyy-MM-ddTHH:mm:ss") -verbose
         $cetUnix = Get-Unixtime -Timestamp $currentDateTime
         $utcUnix = Get-Unixtime -Timestamp $utcNow
+        write-verbose $cetUnix -verbose
+        write-verbose $utcUnix -verbose
         $utcUnix | Should -Be $cetUnix
     }
 

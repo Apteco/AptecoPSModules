@@ -45,7 +45,8 @@ Function ConvertFrom-UnixTime {
 
     #>
 
-    [cmdletbinding()]
+    [CmdletBinding()]
+    [OutputType([DateTime])]
     param(
          [Parameter(Mandatory=$true,ValueFromPipeline)][UInt64] $Unixtime
         ,[Parameter(Mandatory=$false)][switch] $InMilliseconds = $false
@@ -70,7 +71,8 @@ Function ConvertFrom-UnixTime {
             $timestamp = [System.TimeZoneInfo]::ConvertTimeFromUtc($timestamp,[System.TimeZoneInfo]::Local)
         }
 
-        return $timestamp
+        # Return
+        $timestamp
 
     }
 
