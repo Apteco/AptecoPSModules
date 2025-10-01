@@ -5,19 +5,18 @@ BeforeAll {
 Describe "ConvertFrom-UnixTime" {
 
     It "Datetime comparison by different timezones" {
+        # This test only makes sense if you have a different timezone than UTC
+        # [DateTime] does not save the timezone that was saved via conversion
+        # It only know UTC and local timezones
         $utcNow = [datetime]::UtcNow
-        write-verbose $utcNow.ToString("yyyy-MM-ddTHH:mm:ss") -verbose
         $utcTZ = [System.TimeZoneInfo]::FindSystemTimeZoneById("UTC")
-        $cetTZ = [System.TimeZoneInfo]::FindSystemTimeZoneById("Central European Standard Time")
+        $localTZ = Get-TimeZone
+        #$cetTZ = [System.TimeZoneInfo]::FindSystemTimeZoneById("Europe/Berlin")
         #$currentDateTime = [System.TimeZoneInfo]::ConvertTimeFromUtc($utcNow, $timezone)
-        $currentDateTime = [System.TimeZoneInfo]::ConvertTime($utcNow, $utcTZ, $cetTZ)
-        write-verbose $currentDateTime.ToString("yyyy-MM-ddTHH:mm:ss") -verbose
-        write-verbose $currentDateTime.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss") -verbose
-        $cetUnix = Get-Unixtime -Timestamp $currentDateTime
+        $currentDateTime = [System.TimeZoneInfo]::ConvertTime($utcNow, $utcTZ, $localTZ)
+        $localUnix = Get-Unixtime -Timestamp $currentDateTime
         $utcUnix = Get-Unixtime -Timestamp $utcNow
-        write-verbose $cetUnix -verbose
-        write-verbose $utcUnix -verbose
-        $utcUnix | Should -Be $cetUnix
+        $utcUnix | Should -Be $localUnix
     }
 
     It "Convert Now to unix timestamp and back and compare" {
