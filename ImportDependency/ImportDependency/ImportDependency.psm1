@@ -56,7 +56,7 @@ If ( $preCheckOs -eq "Windows" ) {
     }
 
     # Add pwsh core path
-    If ( $Script:isCore -eq $true ) {
+    If ( $preCheckisCore -eq $true ) {
         If ( [System.Environment]::GetEnvironmentVariables().keys -contains "ProgramW6432" ) {
             $modulePath += "$( [System.Environment]::GetEnvironmentVariable("ProgramW6432") )\powershell\7\Modules"
         }
@@ -90,7 +90,7 @@ If ( $preCheckOs -eq "Windows" ) {
     }
 
     # Add pwsh core path
-    If ( $Script:isCore -eq $true ) {
+    If ( $preCheckisCore -eq $true ) {
         If ( [System.Environment]::GetEnvironmentVariables().keys -contains "ProgramW6432" ) {
             $scriptPath += "$( [System.Environment]::GetEnvironmentVariable("ProgramW6432") )\powershell\7\Scripts"
         }
@@ -153,6 +153,10 @@ New-Variable -Name psEdition -Value $null -Scope Script -Force              # Ed
 New-Variable -Name platform -Value $null -Scope Script -Force               # Platform type (e.g., Windows, Linux, macOS)
 New-Variable -Name frameworkPreference -Value $null -Scope Script -Force    # Preferred .NET framework version
 New-Variable -Name isCore -Value $null -Scope Script -Force                 # Indicates if PowerShell Core is being used (True/False)
+New-Variable -Name isCoreInstalled -Value $null -Scope Script -Force        # Indicates if PowerShell Core is already installed (True/False)
+New-Variable -Name defaultPsCoreVersion -Value $null -Scope Script -Force   # Default version of PowerShell Core that is used
+New-Variable -Name defaultPsCoreIs64Bit -Value $null -Scope Script -Force   # If default PowerShell is 64-bit (True/False)
+New-Variable -Name defaultPsCorePath -Value $null -Scope Script -Force      # Default Path where PowerShell Core is installed
 New-Variable -Name os -Value $null -Scope Script -Force                     # Operating system name
 New-Variable -Name is64BitOS -Value $null -Scope Script -Force              # Indicates if the OS is 64-bit (True/False)
 New-Variable -Name is64BitProcess -Value $null -Scope Script -Force         # Indicates if the process is 64-bit (True/False)
@@ -165,6 +169,7 @@ New-Variable -Name installedModules -Value $null -Scope Script -Force           
 New-Variable -Name backgroundJobs -Value $null -Scope Script -Force               # Hidden variable to store background jobs
 New-Variable -Name installedGlobalPackages -Value $null -Scope Script -Force               # Caches all installed NuGet Global Packages
 
+# Filling some default values
 $Script:isCore = $preCheckisCore
 $Script:os = $preCheckOs
 $Script:psVersion = $PSVersionTable.PSVersion.ToString()
@@ -195,6 +200,31 @@ $Script:frameworkPreference = @(
 )
 #>
 
+# Check if pscore is installed
+$pwshCommand = Get-Command -commandType Application -Name "pwsh*"
+If ( $pwshCommand.Count -gt 0 ) {
+    If ( ( pwsh { 1+1 } ) -eq 2 ) {
+        $Script:isCoreInstalled = $true
+        $Script:defaultPsCoreVersion = pwsh { $PSVersionTable.PSVersion.ToString() }
+        $Script:defaultPsCoreIs64Bit = pwsh { [System.Environment]::Is64BitProcess }
+        if ($Script:os -eq "Windows") {
+            # For Windows
+            $Script:defaultPsCorePath = ( get-command -name "pwsh*" -CommandType Application | where-object { $_.Source.replace("\pwsh.exe","") -eq ( pwsh { $pshome } ) } ).Source
+        } elseif ( $Script:os -eq "Linux" ) {
+            # For Linux
+            If ( $null -ne (which pwse) ) {
+                $Script:defaultPsCorePath = (which pwse)
+            }
+        }
+    } else {
+        Write-Warning "pwsh command found, but pwsh execution test failed."
+    }
+
+} else {
+    $Script:isCoreInstalled = $false
+}
+
+# Checking the processor architecture and operating system architecture
 If ( $null -ne [System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture ) {
 
     Switch ( [System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture.ToString().toUpper() ) {

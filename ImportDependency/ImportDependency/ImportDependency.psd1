@@ -5,7 +5,7 @@
 RootModule = 'ImportDependency.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.3.7'
+ModuleVersion = '0.3.8'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -115,6 +115,9 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+0.3.8 Added more default information about PSCore, if installed (but also when not currently used)
+      Fixed getting pwsh path on Windows and Linux
+      Fixed loading of module and script path
 0.3.7 Returning absolute logfile path rather than a relative one
 0.3.6 Adding a function Get-TemporaryPath to get a temporary path on Windows and Linux
       Adding two functions to get pwsh and python path

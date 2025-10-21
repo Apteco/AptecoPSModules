@@ -73,27 +73,33 @@
         }
 
         [Ordered]@{
-            "PSVersion"           = $Script:psVersion
-            "PSEdition"           = $Script:psEdition
-            "OS"                  = $Script:os
+            "PSVersion"                     = $Script:psVersion
+            "PSEdition"                     = $Script:psEdition
+            "OS"                            = $Script:os
             #Platform        = $Script:platform
-            "IsCore"              = $Script:isCore
-            "Architecture"        = $Script:architecture
-            "CurrentRuntime"      = Get-CurrentRuntimeId
-            "Is64BitOS"           = $Script:is64BitOS
-            "Is64BitProcess"      = $Script:is64BitProcess
-            "ExecutingUser"       = $Script:executingUser
-            "IsElevated"          = $Script:isElevated
-            "RuntimePreference"   = $Script:runtimePreference -join ', '
-            "FrameworkPreference" = $Script:frameworkPreference -join ', '
-            "PackageManagement"   = $Script:packageManagement
-            "PowerShellGet"       = $Script:powerShellGet
-            "VcRedist"            = $Script:vcredist
-            "BackgroundCheckCompleted" = $didBackgroundCheck
-            "InstalledModules"    = $Script:installedModules
-            "InstalledGlobalPackages" = $Script:installedGlobalPackages
-            "LocalPackageCheckCompleted" = $didLocalPackageCheck
-            "InstalledLocalPackages" = $localPackages
+            "IsCore"                        = $Script:isCore
+            "IsCoreInstalled"               = $Script:isCoreInstalled
+            "DefaultPSCore" = [Ordered]@{
+                "Version"                   = $Script:defaultPsCoreVersion
+                "Is64Bit"                   = $Script:defaultPsCoreIs64Bit
+                "Path"                      = $Script:defaultPsCorePath
+            }
+            "Architecture"                  = $Script:architecture
+            "CurrentRuntime"                = Get-CurrentRuntimeId
+            "Is64BitOS"                     = $Script:is64BitOS
+            "Is64BitProcess"                = $Script:is64BitProcess
+            "ExecutingUser"                 = $Script:executingUser
+            "IsElevated"                    = $Script:isElevated
+            "RuntimePreference"             = $Script:runtimePreference -join ', '
+            "FrameworkPreference"           = $Script:frameworkPreference -join ', '
+            "PackageManagement"             = $Script:packageManagement
+            "PowerShellGet"                 = $Script:powerShellGet
+            "VcRedist"                      = $Script:vcredist
+            "BackgroundCheckCompleted"      = $didBackgroundCheck
+            "InstalledModules"              = $Script:installedModules
+            "InstalledGlobalPackages"       = $Script:installedGlobalPackages
+            "LocalPackageCheckCompleted"    = $didLocalPackageCheck
+            "InstalledLocalPackages"        = $localPackages
         }
 
     }
