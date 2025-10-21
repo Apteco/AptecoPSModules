@@ -140,7 +140,7 @@ Uninstall-Module -Name "ImportDependency"
 
 ```PowerShell
 install-script install-dependencies -force
-install-module Import-Dependency -force
+install-module ImportDependency -force -allowclobber
 
 cd c:\temp
 Install-Dependencies -LocalPackage MailKit -verbose
@@ -160,6 +160,8 @@ PSVersion                      5.1.26100.6584
 PSEdition                      Desktop
 OS                             Windows
 IsCore                         False
+IsCoreInstalled                True
+DefaultPSCore                  {Version, Is64Bit, Path}
 Architecture                   ARM64
 CurrentRuntime                 net4.0
 Is64BitOS                      True
@@ -189,6 +191,8 @@ PSVersion                      5.1.26100.6584
 PSEdition                      Desktop
 OS                             Windows
 IsCore                         False
+IsCoreInstalled                True
+DefaultPSCore                  {Version, Is64Bit, Path}
 Architecture                   ARM64
 CurrentRuntime                 net4.0
 Is64BitOS                      True
