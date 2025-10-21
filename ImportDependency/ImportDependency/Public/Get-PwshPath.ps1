@@ -1,8 +1,9 @@
-function Get-PwsePath {
+function Get-PwshPath {
 
-    $pse = Get-PSEnvironment -SkipBackgroundCheck -SkipLocalPackageCheck
+    #$pse = Get-PSEnvironment -SkipBackgroundCheck -SkipLocalPackageCheck
     
-    $pwshPath = $null
+    $pwshPath = $Script:defaultPsCorePath
+    <#
     if ($pse.OS -eq "Windows") {
         # For Windows
         $pwshPath = (get-command pwsh).source
@@ -12,11 +13,12 @@ function Get-PwsePath {
             $pwshPath = (which pwse)
         }
     }
+    #>
 
-    if (-not $pwshPath) {
+    if ($null -eq $pwshPath) {
         Write-Verbose "pwsh is not installed or not found."
     } else {
-        Write-Verbose "pwsh Path: $pwshPath"
+        Write-Verbose "pwsh Path: $( $pwshPath )"
     }
 
     return $pwshPath

@@ -1,7 +1,7 @@
 ﻿
 <#PSScriptInfo
 
-.VERSION 0.1.10
+.VERSION 0.1.11
 
 .GUID 4c029c8e-09fa-48ee-9d62-10895150ce83
 
@@ -26,6 +26,7 @@
 .EXTERNALSCRIPTDEPENDENCIES
 
 .RELEASENOTES
+0.1.11 Added -AllowClobber to Install-Module cmdlet
 0.1.10 Fixing tags
 0.1.9 Changing default name for NuGet repository to "NuGet v2"
 0.1.8 Removed the admin elevated check for local packages/modules/scripts
@@ -603,7 +604,7 @@ If ( $Module.count -gt 0 ) {
                     }
                 } else {
                     Write-Log -Message "Installing Module $( $mod.Name )" -Severity VERBOSE
-                    Install-Module -Name $mod.Name -Scope $psScope #-Force
+                    Install-Module -Name $mod.Name -Scope $psScope -AllowClobber #-Force
                     $m += 1
                 }
 
