@@ -7,18 +7,22 @@ Function Set-Logfile {
     )
 
     Process {
+
         try {
 
             If ( (Test-Path -Path $Path -IsValid) -eq $true) {
 
                 # Create the item if not existing
-                If (( Test-Path -Path $Path ) -eq $false) {
-                    Write-Verbose "Create the item"
-                    New-Item -Path $Path -ItemType File
-                }
+                #If (( Test-Path -Path $Path ) -eq $false) {
+                #    Write-Verbose "Create the item"
+                #    New-Item -Path $Path -ItemType File
+                #}
 
-                $resolvedPath = Resolve-Path -Path $Path
-                $Script:logfile = $resolvedPath.Path
+                #$resolvedPath = Resolve-Path -Path $Path
+                #$Script:logfile = $resolvedPath.Path
+
+                $resolvedPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Path)
+                $Script:logfile = $resolvedPath
 
             } else {
 
@@ -40,9 +44,9 @@ Function Set-Logfile {
         }
 
         # Return
-        Write-Verbose "Using the file: $( $Script:logfile )"
+        Write-Verbose "Using the file: '$( $Script:logfile )'"
 
-        $True
+        #$True
 
     }
 

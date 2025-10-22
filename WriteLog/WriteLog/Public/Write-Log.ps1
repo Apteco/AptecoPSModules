@@ -81,6 +81,7 @@ Function Write-Log {
     Process {
 
         # Create an array first for all the parts of the log message
+        # TODO set the structure of the log message somewhere globally and replace placeholders with $string.replace("#severity#","$($Severity.ToString())") etc. Custom variables like machine name etc. could be added there, too
         $logarray = @(
             [datetime]::Now.ToString("yyyyMMddHHmmss")
             $Script:processId
@@ -88,14 +89,34 @@ Function Write-Log {
             $Message
         )
 
+        # Specify the tab delimiter
+        # TODO Add a setter and getter for that delimiter somewhere globally
+        $delimiter = $Script:logDelimiter
+
         # Put the array together
-        $logstring = $logarray -join "`t"
+        #$logstring = $logarray -join "`t"
+        
+        # Create a StringBuilder object
+        $logstring = [System.Text.StringBuilder]::new()
+
+        # Iterate over the array and append each element
+        for ($i = 0; $i -lt $logarray.Length; $i++) {
+
+            # Append the current element
+            $logstring.Append($logarray[$i]) | Out-Null
+            
+            # Check if it's not the last element to add the delimiter
+            if ($i -lt $logarray.Length - 1) {
+                $logstring.Append($delimiter) | Out-Null
+            }
+
+        }
 
         # Save the string to the logfile
         $randomDelay = Get-Random -Maximum 3000
         $outArgs = @{
             FilePath = $script:logfile
-            InputObject = $logstring
+            InputObject = $logstring.toString()
             Encoding = "utf8"
             Append = $true
             NoClobber = $true

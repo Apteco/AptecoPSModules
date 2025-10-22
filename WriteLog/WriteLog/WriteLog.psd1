@@ -5,7 +5,7 @@
 RootModule = 'WriteLog.psm1'
 
 # Die Versionsnummer dieses Moduls
-ModuleVersion = '0.9.17'
+ModuleVersion = '0.9.18'
 
 # Unterstützte PSEditions
 # CompatiblePSEditions = @()
@@ -132,6 +132,11 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.9.18 Changed verbose messages to warnings in Invoke-CommandRetry
+       Not creating the logfile in advance anymore, only when writing the first log line
+       Not returning a boolean if setting the log was successful -> that information is written into verbose now
+       Using a stringbuilder to create the log line for better performance
+       Small improvements in code
 0.9.17 Fixing the return of a path rather than a file object in Get-Logfile
 0.9.16 Adding support for temporary path in Linux
 0.9.15 Fixing linux compatibility when importing the module

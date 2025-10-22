@@ -73,12 +73,12 @@ Function Invoke-CommandRetry {
             $completed = $true
         } catch {
             if ($retrycount -ge $Retries) {
-                Write-Verbose -Message "Command [$( $Command )] failed the maximum number of $( $retrycount ) times." -Verbose
+                Write-Warning -Message "Command [$( $Command )] failed the maximum number of $( $retrycount ) times."
                 throw
             } else {
-                Write-Verbose -Message "Command [$( $Command )] failed. Retrying in $( $secondsDelay ) seconds." -Verbose
+                Write-Warning -Message "Command [$( $Command )] failed. Retrying in $( $secondsDelay ) seconds."
                 Start-Sleep -Milliseconds $MillisecondsDelay
-                $retrycount++
+                $retrycount += 1
             }
         }
     }

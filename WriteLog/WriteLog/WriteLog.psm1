@@ -60,9 +60,14 @@ New-Variable -Name logfile -Value $null -Scope Script -Force
 New-Variable -Name processId -Value $null -Scope Script -Force
 New-Variable -Name logfileOverride  -Value $null -Scope Script -Force
 New-Variable -Name processIdOverride  -Value $null -Scope Script -Force
+New-Variable -Name logDelimiter -Value $null -Scope Script -Force
+
 
 # This will be overridden later
 $Script:processId = [guid]::NewGuid().ToString()
+
+# Specify the tab delimiter
+$Script:logDelimiter = "`t"
 
 # Find out the temporary directory
 # TODO Support for MacOS
