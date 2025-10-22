@@ -63,6 +63,10 @@
 
         # Check local lib folder
         If ( $SkipLocalPackageCheck -ne $True ) {
+            If ( [System.Version]::Parse($Script:powerShellGet) -lt [System.Version]::Parse("2.2.5") -and $Script:isCore -eq $True ) {
+                # The check is invalid, please update!
+                throw "Please install PowerShellGet in pwsh with administrator privilege to minimum of 2.2.5 like 'Install-Module PowerShellGet -Force -AllowClobber'"
+            }
             $libPathToCheck = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($LocalPackageFolder)
             Write-Verbose "Checking path '$( $libPathToCheck )' for local packages"
             If ( (Test-Path -Path $libPathToCheck) -eq $true ) {

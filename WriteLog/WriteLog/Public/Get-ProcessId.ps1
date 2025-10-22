@@ -4,6 +4,6 @@ Function Get-ProcessId {
     param(
     )
 
-    $Script:processId
+    return $Script:processId
 
 }
