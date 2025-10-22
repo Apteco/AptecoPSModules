@@ -406,7 +406,7 @@ If ( $Script:os -eq "Windows" ) {
     try {
 
         # Attempt to retrieve the Visual C++ Redistributable 14 registry entry
-        $vcReg = Get-ItemProperty 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\VisualStudio\*\VC\Runtimes\*' -ErrorAction Stop
+        $vcReg = [Array]@( Get-ItemProperty 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\VisualStudio\*\VC\Runtimes\*' -ErrorAction Stop )
 
         If ( $vcReg.Count -gt 0 ) {
             $vcredistInstalled = $True
