@@ -131,7 +131,7 @@ Function Import-Dependency {
         # DOING SOME CHECKS
         #-----------------------------------------------
 
-        Write-Log -Message "Using PowerShell version $( $Script:psVersion ) and $( $Script:psEdition ) edition"
+        Write-Log -Message "Using PowerShell version $( $Script:psVersion ) and $( $Script:powerShellEdition ) edition"
         Write-Log -Message "Using OS: $( $Script:os )"
         Write-Log -Message "Using architecture: $( $Script:architecture )"
 

@@ -10,8 +10,19 @@ Function Invoke-WebRequestUTF8 {
 
     Process {
 
-        # Do the request
+        # Replace the body with UTF8 encoded body if needed
+        $bodyToEncode = $PSBoundParameters.Body
+
+        # Prepare only allowed parameters for Invoke-WebRequest
         $updatedParameters = Skip-UnallowedBaseParameters -Base "Invoke-WebRequest" -Parameters $PSBoundParameters
+        
+        # Encode the body to UTF8 if it's a string due to issues with default encoding in PowerShell 5.1
+        If ( $updatedParameters.ContainsKey("Body") -and $bodyToEncode -is [string] ) {
+            # Encode Body to UTF8 bytes
+            $updatedParameters.Body = [System.Text.Encoding]::UTF8.GetBytes($bodyToEncode)
+        }
+
+        # Do the request
         $response = Invoke-WebRequest @updatedParameters
 
         # Convert Returned content
