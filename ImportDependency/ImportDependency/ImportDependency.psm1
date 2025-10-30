@@ -173,7 +173,7 @@ New-Variable -Name installedGlobalPackages -Value $null -Scope Script -Force    
 $Script:isCore = $preCheckisCore
 $Script:os = $preCheckOs
 $Script:psVersion = $PSVersionTable.PSVersion.ToString()
-$Script:psEdition = $PSVersionTable.PSEdition
+$Script:powerShellEdition = $PSVersionTable.PSEdition # Need to write that out because psedition is reserved
 $Script:platform = $PSVersionTable.Platform
 $Script:is64BitOS = [System.Environment]::Is64BitOperatingSystem
 $Script:is64BitProcess = [System.Environment]::Is64BitProcess

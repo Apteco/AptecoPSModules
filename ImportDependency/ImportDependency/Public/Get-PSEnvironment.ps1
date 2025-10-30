@@ -78,7 +78,7 @@
 
         [Ordered]@{
             "PSVersion"                     = $Script:psVersion
-            "PSEdition"                     = $Script:psEdition
+            "PSEdition"                     = $Script:powerShellEdition
             "OS"                            = $Script:os
             #Platform        = $Script:platform
             "IsCore"                        = $Script:isCore

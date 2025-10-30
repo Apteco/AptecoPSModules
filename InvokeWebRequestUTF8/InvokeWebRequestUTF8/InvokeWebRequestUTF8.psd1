@@ -12,7 +12,7 @@
 RootModule = 'InvokeWebRequestUTF8.psm1'
 
 # Die Versionsnummer dieses Moduls
-ModuleVersion = '0.0.5'
+ModuleVersion = '0.1.0'
 
 # Unterstützte PSEditions
 # CompatiblePSEditions = @()
@@ -119,6 +119,7 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.1.0 Added support for UTF8 body data. So both directions work now with UTF8 encoding in PowerShell 5.1
 0.0.5 Updated copyright to 2025
 0.0.4 Bumped the copyright year to 2024
 0.0.3 Fixed the content conversion handling for InvokeWebRequestUTF8
