@@ -7,17 +7,23 @@
 
     process {
 
-        foreach ($tfm in $Script:frameworkPreference) {
+        $bestFramework = $null
+        $Script:frameworkPreference | ForEach-Object {
 
-            $genericPath = Join-Path $PackageRoot "ref\$( $tfm )"
-            $dll = Get-ChildItem -Path $genericPath -Filter "*.dll" -File -ErrorAction SilentlyContinue |
-                Select-Object -First 1
-            if ($dll) {
-                return $dll.DirectoryName
+            $tfm = $_
+            $genericPath = Join-Path $PackageRoot "ref/$( $tfm )"
+            $dll = Get-ChildItem -Path $genericPath -Filter "*.dll" -File -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ( $dll.Count -gt 0 -and $null -eq $bestFramework ) {
+                $bestFramework = $dll.DirectoryName
             }
+            
         }
 
-        throw "No compatible assembly found in $PackageRoot for RID $runtimeId"
+        If ( $null -ne $bestFramework ) {
+            return $bestFramework
+        } else {
+            throw "No compatible assembly found in $( $PackageRoot ) for reference $( $Script:frameworkPreference -join ',' )"
+        }
 
     }
 }
