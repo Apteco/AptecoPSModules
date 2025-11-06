@@ -152,6 +152,7 @@ New-Variable -Name psVersion -Value $null -Scope Script -Force              # Po
 New-Variable -Name psEdition -Value $null -Scope Script -Force              # Edition of PowerShell (e.g., Desktop, Core)
 New-Variable -Name platform -Value $null -Scope Script -Force               # Platform type (e.g., Windows, Linux, macOS)
 New-Variable -Name frameworkPreference -Value $null -Scope Script -Force    # Preferred .NET framework version
+New-Variable -Name runtimePreference -Value $null -Scope Script -Force      # Preferred OS native framework version
 New-Variable -Name isCore -Value $null -Scope Script -Force                 # Indicates if PowerShell Core is being used (True/False)
 New-Variable -Name isCoreInstalled -Value $null -Scope Script -Force        # Indicates if PowerShell Core is already installed (True/False)
 New-Variable -Name defaultPsCoreVersion -Value $null -Scope Script -Force   # Default version of PowerShell Core that is used

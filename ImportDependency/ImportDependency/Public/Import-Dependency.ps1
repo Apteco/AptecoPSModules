@@ -204,7 +204,6 @@ Function Import-Dependency {
                 public static extern IntPtr LoadLibrary(string lpFileName);
                 public static string GetError() { return Marshal.GetLastWin32Error().ToString(); }
                 public static bool GetEnv() { return Environment.Is64BitProcess; }
-
             }
 "@
 
