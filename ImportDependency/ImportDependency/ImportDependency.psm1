@@ -391,6 +391,7 @@ $Script:backgroundJobs = [System.Collections.ArrayList]@()
         Get-Module -ListAvailable | Where-Object { $_.ModuleType -ne "Manifest" } | Select-Object Name, Path, ModuleType, Version, PreRelease, NestedModules, ExportedFunctions, ExportedCmdlets, ExportedVariables, ExportedAliases | Group-Object Name | ForEach-Object {
             $modules.Add(( $_.Group | Sort-Object Version -Descending | Select-Object -First 1 )) | Out-Null
         }
+        $modules
     } -Name "InstalledModule"
 ))
 [void]$Script:backgroundJobs.Add((
