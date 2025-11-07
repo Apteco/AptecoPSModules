@@ -5,7 +5,7 @@
 RootModule = 'ImportDependency.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.3.12'
+ModuleVersion = '0.3.13'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -115,6 +115,7 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+0.3.13 Using Get-Module -ListAvailable rather than Get-InstalledModule to avoid problems with PowerShellGet and PSCore
 0.3.12 Fixed a bug with choosing the wrong runtime folder when loading packages with native dlls
 0.3.11 Fixed a problem with $psedition variable that is already existing and read-only
 0.3.10 Added a hint when PowerShellGet is not installed in PowerShell Core
