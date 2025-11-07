@@ -385,7 +385,12 @@ $Script:backgroundJobs = [System.Collections.ArrayList]@()
 [void]$Script:backgroundJobs.Add((
     Start-Job -ScriptBlock {
         # Use Get-InstalledModule to retrieve installed modules
-        Get-InstalledModule -ErrorAction SilentlyContinue
+        #Get-InstalledModule -ErrorAction SilentlyContinue
+        #Get-Module -ListAvailable | Where-Object { $_.ModuleType -ne "Manifest" } | Select-Object Name -Unique | Sort-Object Name -ErrorAction SilentlyContinue
+        $modules = [System.Collections.ArrayList]@()
+        Get-Module -ListAvailable | Where-Object { $_.ModuleType -ne "Manifest" } | Select-Object Name, Path, ModuleType, Version, PreRelease, NestedModules, ExportedFunctions, ExportedCmdlets, ExportedVariables, ExportedAliases | Group-Object Name | ForEach-Object {
+            $modules.Add(( $_.Group | Sort-Object Version -Descending | Select-Object -First 1 )) | Out-Null
+        }
     } -Name "InstalledModule"
 ))
 [void]$Script:backgroundJobs.Add((
