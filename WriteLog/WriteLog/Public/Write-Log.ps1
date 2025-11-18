@@ -80,37 +80,18 @@ Function Write-Log {
 
     Process {
 
-        # Create an array first for all the parts of the log message
-        # TODO set the structure of the log message somewhere globally and replace placeholders with $string.replace("#severity#","$($Severity.ToString())") etc. Custom variables like machine name etc. could be added there, too
-        $logarray = @(
-            [datetime]::Now.ToString("yyyyMMddHHmmss")
-            $Script:processId
-            $Severity.ToString()
-            $Message
-        )
+        $vs = $Script:valueStore.Clone()
+        $vs.Add("TIMESTAMP", [datetime]::Now.ToString( $Script:defaultTimestampFormat ) )
+        $vs.Add("PROCESSID", $Script:processId)
+        $vs.Add("SEVERITY", $Severity.ToString())
+        $vs.Add("MESSAGE", $Message)
+        $vs.Add("PROCRAM", [math]::Round([System.Diagnostics.Process]::GetCurrentProcess().WorkingSet64 / 1MB, 3))
+        $vs.Add("PROCCPU", [math]::Round([System.Diagnostics.Process]::GetCurrentProcess().CPU, 3))
 
-        # Specify the tab delimiter
-        # TODO Add a setter and getter for that delimiter somewhere globally
-        $delimiter = $Script:logDelimiter
-
-        # Put the array together
-        #$logstring = $logarray -join "`t"
-        
-        # Create a StringBuilder object
-        $logstring = [System.Text.StringBuilder]::new()
-
-        # Iterate over the array and append each element
-        for ($i = 0; $i -lt $logarray.Length; $i++) {
-
-            # Append the current element
-            $logstring.Append($logarray[$i]) | Out-Null
-            
-            # Check if it's not the last element to add the delimiter
-            if ($i -lt $logarray.Length - 1) {
-                $logstring.Append($delimiter) | Out-Null
-            }
-
-        }
+        $pattern = ($vs.Keys | ForEach-Object {
+            [regex]::Escape($_)
+        }) -join '|'
+        $logstring = [regex]::Replace($Script:defaultOutputFormat, $pattern, { param($match) $vs[$match.Value] })
 
         # Save the string to the logfile
         $randomDelay = Get-Random -Maximum 3000
@@ -122,6 +103,28 @@ Function Write-Log {
             NoClobber = $true
         }
         Invoke-CommandRetry -Command 'Out-File' -Args $outArgs -retries 10 -MillisecondsDelay $randomDelay | Out-Null
+
+        # Additional logfiles
+        If ( $Script:additionalLogs.Count -gt 0 ) {
+            ForEach ( $addLog in $Script:additionalLogs ) {
+                Switch ( $addLog.Type ) {
+                    "textfile" {
+                        $addLogArgs = @{
+                            FilePath = $addLog.Options.Path
+                            InputObject = $logstring.toString()
+                            Encoding = "utf8"
+                            Append = $true
+                            NoClobber = $true
+                        }
+                        Invoke-CommandRetry -Command 'Out-File' -Args $addLogArgs -retries 10 -MillisecondsDelay $randomDelay | Out-Null
+                    }
+                    # TODO add database support in future
+                    Default {
+                        Write-Warning -Message "Unknown additional log type '$( $addLog.Type )' for additional log '$( $addLog.Name )'."
+                    }
+                }
+            }
+        }
 
         # Put the string to host, too
         If ( $WriteToHostToo -eq $true ) {
