@@ -161,3 +161,31 @@ if ( $debug ) {
 
 ```
 
+# Change of Formats
+
+With Version xyz WriteLog introduced the possibilty to use more variables to create the log. With `Set-TimestampFormat` you can override the default timestamp output format and with `Set-LogFormat` you can create a string like `"TIMESTAMP`tPROCESSID`tSEVERITY`tMESSAGE"` to add more information. Here you can see all possible variables:
+
+Name|Explanation
+-|-
+TIMESTAMP|A timestamp value defaulted to yyyyMMddHHmmSS which can be changed by Set-TimestampFormat
+PROCESSID|A guid for the current powershell logging process
+SEVERITY|The severity, currently VERBOSE, INFO, WARNING or ERROR
+MESSAGE|The logged message
+64BITOS|Either 64BitOs or 32BitOs
+64BITPROC|Either 64BitProcess or 32BitProcess
+USER|Currently executing user of the powershell session
+MACHINE|Machine name
+PSVERSION|Currently used PSVersion like 5.1.0 or 7.6.4
+ISELEVATED|Either Elevated or NotElevated
+SYSTEMPROCESSID|Process id of this session in the OS
+PROCRAM|RAM usage of current process
+PROCCPU|CPU usage of current process
+
+## Example
+
+So with these simple commands you can set the timestamp format and the output columns
+
+```PowerShell
+Set-TimestampFormat -Format "yyyy-MM-dd HH:mm:ss.fff" -verbose
+Set-LogFormat -Format "TIMESTAMP`tPROCESSID`tSEVERITY`t64BITOS`t64BITPROC`tUSER`tMACHINE`tPSVERSION`tISELEVATED`tSYSTEMPROCESSID`tPROCRAM`tPROCCPU`tMESSAGE"
+```

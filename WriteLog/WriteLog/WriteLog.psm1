@@ -60,14 +60,21 @@ New-Variable -Name logfile -Value $null -Scope Script -Force
 New-Variable -Name processId -Value $null -Scope Script -Force
 New-Variable -Name logfileOverride  -Value $null -Scope Script -Force
 New-Variable -Name processIdOverride  -Value $null -Scope Script -Force
-New-Variable -Name logDelimiter -Value $null -Scope Script -Force
+#New-Variable -Name logDelimiter -Value $null -Scope Script -Force
+New-Variable -Name valueStore -Value $null -Scope Script -Force
+New-Variable -Name defaultOutputFormat -Value $null -Scope Script -Force
+New-Variable -Name defaultTimestampFormat -Value $null -Scope Script -Force
 
 
 # This will be overridden later
 $Script:processId = [guid]::NewGuid().ToString()
 
 # Specify the tab delimiter
-$Script:logDelimiter = "`t"
+#$Script:logDelimiter = "`t"
+
+# TODO maybe later save these settings in a config file
+$Script:defaultTimestampFormat = "yyyyMMddHHmmss" #"yyyy-MM-dd HH:mm:ss.fff"
+$Script:defaultOutputFormat = "TIMESTAMP`tPROCESSID`tSEVERITY`tMESSAGE"
 
 # Find out the temporary directory
 # TODO Support for MacOS
@@ -79,3 +86,23 @@ $Script:logfile = $fAbsolute
 # This will be changed with the first override
 $Script:logfileOverride = $false
 $Script:processIdOverride = $false
+
+
+#-----------------------------------------------
+# FILL VALUE STORE WITH DEFAULT VALUES
+#-----------------------------------------------
+
+$identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+$executingUser = $identity.Name
+$principal = [Security.Principal.WindowsPrincipal]::new($identity)
+$isElevated = $principal.IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)
+
+$Script:valueStore = [Hashtable]@{
+    "64BITOS" = If ( [System.Environment]::Is64BitOperatingSystem ) { "64BitOS" } Else { "32BitOS" }
+    "64BITPROC" = If ( [System.Environment]::Is64BitProcess ) { "64BitProcess" } Else { "32BitProcess" }
+    "USER" = $executingUser
+    "MACHINE" = [System.Environment]::MachineName
+    "PSVERSION" = $psversiontable.PSVersion.toString()
+    "ISELEVATED" = If ( $isElevated ) { "Elevated" } Else { "NotElevated" }
+    "SYSTEMPROCESSID" = [System.Diagnostics.Process]::GetCurrentProcess().Id
+}
