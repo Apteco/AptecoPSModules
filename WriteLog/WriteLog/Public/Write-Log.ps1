@@ -104,6 +104,28 @@ Function Write-Log {
         }
         Invoke-CommandRetry -Command 'Out-File' -Args $outArgs -retries 10 -MillisecondsDelay $randomDelay | Out-Null
 
+        # Additional logfiles
+        If ( $Script:additionalLogs.Count -gt 0 ) {
+            ForEach ( $addLog in $Script:additionalLogs ) {
+                Switch ( $addLog.Type ) {
+                    "textfile" {
+                        $addLogArgs = @{
+                            FilePath = $addLog.Options.Path
+                            InputObject = $logstring.toString()
+                            Encoding = "utf8"
+                            Append = $true
+                            NoClobber = $true
+                        }
+                        Invoke-CommandRetry -Command 'Out-File' -Args $addLogArgs -retries 10 -MillisecondsDelay $randomDelay | Out-Null
+                    }
+                    # TODO add database support in future
+                    Default {
+                        Write-Warning -Message "Unknown additional log type '$( $addLog.Type )' for additional log '$( $addLog.Name )'."
+                    }
+                }
+            }
+        }
+
         # Put the string to host, too
         If ( $WriteToHostToo -eq $true ) {
             # Write-Host $message # Updating to the newer streams Information, Verbose, Error and Warning

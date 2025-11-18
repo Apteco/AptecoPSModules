@@ -105,6 +105,10 @@ FunctionsToExport = @(
     "Set-LogFormat"
     "Get-LogFormat"
 
+    "Add-AdditionalLogfile"
+    "Remove-AdditionalLogfile"
+    "Get-AdditionalLog"
+
 )
 
 # Aus diesem Modul zu exportierende Cmdlets. Um optimale Leistung zu erzielen, verwenden Sie keine Platzhalter und löschen den Eintrag nicht. Verwenden Sie ein leeres Array, wenn keine zu exportierenden Cmdlets vorhanden sind.
@@ -145,6 +149,8 @@ PrivateData = @{
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
 0.10.0 Feature: Additional log output format (Set-LogFormat / Get-LogFormat) and timestamp format (Set-TimeStampFormat / Get-TimestampFormat)
+       Feature: Support for multiple additional logfiles (Add-AdditionalLogfile / Get-AdditionalLogfile / Remove-AdditionalLogfile)
+                Now you can write into multiple logfiles or have a temporary and persistent logfile at the same time
 0.9.18 Changed verbose messages to warnings in Invoke-CommandRetry
        Not creating the logfile in advance anymore, only when writing the first log line
        Not returning a boolean if setting the log was successful -> that information is written into verbose now

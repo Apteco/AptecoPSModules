@@ -163,7 +163,7 @@ if ( $debug ) {
 
 # Change of Formats
 
-With Version xyz WriteLog introduced the possibilty to use more variables to create the log. With `Set-TimestampFormat` you can override the default timestamp output format and with `Set-LogFormat` you can create a string like `"TIMESTAMP`tPROCESSID`tSEVERITY`tMESSAGE"` to add more information. Here you can see all possible variables:
+With version 0.10.0 WriteLog introduced the possibilty to use more variables to create the log. With `Set-TimestampFormat` you can override the default timestamp output format and with `Set-LogFormat` you can create a string like `"TIMESTAMP`tPROCESSID`tSEVERITY`tMESSAGE"` to add more information. Here you can see all possible variables:
 
 Name|Explanation
 -|-
@@ -188,4 +188,31 @@ So with these simple commands you can set the timestamp format and the output co
 ```PowerShell
 Set-TimestampFormat -Format "yyyy-MM-dd HH:mm:ss.fff" -verbose
 Set-LogFormat -Format "TIMESTAMP`tPROCESSID`tSEVERITY`t64BITOS`t64BITPROC`tUSER`tMACHINE`tPSVERSION`tISELEVATED`tSYSTEMPROCESSID`tPROCRAM`tPROCCPU`tMESSAGE"
+```
+
+# Additional log targets
+
+With version 0.10.0 WriteLog introduced additional logfiles. Maybe databases in future, but files for now. So you can log the same message into multiple logfiles at the same time. Just add files with
+
+```PowerShell
+Add-AdditionalLogfile -Path "C:\Temp\test1.txt" -verbose
+Add-AdditionalLogfile -Path "C:\Temp\test2.txt" -verbose
+```
+
+or show them with
+
+```PowerShell
+Get-AdditionalLog
+
+Type     Name       Options
+----     ----       -------
+textfile Textfile_1 @{Path=C:\Temp\test.txt}
+textfile Textfile_2 @{Path=C:\Temp\test2.txt}
+```
+
+or delete them with one of these options
+
+```PowerShell
+Remove-AdditionalLogfile -Name "Textfile_1"
+Remove-AdditionalLogfile -Path "C:\Temp\test.txt"
 ```

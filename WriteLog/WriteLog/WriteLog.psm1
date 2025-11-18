@@ -60,17 +60,13 @@ New-Variable -Name logfile -Value $null -Scope Script -Force
 New-Variable -Name processId -Value $null -Scope Script -Force
 New-Variable -Name logfileOverride  -Value $null -Scope Script -Force
 New-Variable -Name processIdOverride  -Value $null -Scope Script -Force
-#New-Variable -Name logDelimiter -Value $null -Scope Script -Force
 New-Variable -Name valueStore -Value $null -Scope Script -Force
 New-Variable -Name defaultOutputFormat -Value $null -Scope Script -Force
 New-Variable -Name defaultTimestampFormat -Value $null -Scope Script -Force
-
+New-Variable -Name additionalLogs -Value $null -Scope Script -Force
 
 # This will be overridden later
 $Script:processId = [guid]::NewGuid().ToString()
-
-# Specify the tab delimiter
-#$Script:logDelimiter = "`t"
 
 # TODO maybe later save these settings in a config file
 $Script:defaultTimestampFormat = "yyyyMMddHHmmss" #"yyyy-MM-dd HH:mm:ss.fff"
@@ -86,6 +82,8 @@ $Script:logfile = $fAbsolute
 # This will be changed with the first override
 $Script:logfileOverride = $false
 $Script:processIdOverride = $false
+
+$Script:additionalLogs = [System.Collections.ArrayList]@()
 
 
 #-----------------------------------------------
