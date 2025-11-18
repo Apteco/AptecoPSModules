@@ -18,7 +18,7 @@ function Import-LibFolder {
 
         # This installation includes Mimekit
         #Import-Dependencies -LocalPackage MailKit -LocalPackageFolder "$( $Script:localLibFolder )" #-verbose
-        Import-Dependencies -LoadWholePackageFolder -LocalPackageFolder "$( $Script:localLibFolder )"
+        Import-Dependency -LoadWholePackageFolder -LocalPackageFolder "$( $Script:localLibFolder )"
 
         # TODO save an indikator or bool flag, if it already has been installed
         $Script:libFolderLoadedIndicator = $true
