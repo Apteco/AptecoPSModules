@@ -16,7 +16,7 @@ function Install-MailKit {
         #Import-Dependencies.ps1 -LoadWholePackageFolder -LocalPackageFolder "./lib"
 
         # This installation includes Mimekit
-        Install-Dependencies -LocalPackage MailKit -LocalPackageFolder "$( $Script:localLibFolder )" #-verbose
+        Install-Dependencies -LocalPackage MailKitLite -LocalPackageFolder "$( $Script:localLibFolder )" #-verbose
 
         # TODO save an indikator or bool flag, if it already has been installed
 

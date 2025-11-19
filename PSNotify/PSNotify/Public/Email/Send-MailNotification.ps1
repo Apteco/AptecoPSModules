@@ -2,17 +2,46 @@
 
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory=$true)][String]$Name                                # The email channel to use
-        ,[Parameter(Mandatory=$true)][String]$Target                                # The email target to use
-        ,[Parameter(Mandatory=$true)][String]$Subject                                # The telegram channel to use
-        ,[Parameter(Mandatory=$true)][String]$Text                                # The telegram channel to use
+        
+         [Parameter(Mandatory=$true)]
+         [ValidateNotNullOrEmpty()]
+         [String]$Name                                # The email channel to use
+        
+        ,[Parameter(Mandatory=$true)]
+         [ValidateNotNullOrEmpty()]
+         [String]$Target                                # The email target to use
+        
+        ,[Parameter(Mandatory=$true)]
+         [ValidateNotNullOrEmpty()]
+         [String]$Subject                                # The email subject
+        
+        ,[Parameter(Mandatory=$true)]
+         [ValidateNotNullOrEmpty()]
+         [String]$Text                                # The email text
+        
+        ,[Parameter(Mandatory=$false)]
+         [String[]]$Attachment = [Array]@()
+    
     )
 
     begin {
 
+        # Check Attachment parameter
+        If ( $Attachment -isnot [Array] ) {
+            $Attachment = @($Attachment)
+        }
+
+        # Check path of attachments
+        foreach ( $att in $Attachment ) {
+            If ( ( Test-Path -Path $att ) -ne $true ) {
+                throw "Attachment path '$( $att )' is not valid. Aborting now"
+            }
+        }
+
     }
 
     process {
+
 
         # Get the right target for this channel
         $channel = Get-Channel -Name $Name
@@ -50,9 +79,33 @@
             $message.To.Add($_) # TODO not checking if the email is valid
         }
         $message.Subject = $Subject
-        $textPart = [MimeKit.TextPart]::new("plain")
-        $textPart.Text = $Text
-        $message.Body = $TextPart
+        
+        #$textPart = [MimeKit.TextPart]::new("plain")
+        #$textPart.Text = $Text
+        #$message.Body = $TextPart
+
+        $builder = [MimeKit.BodyBuilder]::new()
+        $builder.TextBody = $Text
+        $Attachments | ForEach-Object {
+            $builder.Attachments.Add($_)
+        }
+        $message.Body = $builder.ToMessageBody()
+        
+        # Add attachment if provided
+        <#
+        If ( $Attachment -ne $null ) {
+            $attachmentPart = [MimeKit.MimePart]::new("application", "octet-stream")
+            $attachmentPart.Content = [MimeKit.MimeContent]::new([System.IO.File]::OpenRead($Attachment), [MimeKit.ContentEncoding]::Base64)
+            $attachmentPart.ContentDisposition = [MimeKit.ContentDisposition]::new([MimeKit.ContentDispositionType]::Attachment)
+            $attachmentPart.FileName = [System.IO.Path]::GetFileName($Attachment)
+
+            $multipart = [MimeKit.Multipart]::new("mixed")
+            $multipart.Add($textPart)
+            $multipart.Add($attachmentPart)
+
+            $message.Body = $multipart
+        }
+        #>
 
         # Send the message
         $msg = $smtpClient.Send($message)
@@ -64,7 +117,4 @@
 
     }
 
-    end {
-
-    }
 }

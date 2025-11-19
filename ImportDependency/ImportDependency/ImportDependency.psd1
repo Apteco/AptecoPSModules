@@ -5,7 +5,7 @@
 RootModule = 'ImportDependency.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.3.14'
+ModuleVersion = '0.3.15'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -115,6 +115,11 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+0.3.15 Fixed a problem with powershell core and indefinite running of Get-Package
+       Added executionpolicy for machine to Get-PSEnvironment
+       Added net471 and netcoreapp2.0 to framework preferences
+       Added win to runtime preferences with loading logic
+       Removed old comments and code
 0.3.14 Fixing the a missing return value for 0.3.13
 0.3.13 Using Get-Module -ListAvailable rather than Get-InstalledModule to avoid problems with PowerShellGet and PSCore
 0.3.12 Fixed a bug with choosing the wrong runtime folder when loading packages with native dlls
