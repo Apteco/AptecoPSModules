@@ -40,6 +40,7 @@ jobs:
           Install-Module -Name PSScriptAnalyzer -force
           Install-Module -Name EncryptCredential
           Install-Module -Name ExtendFunction
+          Install-Module -Name ImportDependency
           Import-Module PSScriptAnalyzer
           Invoke-ScriptAnalyzer -Path $path -Recurse -IncludeRule PSAvoidTrailingWhitespace -Fix
           Publish-Module -Path $path -NuGetApiKey ${{ secrets.NUGET_API_KEY }} -Repository PSGallery
