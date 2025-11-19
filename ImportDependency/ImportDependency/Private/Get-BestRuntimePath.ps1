@@ -13,9 +13,18 @@
             # 1 Look in the RID‑specific folder first
             $runtimeId = $_
             $runtimePath = Join-Path $PackageRoot "runtimes/$( $runtimeId )"
-            $dll = Get-ChildItem -Path $runtimePath -Filter "*.dll" -Recurse -File -ErrorAction SilentlyContinue | Select-Object -First 1
-            if ( $dll.Count -gt 0 -and $null -eq $bestRuntime ) {
-                $bestRuntime = $dll.DirectoryName
+
+            If ( $runtimeId -ne "win" ) {
+
+                $dll = Get-ChildItem -Path $runtimePath -Filter "*.dll" -Recurse -File -ErrorAction SilentlyContinue | Select-Object -First 1
+                if ( $dll.Count -gt 0 -and $null -eq $bestRuntime ) {
+                    $bestRuntime = $dll.DirectoryName
+                }
+
+            } else {
+
+                $bestRuntime = Get-BestFrameworkPath -PackageRoot $runtimePath
+
             }
             
         }

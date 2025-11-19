@@ -67,42 +67,15 @@ Function Import-Dependency {
 
     Begin {
 
+        
+        Write-Verbose "Trying to update background job for modules"
         Update-BackgroundJob
-
-        #-----------------------------------------------
-        # DEBUG
-        #-----------------------------------------------
-        <#
-        Set-Location -Path "C:\Users\Florian\Downloads\dep2"
-        $Module = [Array]@()              # Define specific modules you want to load
-        $GlobalPackage = [Array]@()       # Define specific global package to load
-        $LocalPackage = [Array]@()        # Define a specific local package to load
-        $LocalPackageFolder = "lib"         # Where to find local packages
-        $LoadWholePackageFolder = $true    # Load whole local package folder
-        $VerbosePreference = "Continue"
-        #>
-
-
-        #-----------------------------------------------
-        # INPUT DEFINITION
-        #-----------------------------------------------
-
-        # TODO fill out
-
-        # SETTTINGS FOR LOADING PACKAGES
-        # TODO [ ] Define a priority later for .net versions, but use fixed ones at the moment
-        # These lists will be checked in the defined order
-        $dotnetDesktopVersions = @("net48","net47","net462","netstandard2.1","netstandard2.0","netstandard1.5","netstandard1.3","netstandard1.1","netstandard1.0")
-        $dotnetCoreVersions = @("net6.0","net6.0-windows","net5.0","net5.0-windows","netcore50")
-        $targetFolders = @("ref","lib")
-        #$runtimes = @("win-x64","win-x86","win10","win7","win")
 
 
         #-----------------------------------------------
         # START
         #-----------------------------------------------
 
-        # TODO use the parent logfile if used by a module
         $processStart = [datetime]::now
         $getLogfile = Get-Logfile
         If ( $KeepLogfile -eq $false -and $null -ne $getLogfile ) {
@@ -146,13 +119,6 @@ Function Import-Dependency {
         # Check environment and process
         Write-Log -Message "OS is 64bit: $( $Script:is64BitOS )"
         Write-Log -Message "Process is 64bit: $( $Script:is64BitProcess )"
-
-        # Decide which lib priority to use
-        If ( $Script:isCore -eq $true ) {
-            $dotnetVersions = $dotnetCoreVersions + $dotnetDesktopVersions
-        } else {
-            $dotnetVersions = $dotnetDesktopVersions
-        }
 
 
     }
@@ -217,35 +183,6 @@ Function Import-Dependency {
         Write-Log "[kernel32] loaded: $( $kernel32Loaded )"
 
 
-        # Taken from https://www.powershellgallery.com/packages/Az.Storage/5.10.0/Content/Az.Storage.psm1
-        <#
-
-        function Preload-Assembly {
-            param (
-                [string]
-                $AssemblyDirectory
-            )
-            if($PSEdition -eq 'Desktop' -and (Test-Path $AssemblyDirectory -ErrorAction Ignore))
-            {
-                try
-                {
-                    Get-ChildItem -ErrorAction Stop -Path $AssemblyDirectory -Filter "*.dll" | ForEach-Object {
-                        try
-                        {
-                            Add-Type -Path $_.FullName -ErrorAction Ignore | Out-Null
-                        }
-                        catch {
-                            Write-Verbose $_
-                        }
-                    }
-                }
-                catch {}
-            }
-        }
-
-        #>
-
-
         #-----------------------------------------------
         # LOAD LIB FOLDER (DLLs AND ASSEMBLIES)
         #-----------------------------------------------
@@ -295,53 +232,67 @@ Function Import-Dependency {
 
                 # Check the package ref folder
                 If ( ( Test-Path -Path "$( $package.FullName )/ref" ) -eq $true ) {
-                    $dotnetFolder = Get-BestReferencePath -PackageRoot $package.FullName
-                    If ( (Test-Path -Path $dotnetFolder)  -eq $true -and $packageLoaded -eq 0) {
-                        Get-ChildItem -Path $dotnetFolder -Filter "*.dll" | ForEach-Object {
-                            $f = $_
-                            #"Loading $( $f.FullName )"
-                            try {
-                                Write-Verbose -Message "Loading package ref '$( $f.FullName )'"
-                                If( $Script:isCore ) {
-                                    # For PowerShell Core use Add-Type first
-                                    Add-Type -Path $f.FullName -ErrorAction Stop | Out-Null
-                                } else {
-                                    [void][Reflection.Assembly]::LoadFile($f.FullName)
+                    $dotnetFolder = $null
+                    $dotnetFolder = Get-BestReferencePath -PackageRoot $package.FullName -ErrorAction silentlycontinue
+                    If ( $null -ne $dotnetFolder ) {
+                        If ( (Test-Path -Path $dotnetFolder)  -eq $true -and $packageLoaded -eq 0) {
+                            Get-ChildItem -Path $dotnetFolder -Filter "*.dll" | ForEach-Object {
+                                $f = $_
+                                #"Loading $( $f.FullName )"
+                                try {
+                                    Write-Verbose -Message "Loading package ref '$( $f.FullName )'"
+                                    If( $Script:isCore ) {
+                                        # For PowerShell Core use Add-Type first
+                                        Add-Type -Path $f.FullName -ErrorAction Stop | Out-Null
+                                    } else {
+                                        [void][Reflection.Assembly]::LoadFile($f.FullName)
+                                    }
+                                    $packageLoaded = 1
+                                    #"Loaded $( $dotnetFolder )"
+                                } catch {
+                                    Write-Verbose -Message "Failed! Loading package ref '$( $f.FullName )'"
+                                    $loadError = 1
                                 }
-                                $packageLoaded = 1
-                                #"Loaded $( $dotnetFolder )"
-                            } catch {
-                                Write-Verbose -Message "Failed! Loading package ref '$( $f.FullName )'"
-                                $loadError = 1
                             }
                         }
+                    } else {
+                        Write-Verbose -Message "No compatible framework found in '$( $package.FullName )/ref' for reference $( $Script:frameworkPreference -join ',' )"
+                        $loadError = 1
                     }
+
                 }
 
 
                 # Check the package lib folder
                 if ( ( Test-Path -Path "$( $package.FullName )/lib" ) -eq $true -and $packageLoaded -eq 0) {
-                    $dotnetFolder = Get-BestFrameworkPath -PackageRoot $package.FullName
-                    If ( (Test-Path -Path $dotnetFolder)  -eq $true -and $packageLoaded -eq 0) {
-                        Get-ChildItem -Path $dotnetFolder -Filter "*.dll" | ForEach-Object {
-                            $f = $_
-                            #"Loading $( $f.FullName )"
-                            try {
-                                Write-Verbose -Message "Loading package lib '$( $f.FullName )'"
-                                If( $Script:isCore ) {
-                                    # For PowerShell Core use Add-Type first
-                                    Add-Type -Path $f.FullName -ErrorAction Stop | Out-Null
-                                } else {
-                                    [void][Reflection.Assembly]::LoadFile($f.FullName)
+                    $dotnetFolder = $null
+                    $dotnetFolder = Get-BestFrameworkPath -PackageRoot $package.FullName -ErrorAction silentlycontinue
+                    If ( $null -ne $dotnetFolder ) {
+                        If ( (Test-Path -Path $dotnetFolder)  -eq $true -and $packageLoaded -eq 0) {
+                            Get-ChildItem -Path $dotnetFolder -Filter "*.dll" | ForEach-Object {
+                                $f = $_
+                                #"Loading $( $f.FullName )"
+                                try {
+                                    Write-Verbose -Message "Loading package lib '$( $f.FullName )'"
+                                    If( $Script:isCore ) {
+                                        # For PowerShell Core use Add-Type first
+                                        Add-Type -Path $f.FullName -ErrorAction Stop | Out-Null
+                                    } else {
+                                        [void][Reflection.Assembly]::LoadFile($f.FullName)
+                                    }
+                                    $packageLoaded = 1
+                                    #"Loaded $( $dotnetFolder )"
+                                } catch {
+                                    Write-Verbose -Message "Failed! Loading package lib '$( $f.FullName )'"
+                                    $loadError = 1
                                 }
-                                $packageLoaded = 1
-                                #"Loaded $( $dotnetFolder )"
-                            } catch {
-                                Write-Verbose -Message "Failed! Loading package lib '$( $f.FullName )'"
-                                $loadError = 1
                             }
                         }
+                    } else {
+                        Write-Verbose -Message "No compatible framework found in '$( $package.FullName )/lib' for reference $( $Script:frameworkPreference -join ',' )"
+                        $loadError = 1
                     }
+                    
                 }
 
                 # Output the current status
@@ -363,32 +314,36 @@ Function Import-Dependency {
                 $runtimeLoadError = 0
                 #$useKernel32 = 0
                 if ( ( Test-Path -Path "$( $package.FullName )/runtimes" ) -eq $true -and $runtimeLoaded -eq 0) {
-                    $runtimeFolder = Get-BestRuntimePath -PackageRoot $package.FullName
-
-                    If ( (Test-Path -Path $runtimeFolder) -eq $true -and $runtimeLoaded -eq 0) {
-                        Get-ChildItem -Path $runtimeFolder -Filter "*.dll" -Recurse | ForEach-Object {
-                            $f = $_
-                            #"Loading $( $f.FullName )"
-                            try {
-                                Write-Verbose -Message "Loading package runtime '$( $f.FullName )'"
-                                [void][Reflection.Assembly]::LoadFile($f.FullName)
-                                $runtimeLoaded = 1
-                                #"Loaded $( $dotnetFolder )"
-                            } catch [System.BadImageFormatException] {
-                                # Try it one more time with LoadLibrary through Kernel, if the kernel was loaded
-                                If ( $kernel32Loaded -eq $true ) {
-                                    Write-Log -Severity "WARNING" -Message "Failed! Using kernel32 for loading package runtime '$( $f.FullName )'" -WriteToHostToo $writeToHost
-                                    [void][Kernel32]::LoadLibrary($f.FullName)
-                                    Write-Log -Severity "WARNING" -Message "Last kernel32 error: $( [Kernel32]::GetError() )" -WriteToHostToo $writeToHost # Error list: https://learn.microsoft.com/en-us/windows/win32/debug/system-error-codes--0-499-
-                                    #Write-Log "$( [Kernel32]::GetEnv() )"
-                                    $runtimePossiblyLoaded = 1
+                    $runtimeFolder = $null
+                    $runtimeFolder = Get-BestRuntimePath -PackageRoot $package.FullName -ErrorAction silentlycontinue
+                    If ( $null -ne $runtimeFolder ) {
+                        If ( (Test-Path -Path $runtimeFolder) -eq $true -and $runtimeLoaded -eq 0) {
+                            Get-ChildItem -Path $runtimeFolder -Filter "*.dll" -Recurse | ForEach-Object {
+                                $f = $_
+                                #"Loading $( $f.FullName )"
+                                try {
+                                    Write-Verbose -Message "Loading package runtime '$( $f.FullName )'"
+                                    [void][Reflection.Assembly]::LoadFile($f.FullName)
+                                    $runtimeLoaded = 1
+                                    #"Loaded $( $dotnetFolder )"
+                                } catch [System.BadImageFormatException] {
+                                    # Try it one more time with LoadLibrary through Kernel, if the kernel was loaded
+                                    If ( $kernel32Loaded -eq $true ) {
+                                        Write-Log -Severity "WARNING" -Message "Failed! Using kernel32 for loading package runtime '$( $f.FullName )'" -WriteToHostToo $writeToHost
+                                        [void][Kernel32]::LoadLibrary($f.FullName)
+                                        Write-Log -Severity "WARNING" -Message "Last kernel32 error: $( [Kernel32]::GetError() )" -WriteToHostToo $writeToHost # Error list: https://learn.microsoft.com/en-us/windows/win32/debug/system-error-codes--0-499-
+                                        #Write-Log "$( [Kernel32]::GetEnv() )"
+                                        $runtimePossiblyLoaded = 1
+                                    }
+                                    #$useKernel32 = 1
+                                }  catch {
+                                    $runtimeLoadError = 1
                                 }
-                                #$useKernel32 = 1
-                            }  catch {
-                                $runtimeLoadError = 1
                             }
                         }
-
+                    } else {
+                        Write-Verbose -Message "No compatible runtime found in '$( $package.FullName )/runtimes' for runtime $( $Script:runtimePreference -join ',' )"
+                        $runtimeLoadError = 1
                     }
 
                 }
@@ -410,8 +365,6 @@ Function Import-Dependency {
 
             }
 
-
-
         }
 
     }
@@ -429,8 +382,6 @@ Function Import-Dependency {
         Write-Log -Message "  Runtime loaded: $( $runtimeSuccessCounter )"
         Write-Log -Message "  Runtime possibly loaded: $( $runtimePossibleSuccessCounter )"
         Write-Log -Message "  Runtime failed: $( $runtimeFailureCounter )"
-
-        #Add-Type -AssemblyName System.Security
 
 
         #-----------------------------------------------

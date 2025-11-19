@@ -17,7 +17,7 @@ https://github.com/RamblingCookieMonster/PSStackExchange/blob/db1277453374cb1668
 # OS CHECK
 #-----------------------------------------------
 
-$preCheckisCore = ($PSVersionTable.Keys -contains "PSEdition") -and ($PSVersionTable.PSEdition -ne 'Desktop')
+$preCheckisCore = $PSVersionTable.Keys -contains "PSEdition" -and $PSVersionTable.PSEdition -eq 'Core'
 
 # Check the operating system, if Core
 if ($preCheckisCore -eq $true) {
@@ -41,7 +41,7 @@ if ($preCheckisCore -eq $true) {
 # ADD MODULE PATH, IF NOT PRESENT
 #-----------------------------------------------
 
-If ( $preCheckOs -eq "Windows" ) {
+If ( $preCheckOs -eq "Windows" -and $preCheckisCore -eq $false ) {
 
     $modulePath = @( [System.Environment]::GetEnvironmentVariable("PSModulePath") -split ";" ) + @(
         "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles") )\WindowsPowerShell\Modules"
@@ -55,15 +55,6 @@ If ( $preCheckOs -eq "Windows" ) {
         $modulePath += "$( [System.Environment]::GetEnvironmentVariable("ProgramW6432") )\WindowsPowerShell\Modules"
     }
 
-    # Add pwsh core path
-    If ( $preCheckisCore -eq $true ) {
-        If ( [System.Environment]::GetEnvironmentVariables().keys -contains "ProgramW6432" ) {
-            $modulePath += "$( [System.Environment]::GetEnvironmentVariable("ProgramW6432") )\powershell\7\Modules"
-        }
-        $modulePath += "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles") )\powershell\7\Modules"
-        $modulePath += "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles(x86)") )\powershell\7\Modules"
-    }
-
     # Add all paths
     # Using $env:PSModulePath for only temporary override
     $Env:PSModulePath = @( $modulePath | Sort-Object -unique ) -join ";"
@@ -75,7 +66,7 @@ If ( $preCheckOs -eq "Windows" ) {
 # ADD SCRIPT PATH, IF NOT PRESENT
 #-----------------------------------------------
 
-If ( $preCheckOs -eq "Windows" ) {
+If ( $preCheckOs -eq "Windows" -and $preCheckisCore -eq $false ) {
 
     #$envVariables = [System.Environment]::GetEnvironmentVariables()
     $scriptPath = @( [System.Environment]::GetEnvironmentVariable("Path") -split ";" ) + @(
@@ -87,15 +78,6 @@ If ( $preCheckOs -eq "Windows" ) {
     # Add the 64bit path, if present. In 32bit the ProgramFiles variables only returns the x86 path
     If ( [System.Environment]::GetEnvironmentVariables().keys -contains "ProgramW6432" ) {
         $scriptPath += "$( [System.Environment]::GetEnvironmentVariable("ProgramW6432") )\WindowsPowerShell\Scripts"
-    }
-
-    # Add pwsh core path
-    If ( $preCheckisCore -eq $true ) {
-        If ( [System.Environment]::GetEnvironmentVariables().keys -contains "ProgramW6432" ) {
-            $scriptPath += "$( [System.Environment]::GetEnvironmentVariable("ProgramW6432") )\powershell\7\Scripts"
-        }
-        $scriptPath += "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles") )\powershell\7\Scripts"
-        $scriptPath += "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles(x86)") )\powershell\7\Scripts"
     }
 
     # Using $env:Path for only temporary override
@@ -169,6 +151,7 @@ New-Variable -Name vcredist -Value $null -Scope Script -Force               # In
 New-Variable -Name installedModules -Value $null -Scope Script -Force               # Caches all installed PowerShell modules
 New-Variable -Name backgroundJobs -Value $null -Scope Script -Force               # Hidden variable to store background jobs
 New-Variable -Name installedGlobalPackages -Value $null -Scope Script -Force               # Caches all installed NuGet Global Packages
+New-Variable -Name executionPolicy -Value $null -Scope Script -Force        # Current execution policy
 
 # Filling some default values
 $Script:isCore = $preCheckisCore
@@ -178,6 +161,7 @@ $Script:powerShellEdition = $PSVersionTable.PSEdition # Need to write that out b
 $Script:platform = $PSVersionTable.Platform
 $Script:is64BitOS = [System.Environment]::Is64BitOperatingSystem
 $Script:is64BitProcess = [System.Environment]::Is64BitProcess
+$Script:executionPolicy = Get-ExecutionPolicy -Scope MachinePolicy
 
 <#
 $Script:frameworkPreference = @(
@@ -279,6 +263,8 @@ switch ($Script:os) {
         }
 
         $Script:runtimePreference += @( "win-x86" )
+        $Script:runtimePreference += @( "win" )
+
 
     }
 
@@ -328,7 +314,7 @@ if ( $PSVersionTable.PSEdition -eq 'Desktop' ) {
     }
 
     # Add net4x folders descending from the max version
-    $net4x = @('net48','net47','net462','net461','net45','net40')
+    $net4x = @('net48','net471','net47','net462','net461','net45','net40')
     $Script:frameworkPreference += $net4x[($net4x.IndexOf($maxFramework))..($net4x.Count-1)]
 
     # Then add netstandard (2.0 is the highest fully supported on .NET 4.8)
@@ -352,7 +338,7 @@ if ( $PSVersionTable.PSEdition -eq 'Desktop' ) {
     }
 
     # Finally netstandard fall‑back
-    $Script:frameworkPreference += 'netstandard2.1','netstandard2.0','netstandard1.5','netstandard1.3','netstandard1.1','netstandard1.0'
+    $Script:frameworkPreference += 'netcoreapp2.0','netstandard2.1','netstandard2.0','netstandard1.5','netstandard1.3','netstandard1.1','netstandard1.0'
 
 }
 
@@ -368,17 +354,9 @@ if ($Script:os -eq "Windows") {
     $Script:isElevated = -not [string]::IsNullOrEmpty($env:SUDO_USER)
 }
 
-# Check PowerShellGet and Packagemanagement
-Import-Module PowerShellGet -ErrorAction SilentlyContinue
-$modules = Get-Module
-
 # Check if PackageManagement and PowerShellGet are available
-$modules | where-object { $_.Name -eq "PackageManagement" } | ForEach-Object {
-    $Script:packageManagement = $_.Version.ToString()
-}
-$modules | where-object { $_.Name -eq "PowerShellGet" } | ForEach-Object {
-    $Script:powerShellGet = $_.Version.ToString()
-}
+$Script:packageManagement = ( Get-Module -Name "PackageManagement" -ListAvailable -ErrorAction SilentlyContinue | Sort-Object Version -Descending | Select-Object -First 1 ).Version.toString()
+$Script:powerShellGet = ( Get-Module -Name "PowerShellGet" -ListAvailable -ErrorAction SilentlyContinue | Sort-Object Version -Descending | Select-Object -First 1 ).Version.toString()
 
 # Add jobs to find out more about installed modules and packages in the background
 $Script:backgroundJobs = [System.Collections.ArrayList]@()

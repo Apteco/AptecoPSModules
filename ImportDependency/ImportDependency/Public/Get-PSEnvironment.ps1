@@ -93,6 +93,7 @@
             "Is64BitOS"                     = $Script:is64BitOS
             "Is64BitProcess"                = $Script:is64BitProcess
             "ExecutingUser"                 = $Script:executingUser
+            "ExecutionPolicy"               = $Script:executionPolicy
             "IsElevated"                    = $Script:isElevated
             "RuntimePreference"             = $Script:runtimePreference -join ', '
             "FrameworkPreference"           = $Script:frameworkPreference -join ', '
