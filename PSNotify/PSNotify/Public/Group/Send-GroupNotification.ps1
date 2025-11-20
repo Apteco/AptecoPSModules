@@ -1,16 +1,18 @@
 ﻿function Send-GroupNotification {
 
-
     [CmdletBinding()]
     param (
-         [Parameter(Mandatory = $true)][string]$Name        # Give the channel a name, this is the "identifier for this channel"
-        ,[Parameter(Mandatory = $true)][string]$Message     # Main message to send
-        ,[Parameter(Mandatory = $false)][string]$Subject    # Used for teams and email
+
+         [Parameter(Mandatory = $true)]
+         [String]$Name        # Give the channel a name, this is the "identifier for this channel"
+
+        ,[Parameter(Mandatory = $true)]
+         [String]$Message     # Main message to send
+
+        ,[Parameter(Mandatory = $false)]
+         [String]$Subject    # Used for teams and email
+
     )
-
-    begin {
-
-    }
 
     process {
 
@@ -48,7 +50,4 @@
 
     }
 
-    end {
-
-    }
 }

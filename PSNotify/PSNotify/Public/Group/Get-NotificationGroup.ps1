@@ -1,12 +1,8 @@
-﻿function Get-NotificationGroups {
+﻿function Get-NotificationGroup {
+
     [CmdletBinding()]
     param (
-
     )
-
-    begin {
-
-    }
 
     process {
 
@@ -31,7 +27,4 @@
 
     }
 
-    end {
-
-    }
 }

@@ -1,14 +1,14 @@
 ﻿
 
-function Get-SlackConversations {
+function Get-SlackConversation {
+
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory=$true)][String]$Name                                # The telegram channel to use
+
+        [Parameter(Mandatory=$true)]
+        [String]$Name                                # The telegram channel to use
+
     )
-
-    begin {
-
-    }
 
     process {
 
@@ -50,7 +50,4 @@ function Get-SlackConversations {
 
     }
 
-    end {
-
-    }
 }

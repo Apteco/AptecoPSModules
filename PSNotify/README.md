@@ -153,13 +153,20 @@ Get-SlackConversations -Name "MyNewSlackChannel"
 
 ## Pre-Requisites
 
-To make this happen, we need `MailKit` and `MimeKit` first. You can install it with
+To make this happen, we need `MailKitLite` and `MimeKitLite` first. You can install it with
 
 ```PowerShell
 Install-MailKit -Verbose
 ```
 
-This will automatically install it into `%LOCALAPPDATA%\AptecoPSModules\PSNotify\lib`. As this loads also all dependencies, this can be something around 440MB. When you are sure you only need MailKit and MimeKit, then you can manually delete all other packages in that folder. This can also improve performance.
+This will automatically install it into `%LOCALAPPDATA%\AptecoPSModules\PSNotify\lib`. As this loads also all dependencies, this can be something around 80MB. When you are sure you only need MailKit and MimeKit, then you can manually delete all other packages in that folder. This can also improve performance.
+
+CAUTION: MimeKitLite currently only loads properly with `pwsh` (PowerShell Core). If some messages invole email, you should only use that from `pwsh` and as long as it is installed, you can also start it from WindowsPowerShell 5.1 Desktop like this one liner:
+
+```PowerShell
+pwsh -command { import-module PSNotify; Send-Mailnotification -Name "awsmail" -Target "TestTarget" -Subject "Hello World" -Text "I am done!" }
+```
+
 
 ## Add channel to PSNotify
 
@@ -183,13 +190,46 @@ $emailParams = [Hashtable]@{
 # Note: The @ is correct!
 Add-EmailChannel @emailParams
 
-# Now add targets, which is a group of receivers
+# Now add targets, which is a group of receivers. The -Name parameter refers to the channel name
 Add-EmailTarget -Name "example" -TargetName "Email1" -Receivers "florian.von.bracht@apteco.de", "user@example.com" # TODO rename this entry
 
 # And send an email
 Send-Mailnotification -Name ionos -Target Email1 -Subject "Achtung Test!" -Text "Beware of the text"
+
+# Or if you want to attach files, just to something like this
+Send-Mailnotification -Name ionos -Target Email1 -Subject "Achtung Test!" -Text "Beware of the text" -Attachment @("C:\temp\abc.log","C:\temp\xyz.log")
 ```
 
+## Example for sending attachments via Windows PowerShell 5.1 Desktop
+
+Here is a more advanced example with logs that need to be attached:
+
+```PowerShell
+# Send a status email after upload
+$attachments = [Array]@( ( Get-ChildItem -Path "C:\temp\UploadLog" -Recurse | Where-Object { $_.Name -like "*$( $processId )*" } ).FullName )
+If ($attachments.Count -gt 0) {
+    $sendMailScriptBlock = [ScriptBlock]{
+
+        param(
+            $attach
+        )
+
+        Set-Location -Path "C:\FastStats\Scripts\PSNotify"
+        import-module PSNotify
+
+        $mailArgs = [Hashtable]@{
+            "Name" = "awsmail"
+            "Target" = "TestTarget"
+            "Subject" = "[Apteco] Salesforce Upload Status"
+            "Text" = "Attached you will find the logs"
+            "Attachment" = $attach
+        }
+        Send-Mailnotification @mailArgs
+
+    }
+    pwsh -command $sendMailScriptBlock -args (,$attachments)
+}
+```
 
 # FAQ
 

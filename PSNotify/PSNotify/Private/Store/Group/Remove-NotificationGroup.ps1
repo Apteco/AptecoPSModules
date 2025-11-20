@@ -1,12 +1,12 @@
 ﻿function Remove-NotificationGroup {
+
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory = $true)][String]$Name
+
+        [Parameter(Mandatory = $true)]
+        [String]$Name
+
     )
-
-    begin {
-
-    }
 
     process {
 
@@ -22,7 +22,4 @@
 
     }
 
-    end {
-
-    }
 }

@@ -5,7 +5,7 @@
 RootModule = 'PSNotify.psm1'
 
 # Die Versionsnummer dieses Moduls
-ModuleVersion = '0.0.11'
+ModuleVersion = '0.1.0'
 
 # Unterstützte PSEditions
 # CompatiblePSEditions = @()
@@ -89,7 +89,7 @@ FunctionsToExport = @(
     'Remove-TelegramTarget'
     'Send-TelegramNotification'
     'Get-TelegramMe'
-    'Get-TelegramUpdates'
+    'Get-TelegramUpdate'
 
     # Email
     'Add-EmailChannel'
@@ -106,7 +106,7 @@ FunctionsToExport = @(
     'Remove-SlackChannel'
     'Add-SlackTarget'
     'Remove-SlackTarget'
-    'Get-SlackConversations'
+    'Get-SlackConversation'
     'Send-SlackNotification'
 
     # Teams
@@ -118,23 +118,31 @@ FunctionsToExport = @(
     # Group
     'Add-NotificationGroup'
     'Add-NotificationGroupTarget'
-    'Get-NotificationGroups'
+    'Get-NotificationGroup'
     'Send-GroupNotification'
 
     # General
-    'Get-NotificationChannels'
-    'Get-NotificationTargets'
+    'Get-NotificationChannel'
+    'Get-NotificationTarget'
 
 )
 
 # Aus diesem Modul zu exportierende Cmdlets. Um optimale Leistung zu erzielen, verwenden Sie keine Platzhalter und löschen den Eintrag nicht. Verwenden Sie ein leeres Array, wenn keine zu exportierenden Cmdlets vorhanden sind.
-CmdletsToExport = @() #'*'
+CmdletsToExport = @()
 
 # Die aus diesem Modul zu exportierenden Variablen
-VariablesToExport = @() #'*'
+VariablesToExport = @()
 
 # Aus diesem Modul zu exportierende Aliase. Um optimale Leistung zu erzielen, verwenden Sie keine Platzhalter und löschen den Eintrag nicht. Verwenden Sie ein leeres Array, wenn keine zu exportierenden Aliase vorhanden sind.
-AliasesToExport = @() #'*'
+AliasesToExport = @(
+
+    'Get-NotificationChannels'
+    'Get-NotificationTargets'
+    "Get-SlackConversations"
+    "Get-TelegramUpdates"
+    "Get-NotificationGroups"
+
+)
 
 # Aus diesem Modul zu exportierende DSC-Ressourcen
 # DscResourcesToExport = @()
@@ -164,6 +172,11 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.1.0 Added internal enum for ChannelType
+      Adding aliases for Verbs with plurals
+      Fixing a wrong named function for Slack
+      Reformat all code for better readibility
+      After more testings, bumped to 0.1.0
 0.0.11 Exchanged MailKit with MailKitLite
        Exchanged Import-Dependencies script with Import-Dependency module
        Added support for mail attachments in Send-MailNotification

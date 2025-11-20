@@ -1,14 +1,18 @@
 ﻿function Add-Channel {
+
     [CmdletBinding()]
     param (
-         [Parameter(Mandatory = $true)][String]$Name
-        ,[Parameter(Mandatory = $true)][String]$Type
-        ,[Parameter(Mandatory = $true)][PSCustomObject]$Definition
+
+         [Parameter(Mandatory = $true)]
+         [String]$Name
+
+        ,[Parameter(Mandatory = $true)]
+         [ChannelType]$Type
+
+        ,[Parameter(Mandatory = $true)]
+         [PSCustomObject]$Definition
+
     )
-
-    begin {
-
-    }
 
     process {
 
@@ -45,7 +49,4 @@
 
     }
 
-    end {
-
-    }
 }

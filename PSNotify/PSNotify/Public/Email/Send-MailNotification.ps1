@@ -79,34 +79,15 @@
             $message.To.Add($_) # TODO not checking if the email is valid
         }
         $message.Subject = $Subject
-        
-        #$textPart = [MimeKit.TextPart]::new("plain")
-        #$textPart.Text = $Text
-        #$message.Body = $TextPart
 
+        # Create the body with attachments
         $builder = [MimeKit.BodyBuilder]::new()
         $builder.TextBody = $Text
-        $Attachments | ForEach-Object {
-            $builder.Attachments.Add($_)
+        $Attachment | ForEach-Object {
+            $builder.Attachments.Add($_) | Out-Null
         }
         $message.Body = $builder.ToMessageBody()
         
-        # Add attachment if provided
-        <#
-        If ( $Attachment -ne $null ) {
-            $attachmentPart = [MimeKit.MimePart]::new("application", "octet-stream")
-            $attachmentPart.Content = [MimeKit.MimeContent]::new([System.IO.File]::OpenRead($Attachment), [MimeKit.ContentEncoding]::Base64)
-            $attachmentPart.ContentDisposition = [MimeKit.ContentDisposition]::new([MimeKit.ContentDispositionType]::Attachment)
-            $attachmentPart.FileName = [System.IO.Path]::GetFileName($Attachment)
-
-            $multipart = [MimeKit.Multipart]::new("mixed")
-            $multipart.Add($textPart)
-            $multipart.Add($attachmentPart)
-
-            $message.Body = $multipart
-        }
-        #>
-
         # Send the message
         $msg = $smtpClient.Send($message)
         Write-Verbose $msg

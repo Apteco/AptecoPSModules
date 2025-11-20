@@ -1,15 +1,16 @@
 ﻿function Remove-EmailTarget {
 
-
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory = $true)][string]$Name        # Give the channel a name, this is the "identifier for this channel"
-        ,[Parameter(Mandatory = $true)][string]$TargetName
+
+         [Parameter(Mandatory = $true)]
+         [String]$Name        # Give the channel a name, this is the "identifier for this channel"
+
+        ,[Parameter(Mandatory = $true)]
+         [String]$TargetName
+    
     )
 
-    begin {
-
-    }
 
     process {
 
@@ -17,7 +18,4 @@
 
     }
 
-    end {
-
-    }
 }

@@ -1,32 +1,44 @@
 ﻿function Get-TeamsChannel {
 
-
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'Collection')]
     param (
-         [Parameter(Mandatory = $true)][string]$Name        # Give the channel a name, this is the "identifier for this channel"
+
+        [Parameter(Mandatory=$true, ParameterSetName = 'Single')]
+        [String]$Name
+        
     )
-
-    begin {
-
-    }
 
     process {
 
-        # Check if the telegram channel exists
-        $channel = $null
-        Get-Channel -Name $Name | Where-Object { $_.Type -eq "Teams" } | ForEach-Object {
-            $channel = $_
+        switch ($PSCmdlet.ParameterSetName) {
+
+            'Single' {
+
+                # Check if the channel exists
+                $channel = $null
+                Get-Channel -Name $Name | Where-Object { $_.Type -eq "Teams" } | ForEach-Object {
+                    $channel = $_
+                }
+
+                If ( $null -eq $channel ) {
+                    throw "Channel $( $Name ) not found!"
+                }
+
+                break
+            }
+
+            'Collection' {
+                
+                $channel = @( Get-NotificationChannels -Type "Teams" )
+
+                break
+            }
+
         }
 
-        If ( $null -eq $channel ) {
-            throw "Channel $( $Name ) not found!"
-        }
 
+        #return
         $channel
-
-    }
-
-    end {
 
     }
 

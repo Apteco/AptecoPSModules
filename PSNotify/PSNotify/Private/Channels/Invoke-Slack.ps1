@@ -1,5 +1,4 @@
 ﻿
-
 function Invoke-Slack {
 
     [CmdletBinding()]

@@ -1,15 +1,15 @@
 ﻿function Add-SlackChannel {
 
-
     [CmdletBinding()]
     param (
-         [Parameter(Mandatory = $true)][string]$Name        # Give the channel a name, this is the "identifier for this channel"
-        ,[Parameter(Mandatory = $true)][string]$Token
+
+         [Parameter(Mandatory = $true)]
+         [String]$Name        # Give the channel a name, this is the "identifier for this channel"
+        
+        ,[Parameter(Mandatory = $true)]
+         [String]$Token
+
     )
-
-    begin {
-
-    }
 
     process {
 
@@ -25,7 +25,4 @@
 
     }
 
-    end {
-
-    }
 }

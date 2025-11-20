@@ -1,12 +1,12 @@
 ﻿function Remove-Channel {
+
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory = $true)][String]$Name
+
+        [Parameter(Mandatory = $true)]
+        [String]$Name
+
     )
-
-    begin {
-
-    }
 
     process {
 
@@ -20,7 +20,4 @@
 
     }
 
-    end {
-
-    }
 }
