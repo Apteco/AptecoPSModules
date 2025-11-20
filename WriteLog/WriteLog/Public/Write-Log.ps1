@@ -57,9 +57,16 @@ Function Write-Log {
 
     [cmdletbinding()]
     param(
-          [Parameter(Mandatory=$true,ValueFromPipeline)][String]$Message
-         ,[Parameter(Mandatory=$false)][Boolean]$WriteToHostToo = $true
-         ,[Parameter(Mandatory=$false)][LogSeverity]$Severity = [LogSeverity]::VERBOSE
+
+          [Parameter(Mandatory=$true,ValueFromPipeline)]
+          [String]$Message
+
+         ,[Parameter(Mandatory=$false)]
+          [Boolean]$WriteToHostToo = $true
+
+         ,[Parameter(Mandatory=$false)]
+          [LogSeverity]$Severity = [LogSeverity]::VERBOSE
+
     )
 
     Begin {

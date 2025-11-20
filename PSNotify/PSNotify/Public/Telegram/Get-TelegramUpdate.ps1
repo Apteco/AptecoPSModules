@@ -17,18 +17,24 @@ PS C:\Users\Florian> Get-TelegramUpdates -name "MyNewChannel" -verbose -Offset 2
 
 #>
 
-function Get-TelegramUpdates {
+function Get-TelegramUpdate {
     [CmdletBinding()]
+
     param (
-         [Parameter(Mandatory=$true)][String]$Name                                # The telegram channel to use
-        ,[Parameter(Mandatory=$false)][long]$Offset = 0                           # The id of the last message + 1 to only receiver new messages
-        ,[Parameter(Mandatory=$false)][int]$Limit = 100                           # The number of messages you want to receive with one call
-        ,[Parameter(Mandatory=$false)][int]$Timeout = 0                           # Timeout for the call
+
+         [Parameter(Mandatory=$true)]
+         [String]$Name                                # The telegram channel to use
+
+        ,[Parameter(Mandatory=$false)]
+         [long]$Offset = 0                           # The id of the last message + 1 to only receiver new messages
+
+        ,[Parameter(Mandatory=$false)]
+         [int]$Limit = 100                           # The number of messages you want to receive with one call
+
+        ,[Parameter(Mandatory=$false)]
+         [int]$Timeout = 0                           # Timeout for the call
+
     )
-
-    begin {
-
-    }
 
     process {
 
@@ -45,7 +51,4 @@ function Get-TelegramUpdates {
 
     }
 
-    end {
-
-    }
 }

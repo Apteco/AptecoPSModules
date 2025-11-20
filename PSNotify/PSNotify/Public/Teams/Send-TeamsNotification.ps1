@@ -1,18 +1,23 @@
 ﻿
 
 function Send-TeamsNotification {
+
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory=$true)][String]$Name                                # The telegram channel to use
+
+         [Parameter(Mandatory=$true)]
+         [String]$Name                                # The telegram channel to use
+
         #,[Parameter(Mandatory=$true)][String]$Target                                # The telegram channel to use
-        ,[Parameter(Mandatory=$true)][String]$Title                                # The telegram channel to use
-        ,[Parameter(Mandatory=$true)][String]$Text                                # The telegram channel to use
+
+        ,[Parameter(Mandatory=$true)]
+         [String]$Title                                # The telegram channel to use
+
+        ,[Parameter(Mandatory=$true)]
+         [String]$Text                                # The telegram channel to use
         #,[Parameter(Mandatory=$false)][Switch]$DisableNotification = $false                        # The chat id to use
+
     )
-
-    begin {
-
-    }
 
     process {
 
@@ -45,8 +50,4 @@ function Send-TeamsNotification {
 
     }
 
-    end {
-
-    }
 }
-

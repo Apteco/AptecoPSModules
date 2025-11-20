@@ -3,19 +3,31 @@
 
     [CmdletBinding()]
     param (
-         [Parameter(Mandatory = $true)][string]$Name        # Give the channel a name, this is the "identifier for this channel"
-        ,[Parameter(Mandatory = $true)][string]$From
-        ,[Parameter(Mandatory = $true)][string]$Username
-        ,[Parameter(Mandatory = $true)][string]$Password
-        ,[Parameter(Mandatory = $true)][string]$Host
-        ,[Parameter(Mandatory = $false)][int]$Port = 587
-        ,[Parameter(Mandatory = $false)][Switch]$UseSSL = $false
-        #,[Parameter(Mandatory = $true)][string]$Token
+
+         [Parameter(Mandatory = $true)]
+         [String]$Name        # Give the channel a name, this is the "identifier for this channel"
+
+        ,[Parameter(Mandatory = $true)]
+         [String]$From
+
+        ,[Parameter(Mandatory = $true)]
+         [String]$Username
+
+        ,[Parameter(Mandatory = $true)]
+         [String]$Password
+
+        ,[Parameter(Mandatory = $true)]
+         [String]$Host
+
+        ,[Parameter(Mandatory = $false)]
+         [int]$Port = 587
+
+        ,[Parameter(Mandatory = $false)]
+         [Switch]$UseSSL = $false
+
+        #,[Parameter(Mandatory = $true)][String]$Token
+
     )
-
-    begin {
-
-    }
 
     process {
 
@@ -66,10 +78,6 @@
 
         # Add the channel
         Add-Channel -Type "Email" -Name $Name -Definition $definition
-
-    }
-
-    end {
 
     }
 

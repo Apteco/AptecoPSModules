@@ -17,20 +17,13 @@ https://github.com/RamblingCookieMonster/PSStackExchange/blob/db1277453374cb1668
 # ENUMS
 #-----------------------------------------------
 
-
-# Available hashing algorithms, referring to https://learn.microsoft.com/de-de/dotnet/api/system.security.cryptography.hashalgorithm.create?view=net-7.0
-# and System.Security.Cryptography
-# The numeric values are just dummy values
-<#
-Enum HashName {
-    SHA1        = 10
-    MD5         = 20
-    SHA256      = 30
-    SHA384      = 40
-    SHA512      = 50
-    HMACSHA256  = 60
+Enum ChannelType {
+    All      = -1
+    Email    = 0
+    Teams    = 1
+    Slack    = 2
+    Telegram = 3
 }
-#>
 
 
 #-----------------------------------------------
@@ -123,13 +116,37 @@ Write-Verbose -Message "Default path for keyfile:$( $resolvedStorefile.Path )"
 #-----------------------------------------------
 
 
+#-----------------------------------------------
+# EXPORT MODULE FUNCTIONS
+#-----------------------------------------------
 
-#-----------------------------------------------
-# READ IN CONFIG FILES AND VARIABLES
-#-----------------------------------------------
 
 Export-ModuleMember -Function $Public.Basename
 #Export-ModuleMember -Function $Private.Basename
+
+
+#-----------------------------------------------
+# EXPORT ALIASES
+#-----------------------------------------------
+
+$aliasDef = [Ordered]@{
+    "Get-NotificationChannels" = "Get-NotificationChannel"
+    "Get-NotificationTargets" = "Get-NotificationTarget"
+    "Get-SlackConversations" = "Get-SlackConversation"
+    "Get-TelegramUpdates" = "Get-TelegramUpdate"
+    "Get-NotificationGroups" = "Get-NotificationGroup"
+}
+$aliasDef.GetEnumerator() | ForEach-Object {
+    $name  = $_.Name
+    $value = $_.Value
+    Try {
+        New-Alias -Name $name -Value $value -Force
+    } Catch {
+        Write-Error -Message "Failed to create alias $( $name ) for function $( $value )"
+    }
+}
+
+Export-ModuleMember -Function $Public.Basename -Alias $aliasDef.GetEnumerator().Name
 
 
 #-----------------------------------------------

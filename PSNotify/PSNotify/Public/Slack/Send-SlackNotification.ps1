@@ -1,16 +1,20 @@
 ﻿
 
 function Send-SlackNotification {
+
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory=$true)][String]$Name                                # The telegram channel to use
-        ,[Parameter(Mandatory=$true)][String]$Target                                # The telegram channel to use
-        ,[Parameter(Mandatory=$true)][String]$Text                                # The telegram channel to use
+
+         [Parameter(Mandatory=$true)]
+         [String]$Name                                # The telegram channel to use
+
+        ,[Parameter(Mandatory=$true)]
+         [String]$Target                                # The telegram channel to use
+
+        ,[Parameter(Mandatory=$true)]
+         [String]$Text                                # The telegram channel to use
+
     )
-
-    begin {
-
-    }
 
     process {
 
@@ -32,8 +36,5 @@ function Send-SlackNotification {
 
     }
 
-    end {
-
-    }
 }
 

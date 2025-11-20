@@ -2,7 +2,7 @@
 Function Get-Store {
     [CmdletBinding()]
     param(
-        #[Parameter(Mandatory=$true)][string]$Path
+        #[Parameter(Mandatory=$true)][String]$Path
     )
 
     Process {

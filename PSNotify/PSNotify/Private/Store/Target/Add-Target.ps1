@@ -1,14 +1,19 @@
 ﻿function Add-Target {
+
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory = $true)][String]$Name
-        ,[Parameter(Mandatory = $true)][String]$TargetName
-        ,[Parameter(Mandatory = $true)][PSCustomObject]$Definition
+
+         [Parameter(Mandatory = $true)]
+         [String]$Name
+
+        ,[Parameter(Mandatory = $true)]
+         [String]$TargetName
+
+        ,[Parameter(Mandatory = $true)]
+         [PSCustomObject]$Definition
+
     )
 
-    begin {
-
-    }
 
     process {
 
@@ -26,7 +31,4 @@
 
     }
 
-    end {
-
-    }
 }

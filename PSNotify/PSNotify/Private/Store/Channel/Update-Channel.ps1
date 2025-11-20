@@ -1,9 +1,15 @@
 
 Function Update-Channel {
+
     [CmdletBinding()]
     param(
-         [Parameter(Mandatory = $true)][string]$Name        # Give the channel a name, this is the "identifier for this channel"
-        ,[Parameter(Mandatory = $true)][PSCustomObject]$NewChannel        # Give the channel a name, this is the "identifier for this channel"
+
+         [Parameter(Mandatory = $true)]
+         [String]$Name        # Give the channel a name, this is the "identifier for this channel"
+         
+        ,[Parameter(Mandatory = $true)]
+         [PSCustomObject]$NewChannel        # Give the channel a name, this is the "identifier for this channel"
+
     )
 
     Process {
@@ -23,7 +29,6 @@ Function Update-Channel {
         Get-Channel -Name $NewChannel.Name
 
     }
-
 
 }
 

@@ -1,7 +1,7 @@
 Function Set-Store {
     [CmdletBinding()]
     param(
-        #[Parameter(Mandatory=$true)][string]$Path
+        #[Parameter(Mandatory=$true)][String]$Path
     )
 
     Process {
@@ -48,11 +48,3 @@ Function Set-Store {
 
 
 }
-
-<#
-
-$Script:keyfile = [PSCustomObject]@{
-            "lastChange" = [datetime]::Now.ToString("yyyyMMddHHmmss")
-    }
-    $Script:keyfile | ConvertTo-Json | Set-Content -Path $defaultStorefile
-#>

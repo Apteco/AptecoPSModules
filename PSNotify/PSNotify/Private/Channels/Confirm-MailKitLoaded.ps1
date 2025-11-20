@@ -1,12 +1,8 @@
 ﻿function Confirm-MailKitLoaded {
+
     [CmdletBinding()]
     param (
-
     )
-
-    begin {
-
-    }
 
     process {
 
@@ -36,7 +32,4 @@
 
     }
 
-    end {
-
-    }
 }

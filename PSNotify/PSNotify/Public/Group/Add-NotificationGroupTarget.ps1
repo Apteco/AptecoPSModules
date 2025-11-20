@@ -1,16 +1,20 @@
 ﻿
 
 function Add-NotificationGroupTarget {
+
     [CmdletBinding()]
     param (
-         [Parameter(Mandatory = $true)][String]$Group
-        ,[Parameter(Mandatory = $true)][String]$Channel
-        ,[Parameter(Mandatory = $true)][String]$Target
+
+         [Parameter(Mandatory = $true)]
+         [String]$Group
+
+        ,[Parameter(Mandatory = $true)]
+         [String]$Channel
+
+        ,[Parameter(Mandatory = $true)]
+         [String]$Target
+         
     )
-
-    begin {
-
-    }
 
     process {
 
@@ -26,7 +30,4 @@ function Add-NotificationGroupTarget {
 
     }
 
-    end {
-
-    }
 }

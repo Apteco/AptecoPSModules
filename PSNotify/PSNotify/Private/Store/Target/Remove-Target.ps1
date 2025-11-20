@@ -1,13 +1,15 @@
 ﻿function Remove-Target {
+
     [CmdletBinding()]
     param (
-         [Parameter(Mandatory = $true)][String]$Name
-        ,[Parameter(Mandatory = $true)][String]$TargetName
+
+         [Parameter(Mandatory = $true)]
+         [String]$Name
+
+        ,[Parameter(Mandatory = $true)]
+         [String]$TargetName
+
     )
-
-    begin {
-
-    }
 
     process {
 
@@ -21,7 +23,4 @@
 
     }
 
-    end {
-
-    }
 }

@@ -1,20 +1,18 @@
 ﻿function Get-Channel {
 
-
     [CmdletBinding()]
     param (
-         [Parameter(Mandatory = $true)][string]$Name        # Give the channel a name, this is the "identifier for this channel"
+
+         [Parameter(Mandatory = $true)]
+         [String]$Name        # Give the channel a name, this is the "identifier for this channel"
+
     )
-
-    begin {
-
-    }
 
     process {
 
         # Check if the telegram channel exists
         $channel = $null
-        Get-NotificationChannels | Where-Object { $_.Name -eq $Name } | ForEach-Object {
+        Get-NotificationChannel | Where-Object { $_.Name -like $Name } | ForEach-Object {
             $channel = $_
         }
 
@@ -27,7 +25,4 @@
 
     }
 
-    end {
-
-    }
 }

@@ -3,9 +3,15 @@
 
     [CmdletBinding()]
     param (
-         [Parameter(Mandatory = $true)][string]$Name        # Give the channel a name, this is the "identifier for this channel"
-        ,[Parameter(Mandatory = $true)][string]$TargetName  # Give this group a name
-        ,[Parameter(Mandatory = $true)][string[]]$Receivers # Array of email addresses that should be targeted
+
+         [Parameter(Mandatory = $true)]
+         [String]$Name        # Name of the channel to which the target should be added
+        
+        ,[Parameter(Mandatory = $true)]
+         [String]$TargetName  # Give this group a name
+        
+        ,[Parameter(Mandatory = $true)]
+         [string[]]$Receivers # Array of email addresses that should be targeted
     )
 
     begin {
