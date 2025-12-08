@@ -17,6 +17,8 @@ https://github.com/RamblingCookieMonster/PSStackExchange/blob/db1277453374cb1668
 # OS CHECK
 #-----------------------------------------------
 
+Write-Verbose "Checking the Core and OS"
+
 $preCheckisCore = $PSVersionTable.Keys -contains "PSEdition" -and $PSVersionTable.PSEdition -eq 'Core'
 
 # Check the operating system, if Core
@@ -31,8 +33,6 @@ if ($preCheckisCore -eq $true) {
         throw "Unknown operating system"
     }
 } else {
-    # [System.Environment]::OSVersion.VersionString()
-    # [System.Environment]::Is64BitOperatingSystem
     $preCheckOs = "Windows"
 }
 
@@ -42,6 +42,8 @@ if ($preCheckisCore -eq $true) {
 #-----------------------------------------------
 
 If ( $preCheckOs -eq "Windows" -and $preCheckisCore -eq $false ) {
+
+    Write-Verbose "Adding Module path on Windows (when not using Core)"
 
     $modulePath = @( [System.Environment]::GetEnvironmentVariable("PSModulePath") -split ";" ) + @(
         "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles") )\WindowsPowerShell\Modules"
@@ -68,6 +70,9 @@ If ( $preCheckOs -eq "Windows" -and $preCheckisCore -eq $false ) {
 
 If ( $preCheckOs -eq "Windows" -and $preCheckisCore -eq $false ) {
 
+    Write-Verbose "Adding Script path on Windows (when not using Core)"
+
+
     #$envVariables = [System.Environment]::GetEnvironmentVariables()
     $scriptPath = @( [System.Environment]::GetEnvironmentVariable("Path") -split ";" ) + @(
         "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles") )\WindowsPowerShell\Scripts"
@@ -87,15 +92,12 @@ If ( $preCheckOs -eq "Windows" -and $preCheckisCore -eq $false ) {
 
 
 #-----------------------------------------------
-# ENUMS
-#-----------------------------------------------
-
-
-#-----------------------------------------------
 # LOAD PUBLIC AND PRIVATE FUNCTIONS
 #-----------------------------------------------
 
 #$PSBoundParameters["Verbose"].IsPresent -eq $true
+
+Write-Verbose "Loading public and private functions"
 
 $Public  = @( Get-ChildItem -Path "$( $PSScriptRoot )/Public/*.ps1" -ErrorAction SilentlyContinue )
 $Private = @( Get-ChildItem -Path "$( $PSScriptRoot )/Private/*.ps1" -ErrorAction SilentlyContinue )
@@ -113,20 +115,10 @@ $Private = @( Get-ChildItem -Path "$( $PSScriptRoot )/Private/*.ps1" -ErrorActio
 
 
 #-----------------------------------------------
-# READ IN CONFIG FILES AND VARIABLES
-#-----------------------------------------------
-
-# ...
-
-
-#-----------------------------------------------
-# READ IN CONFIG FILES AND VARIABLES
-#-----------------------------------------------
-
-
-#-----------------------------------------------
 # SET SOME VARIABLES ONLY VISIBLE TO MODULE AND FUNCTIONS
 #-----------------------------------------------
+
+Write-Verbose "Define internal module variables"
 
 # Define the variables
 #New-Variable -Name execPath -Value $null -Scope Script -Force              # Path of the calling script
@@ -163,51 +155,29 @@ $Script:is64BitOS = [System.Environment]::Is64BitOperatingSystem
 $Script:is64BitProcess = [System.Environment]::Is64BitProcess
 $Script:executionPolicy = Get-ExecutionPolicy -Scope MachinePolicy
 
-<#
-$Script:frameworkPreference = @(
 
-    # .NET 8+ (future‑proof)
-    'net9.0','net8.0','net8.0-windows','net7.0','net7.0-windows',
-
-    # .NET 6
-    'net6.0','net6.0-windows',
-
-    # .NET 5
-    'net5.0','net5.0-windows','netcore50',
-
-    # .NET Standard 2.1 → 2.0 → 1.5 → 1.3 → 1.1 → 1.0
-    'netstandard2.1','netstandard2.0','netstandard1.5',
-    'netstandard1.3','netstandard1.1','netstandard1.0',
-
-    # Classic .NET Framework descending
-    'net48','net47','net462'
-
-)
-#>
+Write-Verbose "Checking more details about PS Core"
 
 # Check if pscore is installed
 $pwshCommand = Get-Command -commandType Application -Name "pwsh*"
+$Script:defaultPsCoreVersion = $pwshCommand[0].Version
 If ( $pwshCommand.Count -gt 0 ) {
-    If ( ( pwsh { 1+1 } ) -eq 2 ) {
-        $Script:isCoreInstalled = $true
-        $Script:defaultPsCoreVersion = pwsh { $PSVersionTable.PSVersion.ToString() }
-        $Script:defaultPsCoreIs64Bit = pwsh { [System.Environment]::Is64BitProcess }
-        if ($Script:os -eq "Windows") {
-            # For Windows
-            $Script:defaultPsCorePath = ( get-command -name "pwsh*" -CommandType Application | where-object { $_.Source.replace("\pwsh.exe","") -eq ( pwsh { $pshome } ) } ).Source
-        } elseif ( $Script:os -eq "Linux" ) {
-            # For Linux
-            If ( $null -ne (which pwse) ) {
-                $Script:defaultPsCorePath = (which pwse)
-            }
+    $Script:isCoreInstalled = $true
+    if ($Script:os -eq "Windows") {
+        # For Windows
+        $Script:defaultPsCorePath = ( get-command -name "pwsh*" -CommandType Application | where-object { $_.Source.replace("\pwsh.exe","") -eq ( pwsh { $pshome } ) } ).Source
+    } elseif ( $Script:os -eq "Linux" ) {
+        # For Linux
+        If ( $null -ne (which pwse) ) {
+            $Script:defaultPsCorePath = (which pwse)
         }
-    } else {
-        Write-Warning "pwsh command found, but pwsh execution test failed."
     }
-
 } else {
     $Script:isCoreInstalled = $false
 }
+
+
+Write-Verbose "Checking the processor architecture"
 
 # Checking the processor architecture and operating system architecture
 If ( $null -ne [System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture ) {
@@ -243,6 +213,9 @@ if ($arch -match "(?i)32") {
 } else {
     $Script:architecture = "Unknown"
 }
+
+
+Write-Verbose "Checking the .NET package runtime preference order"
 
 # Check which runtimes to prefer
 $Script:runtimePreference = @()
@@ -301,6 +274,9 @@ switch ($Script:os) {
     }
 }
 
+
+Write-Verbose "Checking the .NET package lib preference order"
+
 # Check lib preference
 $Script:frameworkPreference = @()
 $ver = [System.Environment]::Version
@@ -342,6 +318,9 @@ if ( $PSVersionTable.PSEdition -eq 'Desktop' ) {
 
 }
 
+
+Write-Verbose "Checking Elevation"
+
 # Check elevation
 # TODO check for MacOS
 if ($Script:os -eq "Windows") {
@@ -351,34 +330,80 @@ if ($Script:os -eq "Windows") {
     $Script:isElevated = $principal.IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)
 } elseif ( $Script:os -eq "Linux" ) {
     $Script:executingUser = whoami
-    $Script:isElevated = -not [string]::IsNullOrEmpty($env:SUDO_USER)
+    $Script:isElevated = -not [String]::IsNullOrEmpty($env:SUDO_USER)
 }
+
+Write-Verbose "Checking PackageManagement and PowerShellGet versions"
 
 # Check if PackageManagement and PowerShellGet are available
 $Script:packageManagement = ( Get-Module -Name "PackageManagement" -ListAvailable -ErrorAction SilentlyContinue | Sort-Object Version -Descending | Select-Object -First 1 ).Version.toString()
 $Script:powerShellGet = ( Get-Module -Name "PowerShellGet" -ListAvailable -ErrorAction SilentlyContinue | Sort-Object Version -Descending | Select-Object -First 1 ).Version.toString()
 
+
+Write-Verbose "Add background jobs to work out the installed modules and packages"
+
 # Add jobs to find out more about installed modules and packages in the background
+
+# TODO add in multiple paths for pscore ?
+
 $Script:backgroundJobs = [System.Collections.ArrayList]@()
+If ( $Script:isCoreInstalled -eq $True ) {
+    
+    [void]$Script:backgroundJobs.Add((
+        Start-Job -ScriptBlock {
+            pwsh { [System.Environment]::Is64BitProcess }
+        } -Name "PwshIs64Bit"
+    ))
+
+}
+
 [void]$Script:backgroundJobs.Add((
     Start-Job -ScriptBlock {
-        # Use Get-InstalledModule to retrieve installed modules
-        #Get-InstalledModule -ErrorAction SilentlyContinue
-        #Get-Module -ListAvailable | Where-Object { $_.ModuleType -ne "Manifest" } | Select-Object Name -Unique | Sort-Object Name -ErrorAction SilentlyContinue
+
         $modules = [System.Collections.ArrayList]@()
         Get-Module -ListAvailable | Where-Object { $_.ModuleType -ne "Manifest" } | Select-Object Name, Path, ModuleType, Version, PreRelease, NestedModules, ExportedFunctions, ExportedCmdlets, ExportedVariables, ExportedAliases | Group-Object Name | ForEach-Object {
             $modules.Add(( $_.Group | Sort-Object Version -Descending | Select-Object -First 1 )) | Out-Null
         }
         $modules
+
     } -Name "InstalledModule"
 ))
+
+
 [void]$Script:backgroundJobs.Add((
     Start-Job -ScriptBlock {
-        # Use Get-InstalledModule to retrieve installed modules
-        PackageManagement\Get-Package -ProviderName NuGet -ErrorAction SilentlyContinue
-    } -Name "InstalledGlobalPackages"
+        param($ModuleRoot, $OS)
+
+        # Load the needed assemblies
+        Add-Type -AssemblyName System.IO.Compression.FileSystem -ErrorAction Stop
+
+        # Paths are dependent on the os
+        if ($OS -eq "Windows") {
+            $pathsToCheck = @( 
+                ( Join-Path $env:USERPROFILE ".nuget\packages" )
+                "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles") )\PackageManagement\NuGet\Packages"
+                "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles(x86)") )\PackageManagement\NuGet\Packages"
+            )
+        } else {
+            $pathsToCheck = @( 
+                ( Join-Path $HOME ".nuget/packages" )
+            )
+        }
+
+        # Dot source the needed function
+        . ( Join-Path $ModuleRoot "/Public/Get-LocalPackage.ps1" )
+
+        # Load the packages
+        $packages = Get-LocalPackage -NugetRoot $pathsToCheck
+
+        $packages
+
+    } -Name "InstalledGlobalPackages" -ArgumentList $PSScriptRoot.ToString(), $preCheckOs
+
 ))
 
+
+Write-Verbose "Checking VCRedist"
 
 # Check the vcredist installation
 $vcredistInstalled = $False
@@ -433,6 +458,6 @@ $Script:vcredist = [PSCustomObject]@{
 # MAKE PUBLIC FUNCTIONS PUBLIC
 #-----------------------------------------------
 
-#Write-Verbose "Export public functions: $(($Public.Basename -join ", "))" -verbose
+Write-Verbose "Exporting public functions"
+
 Export-ModuleMember -Function $Public.Basename #-verbose  #+ "Set-Logfile"
-#Export-ModuleMember -Function $Private.Basename #-verbose  #+ "Set-Logfile"

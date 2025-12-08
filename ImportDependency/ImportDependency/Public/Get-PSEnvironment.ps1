@@ -70,7 +70,7 @@
             $libPathToCheck = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($LocalPackageFolder)
             Write-Verbose "Checking path '$( $libPathToCheck )' for local packages"
             If ( (Test-Path -Path $libPathToCheck) -eq $true ) {
-                $localPackages = PackageManagement\Get-Package -Destination $LocalPackageFolder
+                $localPackages = Get-LocalPackage -NugetRoot $LocalPackageFolder
                 Write-Verbose "Found $( $localPackages.Count ) local packages"
             }
             $didLocalPackageCheck = $True
@@ -85,7 +85,7 @@
             "IsCoreInstalled"               = $Script:isCoreInstalled
             "DefaultPSCore" = [Ordered]@{
                 "Version"                   = $Script:defaultPsCoreVersion
-                "Is64Bit"                   = $Script:defaultPsCoreIs64Bit
+                "Is64Bit"                   = $Script:defaultPsCoreIs64Bit      # This is updated by a background job
                 "Path"                      = $Script:defaultPsCorePath
             }
             "Architecture"                  = $Script:architecture
@@ -101,8 +101,8 @@
             "PowerShellGet"                 = $Script:powerShellGet
             "VcRedist"                      = $Script:vcredist
             "BackgroundCheckCompleted"      = $didBackgroundCheck
-            "InstalledModules"              = $Script:installedModules
-            "InstalledGlobalPackages"       = $Script:installedGlobalPackages
+            "InstalledModules"              = $Script:installedModules              # This is updated by a background job
+            "InstalledGlobalPackages"       = $Script:installedGlobalPackages       # This is updated by a background job
             "LocalPackageCheckCompleted"    = $didLocalPackageCheck
             "InstalledLocalPackages"        = $localPackages
         }

@@ -24,6 +24,12 @@ function Update-BackgroundJob {
 
             switch ($job.Name) {
 
+                "PwshIs64Bit" {
+
+                    $Script:defaultPsCoreIs64Bit = $results
+
+                }
+
                 "InstalledModule" {
 
                     $Script:installedModules = $results

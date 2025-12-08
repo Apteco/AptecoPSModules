@@ -71,6 +71,7 @@ Function Import-Dependency {
         Write-Verbose "Trying to update background job for modules"
         Update-BackgroundJob
 
+        Write-Verbose "Proceeding with start settings"
 
         #-----------------------------------------------
         # START
@@ -201,9 +202,9 @@ Function Import-Dependency {
 
             # Load the packages we can find
             If ( $LocalPackage.Count -gt 0 -or $LoadWholePackageFolder -eq $true) {
-                $localPackages = PackageManagement\Get-Package -Destination $LocalPackageFolder
+                $localPackages =  Get-LocalPackages -NugetRoot $LocalPackageFolder
             }
-            $globalPackages = PackageManagement\Get-Package -ProviderName NuGet # TODO This can be replaced with Get-PSEnvironment
+            $globalPackages = $Script:installedGlobalPackages #PackageManagement\Get-Package -ProviderName NuGet # TODO This can be replaced with Get-PSEnvironment
 
             # Filter the packages
             $packagesToLoad = [System.Collections.ArrayList]@()
@@ -223,7 +224,7 @@ Function Import-Dependency {
             $packagesToLoad | ForEach-Object {
 
                 # This is the whole path to the nupkg, but we can use the parent directory
-                $pkg = Get-Item -Path $_.source
+                $pkg = Get-Item -Path $_.Path
                 $package = $pkg.Directory
 
                 # Counters
