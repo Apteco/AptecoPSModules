@@ -33,8 +33,6 @@ if ($preCheckisCore -eq $true) {
         throw "Unknown operating system"
     }
 } else {
-    # [System.Environment]::OSVersion.VersionString()
-    # [System.Environment]::Is64BitOperatingSystem
     $preCheckOs = "Windows"
 }
 
@@ -157,27 +155,6 @@ $Script:is64BitOS = [System.Environment]::Is64BitOperatingSystem
 $Script:is64BitProcess = [System.Environment]::Is64BitProcess
 $Script:executionPolicy = Get-ExecutionPolicy -Scope MachinePolicy
 
-<#
-$Script:frameworkPreference = @(
-
-    # .NET 8+ (future‑proof)
-    'net9.0','net8.0','net8.0-windows','net7.0','net7.0-windows',
-
-    # .NET 6
-    'net6.0','net6.0-windows',
-
-    # .NET 5
-    'net5.0','net5.0-windows','netcore50',
-
-    # .NET Standard 2.1 → 2.0 → 1.5 → 1.3 → 1.1 → 1.0
-    'netstandard2.1','netstandard2.0','netstandard1.5',
-    'netstandard1.3','netstandard1.1','netstandard1.0',
-
-    # Classic .NET Framework descending
-    'net48','net47','net462'
-
-)
-#>
 
 Write-Verbose "Checking more details about PS Core"
 
@@ -382,14 +359,13 @@ If ( $Script:isCoreInstalled -eq $True ) {
 
 [void]$Script:backgroundJobs.Add((
     Start-Job -ScriptBlock {
-        # Use Get-InstalledModule to retrieve installed modules
-        #Get-InstalledModule -ErrorAction SilentlyContinue
-        #Get-Module -ListAvailable | Where-Object { $_.ModuleType -ne "Manifest" } | Select-Object Name -Unique | Sort-Object Name -ErrorAction SilentlyContinue
+
         $modules = [System.Collections.ArrayList]@()
         Get-Module -ListAvailable | Where-Object { $_.ModuleType -ne "Manifest" } | Select-Object Name, Path, ModuleType, Version, PreRelease, NestedModules, ExportedFunctions, ExportedCmdlets, ExportedVariables, ExportedAliases | Group-Object Name | ForEach-Object {
             $modules.Add(( $_.Group | Sort-Object Version -Descending | Select-Object -First 1 )) | Out-Null
         }
         $modules
+
     } -Name "InstalledModule"
 ))
 
@@ -397,141 +373,7 @@ If ( $Script:isCoreInstalled -eq $True ) {
 [void]$Script:backgroundJobs.Add((
     Start-Job -ScriptBlock {
         param($ModuleRoot, $OS)
-<#
-        $preCheckisCore = $PSVersionTable.Keys -contains "PSEdition" -and $PSVersionTable.PSEdition -eq 'Core'
 
-        # Check the operating system, if Core
-        if ($preCheckisCore -eq $true) {
-            If ( $IsWindows -eq $true ) {
-                $preCheckOs = "Windows"
-            } elseif ( $IsLinux -eq $true ) {
-                $preCheckOs = "Linux"
-            } elseif ( $IsMacOS -eq $true ) {
-                $preCheckOs = "MacOS"
-            } else {
-                throw "Unknown operating system"
-            }
-        } else {
-            # [System.Environment]::OSVersion.VersionString()
-            # [System.Environment]::Is64BitOperatingSystem
-            $preCheckOs = "Windows"
-        }
-
-        if ($preCheckOs -eq "Windows") {
-            $GlobalNuGetPath = Join-Path $env:USERPROFILE ".nuget\packages"
-        } else {
-            $GlobalNuGetPath = Join-Path $HOME ".nuget/packages"
-        }
-
-        if (-not (Test-Path $GlobalNuGetPath)) {
-            Write-Error "NuGet package directory not found: $GlobalNuGetPath"
-            return
-        }
-
-        $packages = [System.Collections.ArrayList]::new()
-
-        Get-ChildItem $GlobalNuGetPath -Recurse -Filter *.nuspec | ForEach-Object {
-            try {
-
-                [xml]$xml = Get-Content $_.FullName -ErrorAction Stop
-                $meta = $xml.package.metadata
-
-                # Calculate directory size
-                $pkgFolder = Split-Path $_.FullName -Parent
-                $sizeBytes = (Get-ChildItem $pkgFolder -Recurse -File | Measure-Object Length -Sum).Sum
-
-                $packages.Add([PSCustomObject]@{
-                    Id          = $meta.id
-                    Version     = $meta.version
-                    Description = $meta.description
-                    Authors     = $meta.authors
-                    Path        = $pkgFolder
-                    SizeMB      = [math]::Round(($sizeBytes / 1MB), 2)
-                    Source  = "nuspec"
-                } ) | Out-Null
-
-            } catch {
-                # ignore broken packages
-            }
-        }
-
-        # When we have Windows, then there are more paths to check
-        # TODO maybe add this path     "C:\Windows\System32\config\systemprofile\.nuget\packages"  # SYSTEM account
-        if ($preCheckOs -eq "Windows") {
-
-            # Load ZIP functionality
-            try {
-                Add-Type -AssemblyName System.IO.Compression.FileSystem -ErrorAction Stop
-            } catch {
-                Write-Error "ZipFile assembly not available on this system." -ForegroundColor Red
-                return
-            }
-
-            $pathsToCheck = @( 
-                "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles") )\PackageManagement\NuGet\Packages"
-                "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles(x86)") )\PackageManagement\NuGet\Packages"
-            )
-
-            $existing = $pathsToCheck | Where-Object { Test-Path $_ }
-
-            $existing | ForEach-Object {
-                Get-ChildItem $_ -Recurse -File | ForEach-Object {
-
-                    if ($_.Extension -eq ".nuspec") {
-                        # Fast path: read existing nuspec
-                        [xml]$xml = Get-Content $_.FullName
-                        $meta = $xml.package.metadata
-
-                        # Calculate directory size
-                        $pkgFolder = Split-Path $_.FullName -Parent
-                        $sizeBytes = (Get-ChildItem $pkgFolder -Recurse -File | Measure-Object Length -Sum).Sum
-
-                        $packages.Add([PSCustomObject]@{
-                            Id      = $meta.id
-                            Version = $meta.version
-                            Description = $meta.description
-                            Authors     = $meta.authors
-                            Path    = $_.DirectoryName
-                            Source  = "nuspec"
-                            SizeMB      = [math]::Round(($sizeBytes / 1MB), 2)
-
-                        } ) | Out-Null
-                    } elseif ($_.Extension -eq ".nupkg") {
-                        # Slow(er) path: read nuspec inside the ZIP container
-                        $zip = [System.IO.Compression.ZipFile]::OpenRead($_.FullName)
-                        $entry = $zip.Entries | Where-Object { $_.FullName -like "*.nuspec" }
-
-                        # Calculate directory size
-                        $pkgFolder = Split-Path $_.FullName -Parent
-                        $sizeBytes = (Get-ChildItem $pkgFolder -Recurse -File | Measure-Object Length -Sum).Sum
-
-                        if ($entry) {
-                            $stream = $entry.Open()
-                            $reader = New-Object System.IO.StreamReader($stream)
-                            [xml]$xml = $reader.ReadToEnd()
-                            $stream.Dispose()
-                            $zip.Dispose()
-
-                            $meta = $xml.package.metadata
-
-                            $packages.Add([PSCustomObject]@{
-                                Id      = $meta.id
-                                Version = $meta.version
-                                Description = $meta.description
-                                Authors     = $meta.authors
-                                SizeMB      = [math]::Round(($sizeBytes / 1MB), 2)
-                                Path    = $_.FullName
-                                Source  = "zip"
-                            } ) | Out-Null
-                        }
-                    }
-                }
-            }
-
-
-
-        }
-#>      
         # Load the needed assemblies
         Add-Type -AssemblyName System.IO.Compression.FileSystem -ErrorAction Stop
 
@@ -555,9 +397,6 @@ If ( $Script:isCoreInstalled -eq $True ) {
         $packages = Get-LocalPackage -NugetRoot $pathsToCheck
 
         $packages
-
-        # Use Get-InstalledModule to retrieve installed modules
-        #PackageManagement\Get-Package -ProviderName NuGet -ErrorAction SilentlyContinue
 
     } -Name "InstalledGlobalPackages" -ArgumentList $PSScriptRoot.ToString(), $preCheckOs
 
@@ -621,6 +460,4 @@ $Script:vcredist = [PSCustomObject]@{
 
 Write-Verbose "Exporting public functions"
 
-#Write-Verbose "Export public functions: $(($Public.Basename -join ", "))" -verbose
 Export-ModuleMember -Function $Public.Basename #-verbose  #+ "Set-Logfile"
-#Export-ModuleMember -Function $Private.Basename #-verbose  #+ "Set-Logfile"

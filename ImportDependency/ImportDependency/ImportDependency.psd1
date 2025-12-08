@@ -5,7 +5,7 @@
 RootModule = 'ImportDependency.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.3.15'
+ModuleVersion = '0.4.0'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -118,7 +118,11 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
-       Added a new function to load packages from specific folders without Get-Package
+0.4.0 Adding verbose output when import-module
+      Changing the way how we load module and package metadata for better performance
+      Cosmetic changes on code
+      Determination if pwsh is 64 bit is now a background job        
+      Added a new function to load packages from specific folders without Get-Package
 0.3.15 Fixed a problem with powershell core and indefinite running of Get-Package
        Added executionpolicy for machine to Get-PSEnvironment
        Added net471 and netcoreapp2.0 to framework preferences
