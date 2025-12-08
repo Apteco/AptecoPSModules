@@ -60,6 +60,27 @@ Export-ModuleMember -Function $Public.Basename
 
 
 #-----------------------------------------------
+# EXPORT ALIASES
+#-----------------------------------------------
+
+$aliasDef = [Ordered]@{
+    "Get-BaseParameters" = "Get-BaseParameter"
+    "Skip-UnallowedBaseParameters" = "Skip-UnallowedBaseParameter"
+}
+$aliasDef.GetEnumerator() | ForEach-Object {
+    $name  = $_.Name
+    $value = $_.Value
+    Try {
+        New-Alias -Name $name -Value $value -Force
+    } Catch {
+        Write-Error -Message "Failed to create alias $( $name ) for function $( $value )"
+    }
+}
+
+Export-ModuleMember -Function $Public.Basename -Alias $aliasDef.GetEnumerator().Name
+
+
+#-----------------------------------------------
 # SET SOME VARIABLES ONLY VISIBLE TO MODULE AND FUNCTIONS
 #-----------------------------------------------
 

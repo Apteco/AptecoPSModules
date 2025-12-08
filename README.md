@@ -30,6 +30,30 @@ Name|Type|Repository/<br/>Version|Platform|Tests|Downloads|
 [OSMGeocode](OSMGeocode/)|Module|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/OSMGeocode)](https://www.powershellgallery.com/packages/OSMGeocode)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/OSMGeocode)](https://www.powershellgallery.com/packages/OSMGeocode)<br/>![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)||[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/OSMGeocode)](https://www.powershellgallery.com/packages/OSMGeocode)
 [ImportDependency](ImportDependency/)|Module|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/ImportDependency)](https://www.powershellgallery.com/packages/ImportDependency)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/ImportDependency)](https://www.powershellgallery.com/packages/ImportDependency)<br/>![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)||[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/ImportDependency)](https://www.powershellgallery.com/packages/ImportDependency)
 
+# Installation / Update
+
+If you want to install an module just do it like
+
+```PowerShell
+Install-Module WriteLog
+```
+
+If you want to update it then use
+
+```PowerShell
+Update-Module WriteLog
+```
+
+If you want to update all Apteco modules at once (if an update is available)
+
+```PowerShell
+get-installedmodule | where-object { $_.CompanyName -like "*Apteco*" } | update-module
+```
+
+
+# More information about the modules
+
+
 
 Here are some high level descriptions. Please follow the links from the table or go into the subdirectories to get more detailed information.
 
@@ -107,7 +131,7 @@ function Invoke-CoreWebRequest {
     
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory=$true)][string]$AdditionalString
+        [Parameter(Mandatory=$true)][String]$AdditionalString
     )
     DynamicParam { Get-BaseParameters "Invoke-WebRequest" }
 

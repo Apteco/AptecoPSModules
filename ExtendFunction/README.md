@@ -9,7 +9,7 @@ function Invoke-CoreWebRequest {
     
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory=$true)][string]$AdditionalString
+        [Parameter(Mandatory=$true)][String]$AdditionalString
     )
     DynamicParam { Get-BaseParameters "Invoke-WebRequest" }
 

@@ -1,5 +1,5 @@
 ﻿
-Function Skip-UnallowedBaseParameters {
+Function Skip-UnallowedBaseParameter {
 
 <#
     .SYNOPSIS
@@ -18,7 +18,7 @@ Function Skip-UnallowedBaseParameters {
 
             [CmdletBinding()]
             param (
-                [Parameter(Mandatory=$true)][string]$AdditionalString
+                [Parameter(Mandatory=$true)][String]$AdditionalString
             )
             DynamicParam { Get-BaseParameters "Invoke-WebRequest" }
 
@@ -51,7 +51,7 @@ Function Skip-UnallowedBaseParameters {
     #>
     [CmdletBinding()]
     param(
-         [Parameter(Mandatory=$true)][string]$Base
+         [Parameter(Mandatory=$true)][String]$Base
         ,[Parameter(Mandatory=$true)][Hashtable]$Parameters
     )
 
