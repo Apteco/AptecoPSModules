@@ -55,7 +55,9 @@ RequiredModules = @(
 )
 
 # Assemblies that must be loaded prior to importing this module
-# RequiredAssemblies = @()
+RequiredAssemblies = @(
+      "System.IO.Compression.FileSystem"
+)
 
 # Script files (.ps1) that are run in the caller's environment prior to importing this module.
 # ScriptsToProcess = @()
@@ -76,6 +78,7 @@ FunctionsToExport = @(
     "Get-TemporaryPath"
     "Get-PythonPath"
     "Get-PwshPath"
+    "Get-LocalPackage"
 )
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
@@ -115,6 +118,7 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+       Added a new function to load packages from specific folders without Get-Package
 0.3.15 Fixed a problem with powershell core and indefinite running of Get-Package
        Added executionpolicy for machine to Get-PSEnvironment
        Added net471 and netcoreapp2.0 to framework preferences

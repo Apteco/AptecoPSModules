@@ -17,6 +17,8 @@ https://github.com/RamblingCookieMonster/PSStackExchange/blob/db1277453374cb1668
 # OS CHECK
 #-----------------------------------------------
 
+Write-Verbose "Checking the Core and OS"
+
 $preCheckisCore = $PSVersionTable.Keys -contains "PSEdition" -and $PSVersionTable.PSEdition -eq 'Core'
 
 # Check the operating system, if Core
@@ -43,6 +45,8 @@ if ($preCheckisCore -eq $true) {
 
 If ( $preCheckOs -eq "Windows" -and $preCheckisCore -eq $false ) {
 
+    Write-Verbose "Adding Module path on Windows (when not using Core)"
+
     $modulePath = @( [System.Environment]::GetEnvironmentVariable("PSModulePath") -split ";" ) + @(
         "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles") )\WindowsPowerShell\Modules"
         "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles(x86)") )\WindowsPowerShell\Modules"
@@ -68,6 +72,9 @@ If ( $preCheckOs -eq "Windows" -and $preCheckisCore -eq $false ) {
 
 If ( $preCheckOs -eq "Windows" -and $preCheckisCore -eq $false ) {
 
+    Write-Verbose "Adding Script path on Windows (when not using Core)"
+
+
     #$envVariables = [System.Environment]::GetEnvironmentVariables()
     $scriptPath = @( [System.Environment]::GetEnvironmentVariable("Path") -split ";" ) + @(
         "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles") )\WindowsPowerShell\Scripts"
@@ -87,15 +94,12 @@ If ( $preCheckOs -eq "Windows" -and $preCheckisCore -eq $false ) {
 
 
 #-----------------------------------------------
-# ENUMS
-#-----------------------------------------------
-
-
-#-----------------------------------------------
 # LOAD PUBLIC AND PRIVATE FUNCTIONS
 #-----------------------------------------------
 
 #$PSBoundParameters["Verbose"].IsPresent -eq $true
+
+Write-Verbose "Loading public and private functions"
 
 $Public  = @( Get-ChildItem -Path "$( $PSScriptRoot )/Public/*.ps1" -ErrorAction SilentlyContinue )
 $Private = @( Get-ChildItem -Path "$( $PSScriptRoot )/Private/*.ps1" -ErrorAction SilentlyContinue )
@@ -113,20 +117,10 @@ $Private = @( Get-ChildItem -Path "$( $PSScriptRoot )/Private/*.ps1" -ErrorActio
 
 
 #-----------------------------------------------
-# READ IN CONFIG FILES AND VARIABLES
-#-----------------------------------------------
-
-# ...
-
-
-#-----------------------------------------------
-# READ IN CONFIG FILES AND VARIABLES
-#-----------------------------------------------
-
-
-#-----------------------------------------------
 # SET SOME VARIABLES ONLY VISIBLE TO MODULE AND FUNCTIONS
 #-----------------------------------------------
+
+Write-Verbose "Define internal module variables"
 
 # Define the variables
 #New-Variable -Name execPath -Value $null -Scope Script -Force              # Path of the calling script
@@ -185,29 +179,28 @@ $Script:frameworkPreference = @(
 )
 #>
 
+Write-Verbose "Checking more details about PS Core"
+
 # Check if pscore is installed
 $pwshCommand = Get-Command -commandType Application -Name "pwsh*"
+$Script:defaultPsCoreVersion = $pwshCommand[0].Version
 If ( $pwshCommand.Count -gt 0 ) {
-    If ( ( pwsh { 1+1 } ) -eq 2 ) {
-        $Script:isCoreInstalled = $true
-        $Script:defaultPsCoreVersion = pwsh { $PSVersionTable.PSVersion.ToString() }
-        $Script:defaultPsCoreIs64Bit = pwsh { [System.Environment]::Is64BitProcess }
-        if ($Script:os -eq "Windows") {
-            # For Windows
-            $Script:defaultPsCorePath = ( get-command -name "pwsh*" -CommandType Application | where-object { $_.Source.replace("\pwsh.exe","") -eq ( pwsh { $pshome } ) } ).Source
-        } elseif ( $Script:os -eq "Linux" ) {
-            # For Linux
-            If ( $null -ne (which pwse) ) {
-                $Script:defaultPsCorePath = (which pwse)
-            }
+    $Script:isCoreInstalled = $true
+    if ($Script:os -eq "Windows") {
+        # For Windows
+        $Script:defaultPsCorePath = ( get-command -name "pwsh*" -CommandType Application | where-object { $_.Source.replace("\pwsh.exe","") -eq ( pwsh { $pshome } ) } ).Source
+    } elseif ( $Script:os -eq "Linux" ) {
+        # For Linux
+        If ( $null -ne (which pwse) ) {
+            $Script:defaultPsCorePath = (which pwse)
         }
-    } else {
-        Write-Warning "pwsh command found, but pwsh execution test failed."
     }
-
 } else {
     $Script:isCoreInstalled = $false
 }
+
+
+Write-Verbose "Checking the processor architecture"
 
 # Checking the processor architecture and operating system architecture
 If ( $null -ne [System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture ) {
@@ -243,6 +236,9 @@ if ($arch -match "(?i)32") {
 } else {
     $Script:architecture = "Unknown"
 }
+
+
+Write-Verbose "Checking the .NET package runtime preference order"
 
 # Check which runtimes to prefer
 $Script:runtimePreference = @()
@@ -301,6 +297,9 @@ switch ($Script:os) {
     }
 }
 
+
+Write-Verbose "Checking the .NET package lib preference order"
+
 # Check lib preference
 $Script:frameworkPreference = @()
 $ver = [System.Environment]::Version
@@ -342,6 +341,9 @@ if ( $PSVersionTable.PSEdition -eq 'Desktop' ) {
 
 }
 
+
+Write-Verbose "Checking Elevation"
+
 # Check elevation
 # TODO check for MacOS
 if ($Script:os -eq "Windows") {
@@ -351,15 +353,33 @@ if ($Script:os -eq "Windows") {
     $Script:isElevated = $principal.IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)
 } elseif ( $Script:os -eq "Linux" ) {
     $Script:executingUser = whoami
-    $Script:isElevated = -not [string]::IsNullOrEmpty($env:SUDO_USER)
+    $Script:isElevated = -not [String]::IsNullOrEmpty($env:SUDO_USER)
 }
+
+Write-Verbose "Checking PackageManagement and PowerShellGet versions"
 
 # Check if PackageManagement and PowerShellGet are available
 $Script:packageManagement = ( Get-Module -Name "PackageManagement" -ListAvailable -ErrorAction SilentlyContinue | Sort-Object Version -Descending | Select-Object -First 1 ).Version.toString()
 $Script:powerShellGet = ( Get-Module -Name "PowerShellGet" -ListAvailable -ErrorAction SilentlyContinue | Sort-Object Version -Descending | Select-Object -First 1 ).Version.toString()
 
+
+Write-Verbose "Add background jobs to work out the installed modules and packages"
+
 # Add jobs to find out more about installed modules and packages in the background
+
+# TODO add in multiple paths for pscore ?
+
 $Script:backgroundJobs = [System.Collections.ArrayList]@()
+If ( $Script:isCoreInstalled -eq $True ) {
+    
+    [void]$Script:backgroundJobs.Add((
+        Start-Job -ScriptBlock {
+            pwsh { [System.Environment]::Is64BitProcess }
+        } -Name "PwshIs64Bit"
+    ))
+
+}
+
 [void]$Script:backgroundJobs.Add((
     Start-Job -ScriptBlock {
         # Use Get-InstalledModule to retrieve installed modules
@@ -372,13 +392,179 @@ $Script:backgroundJobs = [System.Collections.ArrayList]@()
         $modules
     } -Name "InstalledModule"
 ))
+
+
 [void]$Script:backgroundJobs.Add((
     Start-Job -ScriptBlock {
+        param($ModuleRoot, $OS)
+<#
+        $preCheckisCore = $PSVersionTable.Keys -contains "PSEdition" -and $PSVersionTable.PSEdition -eq 'Core'
+
+        # Check the operating system, if Core
+        if ($preCheckisCore -eq $true) {
+            If ( $IsWindows -eq $true ) {
+                $preCheckOs = "Windows"
+            } elseif ( $IsLinux -eq $true ) {
+                $preCheckOs = "Linux"
+            } elseif ( $IsMacOS -eq $true ) {
+                $preCheckOs = "MacOS"
+            } else {
+                throw "Unknown operating system"
+            }
+        } else {
+            # [System.Environment]::OSVersion.VersionString()
+            # [System.Environment]::Is64BitOperatingSystem
+            $preCheckOs = "Windows"
+        }
+
+        if ($preCheckOs -eq "Windows") {
+            $GlobalNuGetPath = Join-Path $env:USERPROFILE ".nuget\packages"
+        } else {
+            $GlobalNuGetPath = Join-Path $HOME ".nuget/packages"
+        }
+
+        if (-not (Test-Path $GlobalNuGetPath)) {
+            Write-Error "NuGet package directory not found: $GlobalNuGetPath"
+            return
+        }
+
+        $packages = [System.Collections.ArrayList]::new()
+
+        Get-ChildItem $GlobalNuGetPath -Recurse -Filter *.nuspec | ForEach-Object {
+            try {
+
+                [xml]$xml = Get-Content $_.FullName -ErrorAction Stop
+                $meta = $xml.package.metadata
+
+                # Calculate directory size
+                $pkgFolder = Split-Path $_.FullName -Parent
+                $sizeBytes = (Get-ChildItem $pkgFolder -Recurse -File | Measure-Object Length -Sum).Sum
+
+                $packages.Add([PSCustomObject]@{
+                    Id          = $meta.id
+                    Version     = $meta.version
+                    Description = $meta.description
+                    Authors     = $meta.authors
+                    Path        = $pkgFolder
+                    SizeMB      = [math]::Round(($sizeBytes / 1MB), 2)
+                    Source  = "nuspec"
+                } ) | Out-Null
+
+            } catch {
+                # ignore broken packages
+            }
+        }
+
+        # When we have Windows, then there are more paths to check
+        # TODO maybe add this path     "C:\Windows\System32\config\systemprofile\.nuget\packages"  # SYSTEM account
+        if ($preCheckOs -eq "Windows") {
+
+            # Load ZIP functionality
+            try {
+                Add-Type -AssemblyName System.IO.Compression.FileSystem -ErrorAction Stop
+            } catch {
+                Write-Error "ZipFile assembly not available on this system." -ForegroundColor Red
+                return
+            }
+
+            $pathsToCheck = @( 
+                "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles") )\PackageManagement\NuGet\Packages"
+                "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles(x86)") )\PackageManagement\NuGet\Packages"
+            )
+
+            $existing = $pathsToCheck | Where-Object { Test-Path $_ }
+
+            $existing | ForEach-Object {
+                Get-ChildItem $_ -Recurse -File | ForEach-Object {
+
+                    if ($_.Extension -eq ".nuspec") {
+                        # Fast path: read existing nuspec
+                        [xml]$xml = Get-Content $_.FullName
+                        $meta = $xml.package.metadata
+
+                        # Calculate directory size
+                        $pkgFolder = Split-Path $_.FullName -Parent
+                        $sizeBytes = (Get-ChildItem $pkgFolder -Recurse -File | Measure-Object Length -Sum).Sum
+
+                        $packages.Add([PSCustomObject]@{
+                            Id      = $meta.id
+                            Version = $meta.version
+                            Description = $meta.description
+                            Authors     = $meta.authors
+                            Path    = $_.DirectoryName
+                            Source  = "nuspec"
+                            SizeMB      = [math]::Round(($sizeBytes / 1MB), 2)
+
+                        } ) | Out-Null
+                    } elseif ($_.Extension -eq ".nupkg") {
+                        # Slow(er) path: read nuspec inside the ZIP container
+                        $zip = [System.IO.Compression.ZipFile]::OpenRead($_.FullName)
+                        $entry = $zip.Entries | Where-Object { $_.FullName -like "*.nuspec" }
+
+                        # Calculate directory size
+                        $pkgFolder = Split-Path $_.FullName -Parent
+                        $sizeBytes = (Get-ChildItem $pkgFolder -Recurse -File | Measure-Object Length -Sum).Sum
+
+                        if ($entry) {
+                            $stream = $entry.Open()
+                            $reader = New-Object System.IO.StreamReader($stream)
+                            [xml]$xml = $reader.ReadToEnd()
+                            $stream.Dispose()
+                            $zip.Dispose()
+
+                            $meta = $xml.package.metadata
+
+                            $packages.Add([PSCustomObject]@{
+                                Id      = $meta.id
+                                Version = $meta.version
+                                Description = $meta.description
+                                Authors     = $meta.authors
+                                SizeMB      = [math]::Round(($sizeBytes / 1MB), 2)
+                                Path    = $_.FullName
+                                Source  = "zip"
+                            } ) | Out-Null
+                        }
+                    }
+                }
+            }
+
+
+
+        }
+#>      
+        # Load the needed assemblies
+        Add-Type -AssemblyName System.IO.Compression.FileSystem -ErrorAction Stop
+
+        # Paths are dependent on the os
+        if ($OS -eq "Windows") {
+            $pathsToCheck = @( 
+                ( Join-Path $env:USERPROFILE ".nuget\packages" )
+                "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles") )\PackageManagement\NuGet\Packages"
+                "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles(x86)") )\PackageManagement\NuGet\Packages"
+            )
+        } else {
+            $pathsToCheck = @( 
+                ( Join-Path $HOME ".nuget/packages" )
+            )
+        }
+
+        # Dot source the needed function
+        . ( Join-Path $ModuleRoot "/Public/Get-LocalPackage.ps1" )
+
+        # Load the packages
+        $packages = Get-LocalPackage -NugetRoot $pathsToCheck
+
+        $packages
+
         # Use Get-InstalledModule to retrieve installed modules
-        PackageManagement\Get-Package -ProviderName NuGet -ErrorAction SilentlyContinue
-    } -Name "InstalledGlobalPackages"
+        #PackageManagement\Get-Package -ProviderName NuGet -ErrorAction SilentlyContinue
+
+    } -Name "InstalledGlobalPackages" -ArgumentList $PSScriptRoot.ToString(), $preCheckOs
+
 ))
 
+
+Write-Verbose "Checking VCRedist"
 
 # Check the vcredist installation
 $vcredistInstalled = $False
@@ -432,6 +618,8 @@ $Script:vcredist = [PSCustomObject]@{
 #-----------------------------------------------
 # MAKE PUBLIC FUNCTIONS PUBLIC
 #-----------------------------------------------
+
+Write-Verbose "Exporting public functions"
 
 #Write-Verbose "Export public functions: $(($Public.Basename -join ", "))" -verbose
 Export-ModuleMember -Function $Public.Basename #-verbose  #+ "Set-Logfile"

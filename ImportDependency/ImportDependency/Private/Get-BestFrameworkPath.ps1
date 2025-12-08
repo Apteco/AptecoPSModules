@@ -2,7 +2,7 @@
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true)]
-        [string]$PackageRoot   # e.g. "$HOME\.nuget\packages\myPkg\1.0.0"
+        [String]$PackageRoot   # e.g. "$HOME\.nuget\packages\myPkg\1.0.0"
     )
 
     process {

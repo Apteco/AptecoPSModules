@@ -225,6 +225,14 @@ System.Threading.Channels      7.0.0            C:\Users\flo\Downloads\testpa...
 System.Threading.Tasks.Exte... 4.6.3            C:\Users\flo\Downloads\testpa... NuGet
 ```
 
+## How to see verbose output when Import-Module is executed
+
+This is kind of quirky in PowerShell as we cannot work out, if `Import-Module ImportDependendy -Verbose` was called. To see the output just add this before the `Import-Module`
+
+```PowerShell
+$VerbosePreference = 'Continue'
+```
+
 # Contribution
 
 You are free to use this code, put in some changes and use a pull request to feedback improvements :-)
