@@ -202,7 +202,7 @@ Function Import-Dependency {
 
             # Load the packages we can find
             If ( $LocalPackage.Count -gt 0 -or $LoadWholePackageFolder -eq $true) {
-                $localPackages =  Get-LocalPackages -NugetRoot $LocalPackageFolder
+                $localPackages =  Get-LocalPackage -NugetRoot $LocalPackageFolder
             }
             $globalPackages = $Script:installedGlobalPackages #PackageManagement\Get-Package -ProviderName NuGet # TODO This can be replaced with Get-PSEnvironment
 
