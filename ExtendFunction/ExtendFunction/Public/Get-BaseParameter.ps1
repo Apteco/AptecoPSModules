@@ -1,5 +1,5 @@
 ﻿
-Function Get-BaseParameters {
+Function Get-BaseParameter {
 
     <#
     .SYNOPSIS
@@ -19,7 +19,7 @@ Function Get-BaseParameters {
 
             [CmdletBinding()]
             param (
-                [Parameter(Mandatory=$true)][string]$AdditionalString
+                [Parameter(Mandatory=$true)][String]$AdditionalString
             )
             DynamicParam { Get-BaseParameters "Invoke-WebRequest" }
 
@@ -50,15 +50,15 @@ Function Get-BaseParameters {
 
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory=$true)][string]$Base
+        [Parameter(Mandatory=$true)][String]$Base
     )
 
     Process {
-        $baseC = Get-Command -Name $Base -All | where { $_.CommandType -ne "Alias" }
+        $baseC = Get-Command -Name $Base -All | where-object { $_.CommandType -ne "Alias" }
         $common = [CommonParameters].GetProperties().name
         if ($baseC) {
             $dict = [RuntimeDefinedParameterDictionary]::new()
-            $baseC.Parameters.GetEnumerator() | ForEach {
+            $baseC.Parameters.GetEnumerator() | ForEach-Object {
                 $val = $_.value
                 $key = $_.key
                 if ($key -notin $common) {
