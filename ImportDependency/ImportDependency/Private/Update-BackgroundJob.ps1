@@ -32,7 +32,10 @@ function Update-BackgroundJob {
 
                 "InstalledModule" {
 
-                    $Script:installedModules = $results
+                    $Script:installedModules = $results | Group-Object Name, PathEdition | ForEach-Object {
+                        # Get the latest version for each module/edition combination
+                        $_.Group | where-Object { $_.Version -ne "Unknown" } | Sort-Object { [version]($_.Version -replace '[^0-9.]', '0') } -Descending | Select-Object -First 1
+                    } | Sort-Object PathEdition, Name
 
                 }
 
