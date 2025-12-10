@@ -359,16 +359,86 @@ If ( $Script:isCoreInstalled -eq $True ) {
 
 [void]$Script:backgroundJobs.Add((
     Start-Job -ScriptBlock {
+        param($ModuleRoot, $OS)
 
-        $modules = [System.Collections.ArrayList]@()
-        Get-Module -ListAvailable | Where-Object { $_.ModuleType -ne "Manifest" } | Select-Object Name, Path, ModuleType, Version, PreRelease, NestedModules, ExportedFunctions, ExportedCmdlets, ExportedVariables, ExportedAliases | Group-Object Name | ForEach-Object {
-            $modules.Add(( $_.Group | Sort-Object Version -Descending | Select-Object -First 1 )) | Out-Null
-        }
-        $modules
+        # On Unix split by :
 
-    } -Name "InstalledModule"
+        $pathSeparator = if ($IsWindows -or $OS -match 'Windows') { ';' } else { ':' }
+
+        $env:PSModulePath -split $pathSeparator | ForEach-Object {
+            $modulePath = $_
+            if (Test-Path $modulePath) {
+                Get-ChildItem $modulePath -Filter *.psd1 -Recurse -ErrorAction SilentlyContinue | ForEach-Object {
+                    $content = Get-Content $_.FullName -Raw
+                    
+                    # Extract version
+                    if ($content -match "ModuleVersion\s*=\s*(['\`"])(.+?)\1") {
+                        $version = $matches[2]
+                    } else {
+                        $version = 'Unknown'
+                    }
+
+                    # Extract PowerShellVersion
+                    if ($content -match "PowerShellVersion\s*=\s*(['\`"])(.+?)\1") {
+                        $psVersion = $matches[2]
+                    } else {
+                        $psVersion = 'Not Specified'
+                    }
+                    
+                    # Extract CompatiblePSEditions
+                    if ($content -match "CompatiblePSEditions\s*=\s*@\(([^)]+)\)") {
+                        $editions = $matches[1] -replace "['\`"\s]", '' -split ','
+                    } else {
+                        $editions = @('Desktop') # Default for older modules
+                    }
+
+                    # Extract Tags from PSData
+                    if ($content -match "PSData\s*=\s*@\{[^}]*Tags\s*=\s*@\(([^)]+)\)") {
+                        $tags = $matches[1] -replace "['\`"\s]", '' -split ',' | Where-Object { $_ }
+                    } else {
+                        $tags = @()
+                    }
+
+                    # Extract Author
+                    if ($content -match "Author\s*=\s*(['\`"])(.+?)\1") {
+                        $author = $matches[2]
+                    } else {
+                        $author = 'Unknown'
+                    }
+                    
+                    # Extract CompanyName
+                    if ($content -match "CompanyName\s*=\s*(['\`"])(.+?)\1") {
+                        $companyName = $matches[2]
+                    } else {
+                        $companyName = 'Unknown'
+                    }
+                    
+                    # Determine path-based edition
+                    $pathEdition = if ($modulePath -match 'WindowsPowerShell') {
+                        'WindowsPowerShell'
+                    } elseif ($modulePath -match 'PowerShell\\[67]') {
+                        'PSCore'
+                    } else {
+                        'Shared'
+                    }
+                    
+                    [PSCustomObject][Ordered]@{
+                        Name                 = $_.BaseName
+                        Version              = $version
+                        PowerShellVersion    = $psVersion
+                        Author               = $author
+                        CompanyName          = $companyName
+                        PathEdition          = $pathEdition
+                        CompatibleEditions   = $editions -join ', '
+                        Tags                 = $tags -join ', '
+                        Path                 = $_.DirectoryName
+                    }
+                }
+            }
+        } 
+
+    } -Name "InstalledModule" -ArgumentList $PSScriptRoot.ToString(), $preCheckOs
 ))
-
 
 [void]$Script:backgroundJobs.Add((
     Start-Job -ScriptBlock {
