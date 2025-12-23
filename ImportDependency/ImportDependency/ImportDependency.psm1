@@ -275,28 +275,14 @@ switch ($Script:os) {
 }
 
 
-Write-Verbose "Checking the .NET package lib preference order"
+Write-Verbose "Checking the .NET package ref/lib preference order"
 
 # Check lib preference
 $Script:frameworkPreference = @()
 $ver = [System.Environment]::Version
 
-if ( $PSVersionTable.PSEdition -eq 'Desktop' ) {
-
-    # Desktop PowerShell can load any net4x up to the installed version
-    $maxFramework = switch ($ver.Major) {
-        4 { "net48" }   # most common Windows PowerShell 5.1 runs on .NET 4.8
-        default { "net48" }
-    }
-
-    # Add net4x folders descending from the max version
-    $net4x = @('net48','net471','net47','net462','net461','net45','net40')
-    $Script:frameworkPreference += $net4x[($net4x.IndexOf($maxFramework))..($net4x.Count-1)]
-
-    # Then add netstandard (2.0 is the highest fully supported on .NET 4.8)
-    $Script:frameworkPreference += 'netstandard2.0','netstandard1.5','netstandard1.3','netstandard1.1','netstandard1.0'
-
-} else {
+# If this is core, add the important framework folders first
+If ( $Script:isCore -eq $True ) {
 
     # PowerShell 7+ runs on .NET 6, 7, or 8 – pick the highest available
     $major = $ver.Major   # 6,7,8 …
@@ -313,8 +299,29 @@ if ( $PSVersionTable.PSEdition -eq 'Desktop' ) {
         $Script:frameworkPreference += "net$( $m ).0-windows"
     }
 
-    # Finally netstandard fall‑back
-    $Script:frameworkPreference += 'netcoreapp2.0','netstandard2.1','netstandard2.0','netstandard1.5','netstandard1.3','netstandard1.1','netstandard1.0'
+    # Finally netcore/netstandard fall‑back
+    $Script:frameworkPreference += 'netcoreapp2.1','netcoreapp2.0','netstandard2.1','netstandard2.0','netstandard1.5','netstandard1.3','netstandard1.1','netstandard1.0'
+
+}
+
+
+# Then add .NET Framework folders for Desktop PowerShell, it could be a try to load them
+
+# Desktop PowerShell can load any net4x up to the installed version
+$maxFramework = switch ($ver.Major) {
+    4 { "net48" }   # most common Windows PowerShell 5.1 runs on .NET 4.8
+    default { "net48" }
+}
+
+# Add net4x folders descending from the max version
+$net4x = @('net48','net471','net47','net462','net461','net45','net40')
+$Script:frameworkPreference += $net4x[($net4x.IndexOf($maxFramework))..($net4x.Count-1)]
+
+# Just the fallback for up to .NET 4.8
+if ( $Script:powerShellEdition -eq 'Desktop' ) {
+
+    # Then add netstandard (2.0 is the highest fully supported on .NET 4.8)
+    $Script:frameworkPreference += 'netstandard2.0','netstandard1.5','netstandard1.3','netstandard1.1','netstandard1.0'
 
 }
 

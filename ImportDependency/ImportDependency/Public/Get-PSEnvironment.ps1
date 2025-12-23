@@ -70,7 +70,7 @@
             $libPathToCheck = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($LocalPackageFolder)
             Write-Verbose "Checking path '$( $libPathToCheck )' for local packages"
             If ( (Test-Path -Path $libPathToCheck) -eq $true ) {
-                $localPackages = Get-LocalPackage -NugetRoot $LocalPackageFolder
+                $localPackages = Get-LocalPackage -NugetRoot $libPathToCheck
                 Write-Verbose "Found $( $localPackages.Count ) local packages"
             }
             $didLocalPackageCheck = $True

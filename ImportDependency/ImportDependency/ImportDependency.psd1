@@ -5,7 +5,7 @@
 RootModule = 'ImportDependency.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.4.2'
+ModuleVersion = '0.4.3'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -118,6 +118,8 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+0.4.3 Fixed a problem with loading local packages when using Id rather than Name
+      Changed the way how to load the frameworks preferences in packages
 0.4.2 Changed the way on how to load modules
 0.4.1 Fixed a typo in Import-Dependency after tests with Ubuntu
 0.4.0 Adding verbose output when import-module

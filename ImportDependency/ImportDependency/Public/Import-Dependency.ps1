@@ -199,22 +199,25 @@ Function Import-Dependency {
         If ( $LocalPackage.Count -gt 0 -or $GlobalPackage.Count -gt 0 -or $LoadWholePackageFolder -eq $true) {
 
             Write-Log -message "Loading libs..."
+            Write-Log -message "Using libs in this order: $( $Script:frameworkPreference -join ", " )"
 
             # Load the packages we can find
             If ( $LocalPackage.Count -gt 0 -or $LoadWholePackageFolder -eq $true) {
-                $localPackages =  Get-LocalPackage -NugetRoot $LocalPackageFolder
+                $libPathToCheck = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($LocalPackageFolder)
+                Write-Log "Checking path '$( $libPathToCheck )' for local packages"
+                $localPackages =  Get-LocalPackage -NugetRoot $libPathToCheck
             }
             $globalPackages = $Script:installedGlobalPackages #PackageManagement\Get-Package -ProviderName NuGet # TODO This can be replaced with Get-PSEnvironment
 
             # Filter the packages
             $packagesToLoad = [System.Collections.ArrayList]@()
-            $packagesToLoad.AddRange( @( $globalPackages | Where-Object { $_.Name -in $GlobalPackage } ))
+            $packagesToLoad.AddRange( @( $globalPackages | Where-Object { $_.Id -in $GlobalPackage } ))
 
             # Decide whether to load all local packages or just a selection
             If ( $LoadWholePackageFolder -eq $true ) {
                 $packagesToLoad.AddRange( @( $localPackages ))
             } else {
-                $packagesToLoad.AddRange( @($localPackages | Where-Object { $_.Name -in $LocalPackage } ))
+                $packagesToLoad.AddRange( @($localPackages | Where-Object { $_.Id -in $LocalPackage } ))
             }
 
             Write-Log -Message "There are $( $packagesToLoad.Count ) packages to load"
