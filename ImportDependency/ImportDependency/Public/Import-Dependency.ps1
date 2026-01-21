@@ -67,7 +67,12 @@ Function Import-Dependency {
 
     Begin {
 
-        
+        # Set explicitely verbose output and remember it
+        If ( $SuppressWarnings -ne $true -and $PSBoundParameters["Verbose"].IsPresent -eq $true -and $PSBoundParameters["Verbose"] -eq $True) {
+            $originalVerbosity = $VerbosePreference
+            $VerbosePreference = 'Continue'
+        }
+
         Write-Verbose "Trying to update background job for modules"
         Update-BackgroundJob
 
@@ -227,8 +232,10 @@ Function Import-Dependency {
             $packagesToLoad | ForEach-Object {
 
                 # This is the whole path to the nupkg, but we can use the parent directory
-                $pkg = Get-Item -Path $_.Path
-                $package = $pkg.Directory
+                $pkg = $_
+                $package = Get-Item -Path $_.Path
+
+                Write-Verbose "Loading '$( $pkg.Id )'"
 
                 # Counters
                 $packageLoaded = 0
@@ -244,7 +251,7 @@ Function Import-Dependency {
                                 $f = $_
                                 #"Loading $( $f.FullName )"
                                 try {
-                                    Write-Verbose -Message "Loading package ref '$( $f.FullName )'"
+                                    Write-Verbose -Message "  Loading package ref '$( $f.FullName )'"
                                     If( $Script:isCore ) {
                                         # For PowerShell Core use Add-Type first
                                         Add-Type -Path $f.FullName -ErrorAction Stop | Out-Null
@@ -254,13 +261,13 @@ Function Import-Dependency {
                                     $packageLoaded = 1
                                     #"Loaded $( $dotnetFolder )"
                                 } catch {
-                                    Write-Verbose -Message "Failed! Loading package ref '$( $f.FullName )'"
+                                    Write-Verbose -Message "  Failed! Loading package ref '$( $f.FullName )'"
                                     $loadError = 1
                                 }
                             }
                         }
                     } else {
-                        Write-Verbose -Message "No compatible framework found in '$( $package.FullName )/ref' for reference $( $Script:frameworkPreference -join ',' )"
+                        Write-Verbose -Message "  No compatible framework found in '$( $package.FullName )/ref' for reference $( $Script:frameworkPreference -join ',' )"
                         $loadError = 1
                     }
 
@@ -277,7 +284,7 @@ Function Import-Dependency {
                                 $f = $_
                                 #"Loading $( $f.FullName )"
                                 try {
-                                    Write-Verbose -Message "Loading package lib '$( $f.FullName )'"
+                                    Write-Verbose -Message "  Loading package lib '$( $f.FullName )'"
                                     If( $Script:isCore ) {
                                         # For PowerShell Core use Add-Type first
                                         Add-Type -Path $f.FullName -ErrorAction Stop | Out-Null
@@ -287,16 +294,16 @@ Function Import-Dependency {
                                     $packageLoaded = 1
                                     #"Loaded $( $dotnetFolder )"
                                 } catch {
-                                    Write-Verbose -Message "Failed! Loading package lib '$( $f.FullName )'"
+                                    Write-Verbose -Message "  Failed! Loading package lib '$( $f.FullName )'"
                                     $loadError = 1
                                 }
                             }
                         }
                     } else {
-                        Write-Verbose -Message "No compatible framework found in '$( $package.FullName )/lib' for reference $( $Script:frameworkPreference -join ',' )"
+                        Write-Verbose -Message "  No compatible framework found in '$( $package.FullName )/lib' for reference $( $Script:frameworkPreference -join ',' )"
                         $loadError = 1
                     }
-                    
+
                 }
 
                 # Output the current status
@@ -326,7 +333,7 @@ Function Import-Dependency {
                                 $f = $_
                                 #"Loading $( $f.FullName )"
                                 try {
-                                    Write-Verbose -Message "Loading package runtime '$( $f.FullName )'"
+                                    Write-Verbose -Message "  Loading package runtime '$( $f.FullName )'"
                                     [void][Reflection.Assembly]::LoadFile($f.FullName)
                                     $runtimeLoaded = 1
                                     #"Loaded $( $dotnetFolder )"
@@ -346,7 +353,7 @@ Function Import-Dependency {
                             }
                         }
                     } else {
-                        Write-Verbose -Message "No compatible runtime found in '$( $package.FullName )/runtimes' for runtime $( $Script:runtimePreference -join ',' )"
+                        Write-Verbose -Message "  No compatible runtime found in '$( $package.FullName )/runtimes' for runtime $( $Script:runtimePreference -join ',' )"
                         $runtimeLoadError = 1
                     }
 
@@ -401,6 +408,11 @@ Function Import-Dependency {
         If ( $KeepLogfile -eq $false -and $null -ne $getLogfile -and '' -ne $getLogfile) {
             Write-Log -Message "Changing logfile back to '$( $currentLogfile )'"
             Set-Logfile -Path $currentLogfile
+        }
+
+        # Set explicitely verbose output back
+        If ( $SuppressWarnings -ne $true -and $PSBoundParameters["Verbose"].IsPresent -eq $true -and $PSBoundParameters["Verbose"] -eq $True) {
+            $VerbosePreference = $VerbosePreference
         }
 
     }
