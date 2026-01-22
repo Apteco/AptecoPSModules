@@ -5,7 +5,7 @@
 RootModule = 'ImportDependency.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.4.6'
+ModuleVersion = '0.4.7'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -118,6 +118,7 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+0.4.7 Suppressing runtime loading message
 0.4.6 Added pscore/linux compatiblity to load native linux/macos assemblies from runtimes folder
 0.4.5 Fixed a problem with loading native assemblies from runtimes folders
 0.4.4 Added an internal switch for -verbose output
