@@ -233,6 +233,54 @@ This is kind of quirky in PowerShell as we cannot work out, if `Import-Module Im
 $VerbosePreference = 'Continue'
 ```
 
+# FAQ
+
+## I cannot install local nuget packages with pwsh under linux
+
+When executing a command like this
+
+```Pwsh
+install-package DuckDB.NET.Data.Full -verbose -Destination "./lib" -force -SkipDependencies -SkipValidate
+```
+
+I sometimes get this error
+
+```
+VERBOSE: Completed downloading 'DuckDB.NET.Data.Full'.
+VERBOSE: Hash for package 'DuckDB.NET.Data.Full' does not match hash provided from the server.
+VERBOSE: InstallPackageLocal' - name='DuckDB.NET.Data.Full', version='1.4.3',destination='/home/flobuntu/Downloads/20260122/lib'
+Install-Package: Package 'DuckDB.NET.Data.Full' failed to be installed because: End of Central Directory record could not be found.
+```
+
+To install a local nuget package then, you can also save and unzip that package with
+
+```Pwsh
+# Loading package with dependencies as single *.nupkg files
+save-package DuckDB.NET.Data.Full -Path ".\lib" -verbose
+
+# Switch to the folder
+cd lib
+
+# Unzip the most important ones - you need p7zip-full for that
+7z x ./DuckDB.NET.Bindings.Full.1.4.3.nupkg -d -o"./DuckDB.NET.Bindings.Full.1.4.3"
+7z x ./DuckDB.NET.Data.Full.1.4.3.nupkg -o"./DuckDB.NET.Data.Full.1.4.3"
+
+# This package seems to be dubble zipped and needs another round
+cd DuckDB.NET.Data.Full.1.4.3
+7z x ./DuckDB.NET.Data.Full.1.4.3
+rm DuckDB.NET.Data.Full.1.4.3
+cd ..
+
+# Remove not needed packages and leave the directory
+rm *.nupkg
+cd ..
+
+# Import the lib folder
+import-module importdependency
+import-dependency -LoadWholePackageFolder -LocalPackageFolder .\lib
+```
+
+
 # Contribution
 
 You are free to use this code, put in some changes and use a pull request to feedback improvements :-)

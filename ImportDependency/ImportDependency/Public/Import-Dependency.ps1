@@ -328,13 +328,20 @@ Function Import-Dependency {
                     $runtimeFolder = $null
                     $runtimeFolder = Get-BestRuntimePath -PackageRoot $package.FullName -ErrorAction silentlycontinue
                     If ( $null -ne $runtimeFolder ) {
-                        If ( (Test-Path -Path $runtimeFolder) -eq $true -and $runtimeLoaded -eq 0) {
-                            Get-ChildItem -Path $runtimeFolder -Filter "*.dll" -Recurse | ForEach-Object {
+                        Write-Verbose -Message "  Found compatible runtime in '$( $package.FullName )/runtimes'"
+                        If ( (Test-Path -Path $runtimeFolder) -eq $true -and $runtimeLoaded -eq 0) {                            
+                            Get-ChildItem -Path $runtimeFolder -Include "*.so","*.dll","*.dylib" -Recurse | ForEach-Object {
                                 $f = $_
                                 #"Loading $( $f.FullName )"
                                 try {
                                     Write-Verbose -Message "  Loading package runtime '$( $f.FullName )'"
-                                    [void][Reflection.Assembly]::LoadFile($f.FullName)
+                                    If( $Script:isCore -eq $True ) {
+                                        # For PowerShell Core use NativeLibrary Load
+                                        [System.Runtime.InteropServices.NativeLibrary]::Load($f.FullName)
+                                    } else {
+                                        # For Windows PowerShell use LoadFile
+                                        [void][Reflection.Assembly]::LoadFile($f.FullName)
+                                    }
                                     $runtimeLoaded = 1
                                     #"Loaded $( $dotnetFolder )"
                                 } catch [System.BadImageFormatException] {
