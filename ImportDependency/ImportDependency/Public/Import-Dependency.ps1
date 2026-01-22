@@ -337,7 +337,7 @@ Function Import-Dependency {
                                     Write-Verbose -Message "  Loading package runtime '$( $f.FullName )'"
                                     If( $Script:isCore -eq $True ) {
                                         # For PowerShell Core use NativeLibrary Load
-                                        [System.Runtime.InteropServices.NativeLibrary]::Load($f.FullName)
+                                        [void][System.Runtime.InteropServices.NativeLibrary]::Load($f.FullName)
                                     } else {
                                         # For Windows PowerShell use LoadFile
                                         [void][Reflection.Assembly]::LoadFile($f.FullName)
