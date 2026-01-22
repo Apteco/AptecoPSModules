@@ -14,11 +14,29 @@
             $runtimeId = $_
             $runtimePath = Join-Path $PackageRoot "runtimes/$( $runtimeId )"
 
-            If ( $runtimeId -ne "win" ) {
+            # Check based on platform-specific RIDs
+            If ( $runtimeId -like "win*" ) {
 
-                $dll = Get-ChildItem -Path $runtimePath -Filter "*.dll" -Recurse -File -ErrorAction SilentlyContinue | Select-Object -First 1
-                if ( $dll.Count -gt 0 -and $null -eq $bestRuntime ) {
-                    $bestRuntime = $dll.DirectoryName
+                # Windows runtime: look for .dll files
+                $assembly = Get-ChildItem -Path $runtimePath -Filter "*.dll" -Recurse -File -ErrorAction SilentlyContinue | Select-Object -First 1
+                if ( $assembly.Count -gt 0 -and $null -eq $bestRuntime ) {
+                    $bestRuntime = $assembly.DirectoryName
+                }
+
+            } elseif ( $runtimeId -like "linux*" ) {
+
+                # Linux runtime: look for .so files
+                $assembly = Get-ChildItem -Path $runtimePath -Filter "*.so*" -Recurse -File -ErrorAction SilentlyContinue | Select-Object -First 1
+                if ( $assembly.Count -gt 0 -and $null -eq $bestRuntime ) {
+                    $bestRuntime = $assembly.DirectoryName
+                }
+
+            } elseif ( $runtimeId -like "osx*" -or $runtimeId -like "macos*" ) {
+
+                # macOS runtime: look for .dylib files
+                $assembly = Get-ChildItem -Path $runtimePath -Filter "*.dylib" -Recurse -File -ErrorAction SilentlyContinue | Select-Object -First 1
+                if ( $assembly.Count -gt 0 -and $null -eq $bestRuntime ) {
+                    $bestRuntime = $assembly.DirectoryName
                 }
 
             } else {

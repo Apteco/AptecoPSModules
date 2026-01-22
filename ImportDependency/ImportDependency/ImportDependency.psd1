@@ -5,7 +5,7 @@
 RootModule = 'ImportDependency.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.4.4'
+ModuleVersion = '0.4.5'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -118,6 +118,7 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+0.4.5 Fixed a problem with loading native assemblies from runtimes folders
 0.4.4 Added an internal switch for -verbose output
       Fixed a problem with loading local packages when using the wrong path
 0.4.3 Fixed a problem with loading local packages when using Id rather than Name
