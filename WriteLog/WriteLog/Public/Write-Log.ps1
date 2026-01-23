@@ -32,6 +32,9 @@ Function Write-Log {
     Uses the enum [LogSeverity] (default=[LogSeverity]::VERBOSE) to choose the loglevel.
     The logfile will contain that loglevel and depending on error or warning, it will be shown in the console
 
+.PARAMETER UtcTimestamp
+    Log the current entry in UTC rather than the local time
+
 .EXAMPLE
     Write-Log -message "Hello World"
 
@@ -59,6 +62,7 @@ Function Write-Log {
     param(
 
           [Parameter(Mandatory=$true,ValueFromPipeline)]
+          [ValidateNotNullOrEmpty()]
           [String]$Message
 
          ,[Parameter(Mandatory=$false)]
@@ -66,6 +70,9 @@ Function Write-Log {
 
          ,[Parameter(Mandatory=$false)]
           [LogSeverity]$Severity = [LogSeverity]::VERBOSE
+
+         ,[Parameter(Mandatory=$false)]
+          [Switch]$UtcTimestamp = $false
 
     )
 
@@ -88,7 +95,11 @@ Function Write-Log {
     Process {
 
         $vs = $Script:valueStore.Clone()
-        $vs.Add("TIMESTAMP", [datetime]::Now.ToString( $Script:defaultTimestampFormat ) )
+        If ($UtcTimestamp -eq $True) {
+            $vs.Add("TIMESTAMP", [datetime]::UtcNow.ToString( $Script:defaultTimestampFormat ) )
+        } else {
+            $vs.Add("TIMESTAMP", [datetime]::Now.ToString( $Script:defaultTimestampFormat ) )
+        }
         $vs.Add("PROCESSID", $Script:processId)
         $vs.Add("SEVERITY", $Severity.ToString())
         $vs.Add("MESSAGE", $Message)

@@ -5,7 +5,7 @@
 RootModule = 'WriteLog.psm1'
 
 # Die Versionsnummer dieses Moduls
-ModuleVersion = '0.10.0'
+ModuleVersion = '0.10.1'
 
 # Unterstützte PSEditions
 # CompatiblePSEditions = @()
@@ -20,7 +20,7 @@ Author = 'florian.von.bracht@apteco.de'
 CompanyName = 'Apteco GmbH'
 
 # Urheberrechtserklärung für dieses Modul
-Copyright = '(c) 2025 Apteco GmbH. All rights reserved.'
+Copyright = '(c) 2026 Apteco GmbH. All rights reserved.'
 
 # Beschreibung der von diesem Modul bereitgestellten Funktionen
 Description = 'Apteco PS Modules - PowerShell logging script
@@ -148,6 +148,8 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.10.1 Feature: Added a new Switch for WriteLog to allow logging in UTC rather than only local timestamp
+       Fix: Small fix for Linux/MacOS compatibility for getting the executing user and elevation status
 0.10.0 Feature: Additional log output format (Set-LogFormat / Get-LogFormat) and timestamp format (Set-TimeStampFormat / Get-TimestampFormat)
        Feature: Support for multiple additional logfiles (Add-AdditionalLogfile / Get-AdditionalLogfile / Remove-AdditionalLogfile)
                 Now you can write into multiple logfiles or have a temporary and persistent logfile at the same time

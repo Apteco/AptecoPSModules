@@ -28,6 +28,30 @@ Enum LogSeverity {
 
 
 #-----------------------------------------------
+# OS CHECK
+#-----------------------------------------------
+
+Write-Verbose "Checking the Core and OS"
+
+$preCheckisCore = $PSVersionTable.Keys -contains "PSEdition" -and $PSVersionTable.PSEdition -eq 'Core'
+
+# Check the operating system, if Core
+if ($preCheckisCore -eq $true) {
+    If ( $IsWindows -eq $true ) {
+        $preCheckOs = "Windows"
+    } elseif ( $IsLinux -eq $true ) {
+        $preCheckOs = "Linux"
+    } elseif ( $IsMacOS -eq $true ) {
+        $preCheckOs = "MacOS"
+    } else {
+        throw "Unknown operating system"
+    }
+} else {
+    $preCheckOs = "Windows"
+}
+
+
+#-----------------------------------------------
 # LOAD PUBLIC AND PRIVATE FUNCTIONS
 #-----------------------------------------------
 
@@ -41,6 +65,28 @@ $Private = @( Get-ChildItem -Path "$( $PSScriptRoot )/Private/*.ps1" -ErrorActio
         . $import.fullname
     } Catch {
         Write-Error -Message "Failed to import function $($import.fullname): $_"
+    }
+}
+
+
+#-----------------------------------------------
+# LOAD WINDOWS SPECIFIC FUNCTIONS
+#-----------------------------------------------
+
+Write-Verbose "Loading Windows specific functions"
+
+$WindowsPrivate  = @( Get-ChildItem -Path "$( $PSScriptRoot )/Private/Windows/*.ps1" -ErrorAction SilentlyContinue )
+
+# dot source the files
+If ( $preCheckOs -eq "Windows" ) {
+    @( $WindowsPrivate ) | ForEach-Object {
+        $import = $_
+        Write-Verbose "Load function $( $import.fullname )" #-verbose
+        Try {
+            . $import.fullname
+        } Catch {
+            Write-Error -Message "Failed to import function $( $import.fullname ): $( $_ )"
+        }
     }
 }
 
@@ -90,10 +136,15 @@ $Script:additionalLogs = [System.Collections.ArrayList]@()
 # FILL VALUE STORE WITH DEFAULT VALUES
 #-----------------------------------------------
 
-$identity = [Security.Principal.WindowsIdentity]::GetCurrent()
-$executingUser = $identity.Name
-$principal = [Security.Principal.WindowsPrincipal]::new($identity)
-$isElevated = $principal.IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)
+# Check elevation
+if ($preCheckOs -eq "Windows") {
+    $id = Get-CurrentWindowsIdentity
+    $executingUser = $id.ExecutingUser
+    $isElevated = $id.IsElevated
+} elseif ( $preCheckOs -eq "Linux" -or $preCheckOs -eq "MacOS" ) {
+    $executingUser = whoami
+    $isElevated = -not [String]::IsNullOrEmpty($env:SUDO_USER)
+}
 
 $Script:valueStore = [Hashtable]@{
     "64BITOS" = If ( [System.Environment]::Is64BitOperatingSystem ) { "64BitOS" } Else { "32BitOS" }
