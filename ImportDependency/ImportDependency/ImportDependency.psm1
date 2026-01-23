@@ -115,6 +115,28 @@ $Private = @( Get-ChildItem -Path "$( $PSScriptRoot )/Private/*.ps1" -ErrorActio
 
 
 #-----------------------------------------------
+# LOAD WINDOWS SPECIFIC FUNCTIONS
+#-----------------------------------------------
+
+Write-Verbose "Loading Windows specific functions"
+
+$WindowsPrivate  = @( Get-ChildItem -Path "$( $PSScriptRoot )/Private/Windows/*.ps1" -ErrorAction SilentlyContinue )
+
+# dot source the files
+If ( $preCheckOs -eq "Windows" ) {
+    @( $WindowsPrivate ) | ForEach-Object {
+        $import = $_
+        Write-Verbose "Load function $( $import.fullname )" #-verbose
+        Try {
+            . $import.fullname
+        } Catch {
+            Write-Error -Message "Failed to import function $( $import.fullname ): $( $_ )"
+        }
+    }
+}
+
+
+#-----------------------------------------------
 # SET SOME VARIABLES ONLY VISIBLE TO MODULE AND FUNCTIONS
 #-----------------------------------------------
 
@@ -153,8 +175,18 @@ $Script:powerShellEdition = $PSVersionTable.PSEdition # Need to write that out b
 $Script:platform = $PSVersionTable.Platform
 $Script:is64BitOS = [System.Environment]::Is64BitOperatingSystem
 $Script:is64BitProcess = [System.Environment]::Is64BitProcess
-$Script:executionPolicy = Get-ExecutionPolicy -Scope MachinePolicy
+$Script:executionPolicy = [PSCustomObject]@{
+    "LocalMachine" = Get-ExecutionPolicy -Scope LocalMachine
+    "MachinePolicy" = Get-ExecutionPolicy -Scope MachinePolicy
+    "Process" = Get-ExecutionPolicy -Scope Process
+    "CurrentUser" = Get-ExecutionPolicy -Scope CurrentUser
+    "UserPolicy" = Get-ExecutionPolicy -Scope UserPolicy
+}
 
+
+#-----------------------------------------------
+# CHECKING POWERSHELL CORE DETAILS
+#-----------------------------------------------
 
 Write-Verbose "Checking more details about PS Core"
 
@@ -176,6 +208,10 @@ If ( $pwshCommand.Count -gt 0 ) {
     $Script:isCoreInstalled = $false
 }
 
+
+#-----------------------------------------------
+# CHECKING PROCESSOR ARCHITECTURE
+#-----------------------------------------------
 
 Write-Verbose "Checking the processor architecture"
 
@@ -214,6 +250,10 @@ if ($arch -match "(?i)32") {
     $Script:architecture = "Unknown"
 }
 
+
+#-----------------------------------------------
+# CHECKING .NET PACKAGE RUNTIME PREFERENCE ORDER
+#-----------------------------------------------
 
 Write-Verbose "Checking the .NET package runtime preference order"
 
@@ -275,6 +315,10 @@ switch ($Script:os) {
 }
 
 
+#-----------------------------------------------
+# CHECKING .NET PACKAGE REF/LIB PREFERENCE ORDER
+#-----------------------------------------------
+
 Write-Verbose "Checking the .NET package ref/lib preference order"
 
 # Check lib preference
@@ -304,7 +348,6 @@ If ( $Script:isCore -eq $True ) {
 
 }
 
-
 # Then add .NET Framework folders for Desktop PowerShell, it could be a try to load them
 
 # Desktop PowerShell can load any net4x up to the installed version
@@ -326,16 +369,18 @@ if ( $Script:powerShellEdition -eq 'Desktop' ) {
 }
 
 
+#-----------------------------------------------
+# CHECKING ELEVATION
+#-----------------------------------------------
+
 Write-Verbose "Checking Elevation"
 
 # Check elevation
-# TODO check for MacOS
 if ($Script:os -eq "Windows") {
-    $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
-    $Script:executingUser = $identity.Name
-    $principal = [Security.Principal.WindowsPrincipal]::new($identity)
-    $Script:isElevated = $principal.IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)
-} elseif ( $Script:os -eq "Linux" ) {
+    $id = Get-CurrentWindowsIdentity
+    $Script:executingUser = $id.ExecutingUser
+    $Script:isElevated = $id.IsElevated
+} elseif ( $Script:os -eq "Linux" -or $Script:os -eq "MacOS" ) {
     $Script:executingUser = whoami
     $Script:isElevated = -not [String]::IsNullOrEmpty($env:SUDO_USER)
 }
@@ -349,9 +394,11 @@ $Script:powerShellGet = ( Get-Module -Name "PowerShellGet" -ListAvailable -Error
 
 Write-Verbose "Add background jobs to work out the installed modules and packages"
 
-# Add jobs to find out more about installed modules and packages in the background
 
-# TODO add in multiple paths for pscore ?
+
+#-----------------------------------------------
+# CHECKING POWERHELL 64BIT IN BACKGROUND
+#-----------------------------------------------
 
 $Script:backgroundJobs = [System.Collections.ArrayList]@()
 If ( $Script:isCoreInstalled -eq $True ) {
@@ -363,6 +410,15 @@ If ( $Script:isCoreInstalled -eq $True ) {
     ))
 
 }
+
+
+#-----------------------------------------------
+# CHECKING POWERHELL MODULES IN BACKGROUND
+#-----------------------------------------------
+
+# Add jobs to find out more about installed modules and packages in the background
+
+# TODO add in multiple paths for pscore ?
 
 [void]$Script:backgroundJobs.Add((
     Start-Job -ScriptBlock {
@@ -447,6 +503,11 @@ If ( $Script:isCoreInstalled -eq $True ) {
     } -Name "InstalledModule" -ArgumentList $PSScriptRoot.ToString(), $preCheckOs
 ))
 
+
+#-----------------------------------------------
+# CHECKING GLOBAL NUGET PACKAGES IN BACKGROUND
+#-----------------------------------------------
+
 [void]$Script:backgroundJobs.Add((
     Start-Job -ScriptBlock {
         param($ModuleRoot, $OS)
@@ -479,6 +540,10 @@ If ( $Script:isCoreInstalled -eq $True ) {
 
 ))
 
+
+#-----------------------------------------------
+# CHECKING VCREDIST
+#-----------------------------------------------
 
 Write-Verbose "Checking VCRedist"
 
