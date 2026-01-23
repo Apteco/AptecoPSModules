@@ -3,7 +3,7 @@ function Set-TimestampFormat {
     param(
         [Parameter(Mandatory=$true)]
         [ValidateNotNullOrEmpty()]
-        [string]$Format
+        [String]$Format
     )
     process {
         try {

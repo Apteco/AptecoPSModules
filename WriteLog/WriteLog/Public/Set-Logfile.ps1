@@ -2,7 +2,7 @@ Function Set-Logfile {
 
     [cmdletbinding()]
     param(
-        [Parameter(Mandatory=$true)][string]$Path
+        [Parameter(Mandatory=$true)][String]$Path
         ,[Parameter(Mandatory=$false)][switch]$DisableOverride = $False
     )
 

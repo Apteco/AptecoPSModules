@@ -2,10 +2,10 @@ Function Remove-AdditionalLogfile {
     [CmdletBinding(SupportsShouldProcess = $true)]
     param(
         [Parameter(Mandatory = $true, ParameterSetName = 'ByName')]
-        [string] $Name,
+        [String] $Name,
 
         [Parameter(Mandatory = $true, ParameterSetName = 'ByPath')]
-        [string] $Path
+        [String] $Path
 
         # [Parameter(Mandatory = $true, ParameterSetName = 'ByIndex')]
         # [int] $Index

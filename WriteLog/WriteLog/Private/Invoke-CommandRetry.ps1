@@ -53,7 +53,7 @@ Function Invoke-CommandRetry {
     #>
 
     param (
-        [Parameter(Mandatory=$true)][string]$Command,
+        [Parameter(Mandatory=$true)][String]$Command,
         [Parameter(Mandatory=$true)][hashtable]$Args,
         [Parameter(Mandatory=$false)][int]$Retries = 10,
         [Parameter(Mandatory=$false)][int]$MillisecondsDelay = ( Get-Random -Maximum 3000 )

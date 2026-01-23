@@ -2,7 +2,7 @@ Function Set-ProcessId {
 
     [cmdletbinding()]
     param(
-        [Parameter(Mandatory=$true)][string]$Id
+        [Parameter(Mandatory=$true)][String]$Id
     )
 
     # Set override value so we know it was set

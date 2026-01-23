@@ -3,7 +3,7 @@ function Set-LogFormat {
     param(
         [Parameter(Mandatory=$true)]
         [ValidateNotNullOrEmpty()]
-        [string]$Format
+        [String]$Format
     )
     process {
         $Script:defaultOutputFormat = $Format

@@ -18,7 +18,7 @@ Function Add-AdditionalLogfile {
         }
 
         # If Name is empty, use the filename from the path
-        If ( [string]::IsNullOrWhiteSpace( $Name ) ) {
+        If ( [String]::IsNullOrWhiteSpace( $Name ) ) {
             $textfilesPresent = @( $Script:additionalLogs | Where-Object { $_.Type -eq "textfile" } ).Count
             $Name = "Textfile_$( $textfilesPresent + 1 )"
         }
