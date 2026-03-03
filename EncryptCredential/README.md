@@ -35,7 +35,10 @@ The key ist saved per default in your users profile, but can be exported into an
 Be aware that the encrypted strings are only valid for the executing machine as it uses SecureStrings that cannot be
 copied over to other machines.
 
+If you don't provide a keyfile, it will be automatically generated with your first call of 'Get-PlaintextToSecure'
+
 You can use `Import-Keyfile` to use a keyfile that has been exported before.
+
 
 # Installation
 

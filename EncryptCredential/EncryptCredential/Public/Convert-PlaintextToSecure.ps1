@@ -78,8 +78,8 @@ Function Convert-PlaintextToSecure {
 
         $return = ""
 
-        # generate salt
-        $salt = Get-Content -Path $Script:keyfile -Encoding UTF8
+        # read key bytes (handles both binary and legacy text format)
+        $salt = Read-Keyfile -Path $Script:keyfile
 
         # convert
         $stringSecure = ConvertTo-secureString -String $String -asplaintext -force
