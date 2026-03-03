@@ -121,10 +121,6 @@ Write-Verbose -Message "Default path for keyfile:$( $resolvedStorefile.Path )"
 #-----------------------------------------------
 
 
-Export-ModuleMember -Function $Public.Basename
-#Export-ModuleMember -Function $Private.Basename
-
-
 #-----------------------------------------------
 # EXPORT ALIASES
 #-----------------------------------------------

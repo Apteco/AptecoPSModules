@@ -40,6 +40,9 @@ function Get-NotificationChannel {
 
         }
 
+        # Return
+        $channels
+
     }
 
 }

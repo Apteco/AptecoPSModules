@@ -5,7 +5,7 @@
 RootModule = 'PSNotify.psm1'
 
 # Die Versionsnummer dieses Moduls
-ModuleVersion = '0.1.0'
+ModuleVersion = '0.1.1'
 
 # Unterstützte PSEditions
 # CompatiblePSEditions = @()
@@ -172,6 +172,7 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.1.1 Fixed some minor bugs identified by Claude AI
 0.1.0 Added internal enum for ChannelType
       Adding aliases for Verbs with plurals
       Fixing a wrong named function for Slack

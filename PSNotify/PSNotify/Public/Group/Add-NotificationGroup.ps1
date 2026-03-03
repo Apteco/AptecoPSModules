@@ -11,17 +11,11 @@
     process {
 
         # Check if the group already exists
-        try {
-            $group = @( Get-NotificationGroup -Name $Name )
-
-            If ( $group.count -gt 0 ) {
-                throw "Group $( $Name ) already exists"
-            }
-        } catch {
-            # Do nothing
+        If ( @( $script:store.groups | Where-Object { $_.Name -eq $Name } ).Count -gt 0 ) {
+            throw "Group '$( $Name )' already exists"
         }
 
-        # Add the channel to the store
+        # Add the group to the store
         $script:store.groups += [PSCustomObject]@{
             "GroupId" = [guid]::NewGuid().ToString()
             "Name" = $Name

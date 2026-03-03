@@ -6,8 +6,6 @@ Function Set-Store {
 
     Process {
 
-        $store = $null
-
         try {
 
             # Resolve path first
@@ -21,6 +19,9 @@ Function Set-Store {
                     Write-Verbose -message "Moving previous store file '$( $absolutePath )' to $( $backupPath )" #-Verbose
                     Move-Item -Path $absolutePath -Destination $backupPath #-Verbose
                 }
+
+                # Stamp the modification time right before writing
+                $script:store.lastChange = [datetime]::Now.ToString("yyyyMMddHHmmss")
 
                 # Now save the store file
                 ConvertTo-Json -InputObject $script:store -Depth 99 | Set-Content -Path $absolutePath -Encoding utf8 # -Verbose
