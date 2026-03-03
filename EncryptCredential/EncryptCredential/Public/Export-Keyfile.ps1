@@ -1,14 +1,9 @@
 
-<#
-
-This function copies the key, not moving it
-
-#>
 Function Export-Keyfile {
 
 <#
 .SYNOPSIS
-    Exporting the keyfile to another path
+    Exporting/copying the keyfile to another path
 
 .DESCRIPTION
     This function is using the currently defined keyfile or the automatically generated one and exports it to the defined $Path
@@ -50,11 +45,17 @@ Function Export-Keyfile {
 
     Process {
 
-        # TODO [ ] check if $Path and $Script:keyfile are the same
+        # Guard against source and destination being the same path
+        $resolvedSource = Resolve-Path -Path $Script:keyfile -ErrorAction SilentlyContinue
+        $resolvedDest   = Resolve-Path -Path $Path -ErrorAction SilentlyContinue
+        If ( $resolvedSource -and $resolvedDest -and ($resolvedSource.Path -eq $resolvedDest.Path) ) {
+            Write-Warning "Source and destination are the same file. Skipping."
+            return
+        }
 
         # Create the file, if not existing yet
         If ( (Test-Path -Path $Script:keyfile) -eq $false ) {
-            Create-KeyFile -Path $Script:keyfile -ByteLength 32
+            New-KeyfileRaw -Path $Script:keyfile -ByteLength 32
         }
 
         # Move the keyfile to the new destination

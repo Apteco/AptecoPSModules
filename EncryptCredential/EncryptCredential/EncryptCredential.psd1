@@ -4,7 +4,7 @@
 RootModule = 'EncryptCredential.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.2.0'
+ModuleVersion = '0.3.0'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -19,7 +19,7 @@ Author = 'florian.von.bracht@apteco.de'
 CompanyName = 'Apteco GmbH'
 
 # Copyright statement for this module
-Copyright = '(c) 2025 Apteco GmbH. All rights reserved.'
+Copyright = '(c) 2026 Apteco GmbH. All rights reserved.'
 
 # Description of the functionality provided by this module
 Description = 'Apteco PS Modules - PowerShell security encryption module
@@ -95,6 +95,7 @@ FunctionsToExport = @(
     "Convert-SecureToPlaintext"
     "Export-Keyfile"
     "Import-Keyfile"
+    "New-Keyfile"
 )
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
@@ -134,6 +135,14 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = "
+0.3.0 Reworked the module with Claude AI to be more secure and robust, now using another way to create
+      a keyfile for salting. The old encryption method is still supported, so all
+      previously encrypted strings will stay valid UNTIL you call New-Keyfile. After that,
+      please re-encrypt all your credentials.
+      Added ACL and linux file permission handling for the keyfile.
+      Dispose the used AES object after encryption/decryption for better security.
+      Changed internal functions verbs for more consistency
+      Updated the copyright year to 2026
 0.2.0 Tested successfully Linux support
 0.1.2 Updated copyright to 2025
 0.1.1 Bumped the copyright year to 2024

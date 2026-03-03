@@ -43,7 +43,7 @@ Function Convert-SecureToPlaintext {
 
         # Give a hint the file needs to be loaded
         If ( (Test-Path -Path $Script:keyfile) -eq $false ) {
-            Write-Error -Message "The keyfile does not exists, please define a valid path with 'Load-Keyfile'"
+            throw "The keyfile does not exist. Use 'Import-Keyfile -Path' to load a valid keyfile."
         }
 
     }
@@ -52,13 +52,14 @@ Function Convert-SecureToPlaintext {
 
         $return = ""
 
-        # generate salt
-        $salt = Get-Content -Path $Script:keyfile -Encoding UTF8
+        # read key bytes (handles both binary and legacy text format)
+        $salt = Read-Keyfile -Path $Script:keyfile
 
         #convert
         Try {
             $stringSecure = ConvertTo-SecureString -String $String -Key $salt
             $return = (New-Object PSCredential "dummy",$stringSecure).GetNetworkCredential().Password
+            $stringSecure.Dispose()
         } Catch {
             Write-Error "Decryption failed, maybe the keyfile was exchanged or you copied the files to another machine?"
         }
