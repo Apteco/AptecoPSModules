@@ -15,7 +15,7 @@
 
         $channel = Get-Channel -Name $Name
 
-        $channel.targets = $channel.targets | Where-Object { $_.Name -ne $TargetName }
+        $channel.targets = $channel.targets | Where-Object { $_.TargetName -ne $TargetName }
 
         # Exclude the channel
         #$script:store.channels = $script:store.channels | Where-Object { $_.Name -ne $channel.Name }

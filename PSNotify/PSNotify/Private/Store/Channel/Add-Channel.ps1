@@ -17,21 +17,9 @@
     process {
 
         # Check if the channel already exists
-        try {
-            $channel = @( Get-Channel -Name $Name )
-
-            If ( $channel.count -gt 0 ) {
-                throw "Channel $( $Name ) already exists"
-            }
-        } catch {
-            # Do nothing
+        If ( @( $script:store.channels | Where-Object { $_.Name -eq $Name } ).Count -gt 0 ) {
+            throw "Channel '$( $Name )' already exists"
         }
-
-        # If ( $script:store.channels.count -ge 1 ) {
-        #     $existingChannels = [Array]@( $script:store.channels )
-        # } else {
-        #     $existingChannels = [Array]@()
-        # }
 
         # Add the channel to the store
         $script:store.channels += [PSCustomObject]@{

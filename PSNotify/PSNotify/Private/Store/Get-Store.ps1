@@ -7,7 +7,6 @@ Function Get-Store {
 
     Process {
 
-        $store = $null
         try {
 
             # Resolve path first
@@ -15,12 +14,8 @@ Function Get-Store {
 
             If ( ( Test-Path -Path $absolutePath -IsValid ) -eq $true ) {
 
-                # Now load the store file
-                $storeContent = Get-Content -Path $absolutePath -encoding utf8 -Raw | ConvertFrom-Json #-Depth 99
-
-                # Resolve the path now to an absolute path
-                #$resolvedPath = Resolve-Path -Path $absolutePath
-
+                # Assign inside the try so a parse/IO failure cannot set $Script:store to $null
+                $Script:store = Get-Content -Path $absolutePath -encoding utf8 -Raw | ConvertFrom-Json #-Depth 99
 
             } else {
 
@@ -30,13 +25,9 @@ Function Get-Store {
 
         } catch {
 
-            Write-Error -Message "The path '$( $Script:defaultStorefile )' is invalid."
+            Write-Error -Message "Failed to load store from '$( $Script:defaultStorefile )': $_"
 
         }
-
-        # Return
-        #$resolvedPath.Path
-        $Script:store = $storeContent
 
     }
 
