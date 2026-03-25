@@ -100,6 +100,10 @@ function Add-RowsToDuckDB {
         Invoke-BufferedWrite -Connection $Connection -TableName $TableName `
                              -Data $buffer -PKColumns $PKColumns
         Write-Information "[$TableName] $rowCount rows inserted via pipeline."
+
+        # Force DuckDB to flush changes to disk (important for in-memory connections or when using transactions)
+        Invoke-DuckDBQuery -Query "FORCE CHECKPOINT"
+
     }
 }
 #endregion

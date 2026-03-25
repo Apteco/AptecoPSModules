@@ -5,11 +5,18 @@ function Close-DuckDBConnection {
     #>
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory)]
-        [DuckDB.NET.Data.DuckDBConnection]$Connection
+        [Parameter(Mandatory=$false)]
+        [DuckDB.NET.Data.DuckDBConnection]$Connection = $null
     )
+
+    if ($null -eq $Connection) {
+        $Connection = $Script:DefaultConnection
+        if ($null -eq $Connection) { throw "No active DuckDB connection. Provide -Connection or call Initialize-SQLPipeline first." }
+    }
+
     if ($Connection.State -ne [System.Data.ConnectionState]::Closed) {
         $Connection.Close()
         Write-Verbose 'DuckDB connection closed.'
     }
+    
 }
