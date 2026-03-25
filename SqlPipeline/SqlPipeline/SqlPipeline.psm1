@@ -1,6 +1,23 @@
+#-----------------------------------------------
+#region: VERBOSE OUTPUT
+#-----------------------------------------------
+
+param(
+    [bool]$Verbose = $false
+)
+
+If ( $Verbose -eq $true ) {
+    $previousVerbosePreference = $VerbosePreference
+    $VerbosePreference = "Continue"
+} else {
+    $VerbosePreference = "SilentlyContinue"
+}
+
+#endregion: VERBOSE OUTPUT
+
 
 #-----------------------------------------------
-# NOTES
+#region: NOTES
 #-----------------------------------------------
 
 <#
@@ -12,6 +29,8 @@ https://github.com/RamblingCookieMonster/PSStackExchange/blob/db1277453374cb1668
 
 #>
 
+#endregion: NOTES
+
 
 #-----------------------------------------------
 # ENUMS
@@ -19,10 +38,15 @@ https://github.com/RamblingCookieMonster/PSStackExchange/blob/db1277453374cb1668
 
 
 #-----------------------------------------------
-# ADD MODULE PATH, IF NOT PRESENT
+# IMPORT IMPORTDEPENDENCY MODULE
 #-----------------------------------------------
 
-Import-Module ImportDependency
+If ( ( get-module -Name ImportDependency ).Count -ge 1 ) {
+    Write-Verbose "Module ImportDependency is already imported"
+} else {
+    Write-Verbose "Importing module ImportDependency"
+    Import-Module -Name ImportDependency
+}
 
 
 #-----------------------------------------------
@@ -52,10 +76,22 @@ $Private = @( Get-ChildItem -Path "$( $PSScriptRoot )/Private/*.ps1" -Recurse -E
 New-Variable -Name timestamp -Value $null -Scope Script -Force      # Start time of this module
 New-Variable -Name logDivider -Value $null -Scope Script -Force     # String of dashes to use in logs
 New-Variable -Name moduleRoot -Value $null -Scope Script -Force     # Current location root of this module
+New-Variable -Name PipelineBuffer -Value $null -Scope Script -Force # Buffer for the incremental load pipeline
+New-Variable -Name PipelineOptions -Value $null -Scope Script -Force # Options for
+New-Variable -Name isDuckDBLoaded -Value $null -Scope Script -Force # Flag if DuckDB is available (set in Initialize-SQLPipeline)
+New-Variable -Name psModules -Value $null -Scope Script -Force # Flag if DuckDB is available (set in Initialize-SQLPipeline)
+New-Variable -Name psPackages -Value $null -Scope Script -Force # Flag if DuckDB is available (set in Initialize-SQLPipeline)
+New-Variable -Name psAssemblies -Value $null -Scope Script -Force # Flag if DuckDB is available (set in Initialize-SQLPipeline)
+New-Variable -Name psScripts -Value $null -Scope Script -Force # Flag if DuckDB is available (set in Initialize-SQLPipeline)
 
 # Set the variables now
 $Script:timestamp = [datetime]::Now
 $Script:moduleRoot = $PSScriptRoot.ToString()
+
+# Interne Pipeline-Puffer pro Tabelle
+$Script:isDuckDBLoaded = $false
+$Script:PipelineBuffer  = [System.Collections.Generic.Dictionary[string, System.Collections.Generic.List[PSObject]]]::new()
+$Script:PipelineOptions = [System.Collections.Generic.Dictionary[string, hashtable]]::new()
 
 
 #-----------------------------------------------
@@ -66,20 +102,17 @@ $Script:moduleRoot = $PSScriptRoot.ToString()
 . ( Join-Path -Path $PSScriptRoot.ToString() -ChildPath "/bin/dependencies.ps1" )
 
 # Load modules
-If ( $psModules.Count -gt 0 ) {
+Write-Verbose "There are currently $($Script:psModules.Count) modules defined as dependencies: $($Script:psModules -join ", ")"
+If ( $Script:psModules.Count -gt 0 ) {
     Import-Dependency -Module $psModules
 }
 
 # TODO For future you need in linux maybe this module for outgrid-view, which is also supported on console only: microsoft.powershell.consoleguitools
-
-# Load packages from current local libfolder
-$pse = Get-PSEnvironment
-If ( $psLocalPackages.Count -gt 0 -and $pse.InstalledLocalPackages.Count -gt 0 ) {
-    Import-Dependency -LoadWholePackageFolder
-}
+Write-Verbose "There are currently $($Script:psPackages.Count) packages defined as dependencies: $($Script:psPackages -join ", ")"
+Import-Package
 
 # Load assemblies
-$psAssemblies | ForEach-Object {
+$Script:psAssemblies | ForEach-Object {
     $ass = $_
     Add-Type -AssemblyName $ass
 }
@@ -90,3 +123,12 @@ $psAssemblies | ForEach-Object {
 #-----------------------------------------------
 
 Export-ModuleMember -Function $Public.Basename
+
+
+#-----------------------------------------------
+# SET THE VERBOSE PREFERENCE BACK TO THE ORIGINAL VALUE
+#-----------------------------------------------
+
+If ( $Verbose -eq $true ) {
+    $VerbosePreference = $previousVerbosePreference
+}

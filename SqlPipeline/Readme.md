@@ -1,6 +1,8 @@
 # Introduction
 
-Wrapper for [SimplySql](https://github.com/mithrandyr/SimplySql/) to allow pipeline input and set the parameters automatically and it accepts also PSCustomObject input. It supports all the supported databases from SimplySql, but examples here are made with SQLite.
+Wrapper for [SimplySql](https://github.com/mithrandyr/SimplySql/) and DuckDB to allow pipeline input and set the parameters automatically and it accepts also PSCustomObject input. It supports all the supported databases from SimplySql, but examples here are made with SQLite.
+
+> **Note:** To use DuckDB, run `Install-SqlPipeline` first to install the required dependencies.
 
 # Performance
 
