@@ -2,14 +2,14 @@
 function Invoke-DuckDBUpsert {
     <#
     .SYNOPSIS
-        Führt einen UPSERT via temporärer Staging-Tabelle + INSERT ON CONFLICT durch.
+        Performs an UPSERT via a temporary staging table + INSERT ON CONFLICT.
     .DESCRIPTION
-        1. Daten per Appender in stg_<TableName> schreiben (schnell)
-        2. INSERT INTO <TableName> … ON CONFLICT (PK) DO UPDATE SET …
-        3. Staging-Tabelle droppen
+        1. Write data into stg_<TableName> via appender (fast)
+        2. INSERT INTO <TableName> ... ON CONFLICT (PK) DO UPDATE SET ...
+        3. Drop the staging table
     .PARAMETER PKColumns
-        Primärschlüssel-Spalten für die ON CONFLICT-Klausel.
-        Falls leer: reiner INSERT (kein UPSERT).
+        Primary key columns for the ON CONFLICT clause.
+        If empty: plain INSERT (no UPSERT).
     #>
     [CmdletBinding()]
     param(
@@ -21,17 +21,17 @@ function Invoke-DuckDBUpsert {
 
     $stagingTable = "stg_$TableName"
 
-    # Staging anlegen
+    # Create staging table
     Invoke-DuckDBQuery -Connection $Connection -Query @"
         CREATE TEMP TABLE IF NOT EXISTS $stagingTable
         AS SELECT * FROM $TableName WHERE 1 = 0
 "@
 
-    # Daten per Appender in Staging schreiben
+    # Write data into staging via appender
     Write-DuckDBAppender -Connection $Connection -TableName $stagingTable -Data $Data
 
     if ($PKColumns.Count -gt 0) {
-        # Alle Nicht-PK-Spalten für SET-Klausel ermitteln
+        # Determine all non-PK columns for the SET clause
         $allCols  = Get-DuckDBColumns -Connection $Connection -TableName $TableName
         $setCols  = $allCols | Where-Object { $_ -notin $PKColumns }
         $setClause = ($setCols | ForEach-Object { "$_ = excluded.$_" }) -join ', '
@@ -43,14 +43,14 @@ function Invoke-DuckDBUpsert {
             ON CONFLICT ($pkList) DO UPDATE SET $setClause
 "@
     } else {
-        # Kein PK definiert – einfacher INSERT
+        # No PK defined - plain INSERT
         Invoke-DuckDBQuery -Connection $Connection -Query @"
             INSERT INTO $TableName
             SELECT * FROM $stagingTable
 "@
     }
 
-    # Staging aufräumen
+    # Clean up staging table
     Invoke-DuckDBQuery -Connection $Connection -Query "DROP TABLE IF EXISTS $stagingTable"
-    Write-Verbose "[$TableName] UPSERT abgeschlossen."
+    Write-Verbose "[$TableName] UPSERT completed."
 }

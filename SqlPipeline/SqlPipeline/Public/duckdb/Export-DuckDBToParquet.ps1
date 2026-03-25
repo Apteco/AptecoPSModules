@@ -1,18 +1,23 @@
 function Export-DuckDBToParquet {
     <#
     .SYNOPSIS
-        Exportiert eine DuckDB-Tabelle als Parquet-Datei (z.B. für externe Tools).
+        Exports a DuckDB table as a Parquet file (e.g. for use with external tools).
     .PARAMETER Compression
-        Kompressionsalgorithmus: SNAPPY (Standard), ZSTD, GZIP, NONE
+        Compression algorithm: SNAPPY (default), ZSTD, GZIP, NONE
     #>
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory)] [DuckDB.NET.Data.DuckDBConnection]$Connection,
+        [Parameter(Mandatory=$false)] [DuckDB.NET.Data.DuckDBConnection]$Connection = $null,
         [Parameter(Mandatory)] [string]$TableName,
         [Parameter(Mandatory)] [string]$OutputPath,
         [ValidateSet('SNAPPY','ZSTD','GZIP','NONE')]
         [string]$Compression = 'ZSTD'
     )
+
+    if ($null -eq $Connection) {
+        $Connection = $Script:DefaultConnection
+        if ($null -eq $Connection) { throw "No active DuckDB connection. Provide -Connection or call Initialize-SQLPipeline first." }
+    }
 
     $dir = Split-Path $OutputPath -Parent
     if ($dir -and -not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir | Out-Null }
@@ -21,5 +26,5 @@ function Export-DuckDBToParquet {
         COPY $TableName TO '$OutputPath'
         (FORMAT PARQUET, COMPRESSION $Compression)
 "@
-    Write-Host "[$TableName] Parquet exportiert: $OutputPath" -ForegroundColor Green
+    Write-Information "[$TableName] Parquet exported: $OutputPath"
 }

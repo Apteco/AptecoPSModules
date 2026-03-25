@@ -1,7 +1,7 @@
 function ConvertTo-DuckDBType {
     <#
     .SYNOPSIS
-        Leitet den DuckDB-SQL-Typ aus einem PowerShell-Wert ab.
+        Derives the DuckDB SQL type from a PowerShell value.
     #>
     [CmdletBinding()]
     [OutputType([string])]
@@ -16,7 +16,7 @@ function ConvertTo-DuckDBType {
     if ($Value -is [System.Collections.IList])               { return 'JSON'    }
     if ($Value -is [PSCustomObject] -or
         $Value -is [System.Collections.IDictionary])         { return 'JSON'    }
-    # ISO-Datumsstring erkennen
+    # Detect ISO datetime string
     if ($Value -is [string] -and
         $Value -match '^\d{4}-\d{2}-\d{2}(T|\s)\d{2}:\d{2}') { return 'TIMESTAMP' }
     return 'VARCHAR'

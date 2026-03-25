@@ -1,7 +1,7 @@
 function Get-DuckDBColumns {
     <#
     .SYNOPSIS
-        Gibt die Spaltennamen einer DuckDB-Tabelle als String-Array zurück.
+        Returns the column names of a DuckDB table as a string array.
     #>
     [CmdletBinding()]
     [OutputType([string[]])]

@@ -78,17 +78,18 @@ New-Variable -Name logDivider -Value $null -Scope Script -Force     # String of 
 New-Variable -Name moduleRoot -Value $null -Scope Script -Force     # Current location root of this module
 New-Variable -Name PipelineBuffer -Value $null -Scope Script -Force # Buffer for the incremental load pipeline
 New-Variable -Name PipelineOptions -Value $null -Scope Script -Force # Options for
-New-Variable -Name isDuckDBLoaded -Value $null -Scope Script -Force # Flag if DuckDB is available (set in Initialize-SQLPipeline)
-New-Variable -Name psModules -Value $null -Scope Script -Force # Flag if DuckDB is available (set in Initialize-SQLPipeline)
-New-Variable -Name psPackages -Value $null -Scope Script -Force # Flag if DuckDB is available (set in Initialize-SQLPipeline)
-New-Variable -Name psAssemblies -Value $null -Scope Script -Force # Flag if DuckDB is available (set in Initialize-SQLPipeline)
-New-Variable -Name psScripts -Value $null -Scope Script -Force # Flag if DuckDB is available (set in Initialize-SQLPipeline)
+New-Variable -Name isDuckDBLoaded -Value $null -Scope Script -Force    # Flag indicating whether DuckDB.NET is available
+New-Variable -Name DefaultConnection -Value $null -Scope Script -Force  # Default DuckDB connection (in-memory, auto-initialized on module load)
+New-Variable -Name psModules -Value $null -Scope Script -Force          # Module dependencies
+New-Variable -Name psPackages -Value $null -Scope Script -Force         # NuGet package dependencies
+New-Variable -Name psAssemblies -Value $null -Scope Script -Force       # .NET assembly dependencies
+New-Variable -Name psScripts -Value $null -Scope Script -Force          # Script dependencies
 
 # Set the variables now
 $Script:timestamp = [datetime]::Now
 $Script:moduleRoot = $PSScriptRoot.ToString()
 
-# Interne Pipeline-Puffer pro Tabelle
+# Internal pipeline buffer per table
 $Script:isDuckDBLoaded = $false
 $Script:PipelineBuffer  = [System.Collections.Generic.Dictionary[string, System.Collections.Generic.List[PSObject]]]::new()
 $Script:PipelineOptions = [System.Collections.Generic.Dictionary[string, hashtable]]::new()
@@ -115,6 +116,18 @@ Import-Package
 $Script:psAssemblies | ForEach-Object {
     $ass = $_
     Add-Type -AssemblyName $ass
+}
+
+# Auto-initialize an in-memory DuckDB connection so that Initialize-SQLPipeline
+# is only required when a persistent file-based database is needed.
+if ($Script:isDuckDBLoaded) {
+    try {
+        $Script:DefaultConnection = New-DuckDBConnection -DbPath ':memory:'
+        Initialize-PipelineMetadata -Connection $Script:DefaultConnection
+        Write-Verbose "DuckDB in-memory connection initialized automatically. Call Initialize-SQLPipeline -DbPath to switch to a file-based database."
+    } catch {
+        Write-Warning "Failed to auto-initialize DuckDB in-memory connection: $_"
+    }
 }
 
 

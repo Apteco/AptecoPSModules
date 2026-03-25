@@ -1,12 +1,12 @@
 function Sync-DuckDBSchema {
     <#
     .SYNOPSIS
-        Vergleicht die API-Daten mit dem bestehenden Tabellenschema und fügt
-        neue Spalten per ALTER TABLE ADD COLUMN hinzu.
+        Compares incoming data with the existing table schema and adds new columns
+        via ALTER TABLE ADD COLUMN.
     .DESCRIPTION
-        Felder, die in der API nicht mehr geliefert werden, bleiben unverändert
-        in der Tabelle (erhalten NULL-Werte beim nächsten Load).
-        Neue Felder aus der API werden automatisch ergänzt.
+        Columns that are no longer present in the incoming data remain unchanged in
+        the table (they will receive NULL values on the next load).
+        New columns from the incoming data are added automatically.
     #>
     [CmdletBinding()]
     param(
@@ -21,13 +21,13 @@ function Sync-DuckDBSchema {
     $newCols = $incomingCols | Where-Object { $_ -notin $existingCols }
 
     if ($newCols.Count -eq 0) {
-        Write-Verbose "[$TableName] Schema ist aktuell – keine neuen Spalten."
+        Write-Verbose "[$TableName] Schema is up to date - no new columns."
         return
     }
 
     foreach ($col in $newCols) {
         $sqlType = ConvertTo-DuckDBType -Value $SampleRow.$col
-        Write-Host "[$TableName] Neue Spalte: $col ($sqlType)"
+        Write-Verbose "[$TableName] New column: $col ($sqlType)"
         Invoke-DuckDBQuery -Connection $Connection -Query `
             "ALTER TABLE $TableName ADD COLUMN IF NOT EXISTS $col $sqlType"
     }

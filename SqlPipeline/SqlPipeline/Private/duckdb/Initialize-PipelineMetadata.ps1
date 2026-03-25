@@ -1,7 +1,7 @@
 function Initialize-PipelineMetadata {
     <#
     .SYNOPSIS
-        Erstellt die _load_metadata-Tabelle falls nicht vorhanden.
+        Creates the _load_metadata table if it does not already exist.
     #>
     [CmdletBinding()]
     param(
@@ -17,5 +17,5 @@ function Initialize-PipelineMetadata {
             error_msg    VARCHAR
         )
 "@
-    Write-Verbose 'Metadaten-Tabelle bereit.'
+    Write-Verbose 'Metadata table ready.'
 }

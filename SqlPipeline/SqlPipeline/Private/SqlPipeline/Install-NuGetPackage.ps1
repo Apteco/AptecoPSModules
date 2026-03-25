@@ -26,18 +26,18 @@ function Install-NuGetPackage {
     $outFile  = Join-Path $OutputDir "$pkgId.$Version.nupkg"
     $unzipDir = Join-Path $OutputDir "$pkgId.$Version"
 
-    Write-Host "Downloading $PackageId $Version ..."
+    Write-Verbose "Downloading $PackageId $Version ..."
     Invoke-WebRequest -Uri $url -OutFile $outFile
 
-    Write-Host "Extracting to $unzipDir ..."
+    Write-Verbose "Extracting to $unzipDir ..."
     Expand-Archive -Path $outFile -DestinationPath $unzipDir -Force
 
     if (-not $KeepPackage) {
-        Write-Host "Removing $outFile ..."
+        Write-Verbose "Removing $outFile ..."
         Remove-Item -Path $outFile -Force
     }
 
-    Write-Host "Done: $unzipDir"
+    Write-Verbose "Done: $unzipDir"
     return $unzipDir
 
 }

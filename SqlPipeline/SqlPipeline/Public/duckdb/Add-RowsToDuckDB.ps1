@@ -1,51 +1,51 @@
 # ---------------------------------------------------------------------------
-#region  Apteco SqlPipeline-kompatibler Interface-Layer
+#region  Apteco SqlPipeline-compatible Interface Layer
 # ---------------------------------------------------------------------------
-# Diese Funktionen orientieren sich an der Apteco SqlPipeline API (Add-RowsToSql)
-# und ermöglichen nativen PowerShell-Pipeline-Input (|) für DuckDB.
-# Kompatibel mit: Import-Module SqlPipeline, SimplySql
+# These functions follow the Apteco SqlPipeline API (Add-RowsToSql)
+# and enable native PowerShell pipeline input (|) for DuckDB.
+# Compatible with: Import-Module SqlPipeline, SimplySql
 # ---------------------------------------------------------------------------
 
 function Add-RowsToDuckDB {
     <#
     .SYNOPSIS
-        Fügt PSObjects per PowerShell-Pipeline direkt in eine DuckDB-Tabelle ein.
-        Kompatibel mit dem Apteco SqlPipeline-Interface (Add-RowsToSql).
+        Inserts PSObjects directly into a DuckDB table via the PowerShell pipeline.
+        Compatible with the Apteco SqlPipeline interface (Add-RowsToSql).
 
     .DESCRIPTION
-        Puffert die Pipeline-Objekte intern und führt den eigentlichen Write
-        in DuckDB aus, sobald die Pipeline abgeschlossen ist (End-Block).
-        Unterstützt:
-        - Automatische Tabellenerstellung
-        - Schema-Evolution (neue Felder)
-        - UPSERT (PKColumns angegeben) oder reiner INSERT
-        - Transaktions-ähnliches Batching via -UseTransaction (Staging)
+        Buffers the pipeline objects internally and performs the actual write
+        to DuckDB once the pipeline is complete (End block).
+        Supports:
+        - Automatic table creation
+        - Schema evolution (new columns)
+        - UPSERT (when PKColumns are specified) or plain INSERT
+        - Transaction-like batching via -UseTransaction (staging)
 
     .PARAMETER InputObject
-        PSObject aus der Pipeline.
+        PSObject from the pipeline.
 
     .PARAMETER Connection
-        Offene DuckDB-Verbindung.
+        Open DuckDB connection. If omitted, the default in-memory connection is used.
 
     .PARAMETER TableName
-        Zieltabelle in DuckDB.
+        Target table in DuckDB.
 
     .PARAMETER PKColumns
-        Primärschlüssel für UPSERT. Leer = reiner INSERT.
+        Primary key columns for UPSERT. Empty = plain INSERT.
 
     .PARAMETER UseTransaction
-        Puffert alle Rows und schreibt erst am Ende via Staging-Tabelle (sicherer,
-        etwas langsamer). Ohne Flag: Appender direkt nach Puffer-Befüllung.
+        Buffers all rows and writes them at the end via a staging table (safer,
+        slightly slower). Without this flag: appender is used directly after the buffer is filled.
 
     .PARAMETER BatchSize
-        Anzahl Rows pro Staging-Batch (Standard: 10000). Nur relevant ohne -UseTransaction.
+        Number of rows per staging batch (default: 10000). Only relevant without -UseTransaction.
 
     .EXAMPLE
-        # Apteco-Stil: Pipeline-Input
-        Import-Csv '.\orders.csv' | Add-RowsToDuckDB -Connection $conn -TableName 'orders' -PKColumns 'order_id' -UseTransaction -Verbose
+        # Apteco style: pipeline input
+        Import-Csv '.\orders.csv' | Add-RowsToDuckDB -TableName 'orders' -PKColumns 'order_id' -UseTransaction -Verbose
 
     .EXAMPLE
-        # API-Daten direkt pipen
+        # Pipe API data directly (explicit connection)
         (Invoke-RestMethod 'https://api.example.com/orders').items |
             Add-RowsToDuckDB -Connection $conn -TableName 'orders' -PKColumns @('order_id')
     #>
@@ -54,8 +54,8 @@ function Add-RowsToDuckDB {
         [Parameter(Mandatory, ValueFromPipeline)]
         [PSObject]$InputObject,
 
-        [Parameter(Mandatory)]
-        [DuckDB.NET.Data.DuckDBConnection]$Connection,
+        [Parameter(Mandatory=$false)]
+        [DuckDB.NET.Data.DuckDBConnection]$Connection = $null,
 
         [Parameter(Mandatory)]
         [string]$TableName,
@@ -68,18 +68,22 @@ function Add-RowsToDuckDB {
     )
 
     begin {
+        if ($null -eq $Connection) {
+            $Connection = $Script:DefaultConnection
+            if ($null -eq $Connection) { throw "No active DuckDB connection. Provide -Connection or call Initialize-SQLPipeline first." }
+        }
         $buffer = [System.Collections.Generic.List[PSObject]]::new()
         $rowCount = 0
-        Write-Verbose "[$TableName] Add-RowsToDuckDB gestartet (UseTransaction=$UseTransaction, BatchSize=$BatchSize)"
+        Write-Verbose "[$TableName] Add-RowsToDuckDB started (UseTransaction=$UseTransaction, BatchSize=$BatchSize)"
     }
 
     process {
         $buffer.Add($InputObject)
         $rowCount++
 
-        # Ohne UseTransaction: Batch-weise schreiben sobald BatchSize erreicht
+        # Without UseTransaction: write in batches once BatchSize is reached
         if (-not $UseTransaction -and $buffer.Count -ge $BatchSize) {
-            Write-Verbose "[$TableName] Batch-Write: $($buffer.Count) Rows"
+            Write-Verbose "[$TableName] Batch write: $($buffer.Count) rows"
             Invoke-BufferedWrite -Connection $Connection -TableName $TableName `
                                  -Data $buffer -PKColumns $PKColumns
             $buffer.Clear()
@@ -88,14 +92,14 @@ function Add-RowsToDuckDB {
 
     end {
         if ($buffer.Count -eq 0) {
-            Write-Verbose "[$TableName] Keine Daten in Pipeline."
+            Write-Verbose "[$TableName] No data in pipeline."
             return
         }
 
-        Write-Verbose "[$TableName] Finaler Write: $($buffer.Count) Rows (gesamt: $rowCount)"
+        Write-Verbose "[$TableName] Final write: $($buffer.Count) rows (total: $rowCount)"
         Invoke-BufferedWrite -Connection $Connection -TableName $TableName `
                              -Data $buffer -PKColumns $PKColumns
-        Write-Information "[$TableName] ✓ $rowCount Zeilen via Pipeline eingefügt." #-ForegroundColor Green
+        Write-Information "[$TableName] $rowCount rows inserted via pipeline."
     }
 }
 #endregion

@@ -1,17 +1,22 @@
 function Set-LoadMetadata {
     <#
     .SYNOPSIS
-        Speichert Timestamp, Zeilenzahl und Status nach einem Load.
+        Stores the timestamp, row count, and status after a load.
     #>
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory)] [DuckDB.NET.Data.DuckDBConnection]$Connection,
+        [Parameter(Mandatory=$false)] [DuckDB.NET.Data.DuckDBConnection]$Connection = $null,
         [Parameter(Mandatory)] [string]$TableName,
         [Parameter(Mandatory)] [int]$RowsLoaded,
         [ValidateSet('success','error')]
         [string]$Status = 'success',
         [string]$ErrorMessage = ''
     )
+
+    if ($null -eq $Connection) {
+        $Connection = $Script:DefaultConnection
+        if ($null -eq $Connection) { throw "No active DuckDB connection. Provide -Connection or call Initialize-SQLPipeline first." }
+    }
 
     $ts  = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
     $err = $ErrorMessage -replace "'", "''"

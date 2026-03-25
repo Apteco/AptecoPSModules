@@ -1,11 +1,11 @@
 function New-DuckDBConnection {
     <#
     .SYNOPSIS
-        Öffnet eine DuckDB-Verbindung zur angegebenen Datenbankdatei.
+        Opens a DuckDB connection to the specified database file or in-memory database.
     .PARAMETER DbPath
-        Pfad zur .db-Datei (wird angelegt falls nicht vorhanden).
+        Path to the .db file (created if it does not exist). Use ':memory:' for an in-memory database.
     .PARAMETER EncryptionKey
-        Optionaler Verschlüsselungsschlüssel (AES-256, ab DuckDB 1.4.0).
+        Optional encryption key (AES-256, requires DuckDB 1.4.0 or later).
     .EXAMPLE
         $conn = New-DuckDBConnection -DbPath '.\pipeline.db'
     #>
@@ -29,7 +29,7 @@ function New-DuckDBConnection {
 
     $conn = [DuckDB.NET.Data.DuckDBConnection]::new($connStr)
     $conn.Open()
-    Write-Verbose "Verbindung geöffnet: $DbPath"
+    Write-Verbose "Connection opened: $DbPath"
     $conn
     
 }

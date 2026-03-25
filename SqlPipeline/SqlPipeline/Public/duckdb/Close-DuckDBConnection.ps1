@@ -1,7 +1,7 @@
 function Close-DuckDBConnection {
     <#
     .SYNOPSIS
-        Schließt eine DuckDB-Verbindung sauber.
+        Closes a DuckDB connection cleanly.
     #>
     [CmdletBinding()]
     param(
@@ -10,6 +10,6 @@ function Close-DuckDBConnection {
     )
     if ($Connection.State -ne [System.Data.ConnectionState]::Closed) {
         $Connection.Close()
-        Write-Verbose 'DuckDB-Verbindung geschlossen.'
+        Write-Verbose 'DuckDB connection closed.'
     }
 }

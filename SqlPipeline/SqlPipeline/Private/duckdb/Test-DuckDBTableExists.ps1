@@ -1,7 +1,7 @@
 function Test-DuckDBTableExists {
     <#
     .SYNOPSIS
-        Prüft ob eine Tabelle in DuckDB existiert.
+        Checks whether a table exists in DuckDB.
     #>
     [CmdletBinding()]
     [OutputType([bool])]

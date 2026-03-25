@@ -1,15 +1,15 @@
 function Initialize-DuckDBTable {
     <#
     .SYNOPSIS
-        Legt eine Tabelle anhand eines PSObject-Beispieldatensatzes an, falls sie noch nicht existiert.
+        Creates a table based on a sample PSObject row if it does not already exist.
     .PARAMETER Connection
-        Offene DuckDB-Verbindung.
+        Open DuckDB connection.
     .PARAMETER TableName
-        Name der Zieltabelle.
+        Name of the target table.
     .PARAMETER SampleRow
-        Ein PSObject, dessen Properties als Spalten verwendet werden.
+        A PSObject whose properties are used as column definitions.
     .PARAMETER PKColumns
-        Primärschlüssel-Spalten (optional, aber für UPSERT empfohlen).
+        Primary key columns (optional, recommended for UPSERT).
     #>
     [CmdletBinding()]
     param(
@@ -20,11 +20,11 @@ function Initialize-DuckDBTable {
     )
 
     if (Test-DuckDBTableExists -Connection $Connection -TableName $TableName) {
-        Write-Verbose "[$TableName] Tabelle bereits vorhanden."
+        Write-Verbose "[$TableName] Table already exists."
         return
     }
 
-    Write-Host "[$TableName] Tabelle wird neu angelegt..."
+    Write-Verbose "[$TableName] Creating new table..."
 
     $colDefs = $SampleRow.PSObject.Properties | ForEach-Object {
         $sqlType = ConvertTo-DuckDBType -Value $_.Value
@@ -41,5 +41,5 @@ $($colDefs -join ",`n")
 $pkDef
         )
 "@
-    Write-Host "[$TableName] Tabelle angelegt mit $($colDefs.Count) Spalten."
+    Write-Verbose "[$TableName] Table created with $($colDefs.Count) columns."
 }

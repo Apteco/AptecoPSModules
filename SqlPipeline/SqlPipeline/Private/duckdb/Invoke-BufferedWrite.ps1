@@ -1,8 +1,8 @@
 function Invoke-BufferedWrite {
     <#
     .SYNOPSIS
-        Interne Hilfsfunktion: Schreibt einen Puffer in DuckDB
-        (Tabellenerstellung + Schema-Sync + Repair + Upsert).
+        Internal helper: writes a buffer to DuckDB
+        (table creation + schema sync + repair + upsert).
     #>
     [CmdletBinding()]
     param(
@@ -14,20 +14,20 @@ function Invoke-BufferedWrite {
 
     if ($Data.Count -eq 0) { return }
 
-    # 1. Tabelle anlegen falls nicht vorhanden
+    # 1. Create table if it does not exist
     Initialize-DuckDBTable -Connection $Connection -TableName $TableName `
                            -SampleRow $Data[0] -PKColumns $PKColumns
 
-    # 2. Schema erweitern (neue Felder)
+    # 2. Extend schema with new columns
     Sync-DuckDBSchema -Connection $Connection -TableName $TableName -SampleRow $Data[0]
 
-    # 3. Fehlende Felder normalisieren
+    # 3. Normalize missing columns
     $expectedCols   = Get-DuckDBColumns -Connection $Connection -TableName $TableName
     $normalizedData = $Data | ForEach-Object {
         Repair-DuckDBRow -Row $_ -ExpectedColumns $expectedCols
     }
 
-    # 4. UPSERT oder INSERT
+    # 4. UPSERT or INSERT
     Invoke-DuckDBUpsert -Connection $Connection -TableName $TableName `
                         -Data $normalizedData -PKColumns $PKColumns
 }

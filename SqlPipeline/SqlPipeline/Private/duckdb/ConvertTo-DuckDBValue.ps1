@@ -1,8 +1,8 @@
 function ConvertTo-DuckDBValue {
     <#
     .SYNOPSIS
-        Konvertiert einen PS-Wert in einen für DuckDB geeigneten Wert.
-        Komplexe Objekte (Listen, PSCustomObject) werden nach JSON serialisiert.
+        Converts a PowerShell value into a value suitable for DuckDB.
+        Complex objects (lists, PSCustomObject) are serialized to JSON.
     #>
     [CmdletBinding()]
     param($Value)

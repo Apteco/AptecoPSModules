@@ -1,10 +1,10 @@
 function Write-DuckDBAppender {
     <#
     .SYNOPSIS
-        Schreibt Daten über den DuckDB Appender in eine Tabelle (reiner INSERT, schnell).
+        Writes data into a table using the DuckDB Appender (plain INSERT, fast).
     .DESCRIPTION
-        Alle Rows müssen bereits normalisiert sein (Repair-DuckDBRow).
-        Die Spaltenreihenfolge im PSObject muss der Tabellenreihenfolge entsprechen.
+        All rows must already be normalized (Repair-DuckDBRow).
+        The property order in the PSObject must match the column order in the table.
     #>
     [CmdletBinding()]
     param(
@@ -25,5 +25,5 @@ function Write-DuckDBAppender {
     }
 
     $appender.Close()
-    Write-Verbose "[$TableName] Appender abgeschlossen."
+    Write-Verbose "[$TableName] Appender finished."
 }

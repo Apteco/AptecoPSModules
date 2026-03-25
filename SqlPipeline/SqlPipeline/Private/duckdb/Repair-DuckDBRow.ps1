@@ -1,8 +1,8 @@
 function Repair-DuckDBRow {
     <#
     .SYNOPSIS
-        Füllt fehlende Spalten (nicht mehr von der API geliefert) mit $null auf,
-        sodass der Appender immer alle Tabellenspalten befüllen kann.
+        Fills missing columns (no longer provided by the data source) with $null,
+        so the appender can always populate all table columns.
     #>
     [CmdletBinding()]
     param(
@@ -16,7 +16,7 @@ function Repair-DuckDBRow {
                 $Row | Add-Member -NotePropertyName $col -NotePropertyValue $null -Force
             }
         }
-        # Spalten in der richtigen Reihenfolge zurückgeben
+        # Return columns in the correct order
         $ordered = [PSCustomObject]@{}
         foreach ($col in $ExpectedColumns) {
             $ordered | Add-Member -NotePropertyName $col `
