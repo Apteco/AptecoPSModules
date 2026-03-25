@@ -5,7 +5,7 @@
 RootModule = 'SqlPipeline.psm1'
 
 # Die Versionsnummer dieses Moduls
-ModuleVersion = '0.2.1'
+ModuleVersion = '0.3.0'
 
 # Unterstützte PSEditions
 # CompatiblePSEditions = @()
@@ -46,7 +46,7 @@ PowerShellVersion = '5.1'
 
 # Die Module, die vor dem Importieren dieses Moduls in die globale Umgebung geladen werden müssen
 RequiredModules = @(
-    "SimplySQL"
+    #"SimplySQL"
     "ImportDependency"
 )
 
@@ -67,8 +67,24 @@ RequiredModules = @(
 
 # Aus diesem Modul zu exportierende Funktionen. Um optimale Leistung zu erzielen, verwenden Sie keine Platzhalter und löschen den Eintrag nicht. Verwenden Sie ein leeres Array, wenn keine zu exportierenden Funktionen vorhanden sind.
 FunctionsToExport = @(
+
+    # SimplySQL
     "Add-RowsToSql"
-    #"Add-Null"
+
+    # DuckDB
+    "Add-RowsToDuckDB"
+    "Invoke-IncrementalLoad"
+    "New-DuckDBConnection"
+    "Initialize-SQLPipeline"
+    "Close-DuckDBConnection"
+    "Get-LastLoadTimeStamp"
+    "Get-DuckDBData"
+    "Invoke-DuckDBQuery"
+    "Set-LoadMetadata"
+    "Export-DuckDBToParquet"
+
+    # General
+    "Install-SqlPipeline"
 )
 
 # Aus diesem Modul zu exportierende Cmdlets. Um optimale Leistung zu erzielen, verwenden Sie keine Platzhalter und löschen den Eintrag nicht. Verwenden Sie ein leeres Array, wenn keine zu exportierenden Cmdlets vorhanden sind.
@@ -108,6 +124,11 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.3.0 Added DuckDB.net support through Add-RowsToDuckDB and more
+      Added verbose output when importing module
+      Better usage of ImportDependency to recognize if local package dependencies are already loaded
+      Added local package installation for DuckDB.net (not needed for Add-RowsToSql, only for Add-RowsToDuckDB): Install-SqlPipeline
+      Added function to export DuckDB tables to Parquet: Export-DuckDBToParquet
 0.2.1 Changing the way to look for existing tables
 0.2.0 Support of Linux
 0.1.5 Fixing case sensitive path for private and public functions
