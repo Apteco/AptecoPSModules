@@ -38,7 +38,7 @@ jobs:
       - name: Debug
         run: |
           whoami
-          echo $PSModulePath
+          $env:PSModulePath -split ":"
         shell: pwsh
 
       - name: Run Pester Tests (powershell on ${{ matrix.os }})
