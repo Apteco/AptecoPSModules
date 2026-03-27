@@ -22,13 +22,13 @@ function Initialize-SQLPipeline {
         # File-based database
         Initialize-SQLPipeline -DbPath '.\pipeline.db'
         Import-Csv '.\orders.csv' | Add-RowsToDuckDB -TableName 'orders'
-        Close-DuckDBConnection
+        Close-SqlPipeline
 
     .EXAMPLE
         # Capture connection for explicit use
         $conn = Initialize-SQLPipeline -DbPath '.\pipeline.db'
         Import-Csv '.\orders.csv' | Add-RowsToDuckDB -Connection $conn -TableName 'orders'
-        Close-DuckDBConnection -Connection $conn
+        Close-SqlPipeline -Connection $conn
     #>
     [CmdletBinding()]
     [OutputType([DuckDB.NET.Data.DuckDBConnection])]
