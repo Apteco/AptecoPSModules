@@ -1,9 +1,10 @@
 BeforeAll {
+    
     Write-Host "Hello World 1"
     Import-Module "$PSScriptRoot/../SqlPipeline" -Force -Verbose
     # Create a test SQLite connection
     Write-Host "Hello World 2"
-    Open-SQLiteConnection -DataSource "$PSScriptRoot/test.db" -Verbose
+    Open-SQLiteConnection -DataSource "$PSScriptRoot/test.db" -ConnectionName "default" -Verbose
     Write-Host "Hello Worl3"
 
 }
