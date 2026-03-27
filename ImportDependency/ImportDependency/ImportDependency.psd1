@@ -5,7 +5,7 @@
 RootModule = 'ImportDependency.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.4.8'
+ModuleVersion = '0.4.9'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -118,6 +118,7 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+0.4.9 Added a check to remove inaccessible paths from PSModulePath to avoid errors when loading modules
 0.4.8 Added all executionpolicies to Get-PSEnvironment
       Fixed a problem with checking elevation on Linux and MacOS
 0.4.7 Suppressing runtime loading message

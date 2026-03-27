@@ -252,31 +252,20 @@ VERBOSE: InstallPackageLocal' - name='DuckDB.NET.Data.Full', version='1.4.3',des
 Install-Package: Package 'DuckDB.NET.Data.Full' failed to be installed because: End of Central Directory record could not be found.
 ```
 
-To install a local nuget package then, you can also save and unzip that package with
+To install a local nuget package then, you can also save and unzip that latest package with
 
 ```Pwsh
-# Loading package with dependencies as single *.nupkg files
-save-package DuckDB.NET.Data.Full -Path ".\lib" -verbose
+# Download the two DuckDB packages from Nuget without Install-Package or Save-Package
+Invoke-WebRequest -UseBasicParsing -Uri https://www.nuget.org/api/v2/package/DuckDB.NET.Bindings.Full -OutFile ./lib
+Invoke-WebRequest -UseBasicParsing -Uri https://www.nuget.org/api/v2/package/DuckDB.NET.Data.Full -OutFile ./lib
 
-# Switch to the folder
-cd lib
-
-# Unzip the most important ones - you need p7zip-full for that
-7z x ./DuckDB.NET.Bindings.Full.1.4.3.nupkg -d -o"./DuckDB.NET.Bindings.Full.1.4.3"
-7z x ./DuckDB.NET.Data.Full.1.4.3.nupkg -o"./DuckDB.NET.Data.Full.1.4.3"
-
-# This package seems to be dubble zipped and needs another round
-cd DuckDB.NET.Data.Full.1.4.3
-7z x ./DuckDB.NET.Data.Full.1.4.3
-rm DuckDB.NET.Data.Full.1.4.3
-cd ..
-
-# Remove not needed packages and leave the directory
-rm *.nupkg
-cd ..
+# Expand and delete the nupkg files
+Set-Location ./lib
+Get-ChildItem -Path ./lib/ -Filter *.nupkg | % { Expand-Archive -Path $_; Remove-Item -Path $_ }
+Set-Location ..
 
 # Import the lib folder
-import-module importdependency
+import-module importdependency -Argumentlist $true # The $true allows verbose output
 import-dependency -LoadWholePackageFolder -LocalPackageFolder .\lib
 ```
 

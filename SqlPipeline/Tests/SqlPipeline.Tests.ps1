@@ -1,4 +1,5 @@
 BeforeAll {
+    
     Write-Host "Hello World 1"
     Import-Module "$PSScriptRoot/../SqlPipeline" -Force -Verbose
     # Create a test SQLite connection

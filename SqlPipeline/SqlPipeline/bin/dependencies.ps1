@@ -1,10 +1,11 @@
 
-$psScripts = @(
+$Script:psScripts = [Array]@(
     #"WriteLogfile"
 )
 
-$psModules = @(
-    #"SimplySql"
+$Script:psModules = [Array]@(
+    "SimplySql"
+    #"ImportDependency" # This module is already in the psd1 file as a dependency, so it will be automatically imported when the module is imported. No need to install it separately.
     #"WriteLog"
     #"MeasureRows"
     #"EncryptCredential"
@@ -17,7 +18,9 @@ $psModules = @(
 )
 
 # Define either a simple string or provide a pscustomobject with a specific version number
-$psPackages = @(
+$Script:psPackages = [Array]@(
+    "DuckDB.NET.Bindings.Full"
+    "DuckDB.NET.Data.Full"
     <#
     [PSCustomObject]@{
         name="Npgsql"
@@ -26,6 +29,6 @@ $psPackages = @(
     #>
 )
 
-$psAssemblies = @(
+$Script:psAssemblies = [Array]@(
     #"System.Web"
 )

@@ -1,23 +1,6 @@
-﻿#-----------------------------------------------
-#region: VERBOSE OUTPUT
+﻿
 #-----------------------------------------------
-
-param(
-    [bool]$Verbose = $false
-)
-
-If ( $Verbose -eq $true ) {
-    $previousVerbosePreference = $VerbosePreference
-    $VerbosePreference = "Continue"
-} else {
-    $VerbosePreference = "SilentlyContinue"
-}
-
-#endregion: VERBOSE OUTPUT
-
-
-#-----------------------------------------------
-#region: NOTES
+# NOTES
 #-----------------------------------------------
 
 <#
@@ -29,16 +12,12 @@ https://github.com/RamblingCookieMonster/PSStackExchange/blob/db1277453374cb1668
 
 #>
 
-#endregion: NOTES
-
 
 #-----------------------------------------------
 # OS CHECK
 #-----------------------------------------------
 
-Write-Verbose "Checking the Core and OS"
-
-$preCheckisCore = $PSVersionTable.Keys -contains "PSEdition" -and $PSVersionTable.PSEdition -eq 'Core'
+$preCheckisCore = ($PSVersionTable.Keys -contains "PSEdition") -and ($PSVersionTable.PSEdition -ne 'Desktop')
 
 # Check the operating system, if Core
 if ($preCheckisCore -eq $true) {
@@ -52,6 +31,8 @@ if ($preCheckisCore -eq $true) {
         throw "Unknown operating system"
     }
 } else {
+    # [System.Environment]::OSVersion.VersionString()
+    # [System.Environment]::Is64BitOperatingSystem
     $preCheckOs = "Windows"
 }
 
@@ -60,9 +41,7 @@ if ($preCheckisCore -eq $true) {
 # ADD MODULE PATH, IF NOT PRESENT
 #-----------------------------------------------
 
-If ( $preCheckOs -eq "Windows" -and $preCheckisCore -eq $false ) {
-
-    Write-Verbose "Adding Module path on Windows (when not using Core)"
+If ( $preCheckOs -eq "Windows" ) {
 
     $modulePath = @( [System.Environment]::GetEnvironmentVariable("PSModulePath") -split ";" ) + @(
         "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles") )\WindowsPowerShell\Modules"
@@ -76,32 +55,27 @@ If ( $preCheckOs -eq "Windows" -and $preCheckisCore -eq $false ) {
         $modulePath += "$( [System.Environment]::GetEnvironmentVariable("ProgramW6432") )\WindowsPowerShell\Modules"
     }
 
+    # Add pwsh core path
+    If ( $preCheckisCore -eq $true ) {
+        If ( [System.Environment]::GetEnvironmentVariables().keys -contains "ProgramW6432" ) {
+            $modulePath += "$( [System.Environment]::GetEnvironmentVariable("ProgramW6432") )\powershell\7\Modules"
+        }
+        $modulePath += "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles") )\powershell\7\Modules"
+        $modulePath += "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles(x86)") )\powershell\7\Modules"
+    }
+
     # Add all paths
     # Using $env:PSModulePath for only temporary override
     $Env:PSModulePath = @( $modulePath | Sort-Object -unique ) -join ";"
 
 }
 
-# Check if all module paths are accessible, if not remove them from the path to avoid errors when loading modules
-$pathSeparator = if ($preCheckOs -eq 'Windows') { ';' } else { ':' }
-$env:PSModulePath = ($env:PSModulePath -split $pathSeparator | Where-Object {
-    try {
-        [System.IO.Directory]::GetFiles($_) | Out-Null
-        $true
-    } catch {
-        $false
-    }
-}) -join $pathSeparator
-
 
 #-----------------------------------------------
 # ADD SCRIPT PATH, IF NOT PRESENT
 #-----------------------------------------------
 
-If ( $preCheckOs -eq "Windows" -and $preCheckisCore -eq $false ) {
-
-    Write-Verbose "Adding Script path on Windows (when not using Core)"
-
+If ( $preCheckOs -eq "Windows" ) {
 
     #$envVariables = [System.Environment]::GetEnvironmentVariables()
     $scriptPath = @( [System.Environment]::GetEnvironmentVariable("Path") -split ";" ) + @(
@@ -115,6 +89,15 @@ If ( $preCheckOs -eq "Windows" -and $preCheckisCore -eq $false ) {
         $scriptPath += "$( [System.Environment]::GetEnvironmentVariable("ProgramW6432") )\WindowsPowerShell\Scripts"
     }
 
+    # Add pwsh core path
+    If ( $preCheckisCore -eq $true ) {
+        If ( [System.Environment]::GetEnvironmentVariables().keys -contains "ProgramW6432" ) {
+            $scriptPath += "$( [System.Environment]::GetEnvironmentVariable("ProgramW6432") )\powershell\7\Scripts"
+        }
+        $scriptPath += "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles") )\powershell\7\Scripts"
+        $scriptPath += "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles(x86)") )\powershell\7\Scripts"
+    }
+
     # Using $env:Path for only temporary override
     $Env:Path = @( $scriptPath | Sort-Object -unique ) -join ";"
 
@@ -122,12 +105,15 @@ If ( $preCheckOs -eq "Windows" -and $preCheckisCore -eq $false ) {
 
 
 #-----------------------------------------------
+# ENUMS
+#-----------------------------------------------
+
+
+#-----------------------------------------------
 # LOAD PUBLIC AND PRIVATE FUNCTIONS
 #-----------------------------------------------
 
 #$PSBoundParameters["Verbose"].IsPresent -eq $true
-
-Write-Verbose "Loading public and private functions"
 
 $Public  = @( Get-ChildItem -Path "$( $PSScriptRoot )/Public/*.ps1" -ErrorAction SilentlyContinue )
 $Private = @( Get-ChildItem -Path "$( $PSScriptRoot )/Private/*.ps1" -ErrorAction SilentlyContinue )
@@ -145,32 +131,20 @@ $Private = @( Get-ChildItem -Path "$( $PSScriptRoot )/Private/*.ps1" -ErrorActio
 
 
 #-----------------------------------------------
-# LOAD WINDOWS SPECIFIC FUNCTIONS
+# READ IN CONFIG FILES AND VARIABLES
 #-----------------------------------------------
 
-Write-Verbose "Loading Windows specific functions"
+# ...
 
-$WindowsPrivate  = @( Get-ChildItem -Path "$( $PSScriptRoot )/Private/Windows/*.ps1" -ErrorAction SilentlyContinue )
 
-# dot source the files
-If ( $preCheckOs -eq "Windows" ) {
-    @( $WindowsPrivate ) | ForEach-Object {
-        $import = $_
-        Write-Verbose "Load function $( $import.fullname )" #-verbose
-        Try {
-            . $import.fullname
-        } Catch {
-            Write-Error -Message "Failed to import function $( $import.fullname ): $( $_ )"
-        }
-    }
-}
+#-----------------------------------------------
+# READ IN CONFIG FILES AND VARIABLES
+#-----------------------------------------------
 
 
 #-----------------------------------------------
 # SET SOME VARIABLES ONLY VISIBLE TO MODULE AND FUNCTIONS
 #-----------------------------------------------
-
-Write-Verbose "Define internal module variables"
 
 # Define the variables
 #New-Variable -Name execPath -Value $null -Scope Script -Force              # Path of the calling script
@@ -178,7 +152,6 @@ New-Variable -Name psVersion -Value $null -Scope Script -Force              # Po
 New-Variable -Name psEdition -Value $null -Scope Script -Force              # Edition of PowerShell (e.g., Desktop, Core)
 New-Variable -Name platform -Value $null -Scope Script -Force               # Platform type (e.g., Windows, Linux, macOS)
 New-Variable -Name frameworkPreference -Value $null -Scope Script -Force    # Preferred .NET framework version
-New-Variable -Name runtimePreference -Value $null -Scope Script -Force      # Preferred OS native framework version
 New-Variable -Name isCore -Value $null -Scope Script -Force                 # Indicates if PowerShell Core is being used (True/False)
 New-Variable -Name isCoreInstalled -Value $null -Scope Script -Force        # Indicates if PowerShell Core is already installed (True/False)
 New-Variable -Name defaultPsCoreVersion -Value $null -Scope Script -Force   # Default version of PowerShell Core that is used
@@ -195,55 +168,61 @@ New-Variable -Name vcredist -Value $null -Scope Script -Force               # In
 New-Variable -Name installedModules -Value $null -Scope Script -Force               # Caches all installed PowerShell modules
 New-Variable -Name backgroundJobs -Value $null -Scope Script -Force               # Hidden variable to store background jobs
 New-Variable -Name installedGlobalPackages -Value $null -Scope Script -Force               # Caches all installed NuGet Global Packages
-New-Variable -Name executionPolicy -Value $null -Scope Script -Force        # Current execution policy
 
 # Filling some default values
 $Script:isCore = $preCheckisCore
 $Script:os = $preCheckOs
 $Script:psVersion = $PSVersionTable.PSVersion.ToString()
-$Script:powerShellEdition = $PSVersionTable.PSEdition # Need to write that out because psedition is reserved
+$Script:powerShellEdition = $PSVersionTable.PSEdition
 $Script:platform = $PSVersionTable.Platform
 $Script:is64BitOS = [System.Environment]::Is64BitOperatingSystem
 $Script:is64BitProcess = [System.Environment]::Is64BitProcess
-$Script:executionPolicy = [PSCustomObject]@{
-    "LocalMachine" = Get-ExecutionPolicy -Scope LocalMachine
-    "MachinePolicy" = Get-ExecutionPolicy -Scope MachinePolicy
-    "Process" = Get-ExecutionPolicy -Scope Process
-    "CurrentUser" = Get-ExecutionPolicy -Scope CurrentUser
-    "UserPolicy" = Get-ExecutionPolicy -Scope UserPolicy
-}
 
+<#
+$Script:frameworkPreference = @(
 
-#-----------------------------------------------
-# CHECKING POWERSHELL CORE DETAILS
-#-----------------------------------------------
+    # .NET 8+ (future‑proof)
+    'net9.0','net8.0','net8.0-windows','net7.0','net7.0-windows',
 
-Write-Verbose "Checking more details about PS Core"
+    # .NET 6
+    'net6.0','net6.0-windows',
+
+    # .NET 5
+    'net5.0','net5.0-windows','netcore50',
+
+    # .NET Standard 2.1 → 2.0 → 1.5 → 1.3 → 1.1 → 1.0
+    'netstandard2.1','netstandard2.0','netstandard1.5',
+    'netstandard1.3','netstandard1.1','netstandard1.0',
+
+    # Classic .NET Framework descending
+    'net48','net47','net462'
+
+)
+#>
 
 # Check if pscore is installed
 $pwshCommand = Get-Command -commandType Application -Name "pwsh*"
-$Script:defaultPsCoreVersion = $pwshCommand[0].Version
 If ( $pwshCommand.Count -gt 0 ) {
-    $Script:isCoreInstalled = $true
-    if ($Script:os -eq "Windows") {
-        # For Windows
-        $Script:defaultPsCorePath = ( get-command -name "pwsh*" -CommandType Application | where-object { $_.Source.replace("\pwsh.exe","") -eq ( pwsh { $pshome } ) } ).Source
-    } elseif ( $Script:os -eq "Linux" ) {
-        # For Linux
-        If ( $null -ne (which pwse) ) {
-            $Script:defaultPsCorePath = (which pwse)
+    If ( ( pwsh { 1+1 } ) -eq 2 ) {
+        $Script:isCoreInstalled = $true
+        $Script:defaultPsCoreVersion = pwsh { $PSVersionTable.PSVersion.ToString() }
+        $Script:defaultPsCoreIs64Bit = pwsh { [System.Environment]::Is64BitProcess }
+        if ($Script:os -eq "Windows") {
+            # For Windows
+            $Script:defaultPsCorePath = ( get-command -name "pwsh*" -CommandType Application | where-object { $_.Source.replace("\pwsh.exe","") -eq ( pwsh { $pshome } ) } ).Source
+        } elseif ( $Script:os -eq "Linux" ) {
+            # For Linux
+            If ( $null -ne (which pwse) ) {
+                $Script:defaultPsCorePath = (which pwse)
+            }
         }
+    } else {
+        Write-Warning "pwsh command found, but pwsh execution test failed."
     }
+
 } else {
     $Script:isCoreInstalled = $false
 }
-
-
-#-----------------------------------------------
-# CHECKING PROCESSOR ARCHITECTURE
-#-----------------------------------------------
-
-Write-Verbose "Checking the processor architecture"
 
 # Checking the processor architecture and operating system architecture
 If ( $null -ne [System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture ) {
@@ -280,13 +259,6 @@ if ($arch -match "(?i)32") {
     $Script:architecture = "Unknown"
 }
 
-
-#-----------------------------------------------
-# CHECKING .NET PACKAGE RUNTIME PREFERENCE ORDER
-#-----------------------------------------------
-
-Write-Verbose "Checking the .NET package runtime preference order"
-
 # Check which runtimes to prefer
 $Script:runtimePreference = @()
 switch ($Script:os) {
@@ -306,8 +278,6 @@ switch ($Script:os) {
         }
 
         $Script:runtimePreference += @( "win-x86" )
-        $Script:runtimePreference += @( "win" )
-
 
     }
 
@@ -344,19 +314,26 @@ switch ($Script:os) {
     }
 }
 
-
-#-----------------------------------------------
-# CHECKING .NET PACKAGE REF/LIB PREFERENCE ORDER
-#-----------------------------------------------
-
-Write-Verbose "Checking the .NET package ref/lib preference order"
-
 # Check lib preference
 $Script:frameworkPreference = @()
 $ver = [System.Environment]::Version
 
-# If this is core, add the important framework folders first
-If ( $Script:isCore -eq $True ) {
+if ( $PSVersionTable.PSEdition -eq 'Desktop' ) {
+
+    # Desktop PowerShell can load any net4x up to the installed version
+    $maxFramework = switch ($ver.Major) {
+        4 { "net48" }   # most common Windows PowerShell 5.1 runs on .NET 4.8
+        default { "net48" }
+    }
+
+    # Add net4x folders descending from the max version
+    $net4x = @('net48','net47','net462','net461','net45','net40')
+    $Script:frameworkPreference += $net4x[($net4x.IndexOf($maxFramework))..($net4x.Count-1)]
+
+    # Then add netstandard (2.0 is the highest fully supported on .NET 4.8)
+    $Script:frameworkPreference += 'netstandard2.0','netstandard1.5','netstandard1.3','netstandard1.1','netstandard1.0'
+
+} else {
 
     # PowerShell 7+ runs on .NET 6, 7, or 8 – pick the highest available
     $major = $ver.Major   # 6,7,8 …
@@ -373,209 +350,50 @@ If ( $Script:isCore -eq $True ) {
         $Script:frameworkPreference += "net$( $m ).0-windows"
     }
 
-    # Finally netcore/netstandard fall‑back
-    $Script:frameworkPreference += 'netcoreapp2.1','netcoreapp2.0','netstandard2.1','netstandard2.0','netstandard1.5','netstandard1.3','netstandard1.1','netstandard1.0'
+    # Finally netstandard fall‑back
+    $Script:frameworkPreference += 'netstandard2.1','netstandard2.0','netstandard1.5','netstandard1.3','netstandard1.1','netstandard1.0'
 
 }
-
-# Then add .NET Framework folders for Desktop PowerShell, it could be a try to load them
-
-# Desktop PowerShell can load any net4x up to the installed version
-$maxFramework = switch ($ver.Major) {
-    4 { "net48" }   # most common Windows PowerShell 5.1 runs on .NET 4.8
-    default { "net48" }
-}
-
-# Add net4x folders descending from the max version
-$net4x = @('net48','net471','net47','net462','net461','net45','net40')
-$Script:frameworkPreference += $net4x[($net4x.IndexOf($maxFramework))..($net4x.Count-1)]
-
-# Just the fallback for up to .NET 4.8
-if ( $Script:powerShellEdition -eq 'Desktop' ) {
-
-    # Then add netstandard (2.0 is the highest fully supported on .NET 4.8)
-    $Script:frameworkPreference += 'netstandard2.0','netstandard1.5','netstandard1.3','netstandard1.1','netstandard1.0'
-
-}
-
-
-#-----------------------------------------------
-# CHECKING ELEVATION
-#-----------------------------------------------
-
-Write-Verbose "Checking Elevation"
 
 # Check elevation
+# TODO check for MacOS
 if ($Script:os -eq "Windows") {
-    $id = Get-CurrentWindowsIdentity
-    $Script:executingUser = $id.ExecutingUser
-    $Script:isElevated = $id.IsElevated
-} elseif ( $Script:os -eq "Linux" -or $Script:os -eq "MacOS" ) {
+    $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+    $Script:executingUser = $identity.Name
+    $principal = [Security.Principal.WindowsPrincipal]::new($identity)
+    $Script:isElevated = $principal.IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)
+} elseif ( $Script:os -eq "Linux" ) {
     $Script:executingUser = whoami
     $Script:isElevated = -not [String]::IsNullOrEmpty($env:SUDO_USER)
 }
 
-Write-Verbose "Checking PackageManagement and PowerShellGet versions"
+# Check PowerShellGet and Packagemanagement
+Import-Module PowerShellGet -ErrorAction SilentlyContinue
+$modules = Get-Module
 
 # Check if PackageManagement and PowerShellGet are available
-$Script:packageManagement = ( Get-Module -Name "PackageManagement" -ListAvailable -ErrorAction SilentlyContinue | Sort-Object Version -Descending | Select-Object -First 1 ).Version.toString()
-$Script:powerShellGet = ( Get-Module -Name "PowerShellGet" -ListAvailable -ErrorAction SilentlyContinue | Sort-Object Version -Descending | Select-Object -First 1 ).Version.toString()
-
-
-Write-Verbose "Add background jobs to work out the installed modules and packages"
-
-
-
-#-----------------------------------------------
-# CHECKING POWERHELL 64BIT IN BACKGROUND
-#-----------------------------------------------
-
-$Script:backgroundJobs = [System.Collections.ArrayList]@()
-If ( $Script:isCoreInstalled -eq $True ) {
-    
-    [void]$Script:backgroundJobs.Add((
-        Start-Job -ScriptBlock {
-            pwsh { [System.Environment]::Is64BitProcess }
-        } -Name "PwshIs64Bit"
-    ))
-
+$modules | where-object { $_.Name -eq "PackageManagement" } | ForEach-Object {
+    $Script:packageManagement = $_.Version.ToString()
+}
+$modules | where-object { $_.Name -eq "PowerShellGet" } | ForEach-Object {
+    $Script:powerShellGet = $_.Version.ToString()
 }
 
-
-#-----------------------------------------------
-# CHECKING POWERHELL MODULES IN BACKGROUND
-#-----------------------------------------------
-
 # Add jobs to find out more about installed modules and packages in the background
-
-# TODO add in multiple paths for pscore ?
-
+$Script:backgroundJobs = [System.Collections.ArrayList]@()
 [void]$Script:backgroundJobs.Add((
     Start-Job -ScriptBlock {
-        param($ModuleRoot, $OS)
-
-        # On Unix split by :
-
-        $pathSeparator = if ($IsWindows -or $OS -match 'Windows') { ';' } else { ':' }
-
-        $env:PSModulePath -split $pathSeparator | ForEach-Object {
-            $modulePath = $_
-            if (Test-Path $modulePath) {
-                Get-ChildItem $modulePath -Filter *.psd1 -Recurse -ErrorAction SilentlyContinue | ForEach-Object {
-                    $content = Get-Content $_.FullName -Raw
-                    
-                    # Extract version
-                    if ($content -match "ModuleVersion\s*=\s*(['\`"])(.+?)\1") {
-                        $version = $matches[2]
-                    } else {
-                        $version = 'Unknown'
-                    }
-
-                    # Extract PowerShellVersion
-                    if ($content -match "PowerShellVersion\s*=\s*(['\`"])(.+?)\1") {
-                        $psVersion = $matches[2]
-                    } else {
-                        $psVersion = 'Not Specified'
-                    }
-                    
-                    # Extract CompatiblePSEditions
-                    if ($content -match "CompatiblePSEditions\s*=\s*@\(([^)]+)\)") {
-                        $editions = $matches[1] -replace "['\`"\s]", '' -split ','
-                    } else {
-                        $editions = @('Desktop') # Default for older modules
-                    }
-
-                    # Extract Tags from PSData
-                    if ($content -match "PSData\s*=\s*@\{[^}]*Tags\s*=\s*@\(([^)]+)\)") {
-                        $tags = $matches[1] -replace "['\`"\s]", '' -split ',' | Where-Object { $_ }
-                    } else {
-                        $tags = @()
-                    }
-
-                    # Extract Author
-                    if ($content -match "Author\s*=\s*(['\`"])(.+?)\1") {
-                        $author = $matches[2]
-                    } else {
-                        $author = 'Unknown'
-                    }
-                    
-                    # Extract CompanyName
-                    if ($content -match "CompanyName\s*=\s*(['\`"])(.+?)\1") {
-                        $companyName = $matches[2]
-                    } else {
-                        $companyName = 'Unknown'
-                    }
-                    
-                    # Determine path-based edition
-                    $pathEdition = if ($modulePath -match 'WindowsPowerShell') {
-                        'WindowsPowerShell'
-                    } elseif ($modulePath -match 'PowerShell\\[67]') {
-                        'PSCore'
-                    } else {
-                        'Shared'
-                    }
-                    
-                    [PSCustomObject][Ordered]@{
-                        Name                 = $_.BaseName
-                        Version              = $version
-                        PowerShellVersion    = $psVersion
-                        Author               = $author
-                        CompanyName          = $companyName
-                        PathEdition          = $pathEdition
-                        CompatibleEditions   = $editions -join ', '
-                        Tags                 = $tags -join ', '
-                        Path                 = $_.DirectoryName
-                    }
-                }
-            }
-        } 
-
-    } -Name "InstalledModule" -ArgumentList $PSScriptRoot.ToString(), $preCheckOs
+        # Use Get-InstalledModule to retrieve installed modules
+        Get-InstalledModule -ErrorAction SilentlyContinue
+    } -Name "InstalledModule"
 ))
-
-
-#-----------------------------------------------
-# CHECKING GLOBAL NUGET PACKAGES IN BACKGROUND
-#-----------------------------------------------
-
 [void]$Script:backgroundJobs.Add((
     Start-Job -ScriptBlock {
-        param($ModuleRoot, $OS)
-
-        # Load the needed assemblies
-        Add-Type -AssemblyName System.IO.Compression.FileSystem -ErrorAction Stop
-
-        # Paths are dependent on the os
-        if ($OS -eq "Windows") {
-            $pathsToCheck = @( 
-                ( Join-Path $env:USERPROFILE ".nuget\packages" )
-                "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles") )\PackageManagement\NuGet\Packages"
-                "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles(x86)") )\PackageManagement\NuGet\Packages"
-            )
-        } else {
-            $pathsToCheck = @( 
-                ( Join-Path $HOME ".nuget/packages" )
-            )
-        }
-
-        # Dot source the needed function
-        . ( Join-Path $ModuleRoot "/Public/Get-LocalPackage.ps1" )
-
-        # Load the packages
-        $packages = Get-LocalPackage -NugetRoot $pathsToCheck
-
-        $packages
-
-    } -Name "InstalledGlobalPackages" -ArgumentList $PSScriptRoot.ToString(), $preCheckOs
-
+        # Use Get-InstalledModule to retrieve installed modules
+        PackageManagement\Get-Package -ProviderName NuGet -ErrorAction SilentlyContinue
+    } -Name "InstalledGlobalPackages"
 ))
 
-
-#-----------------------------------------------
-# CHECKING VCREDIST
-#-----------------------------------------------
-
-Write-Verbose "Checking VCRedist"
 
 # Check the vcredist installation
 $vcredistInstalled = $False
@@ -630,15 +448,6 @@ $Script:vcredist = [PSCustomObject]@{
 # MAKE PUBLIC FUNCTIONS PUBLIC
 #-----------------------------------------------
 
-Write-Verbose "Exporting public functions"
-
+#Write-Verbose "Export public functions: $(($Public.Basename -join ", "))" -verbose
 Export-ModuleMember -Function $Public.Basename #-verbose  #+ "Set-Logfile"
-
-
-#-----------------------------------------------
-# SET THE VERBOSE PREFERENCE BACK TO THE ORIGINAL VALUE
-#-----------------------------------------------
-
-If ( $Verbose -eq $true ) {
-    $VerbosePreference = $previousVerbosePreference
-}
+#Export-ModuleMember -Function $Private.Basename #-verbose  #+ "Set-Logfile"
