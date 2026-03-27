@@ -34,7 +34,7 @@ function Invoke-DuckDBUpsert {
         # Determine all non-PK columns for the SET clause
         $allCols  = Get-DuckDBColumns -Connection $Connection -TableName $TableName
         $setCols  = $allCols | Where-Object { $_ -notin $PKColumns }
-        $setClause = ($setCols | ForEach-Object { "$_ = excluded.$_" }) -join ', '
+        $setClause = ($setCols | ForEach-Object { """$_"" = excluded.""$_""" }) -join ', '
         $pkList    = $PKColumns -join ', '
 
         Invoke-DuckDBQuery -Connection $Connection -Query @"

@@ -28,7 +28,7 @@ function Initialize-DuckDBTable {
 
     $colDefs = $SampleRow.PSObject.Properties | ForEach-Object {
         $sqlType = ConvertTo-DuckDBType -Value $_.Value
-        "    $($_.Name)  $sqlType"
+        "    ""$($_.Name)""  $sqlType"
     }
 
     $pkDef = if ($PKColumns.Count -gt 0) {

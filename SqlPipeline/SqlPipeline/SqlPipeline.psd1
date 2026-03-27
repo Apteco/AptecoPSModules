@@ -124,6 +124,7 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+      Added quotations around column names for duckdb support
 0.3.0 Added DuckDB.net support through Add-RowsToDuckDB and more
       Added verbose output when importing module
       Better usage of ImportDependency to recognize if local package dependencies are already loaded
