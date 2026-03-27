@@ -37,6 +37,7 @@ function Invoke-DuckDBUpsert {
         AS SELECT * FROM $TableName WHERE 1 = 0
 "@
 
+    Write-Verbose "[$TableName] Staging table '$stagingTable' created. Starting UPSERT..."
 
     # Write data into staging table
     if ($UseCsvImport) {
@@ -45,6 +46,7 @@ function Invoke-DuckDBUpsert {
         Write-DuckDBAppender -Connection $Connection -TableName $stagingTable -Data $Data -SimpleTypesOnly:$SimpleTypesOnly
     }
 
+    Write-Verbose "[$TableName] Data written to staging table. Starting merge..."
 
     if ($PKColumns.Count -gt 0) {
         # Determine all non-PK columns for the SET clause
@@ -53,6 +55,7 @@ function Invoke-DuckDBUpsert {
         $setClause = ($setCols | ForEach-Object { """$_"" = excluded.""$_""" }) -join ', '
         $pkList    = $PKColumns -join ', '
 
+        Write-Verbose "[$TableName] Performing UPSERT with PK columns: $pkList"
         Invoke-DuckDBQuery -Connection $Connection -Query @"
             INSERT INTO $TableName
             SELECT * FROM $stagingTable
@@ -65,6 +68,8 @@ function Invoke-DuckDBUpsert {
             SELECT * FROM $stagingTable
 "@
     }
+
+    Write-Verbose "[$TableName] Merge completed."
 
     # Clean up staging table
     Invoke-DuckDBQuery -Connection $Connection -Query "DROP TABLE IF EXISTS $stagingTable"

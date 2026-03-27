@@ -93,6 +93,10 @@ function Add-RowsToDuckDB {
         $buffer.Add($InputObject)
         $rowCount++
 
+        If ( $buffer.Count % 1000 -eq 0 ) {
+            Write-Verbose "[$TableName] Buffered $($buffer.Count) rows so far..."
+        }
+
         # Without UseTransaction: write in batches once BatchSize is reached
         if (-not $UseTransaction -and $buffer.Count -ge $BatchSize) {
             Write-Verbose "[$TableName] Batch write: $($buffer.Count) rows"

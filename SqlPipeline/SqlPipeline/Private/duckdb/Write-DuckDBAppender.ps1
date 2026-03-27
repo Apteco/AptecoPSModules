@@ -36,6 +36,10 @@ function Write-DuckDBAppender {
             }
         }
         $appenderRow.EndRow()
+
+        If ( $i % 100 -eq 0 ) {
+            Write-Verbose "[$TableName] Appender: Row $i written."
+        }
     }
 
     $appender.Close()
