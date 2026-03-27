@@ -35,6 +35,12 @@ jobs:
           Install-Module WriteLog, ImportDependency -Repository PSGallery
           Install-Module SimplySQL -AllowClobber -Repository PSGallery
 
+      - name: Debug
+        run: |
+          whoami
+          echo $PSModulePath
+        shell: pwsh
+
       - name: Run Pester Tests (powershell on ${{ matrix.os }})
         if: matrix.shell == 'powershell'
         env:
