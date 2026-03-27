@@ -8,6 +8,17 @@ Wrapper for [SimplySql](https://github.com/mithrandyr/SimplySql/) and DuckDB to 
 
 The module includes a native DuckDB pipeline that works independently of SimplySql. An **in-memory DuckDB database is initialized automatically** when the module is imported — no setup required for quick analysis or temporary storage.
 
+Current functionality:
+
+- DuckDB connection management
+- Automatic table creation from PSObject data
+- Schema evolution (new fields via ALTER TABLE)
+- Normalization of missing fields (columns no longer provided)
+- Bulk insert via Appender (fast) and temporary CSV import (even faster)
+- UPSERT via staging table + INSERT ON CONFLICT
+- Metadata management (last load timestamp per table)
+
+
 ## Installation
 
 Install the required DuckDB.NET NuGet packages into a `./lib` subfolder:
