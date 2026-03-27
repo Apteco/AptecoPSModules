@@ -124,6 +124,8 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+      Skipping comparison with complex datatypes with -SimpleTypesOnly for better import performance
+      Adding a csv importer to export big files first into a temporary file and directly import them via DuckDB into a staging table
       Added quotations around column names for duckdb support
 0.3.0 Added DuckDB.net support through Add-RowsToDuckDB and more
       Added verbose output when importing module

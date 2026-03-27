@@ -40,6 +40,11 @@ function Add-RowsToDuckDB {
     .PARAMETER BatchSize
         Number of rows per staging batch (default: 10000). Only relevant without -UseTransaction.
 
+    .PARAMETER UseCsvImport
+        Use a temporary CSV file + DuckDB COPY FROM instead of the default row-by-row appender.
+        Faster for large datasets. Use -SimpleTypesOnly alongside this for an additional speedup
+        when the data contains no complex objects (lists, dicts, nested PSObjects).
+
     .EXAMPLE
         # Apteco style: pipeline input
         Import-Csv '.\orders.csv' | Add-RowsToDuckDB -TableName 'orders' -PKColumns 'order_id' -UseTransaction -Verbose
@@ -64,7 +69,14 @@ function Add-RowsToDuckDB {
 
         [switch]$UseTransaction,
 
-        [int]$BatchSize = 10000
+        [int]$BatchSize = 10000,
+
+        [Parameter(Mandatory=$false)]
+        [switch]$UseCsvImport = $false,
+
+        [Parameter(Mandatory=$false)]
+        [switch]$SimpleTypesOnly = $false
+        
     )
 
     begin {
@@ -85,7 +97,7 @@ function Add-RowsToDuckDB {
         if (-not $UseTransaction -and $buffer.Count -ge $BatchSize) {
             Write-Verbose "[$TableName] Batch write: $($buffer.Count) rows"
             Invoke-BufferedWrite -Connection $Connection -TableName $TableName `
-                                 -Data $buffer -PKColumns $PKColumns
+                                 -Data $buffer -PKColumns $PKColumns -UseCsvImport:$UseCsvImport -SimpleTypesOnly:$SimpleTypesOnly
             $buffer.Clear()
         }
     }
@@ -98,7 +110,7 @@ function Add-RowsToDuckDB {
 
         Write-Verbose "[$TableName] Final write: $($buffer.Count) rows (total: $rowCount)"
         Invoke-BufferedWrite -Connection $Connection -TableName $TableName `
-                             -Data $buffer -PKColumns $PKColumns
+                             -Data $buffer -PKColumns $PKColumns -UseCsvImport:$UseCsvImport -SimpleTypesOnly:$SimpleTypesOnly
         Write-Information "[$TableName] $rowCount rows inserted via pipeline."
 
         # Force DuckDB to flush changes to disk (important for in-memory connections or when using transactions)

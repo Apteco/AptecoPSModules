@@ -11,17 +11,12 @@ function Repair-DuckDBRow {
     )
 
     process {
+        $props = $Row.PSObject.Properties
+        $ht = [ordered]@{}
         foreach ($col in $ExpectedColumns) {
-            if ($null -eq $Row.PSObject.Properties[$col]) {
-                $Row | Add-Member -NotePropertyName $col -NotePropertyValue $null -Force
-            }
+            $prop = $props[$col]
+            $ht[$col] = if ($null -ne $prop) { $prop.Value } else { $null }
         }
-        # Return columns in the correct order
-        $ordered = [PSCustomObject]@{}
-        foreach ($col in $ExpectedColumns) {
-            $ordered | Add-Member -NotePropertyName $col `
-                                  -NotePropertyValue $Row.$col -Force
-        }
-        $ordered
+        [PSCustomObject]$ht
     }
 }

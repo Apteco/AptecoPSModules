@@ -9,7 +9,11 @@ function Invoke-BufferedWrite {
         [Parameter(Mandatory)] [DuckDB.NET.Data.DuckDBConnection]$Connection,
         [Parameter(Mandatory)] [string]$TableName,
         [Parameter(Mandatory)] $Data,
-        [string[]]$PKColumns = @()
+        [string[]]$PKColumns = @(),
+        [Parameter(Mandatory=$false)]
+        [switch]$UseCsvImport = $false,
+        [Parameter(Mandatory=$false)]
+        [switch]$SimpleTypesOnly = $false
     )
 
     if ($Data.Count -eq 0) { return }
@@ -29,5 +33,6 @@ function Invoke-BufferedWrite {
 
     # 4. UPSERT or INSERT
     Invoke-DuckDBUpsert -Connection $Connection -TableName $TableName `
-                        -Data $normalizedData -PKColumns $PKColumns
+                        -Data $normalizedData -PKColumns $PKColumns `
+                        -UseCsvImport:$UseCsvImport -SimpleTypesOnly:$SimpleTypesOnly
 }

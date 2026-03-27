@@ -4,19 +4,29 @@ function Invoke-DuckDBUpsert {
     .SYNOPSIS
         Performs an UPSERT via a temporary staging table + INSERT ON CONFLICT.
     .DESCRIPTION
-        1. Write data into stg_<TableName> via appender (fast)
+        1. Write data into stg_<TableName> via appender (default) or CSV COPY FROM
         2. INSERT INTO <TableName> ... ON CONFLICT (PK) DO UPDATE SET ...
         3. Drop the staging table
     .PARAMETER PKColumns
         Primary key columns for the ON CONFLICT clause.
         If empty: plain INSERT (no UPSERT).
+    .PARAMETER UseCsvImport
+        Use Write-DuckDBCsv (temp CSV + COPY FROM) instead of the default row-by-row appender.
+        Faster for large datasets; DuckDB parses the CSV internally using multi-threaded C++.
+    .PARAMETER SimpleTypesOnly
+        Passed through to Write-DuckDBCsv (only relevant when -UseCsvImport is set).
+        Skips per-cell complex-type checks when all values are guaranteed to be primitives.
     #>
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)] [DuckDB.NET.Data.DuckDBConnection]$Connection,
         [Parameter(Mandatory)] [string]$TableName,
         [Parameter(Mandatory)] $Data,
-        [string[]]$PKColumns = @()
+        [string[]]$PKColumns = @(),
+        [Parameter(Mandatory=$false)]
+        [switch]$UseCsvImport = $false,
+        [Parameter(Mandatory=$false)]
+        [switch]$SimpleTypesOnly = $false
     )
 
     $stagingTable = "stg_$TableName"
@@ -27,8 +37,14 @@ function Invoke-DuckDBUpsert {
         AS SELECT * FROM $TableName WHERE 1 = 0
 "@
 
-    # Write data into staging via appender
-    Write-DuckDBAppender -Connection $Connection -TableName $stagingTable -Data $Data
+
+    # Write data into staging table
+    if ($UseCsvImport) {
+        Write-DuckDBCsv -Connection $Connection -TableName $stagingTable -Data $Data -SimpleTypesOnly:$SimpleTypesOnly
+    } else {
+        Write-DuckDBAppender -Connection $Connection -TableName $stagingTable -Data $Data -SimpleTypesOnly:$SimpleTypesOnly
+    }
+
 
     if ($PKColumns.Count -gt 0) {
         # Determine all non-PK columns for the SET clause
