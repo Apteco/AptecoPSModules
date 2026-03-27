@@ -5,7 +5,7 @@
 RootModule = 'SqlPipeline.psm1'
 
 # Die Versionsnummer dieses Moduls
-ModuleVersion = '0.3.1'
+ModuleVersion = '0.3.2'
 
 # Unterstützte PSEditions
 # CompatiblePSEditions = @()
@@ -76,7 +76,7 @@ FunctionsToExport = @(
     "Invoke-IncrementalLoad"
     "New-DuckDBConnection"
     "Initialize-SQLPipeline"
-    "Close-DuckDBConnection"
+    "Close-SqlPipeline"
     "Get-LastLoadTimeStamp"
     "Get-DuckDBData"
     "Invoke-DuckDBQuery"
@@ -124,6 +124,7 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.3.2 Renaming Close-DuckDBConnection to Close-SqlPipeline to not clash with Close-DuckDBConnection of AptecoPSFramework (which is used for direct DuckDB connections outside of SqlPipeline)
 0.3.1 Skipping comparison with complex datatypes with -SimpleTypesOnly for better import performance
       Adding a csv importer to export big files first into a temporary file and directly import them via DuckDB into a staging table
       Added quotations around column names for duckdb support

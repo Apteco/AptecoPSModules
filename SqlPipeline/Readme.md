@@ -50,7 +50,7 @@ Initialize-SQLPipeline -DbPath '.\pipeline.db'
 
 Import-Csv '.\orders.csv' | Add-RowsToDuckDB -TableName 'orders' -PKColumns 'order_id' -UseTransaction -Verbose
 
-Close-DuckDBConnection
+Close-SqlPipeline
 ```
 
 ## Public Functions
@@ -195,16 +195,16 @@ Export-DuckDBToParquet -TableName 'orders' -OutputPath '.\export\orders.parquet'
 
 ---
 
-### `Close-DuckDBConnection`
+### `Close-SqlPipeline`
 
 Closes a DuckDB connection cleanly. Use this when working with file-based databases opened via `Initialize-SQLPipeline`.
 
 ```PowerShell
 # Close an explicit connection
-Close-DuckDBConnection -Connection $conn
+Close-SqlPipeline -Connection $conn
 
 # Close the default connection
-Close-DuckDBConnection -Connection (Initialize-SQLPipeline -DbPath '.\pipeline.db')
+Close-SqlPipeline
 ```
 
 | Parameter | Type | Description |
@@ -236,7 +236,7 @@ Set-LoadMetadata -TableName 'contacts' -RowsLoaded $contacts.items.Count
 # Export for downstream consumption
 Export-DuckDBToParquet -TableName 'contacts' -OutputPath '.\export\contacts.parquet'
 
-Close-DuckDBConnection
+Close-SqlPipeline
 ```
 
 # SimplySQL Integration

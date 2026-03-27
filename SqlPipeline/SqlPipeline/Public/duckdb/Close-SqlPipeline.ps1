@@ -1,4 +1,4 @@
-function Close-DuckDBConnection {
+function Close-SqlPipeline {
     <#
     .SYNOPSIS
         Closes a DuckDB connection cleanly.
