@@ -1,6 +1,23 @@
-﻿
+﻿#-----------------------------------------------
+#region: VERBOSE OUTPUT
 #-----------------------------------------------
-# NOTES
+
+param(
+    [bool]$Verbose = $false
+)
+
+If ( $Verbose -eq $true ) {
+    $previousVerbosePreference = $VerbosePreference
+    $VerbosePreference = "Continue"
+} else {
+    $VerbosePreference = "SilentlyContinue"
+}
+
+#endregion: VERBOSE OUTPUT
+
+
+#-----------------------------------------------
+#region: NOTES
 #-----------------------------------------------
 
 <#
@@ -11,6 +28,8 @@ and
 https://github.com/RamblingCookieMonster/PSStackExchange/blob/db1277453374cb16684b35cf93a8f5c97288c41f/PSStackExchange/PSStackExchange.psm1
 
 #>
+
+#endregion: NOTES
 
 
 #-----------------------------------------------
@@ -62,6 +81,17 @@ If ( $preCheckOs -eq "Windows" -and $preCheckisCore -eq $false ) {
     $Env:PSModulePath = @( $modulePath | Sort-Object -unique ) -join ";"
 
 }
+
+# Check if all module paths are accessible, if not remove them from the path to avoid errors when loading modules
+$pathSeparator = if ($preCheckOs -eq 'Windows') { ';' } else { ':' }
+$env:PSModulePath = ($env:PSModulePath -split $pathSeparator | Where-Object {
+    try {
+        [System.IO.Directory]::GetFiles($_) | Out-Null
+        $true
+    } catch {
+        $false
+    }
+}) -join $pathSeparator
 
 
 #-----------------------------------------------
@@ -603,3 +633,12 @@ $Script:vcredist = [PSCustomObject]@{
 Write-Verbose "Exporting public functions"
 
 Export-ModuleMember -Function $Public.Basename #-verbose  #+ "Set-Logfile"
+
+
+#-----------------------------------------------
+# SET THE VERBOSE PREFERENCE BACK TO THE ORIGINAL VALUE
+#-----------------------------------------------
+
+If ( $Verbose -eq $true ) {
+    $VerbosePreference = $previousVerbosePreference
+}
