@@ -42,40 +42,54 @@ You can use `Import-Keyfile` to use a keyfile that has been exported before.
 
 # Machine and User Binding
 
-The raw keyfile bytes are **never** used directly as the AES encryption key.
-Before any encryption or decryption, the module derives the actual key via HMAC-SHA256:
+The approach differs by platform.
+
+## Windows — DPAPI (Data Protection API)
+
+On Windows the keyfile is written to disk as a **DPAPI-protected blob** (`CurrentUser` scope).
+DPAPI is a Windows OS service that encrypts data using key material derived from the user's
+login credentials, managed by LSASS and optionally backed by the machine's TPM.
+
+When the module needs the AES key it calls `ProtectedData.Unprotect()`, which only succeeds
+for the **same user on the same machine**. There is no way to bypass this by knowing
+the user SID or machine GUID — you need the user's actual Windows credentials.
+An attacker who steals the keyfile file cannot unprotect it on a different machine or account.
+
+## Linux / macOS — HMAC-SHA256 binding
+
+DPAPI is not available on Linux. Instead the AES key is derived as:
 
 ```
-AES key = HMAC-SHA256( key  = keyfile bytes       ← the secret you must possess
-                       data = machine_id | user_id ← read from the OS at runtime )
+AES key = HMAC-SHA256( key  = keyfile bytes          ← the secret you must possess
+                       data = machine_id | user | uid ← read from the OS at runtime )
 ```
 
-### Where the identity comes from
+| Value | Source |
+|-------|--------|
+| `machine_id` | `/etc/machine-id` (set once at OS install) |
+| `user` | `$env:UserName` |
+| `uid` | numeric user ID from `id -u` |
 
-| Platform | Machine identity | User identity |
-|----------|-----------------|---------------|
-| Windows | `MachineGuid` from `HKLM:\SOFTWARE\Microsoft\Cryptography` | Current user SID via `WindowsIdentity.GetCurrent()` |
-| Linux | `/etc/machine-id` (set once at OS install time) | `$env:UserName` + numeric UID from `id -u` |
+All three are read from the OS at runtime. There is no parameter a caller can supply
+to override them.
 
-Both values are **read from the operating system at runtime**. There is no parameter a script or caller can pass to override them. The only way to decrypt on a given machine as a given user is to actually be running as that user on that machine.
+> **Limitation**: unlike DPAPI, these binding values are not themselves secret —
+> they can be looked up on the machine. The HMAC binding raises the bar against
+> opportunistic cross-machine/cross-user keyfile theft, but a targeted attacker
+> who has both the keyfile and knowledge of the machine-id + UID could reconstruct
+> the key. File permissions (`chmod 600`) are therefore still the primary defence on Linux.
 
-### What this means in practice
+## What this means in practice
 
-- Copying the encrypted string to another machine → decryption fails (different machine ID)
-- Copying the keyfile to another machine and running the same script → decryption fails (different machine ID)
-- Running as a different user account on the same machine → decryption fails (different SID / UID)
-- An attacker who steals the keyfile but is on a different machine → cannot decrypt
+- Copying the encrypted string to another machine → decryption fails
+- Copying the keyfile to another machine → decryption fails (DPAPI / different machine-id)
+- Running as a different user account → decryption fails (DPAPI / different UID)
+- Changing the service account → must re-encrypt all credentials
 
-### What this does NOT protect against
+## Scheduled tasks and services
 
-- An attacker who **is already running as the same user on the same machine** (they have everything needed)
-- Physical access to the machine combined with extraction of `/etc/machine-id` and the keyfile (both inputs to the HMAC are then known)
-
-The binding adds a meaningful extra layer, but it is not a substitute for protecting the keyfile itself with strict file permissions. Both defences work together.
-
-### Scheduled tasks and services
-
-Because the binding uses the OS user identity at runtime, a scheduled task or service **must run as the same user account that originally encrypted the credentials**. If you change the service account, you must re-encrypt. See [Using with Scheduled Tasks or Windows Services](#using-with-scheduled-tasks-or-windows-services) for setup options.
+A scheduled task or service **must run as the same OS user account that encrypted the credentials**.
+See [Using with Scheduled Tasks or Windows Services](#using-with-scheduled-tasks-or-windows-services) for setup options.
 
 
 # Keyfile Security
@@ -119,7 +133,23 @@ chmod 600 ~/.local/share/AptecoPSModules/key.aes
 
 # Using with Scheduled Tasks or Windows Services
 
-Because encryption is AES-based (not Windows DPAPI), the encrypted strings are portable. The only requirement is that **the account running the task or service can read the keyfile**.
+On Windows, DPAPI requires the **user profile to be loaded** when the task runs.
+Configure the scheduled task with `LogonType = Password` (not `S4U`), which ensures
+the profile is loaded. `S4U` logon may skip profile loading and cause DPAPI to fail.
+
+```PowerShell
+# Correct: Password logon loads the user profile
+$principal = New-ScheduledTaskPrincipal -UserId "DOMAIN\svc_myservice" -LogonType Password
+
+# Avoid: S4U may not load the profile, causing DPAPI decryption to fail
+# $principal = New-ScheduledTaskPrincipal -UserId "DOMAIN\svc_myservice" -LogonType S4U
+```
+
+> **Domain environments**: if an administrator resets a service account password **without
+> knowing the old password** (a forced reset), Windows cannot re-protect the DPAPI master
+> key and it may become permanently inaccessible. Always change service account passwords
+> via a normal password change, or use a **Group Managed Service Account (gMSA)** which
+> handles rotation automatically without this risk.
 
 ## Option 1 — Run as the same user (simplest)
 
@@ -219,29 +249,33 @@ $password = $encryptedString | Convert-SecureToPlaintext
 
 # Migrating to v0.4.0
 
-v0.4.0 changed how the AES key is derived (see [Machine and User Binding](#machine-and-user-binding)).
-All strings encrypted with v0.3.0 or earlier will fail to decrypt with v0.4.0.
-You need to decrypt the old strings and re-encrypt them with the new module.
+v0.4.0 introduced machine-and-user binding. All strings encrypted with v0.3.0
+or earlier will fail to decrypt with v0.4.0. You need to decrypt the old strings
+and re-encrypt them with the new module.
 
-## Path A — upgrade before migrating (recommended)
+> **Windows note**: v0.4.0 also changes the keyfile format from raw bytes to a
+> DPAPI-protected blob. After re-encrypting, run `New-Keyfile` to regenerate the
+> keyfile in the new format. The old raw-bytes keyfile will no longer be readable
+> by v0.4.0.
+
+## Path A — decrypt before upgrading (recommended)
 
 Do this while v0.3.0 is still installed.
 
 ```PowerShell
-# 1. Decrypt every stored string using the old module
-Import-Module EncryptCredential          # must be v0.3.0
-# Import-Keyfile -Path "C:\...\key.aes"  # only needed if you use a non-default location
+# 1. Decrypt every stored string using v0.3.0
+Import-Module EncryptCredential          # must still be v0.3.0
+# Import-Keyfile -Path "C:\...\key.aes"  # only if you use a non-default location
 
 $plain1 = "<your first old encrypted string>"  | Convert-SecureToPlaintext
 $plain2 = "<your second old encrypted string>" | Convert-SecureToPlaintext
-# repeat for every credential you have stored
+# repeat for every stored credential
 
 # 2. Upgrade the module
 Update-Module EncryptCredential          # or: Install-Module EncryptCredential -Force
 
-# 3. Re-encrypt with the new module
+# 3. Re-encrypt — this also generates a new DPAPI-protected keyfile automatically
 Import-Module EncryptCredential -Force   # loads v0.4.0
-# Import-Keyfile -Path "C:\...\key.aes"  # same keyfile as before
 
 $new1 = $plain1 | Convert-PlaintextToSecure
 $new2 = $plain2 | Convert-PlaintextToSecure
@@ -250,14 +284,17 @@ $new2 = $plain2 | Convert-PlaintextToSecure
 
 ## Path B — already upgraded to v0.4.0 without migrating first
 
-If you upgraded before decrypting, the module can no longer read the old strings.
-Decrypt them directly using raw PowerShell (no module needed), then re-encrypt:
+If you upgraded before decrypting, the module can no longer read the old strings
+because the old keyfile is raw bytes but v0.4.0 expects a DPAPI blob on Windows,
+or an HMAC-bound key on Linux.
+
+Decrypt using raw PowerShell (bypasses the module entirely), then re-encrypt:
 
 ```PowerShell
-# Helper: read the keyfile bytes (handles both binary and legacy text format)
+# Helper: read raw keyfile bytes (handles binary and legacy text format)
 function Read-KeyfileRaw ([string]$Path) {
     $bytes = [System.IO.File]::ReadAllBytes($Path)
-    if ($bytes.Length -in @(16, 24, 32)) { return $bytes }   # new binary format
+    if ($bytes.Length -in @(16, 24, 32)) { return $bytes }
 
     # Legacy format: one decimal byte value per line
     $lines = [System.IO.File]::ReadAllText($Path, [System.Text.Encoding]::UTF8) `
@@ -265,13 +302,13 @@ function Read-KeyfileRaw ([string]$Path) {
     return [byte[]]($lines | ForEach-Object { [byte]$_.Trim() })
 }
 
-# Adjust this path if you used a custom keyfile location
+# Adjust path if you used a custom keyfile location
 $keyPath  = "$env:LOCALAPPDATA\AptecoPSModules\key.aes"   # Windows default
 # $keyPath = "$env:HOME/.local/share/AptecoPSModules/key.aes"  # Linux default
 
 $keyBytes = Read-KeyfileRaw -Path $keyPath
 
-# Decrypt each old string using the raw AES key (v0.3.0 method, no binding)
+# Decrypt using the old raw-AES method (no binding, no DPAPI)
 function Decrypt-OldString ([string]$Encrypted, [byte[]]$Key) {
     $secure = ConvertTo-SecureString -String $Encrypted -Key $Key
     $plain  = (New-Object PSCredential "x", $secure).GetNetworkCredential().Password
@@ -279,13 +316,13 @@ function Decrypt-OldString ([string]$Encrypted, [byte[]]$Key) {
     return $plain
 }
 
-$plain1 = Decrypt-OldString -Encrypted "<your first old encrypted string>"  -Key $keyBytes
-$plain2 = Decrypt-OldString -Encrypted "<your second old encrypted string>" -Key $keyBytes
-# repeat for every credential
+$plain1 = Decrypt-OldString "<your first old encrypted string>"  $keyBytes
+$plain2 = Decrypt-OldString "<your second old encrypted string>" $keyBytes
+# repeat for every stored credential
 
-# Re-encrypt with v0.4.0 (bound to this machine + current user)
-Import-Module EncryptCredential
-# Import-Keyfile -Path $keyPath   # only needed for a non-default location
+# Re-encrypt with v0.4.0 — a new DPAPI-protected keyfile is created automatically
+Import-Module EncryptCredential -Force
+# Note: do NOT call Import-Keyfile here — let the module create a fresh keyfile
 
 $new1 = $plain1 | Convert-PlaintextToSecure
 $new2 = $plain2 | Convert-PlaintextToSecure

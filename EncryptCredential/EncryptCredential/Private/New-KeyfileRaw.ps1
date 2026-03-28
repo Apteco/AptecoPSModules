@@ -42,11 +42,22 @@ Function New-KeyfileRaw {
             $rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
             $rng.GetBytes($Key)
             $rng.Dispose()
-            [System.IO.File]::WriteAllBytes($Path, $Key)
 
-            # Restrict file access to the current user only
             If ($PSVersionTable.PSEdition -eq 'Desktop' -or $IsWindows) {
-                # Windows: remove inherited ACEs, grant current user full control
+
+                # Windows: DPAPI-protect the key bytes before writing to disk.
+                # The resulting blob can only be decrypted by the same user on the
+                # same machine — it is backed by Windows credential infrastructure
+                # (LSASS, optionally TPM).  The raw AES key never touches disk.
+                Add-Type -AssemblyName System.Security
+                $protected = [System.Security.Cryptography.ProtectedData]::Protect(
+                    $Key,
+                    $null,
+                    [System.Security.Cryptography.DataProtectionScope]::CurrentUser
+                )
+                [System.IO.File]::WriteAllBytes($Path, $protected)
+
+                # ACL: also restrict file access to the current user (defence in depth)
                 $acl = Get-Acl -Path $Path
                 $acl.SetAccessRuleProtection($true, $false)
                 $rule = New-Object System.Security.AccessControl.FileSystemAccessRule(
@@ -56,9 +67,13 @@ Function New-KeyfileRaw {
                 )
                 $acl.SetAccessRule($rule)
                 Set-Acl -Path $Path -AclObject $acl
+
             } else {
-                # Linux/macOS: owner read/write only (600)
+
+                # Linux/macOS: save raw bytes, restrict to owner read/write only (600)
+                [System.IO.File]::WriteAllBytes($Path, $Key)
                 & chmod 600 $Path
+
             }
 
         } else {
