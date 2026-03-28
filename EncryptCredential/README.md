@@ -246,6 +246,63 @@ Import-Keyfile -Path "/var/lib/apteco/key.aes"
 $password = $encryptedString | Convert-SecureToPlaintext
 ```
 
+## Option 5 — C# hosted PowerShell (in-process or out-of-process)
+
+The module works when called from C# via the PowerShell SDK, both with an
+in-process runspace and with an out-of-process runspace spawned at a specific
+bitness using `PowerShellProcessInstance`.
+
+**In-process** (`Runspace.CreateRunspace()`): the runspace runs inside the C#
+process and inherits its Windows identity and profile state directly.
+
+**Out-of-process** (`PowerShellProcessInstance`): a child PowerShell process is
+spawned. It inherits the parent process's Windows token and profile state, so
+DPAPI behaves identically to the parent.
+
+In both cases the **same `LoadUserProfile` requirement applies** as for scheduled
+tasks. If the hosting process is a Windows Service or IIS app pool, ensure the
+user profile is loaded before any DPAPI call is made (see the note at the top of
+this section).
+
+```csharp
+// Out-of-process example — 32-bit PowerShell 5.1
+var exe = new FileInfo(
+    @"C:\Windows\SysWOW64\WindowsPowerShell\v1.0\powershell.exe");
+var instance = new PowerShellProcessInstance(
+    new Version(5, 1), null, exe, false);
+
+using var runspace = RunspaceFactory.CreateOutOfProcessRunspace(null, instance);
+runspace.Open();
+
+using var ps = PowerShell.Create();
+ps.Runspace = runspace;
+ps.AddCommand("Import-Module").AddArgument("EncryptCredential");
+ps.Invoke();
+
+ps.Commands.Clear();
+ps.AddCommand("Convert-SecureToPlaintext")
+  .AddParameter("String", encryptedString);
+
+string plaintext = ps.Invoke<string>().FirstOrDefault();
+```
+
+> **Verify DPAPI is available** from the hosting process before deploying.
+> Add the snippet below to your startup / health-check logic — it will throw
+> immediately with a clear message if the user profile is not loaded, rather
+> than failing silently later at runtime:
+>
+> ```csharp
+> // Smoke-test: round-trip a dummy value through DPAPI
+> var dummy = System.Text.Encoding.UTF8.GetBytes("dpapi-check");
+> var blob  = System.Security.Cryptography.ProtectedData.Protect(
+>                 dummy, null,
+>                 System.Security.Cryptography.DataProtectionScope.CurrentUser);
+> System.Security.Cryptography.ProtectedData.Unprotect(
+>                 blob, null,
+>                 System.Security.Cryptography.DataProtectionScope.CurrentUser);
+> // If this line is reached, DPAPI is working correctly.
+> ```
+
 
 # Migrating to v0.4.0
 
