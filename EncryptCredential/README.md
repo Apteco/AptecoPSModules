@@ -217,6 +217,82 @@ $password = $encryptedString | Convert-SecureToPlaintext
 ```
 
 
+# Migrating to v0.4.0
+
+v0.4.0 changed how the AES key is derived (see [Machine and User Binding](#machine-and-user-binding)).
+All strings encrypted with v0.3.0 or earlier will fail to decrypt with v0.4.0.
+You need to decrypt the old strings and re-encrypt them with the new module.
+
+## Path A — upgrade before migrating (recommended)
+
+Do this while v0.3.0 is still installed.
+
+```PowerShell
+# 1. Decrypt every stored string using the old module
+Import-Module EncryptCredential          # must be v0.3.0
+# Import-Keyfile -Path "C:\...\key.aes"  # only needed if you use a non-default location
+
+$plain1 = "<your first old encrypted string>"  | Convert-SecureToPlaintext
+$plain2 = "<your second old encrypted string>" | Convert-SecureToPlaintext
+# repeat for every credential you have stored
+
+# 2. Upgrade the module
+Update-Module EncryptCredential          # or: Install-Module EncryptCredential -Force
+
+# 3. Re-encrypt with the new module
+Import-Module EncryptCredential -Force   # loads v0.4.0
+# Import-Keyfile -Path "C:\...\key.aes"  # same keyfile as before
+
+$new1 = $plain1 | Convert-PlaintextToSecure
+$new2 = $plain2 | Convert-PlaintextToSecure
+# replace the stored values with $new1, $new2, etc.
+```
+
+## Path B — already upgraded to v0.4.0 without migrating first
+
+If you upgraded before decrypting, the module can no longer read the old strings.
+Decrypt them directly using raw PowerShell (no module needed), then re-encrypt:
+
+```PowerShell
+# Helper: read the keyfile bytes (handles both binary and legacy text format)
+function Read-KeyfileRaw ([string]$Path) {
+    $bytes = [System.IO.File]::ReadAllBytes($Path)
+    if ($bytes.Length -in @(16, 24, 32)) { return $bytes }   # new binary format
+
+    # Legacy format: one decimal byte value per line
+    $lines = [System.IO.File]::ReadAllText($Path, [System.Text.Encoding]::UTF8) `
+                 -split "`r?`n" | Where-Object { $_.Trim() -ne '' }
+    return [byte[]]($lines | ForEach-Object { [byte]$_.Trim() })
+}
+
+# Adjust this path if you used a custom keyfile location
+$keyPath  = "$env:LOCALAPPDATA\AptecoPSModules\key.aes"   # Windows default
+# $keyPath = "$env:HOME/.local/share/AptecoPSModules/key.aes"  # Linux default
+
+$keyBytes = Read-KeyfileRaw -Path $keyPath
+
+# Decrypt each old string using the raw AES key (v0.3.0 method, no binding)
+function Decrypt-OldString ([string]$Encrypted, [byte[]]$Key) {
+    $secure = ConvertTo-SecureString -String $Encrypted -Key $Key
+    $plain  = (New-Object PSCredential "x", $secure).GetNetworkCredential().Password
+    $secure.Dispose()
+    return $plain
+}
+
+$plain1 = Decrypt-OldString -Encrypted "<your first old encrypted string>"  -Key $keyBytes
+$plain2 = Decrypt-OldString -Encrypted "<your second old encrypted string>" -Key $keyBytes
+# repeat for every credential
+
+# Re-encrypt with v0.4.0 (bound to this machine + current user)
+Import-Module EncryptCredential
+# Import-Keyfile -Path $keyPath   # only needed for a non-default location
+
+$new1 = $plain1 | Convert-PlaintextToSecure
+$new2 = $plain2 | Convert-PlaintextToSecure
+# replace the stored values with $new1, $new2, etc.
+```
+
+
 # Installation
 
 You can just download the whole repository here and pick this script or your can use PSGallery through PowerShell commands directly.
