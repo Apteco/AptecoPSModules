@@ -4,7 +4,7 @@
 RootModule = 'EncryptCredential.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.3.0'
+ModuleVersion = '0.4.0'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -135,6 +135,19 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = "
+0.4.0 Added machine-and-user binding to make encrypted strings non-portable.
+      Windows: keyfile is now written as a DPAPI-protected blob (CurrentUser scope)
+        by New-KeyfileRaw. Get-BoundKey calls ProtectedData.Unprotect() to recover
+        the AES key; this only succeeds for the same user on the same machine and is
+        backed by Windows credential infrastructure (LSASS, optionally TPM).
+        Knowing the user SID or machine GUID alone is not sufficient to bypass it.
+      Linux/macOS: key is derived via HMAC-SHA256(key=keyfileBytes,
+        data=machine-id|username|uid), all read from the OS at runtime.
+      Read-Keyfile updated to return DPAPI blobs as-is for Get-BoundKey to handle.
+      Scheduled tasks on Windows must use LogonType=Password to ensure the user
+        profile is loaded (required by DPAPI).
+      BREAKING CHANGE: all previously encrypted strings must be re-encrypted.
+        See 'Migrating to v0.4.0' in the README.
 0.3.0 Reworked the module with Claude AI to be more secure and robust, now using another way to create
       a keyfile for salting. The old encryption method is still supported, so all
       previously encrypted strings will stay valid UNTIL you call New-Keyfile. After that,

@@ -1,9 +1,11 @@
 Function Read-Keyfile {
 <#
-    Returns the AES key bytes from the keyfile.
-    Supports both formats:
-      - New: raw binary (16/24/32 bytes written with WriteAllBytes)
-      - Legacy: UTF8 text with one decimal number per line (written with Set-Content -Encoding UTF8)
+    Returns raw file bytes for Get-BoundKey to interpret.
+
+    Supports three formats:
+      - Windows v0.4.0+: DPAPI-protected blob (variable length, always > 32 bytes)
+      - Binary (Linux / Windows v0.3.0): raw AES key, exactly 16, 24, or 32 bytes
+      - Legacy text (all platforms, very old): UTF8, one decimal byte value per line
 #>
     param(
         [Parameter(Mandatory=$true)][String]$Path
@@ -11,8 +13,10 @@ Function Read-Keyfile {
 
     $rawBytes = [System.IO.File]::ReadAllBytes($Path)
 
-    If ($rawBytes.Length -in @(16, 24, 32)) {
-        # Binary keyfile (new format)
+    # Binary file: either a raw AES key (16/24/32 bytes) or a Windows DPAPI blob (> 32 bytes).
+    # Return as-is in both cases; Get-BoundKey handles the interpretation.
+    If ($rawBytes.Length -in @(16, 24, 32) -or
+        (($PSVersionTable.PSEdition -eq 'Desktop' -or $IsWindows) -and $rawBytes.Length -gt 32)) {
         return $rawBytes
     }
 

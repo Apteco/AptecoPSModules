@@ -78,8 +78,9 @@ Function Convert-PlaintextToSecure {
 
         $return = ""
 
-        # read key bytes (handles both binary and legacy text format)
-        $salt = Read-Keyfile -Path $Script:keyfile
+        # read key bytes (handles both binary and legacy text format),
+        # then derive a machine-and-user-bound key so the result is not portable
+        $salt = Get-BoundKey -RawKey (Read-Keyfile -Path $Script:keyfile)
 
         # convert
         $stringSecure = ConvertTo-secureString -String $String -asplaintext -force
