@@ -4,7 +4,7 @@
 RootModule = 'EncryptCredential.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.3.0'
+ModuleVersion = '0.4.0'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -135,6 +135,14 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = "
+0.4.0 Added machine-and-user binding via HMAC-SHA256 key derivation (Get-BoundKey).
+      The raw keyfile bytes are no longer used directly as the AES key. Instead the
+      actual key is derived as HMAC-SHA256(key=keyfileBytes, data=machineId|userId),
+      where machineId and userId are read from the OS at runtime (MachineGuid + SID on
+      Windows; /etc/machine-id + username + UID on Linux). Encrypted strings can no
+      longer be decrypted on a different machine or under a different user account even
+      if the keyfile is available. BREAKING CHANGE: all previously encrypted strings
+      must be re-encrypted after upgrading.
 0.3.0 Reworked the module with Claude AI to be more secure and robust, now using another way to create
       a keyfile for salting. The old encryption method is still supported, so all
       previously encrypted strings will stay valid UNTIL you call New-Keyfile. After that,

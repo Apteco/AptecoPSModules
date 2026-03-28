@@ -33,11 +33,49 @@ This module is used to double encrypt sensitive data like credentials, tokens et
 At the first encryption or when calling `Export-Keyfile` a new random keyfile will be generated for salting with AES.
 The key ist saved per default in your users profile, but can be exported into any other folder and use it from there.
 
-> **Important**: The encrypted strings are tied to the **keyfile**, not to a specific machine or user account. Because the module encrypts with AES using the keyfile as the key (not Windows DPAPI), the encrypted strings **can** be used on other machines or by other user accounts — as long as the same keyfile is available and readable. Guard the keyfile accordingly.
+> **Important**: Encrypted strings are bound to the **machine they were created on** and the **OS user account that created them**. They cannot be decrypted on a different machine or by a different user, even if the keyfile is available. See [Machine and User Binding](#machine-and-user-binding) below for how this works.
 
 If you don't provide a keyfile, it will be automatically generated with your first call of `Convert-PlaintextToSecure`
 
 You can use `Import-Keyfile` to use a keyfile that has been exported before.
+
+
+# Machine and User Binding
+
+The raw keyfile bytes are **never** used directly as the AES encryption key.
+Before any encryption or decryption, the module derives the actual key via HMAC-SHA256:
+
+```
+AES key = HMAC-SHA256( key  = keyfile bytes       ← the secret you must possess
+                       data = machine_id | user_id ← read from the OS at runtime )
+```
+
+### Where the identity comes from
+
+| Platform | Machine identity | User identity |
+|----------|-----------------|---------------|
+| Windows | `MachineGuid` from `HKLM:\SOFTWARE\Microsoft\Cryptography` | Current user SID via `WindowsIdentity.GetCurrent()` |
+| Linux | `/etc/machine-id` (set once at OS install time) | `$env:UserName` + numeric UID from `id -u` |
+
+Both values are **read from the operating system at runtime**. There is no parameter a script or caller can pass to override them. The only way to decrypt on a given machine as a given user is to actually be running as that user on that machine.
+
+### What this means in practice
+
+- Copying the encrypted string to another machine → decryption fails (different machine ID)
+- Copying the keyfile to another machine and running the same script → decryption fails (different machine ID)
+- Running as a different user account on the same machine → decryption fails (different SID / UID)
+- An attacker who steals the keyfile but is on a different machine → cannot decrypt
+
+### What this does NOT protect against
+
+- An attacker who **is already running as the same user on the same machine** (they have everything needed)
+- Physical access to the machine combined with extraction of `/etc/machine-id` and the keyfile (both inputs to the HMAC are then known)
+
+The binding adds a meaningful extra layer, but it is not a substitute for protecting the keyfile itself with strict file permissions. Both defences work together.
+
+### Scheduled tasks and services
+
+Because the binding uses the OS user identity at runtime, a scheduled task or service **must run as the same user account that originally encrypted the credentials**. If you change the service account, you must re-encrypt. See [Using with Scheduled Tasks or Windows Services](#using-with-scheduled-tasks-or-windows-services) for setup options.
 
 
 # Keyfile Security
@@ -99,45 +137,53 @@ $encrypted = "MyPassword" | Convert-PlaintextToSecure
 
 The keyfile is written to the service account's own profile. The scheduled task or service then runs as that same account and finds the keyfile automatically.
 
-## Option 3 — Shared keyfile with restricted ACL (Windows)
+## Option 3 — Custom keyfile location for the service account (Windows)
 
-Use this when the encrypting user and the running account are different.
+> **Note**: Because encryption is bound to the OS user, the credentials **must be encrypted by the same service account** that will later decrypt them. You cannot encrypt as one user and decrypt as another.
+
+Use this when you want the keyfile stored centrally (e.g. `ProgramData`) rather than in the service account's roaming profile.
+
+**One-time setup** — run this as the service account (`runas /user:DOMAIN\svc_myservice powershell`):
 
 ```PowerShell
-# One-time setup: export the keyfile to a shared, admin-controlled location
-$sharedKey = "C:\ProgramData\AptecoPSModules\key.aes"
+Import-Module EncryptCredential
+
+# Place the keyfile in a shared, admin-controlled location
+$sharedKey = "C:\ProgramData\AptecoPSModules\svc_myservice.aes"
 Export-Keyfile -Path $sharedKey
 
-# Lock down: remove inheritance, grant Administrators + service account only
+# Restrict: remove inheritance, grant Administrators + this service account only
 $acl = Get-Acl -Path $sharedKey
 $acl.SetAccessRuleProtection($true, $false)
-
 $adminRule = New-Object System.Security.AccessControl.FileSystemAccessRule(
-    "BUILTIN\Administrators",
-    "FullControl",
+    "BUILTIN\Administrators", "FullControl",
     [System.Security.AccessControl.AccessControlType]::Allow
 )
 $svcRule = New-Object System.Security.AccessControl.FileSystemAccessRule(
-    "DOMAIN\svc_myservice",   # replace with your service account
-    "Read",
+    "DOMAIN\svc_myservice", "Read",   # the account that will also decrypt
     [System.Security.AccessControl.AccessControlType]::Allow
 )
 $acl.SetAccessRule($adminRule)
 $acl.SetAccessRule($svcRule)
 Set-Acl -Path $sharedKey -AclObject $acl
+
+# Now encrypt — must be run as the same service account
+$encrypted = "MyPassword" | Convert-PlaintextToSecure
+# Store $encrypted in your config file
 ```
 
-In the scheduled task / service script, import the keyfile before decrypting:
+In the scheduled task / service script (running as `svc_myservice`):
 
 ```PowerShell
 Import-Module EncryptCredential
-Import-Keyfile -Path "C:\ProgramData\AptecoPSModules\key.aes"
+Import-Keyfile -Path "C:\ProgramData\AptecoPSModules\svc_myservice.aes"
 $password = $encryptedString | Convert-SecureToPlaintext
 ```
 
 ## Option 4 — Linux systemd service
 
-Create a dedicated system user and restrict keyfile access:
+Create a dedicated system user, encrypt credentials as that user, and restrict keyfile access.
+The systemd service must run as the same user that did the encryption.
 
 ```bash
 # Copy the keyfile to a directory only the service user can read

@@ -52,8 +52,10 @@ Function Convert-SecureToPlaintext {
 
         $return = ""
 
-        # read key bytes (handles both binary and legacy text format)
-        $salt = Read-Keyfile -Path $Script:keyfile
+        # read key bytes (handles both binary and legacy text format),
+        # then derive a machine-and-user-bound key so decryption only succeeds
+        # on the same machine and under the same OS user account
+        $salt = Get-BoundKey -RawKey (Read-Keyfile -Path $Script:keyfile)
 
         #convert
         Try {
