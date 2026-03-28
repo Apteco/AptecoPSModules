@@ -1,4 +1,4 @@
-﻿
+
 # TODO make sure to use PowerShellGet v2.2.4 or higher and PackageManagement v1.4 or higher
 # TODO make heavy use of ImportDependency
 # TODO always use -allowclobber where possible
@@ -56,10 +56,12 @@ Function Install-Dependency {
     Array of NuGet packages to install in a subfolder of the current folder. Can be changed with parameter LocalPackageFolder.
 .PARAMETER LocalPackageFolder
     Folder name of the local package folder. Default is "lib".
-.PARAMETER InstallScriptAndModuleForCurrentUser
-    By default, the modules and scripts will be installed for all users. If you want to install them only for the current user, then set this parameter to $true.
 .PARAMETER ExcludeDependencies
-    By default, this script is installing dependencies for every nuget package. This can be deactivated with this switch
+    By default, this script is installing dependencies for every nuget package. This can be deactivated with this switch.
+.PARAMETER SuppressWarnings
+    Flag to log warnings, but not redirect to the host.
+.PARAMETER KeepLogfile
+    Flag to keep an existing logfile rather than creating a new one.
 .NOTES
     Created by : gitfvb
 .LINK
@@ -67,95 +69,46 @@ Function Install-Dependency {
 #>
 
 
-[CmdletBinding()]
-Param(
+    [CmdletBinding()]
+    Param(
 
-     [Parameter(Mandatory=$false)]
-     [String[]]$Script = [Array]@()
-    
-    ,[Parameter(Mandatory=$false)]
-     [String[]]$Module = [Array]@()
-    
-    ,[Parameter(Mandatory=$false)]
-     [String[]]$GlobalPackage = [Array]@()
-    
-    ,[Parameter(Mandatory=$false)]
-     [String[]]$LocalPackage = [Array]@()
-    
-    ,[Parameter(Mandatory=$false)]
-     [String]$LocalPackageFolder = "lib"
-    
-    #,[Parameter(Mandatory=$false)]
-    # [Switch]$InstallScriptAndModuleForCurrentUser = $false
-    
-    ,[Parameter(Mandatory=$false)]
-     [Switch]$ExcludeDependencies = $false
+         [Parameter(Mandatory=$false)]
+         [String[]]$Script = [Array]@()
 
-    # TODO implement
-    ,[Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()]
-     [Switch]$SuppressWarnings = $false           # Flag to log warnings, but not put redirect to the host
+        ,[Parameter(Mandatory=$false)]
+         [String[]]$Module = [Array]@()
 
-    ,[Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()]
-     [Switch]$KeepLogfile = $false           # Flag to log warnings, but not put redirect to the host
+        ,[Parameter(Mandatory=$false)]
+         [String[]]$GlobalPackage = [Array]@()
 
-)
+        ,[Parameter(Mandatory=$false)]
+         [String[]]$LocalPackage = [Array]@()
+
+        ,[Parameter(Mandatory=$false)]
+         [String]$LocalPackageFolder = "lib"
+
+        ,[Parameter(Mandatory=$false)]
+         [Switch]$ExcludeDependencies = $false
+
+        ,[Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()]
+         [Switch]$SuppressWarnings = $false           # Flag to log warnings, but not put redirect to the host
+
+        ,[Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()]
+         [Switch]$KeepLogfile = $false           # Flag to keep existing logfile
+
+    )
 
 
-#-----------------------------------------------
-# DEBUG
-#-----------------------------------------------
+    Begin {
 
-<#
-Set-Location -Path "C:\Users\Florian\Downloads\20230918"
+        # Set explicitly verbose output and remember it
+        If ( $SuppressWarnings -ne $true -and $PSBoundParameters["Verbose"].IsPresent -eq $true -and $PSBoundParameters["Verbose"] -eq $True) {
+            $originalVerbosity = $VerbosePreference
+            $VerbosePreference = 'Continue'
+        }
 
-$Script = [Array]@()
-$Module = [Array]@()
-$GlobalPackage = [Array]@()
-$LocalPackage = [Array]@("npgsql")
-$LocalPackageFolder = "lib"
-$InstallScriptAndModuleForCurrentUser = $false
-$VerbosePreference = "Continue"
-#>
+        Write-Verbose "Proceeding with start settings"
 
-
-# TODO check if we can check if this is an admin user rather than enforce it
-# TODO use write log instead of write verbose?
-
-#-----------------------------------------------
-# INPUT DEFINITION
-#-----------------------------------------------
-
-
-<#
-
-$psScripts = @(
-    #"WriteLogfile"
-)
-
-$psModules = @(
-    "WriteLog"
-    "MeasureRows"
-    "EncryptCredential"
-    "ExtendFunction"
-    "ConvertUnixTimestamp"
-    #"Microsoft.PowerShell.Utility"
-)
-
-# Define either a simple string or provide a pscustomobject with a specific version number
-$psPackages = @(
-    [PSCustomObject]@{
-        name="Npgsql"
-        version = "4.1.12"
-        includeDependencies = $true
-        type = "local"  # local|global
-    }
-#>
-
-
-
-
-
-    Process {
 
         #-----------------------------------------------
         # START
@@ -191,14 +144,14 @@ $psPackages = @(
         #-----------------------------------------------
 
         # Check if this is Pwsh Core
-        $psEnv = Get-PSEnvironment
-        $isCore = $psEnv.isCore
-        $psVersion = $psEnv.PSVersion
+        $psEnv = Get-PSEnvironment -SkipLocalPackageCheck
+        $isCore = $psEnv.IsCore
         Write-Log -Message "Using PowerShell version $( $psEnv.PSVersion ) and $( $psEnv.PSEdition ) edition"
-        
+
         # Operating system
         $os = $psEnv.OS
         Write-Log -Message "Using OS: $( $os )"
+        Write-Log -Message "Using architecture: $( $psEnv.Architecture )"
 
         # Check elevation
         if ($os -eq "Windows") {
@@ -209,12 +162,10 @@ $psPackages = @(
         }
 
         # Check execution policy
-        $executionPolicy = $psEnv.ExecutionPolicy
-        Write-Log -Message "Your execution policy is currently: $( $executionPolicy )" -Severity VERBOSE
+        Write-Log -Message "Your execution policy is currently: $( $psEnv.ExecutionPolicy.Process )" -Severity VERBOSE
 
         # Check if elevated rights are needed
-        #If (( $GlobalPackage.Count -gt 0 -or $Module.Count -gt 0 -or $Script.count -gt 0 ) -and $isElevated -eq $false) {
-        If ( $GlobalPackage.Count -gt 0 -and $isElevated -eq $false) {
+        If ( $GlobalPackage.Count -gt 0 -and $psEnv.IsElevated -eq $false) {
             throw "To install global packages, you need elevated rights, so please restart PowerShell with Administrator privileges!"
         }
 
@@ -223,7 +174,7 @@ $psPackages = @(
         # NUGET SETTINGS
         #-----------------------------------------------
 
-        $packageSourceName = "NuGet v2" # otherwise you could create a local repository and put all dependencies in there. You can find more infos here: https://github.com/Apteco/HelperScripts/tree/master/functions/Log#installation-via-local-repository
+        $packageSourceName = "NuGet v2"
         $packageSourceLocation = "https://www.nuget.org/api/v2"
         $packageSourceProviderName = "NuGet"
 
@@ -232,25 +183,28 @@ $psPackages = @(
         # POWERSHELL GALLERY SETTINGS
         #-----------------------------------------------
 
-        $powerShellSourceName = "PSGallery" # otherwise you could create a local repository and put all dependencies in there. You can find more infos here: https://github.com/Apteco/HelperScripts/tree/master/functions/Log#installation-via-local-repository
+        $powerShellSourceName = "PSGallery"
         $powerShellSourceLocation = "https://www.powershellgallery.com/api/v2"
         $powerShellSourceProviderName = "PowerShellGet"
+
         If ( $psEnv.IsElevated -eq $true ) {
-            $psScope = "AllUsers" # CurrentUser|AllUsers
+            $psScope = "AllUsers"
         } else {
-            $psScope = "CurrentUser" # CurrentUser|AllUsers
+            $psScope = "CurrentUser"
         }
 
         Write-Log -Message "Using installation scope: $( $psScope )" -Severity VERBOSE
 
-        # TODO GOT UNTIL HERE 2025-11-18
+        # Initialise counters (used across Process and reported in End)
+        $Script:installCount_s = 0
+        $Script:installCount_m = 0
+        $Script:installCount_l = 0
+        $Script:installCount_g = 0
+
+    }
 
 
-
-
-
-
-
+    Process {
 
         #-----------------------------------------------
         # CHECK POWERSHELL GALLERY REPOSITORY
@@ -258,25 +212,23 @@ $psPackages = @(
 
         # TODO Implement version checks with [System.Version]::Parse("x.y.z")
         If ( $Script.Count -gt 0 -or $Module.Count -gt 0 ) {
-            $powershellRepo = @( Get-PackageSource -ProviderName $powerShellSourceProviderName ) #@( Get-PSRepository -ProviderName $powerShellSourceProviderName ) #@( Get-PSRepository | where { $_.SourceLocation -like "https://www.powershellgallery.com*" } )
+            $powershellRepo = @( Get-PackageSource -ProviderName $powerShellSourceProviderName )
             If ( $powershellRepo.Count -eq 0 ) {
                 Write-Log "No module/script repository found! Please make sure to add a repository to your machine!" -Severity WARNING
             }
         }
 
-        # Install newer PackageManagement
+        # Install newer PackageManagement if needed
         $currentPM = get-installedmodule | where-object { $_.Name -eq "PackageManagement" }
         If ( $currentPM.Version -eq "1.0.0.1" -or $currentPM.Count -eq 0 ) {
             Write-Log "PackageManagement is outdated with v$( $currentPM.Version ). This is updating it now." -Severity WARNING
-            #Install-Module PackageManagement -Force -Verbose -AllowClobber
             Install-Package -Name PackageManagement -Force
         }
 
-        # Install newer PowerShellGet version when it is the default at 1.0.0.1
+        # Install newer PowerShellGet if needed
         $currentPSGet = get-installedmodule | where-object { $_.Name -eq "PowerShellGet" }
         If ( $currentPSGet.Version -eq "1.0.0.1" -or $currentPSGet.Count -eq 0 ) {
             Write-Log "PowerShellGet is outdated with v$( $currentPSGet.Version ). This is updating it now." -Severity WARNING
-            #Install-Module PowerShellGet -Force -Verbose -AllowClobber
             Install-Package -Name PowerShellGet -Force
         }
 
@@ -285,7 +237,7 @@ $psPackages = @(
             try {
 
                 # Get PowerShellGet sources
-                $powershellRepo = @( Get-PackageSource -ProviderName $powerShellSourceProviderName ) #@( Get-PSRepository -ProviderName $powerShellSourceProviderName )
+                $powershellRepo = @( Get-PackageSource -ProviderName $powerShellSourceProviderName )
 
                 # See if PSRepo needs to get registered
                 If ( $powershellRepo.count -ge 1 ) {
@@ -295,15 +247,12 @@ $psPackages = @(
                     $registerPsRepoDecision = $Host.UI.PromptForChoice("", "Register $( $powerShellSourceProviderName ) as repository?", @('&Yes'; '&No'), 1)
                     If ( $registerPsRepoDecision -eq "0" ) {
 
-                        # Means yes and proceed
                         Register-PSRepository -Name $powerShellSourceName -SourceLocation $powerShellSourceLocation
-                        #Register-PackageSource -Name $packageSourceName -Location $packageSourceLocation -ProviderName $packageSourceProviderName
 
                         # Load sources again
                         $powershellRepo = @( Get-PSRepository -ProviderName $powerShellSourceProviderName )
 
                     } else {
-                        # Means no and leave
                         Write-Log "No package repository found! Please make sure to add a PowerShellGet repository to your machine!" -Severity ERROR
                         exit 0
                     }
@@ -327,17 +276,11 @@ $psPackages = @(
 
                 }
 
-                # TODO [x] ask if you want to trust the new repository
-
                 # Do you want to trust that source?
                 If ( $psGetSource.IsTrusted -eq $false ) {
                     Write-Log -Message "Your source is not trusted. Do you want to trust it now?" -Severity WARNING
                     $trustChoice = Request-Choice -title "Trust script/module Source" -message "Do you want to trust $( $psGetSource.Name )?" -choices @("Yes", "No")
                     If ( $trustChoice -eq 1 ) {
-                        # Use
-                        # Set-PSRepository -Name $psGetSource.Name -InstallationPolicy Untrusted
-                        # To get it to the untrusted status again
-
                         Set-PSRepository -Name $psGetSource.Name -InstallationPolicy Trusted
                     }
                 }
@@ -350,26 +293,17 @@ $psPackages = @(
 
         }
 
-        # TODO [x] allow local repositories
-
 
         #-----------------------------------------------
         # CHECK SCRIPT DEPENDENCIES FOR INSTALLATION AND UPDATE
         #-----------------------------------------------
 
-        $s = 0
         If ( $Script.Count -gt 0 ) {
-
-            # TODO [ ] Add psgallery possibly, too
 
             try {
 
-                #If ( $ScriptsOnly -eq $true -or ( $PackagesOnly -eq $false -and $ScriptsOnly -eq $false -and $ModulesOnly -eq $false) ) {
-
                 Write-Log "Checking Script dependencies" -Severity VERBOSE
 
-                # SCRIPTS
-                #$installedScripts = Get-InstalledScript
                 $Script | ForEach-Object {
 
                     $psScript = $_
@@ -378,16 +312,12 @@ $psPackages = @(
 
                     $installedScripts = Get-InstalledScript
 
-                    # TODO [ ] possibly add dependencies on version number
-                    # This is using -force to allow updates
-
                     If ( $ExcludeDependencies -eq $true ) {
                         $psScriptDependencies = Find-Script -Name $psScript
                     } else {
                         $psScriptDependencies = Find-Script -Name $psScript -IncludeDependencies
                     }
 
-                    #$psScriptDependencies | Where-Object { $_.Name -notin $installedScripts.Name } | Install-Script -Scope AllUsers -Verbose -Force
                     $psScriptDependencies | ForEach-Object {
 
                         $scr = $_
@@ -395,31 +325,28 @@ $psPackages = @(
                         If ( $installedScripts.Name -contains $scr.Name ) {
                             Write-Log -Message "Script $( $scr.Name ) is already installed" -Severity VERBOSE
 
-                            $alreadyInstalledScript = $installedScripts | Where-Object { $_.Name -eq $scr.Name } #| Select -first 1
+                            $alreadyInstalledScript = $installedScripts | Where-Object { $_.Name -eq $scr.Name }
 
                             If ( $scr.Version -gt $alreadyInstalledScript.Version ) {
                                 Write-Log -Message "Script $( $scr.Name ) is installed with an older version $( $alreadyInstalledScript.Version ) than the available version $( $scr.Version )" -Severity VERBOSE
                                 Update-Script -Name $scr.Name
-                                $s += 1
+                                $Script:installCount_s += 1
                             } else {
                                 Write-Log -Message "No need to update $( $scr.Name )" -Severity VERBOSE
                             }
                         } else {
                             Write-Log -Message "Installing Script $( $scr.Name )" -Severity VERBOSE
-                            Install-Script -Name $scr.Name -Scope $psScope #-Force
-                            $s += 1
+                            Install-Script -Name $scr.Name -Scope $psScope
+                            $Script:installCount_s += 1
                         }
 
                     }
 
                 }
 
-                #}
-
             } catch {
 
                 Write-Log -Message "Cannot install scripts!" -Severity WARNING
-                #$success = $false
 
             }
 
@@ -434,16 +361,12 @@ $psPackages = @(
         # CHECK MODULES DEPENDENCIES FOR INSTALLATION AND UPDATE
         #-----------------------------------------------
 
-        $m = 0
         If ( $Module.count -gt 0 ) {
 
             try {
 
-                # PSGallery should have been added automatically yet
-
                 Write-Log "Checking Module dependencies" -Severity VERBOSE
 
-                #$installedModules = Get-InstalledModule
                 $Module | Where-Object { $_ -notin @("PowerShellGet","PackageManagement") } | ForEach-Object {
 
                     $psModule = $_
@@ -452,13 +375,12 @@ $psPackages = @(
 
                     $installedModules = Get-InstalledModule
 
-                    # TODO [ ] possibly add dependencies on version number
-                    # This is using -force to allow updates
                     If ( $ExcludeDependencies -eq $true ) {
-                        $psModuleDependencies = Find-Module -Name $psModule #-IncludeDependencies
+                        $psModuleDependencies = Find-Module -Name $psModule
                     } else {
                         $psModuleDependencies = Find-Module -Name $psModule -IncludeDependencies
                     }
+
                     $psModuleDependencies | ForEach-Object {
 
                         $mod = $_
@@ -466,31 +388,28 @@ $psPackages = @(
                         If ( $installedModules.Name -contains $mod.Name ) {
                             Write-Log -Message "Module $( $mod.Name ) is already installed" -Severity VERBOSE
 
-                            $alreadyInstalledModule = $installedModules | Where-Object { $_.Name -eq $mod.Name } #| Select -first 1
+                            $alreadyInstalledModule = $installedModules | Where-Object { $_.Name -eq $mod.Name }
 
                             If ( $mod.Version -gt $alreadyInstalledModule.Version ) {
                                 Write-Log -Message "Module $( $mod.Name ) is installed with an older version $( $alreadyInstalledModule.Version ) than the available version $( $mod.Version )" -Severity VERBOSE
                                 Update-Module -Name $mod.Name
-                                $m += 1
+                                $Script:installCount_m += 1
                             } else {
                                 Write-Log -Message "No need to update $( $mod.Name )" -Severity VERBOSE
                             }
                         } else {
                             Write-Log -Message "Installing Module $( $mod.Name )" -Severity VERBOSE
-                            Install-Module -Name $mod.Name -Scope $psScope -AllowClobber #-Force
-                            $m += 1
+                            Install-Module -Name $mod.Name -Scope $psScope -AllowClobber
+                            $Script:installCount_m += 1
                         }
 
                     }
-                    #$psModuleDependencies | where { $_.Name -notin $installedModules.Name } | Install-Module -Scope AllUsers -Verbose -Force
 
                 }
 
             } catch {
 
                 Write-Log -Message "Cannot install modules!" -Severity WARNING
-
-                #Write-Error -Message $_.Exception.Message #-Severity ERROR
 
             }
 
@@ -505,29 +424,12 @@ $psPackages = @(
         # CHECK PACKAGES NUGET REPOSITORY
         #-----------------------------------------------
 
-        <#
-
-        If this module is not installed via nuget, then this makes sense to check again
-
-        # Add nuget first or make sure it is set
-
-        Register-PackageSource -Name "Nuget v2" -Location "https://www.nuget.org/api/v2" –ProviderName Nuget
-
-        # Make nuget trusted
-        Set-PackageSource -Name NuGet -Trusted
-
-        #>
-
-        # Get-PSRepository
-
-        #Install-Package Microsoft.Data.Sqlite.Core -RequiredVersion 7.0.0-rc.2.22472.11
-
         If ( $GlobalPackage.Count -gt 0 -or $LocalPackage.Count -gt 0 ) {
 
             try {
 
                 # Get NuGet sources
-                $sources = @( Get-PackageSource -ProviderName $packageSourceProviderName ) #| where { $_.Location -like "https://www.nuget.org*" }
+                $sources = @( Get-PackageSource -ProviderName $packageSourceProviderName )
 
                 # See if Nuget needs to get registered
                 If ( $sources.count -ge 1 ) {
@@ -537,14 +439,12 @@ $psPackages = @(
                     $registerNugetDecision = $Host.UI.PromptForChoice("", "Register $( $packageSourceProviderName ) as repository?", @('&Yes'; '&No'), 1)
                     If ( $registerNugetDecision -eq "0" ) {
 
-                        # Means yes and proceed
                         Register-PackageSource -Name $packageSourceName -Location $packageSourceLocation -ProviderName $packageSourceProviderName
 
                         # Load sources again
-                        $sources = @( Get-PackageSource -ProviderName $packageSourceProviderName ) #| where { $_.Location -like "https://www.nuget.org*" }
+                        $sources = @( Get-PackageSource -ProviderName $packageSourceProviderName )
 
                     } else {
-                        # Means no and leave
                         Write-Log "No package repository found! Please make sure to add a NuGet repository to your machine!" -Severity ERROR
                         exit 0
                     }
@@ -568,16 +468,11 @@ $psPackages = @(
 
                 }
 
-                # TODO [x] ask if you want to trust the new repository
-
                 # Do you want to trust that source?
                 If ( $packageSource.IsTrusted -eq $false ) {
                     Write-Log -Message "Your source is not trusted. Do you want to trust it now?" -Severity WARNING
                     $trustChoice = Request-Choice -title "Trust Package Source" -message "Do you want to trust $( $packageSource.Name )?" -choices @("Yes", "No")
                     If ( $trustChoice -eq 1 ) {
-                        # Use
-                        # Set-PackageSource -Name NuGet
-                        # To get it to the untrusted status again
                         Set-PackageSource -Name $packageSource.Name -Trusted
                     }
                 }
@@ -592,11 +487,9 @@ $psPackages = @(
 
 
         #-----------------------------------------------
-        # CHECK LOCAL PACKAGES DEPENDENCIES FOR INSTALLATION AND UPDATE
+        # CHECK LOCAL AND GLOBAL PACKAGES FOR INSTALLATION AND UPDATE
         #-----------------------------------------------
 
-        $l = 0
-        $g = 0
         If ( $LocalPackage.count -gt 0 -or $GlobalPackage.Count -gt 0) {
 
             try {
@@ -620,79 +513,70 @@ $psPackages = @(
                     $pkg = [System.Collections.ArrayList]@()
                     If ( $GlobalPackage -contains $psPackage ) {
                         $globalFlag = $true
-                    } # TODO [ ] Especially test global and local installation
+                    }
 
                     Write-Log "Checking package: $( $psPackage )" -severity VERBOSE
-
-                    # This is using -force to allow updates
-                    <#
-                        Use of continue in case of error because sometimes this happens
-                        AUSFÜHRLICH: Total package yield:'2' for the specified package 'System.ObjectModel'.
-                        Find-Package : Unable to find dependent package(s) (nuget:Microsoft.NETCore.Platforms/3.1.0)
-                    #>
 
                     If ( ($psPackage.gettype()).Name -eq "PsCustomObject" ) {
                         If ( $null -eq $psPackage.version ) {
                             Write-Verbose "Looking for $( $psPackage.name ) without specific version."
                             If ( $ExcludeDependencies -eq $true ) {
-                                [void]@( Find-Package $psPackage.name -Source $packageSource.Name -ErrorAction Continue ).foreach({$pkg.add($_)}) # add elements directly instead of saving everything into a variable
+                                [void]@( Find-Package $psPackage.name -Source $packageSource.Name -ErrorAction Continue ).foreach({$pkg.add($_)})
                             } else {
-                                [void]@( Find-Package $psPackage.name -IncludeDependencies -Source $packageSource.Name -ErrorAction Continue ).foreach({$pkg.add($_)}) # add elements directly instead of saving everything into a variable
+                                [void]@( Find-Package $psPackage.name -IncludeDependencies -Source $packageSource.Name -ErrorAction Continue ).foreach({$pkg.add($_)})
                             }
                         } else {
                             Write-Verbose "Looking for $( $psPackage.name ) with version $( $psPackage.version )"
                             If ( $ExcludeDependencies -eq $true ) {
-                                [void]@( Find-Package $psPackage.name -Source $packageSource.Name -ErrorAction Continue -RequiredVersion $psPackage.version ).foreach({$pkg.add($_)}) # add elements directly instead of saving everything into a variable
+                                [void]@( Find-Package $psPackage.name -Source $packageSource.Name -ErrorAction Continue -RequiredVersion $psPackage.version ).foreach({$pkg.add($_)})
                             } else {
-                                [void]@( Find-Package $psPackage.name -IncludeDependencies -Source $packageSource.Name -ErrorAction Continue -RequiredVersion $psPackage.version ).foreach({$pkg.add($_)}) # add elements directly instead of saving everything into a variable
+                                [void]@( Find-Package $psPackage.name -IncludeDependencies -Source $packageSource.Name -ErrorAction Continue -RequiredVersion $psPackage.version ).foreach({$pkg.add($_)})
                             }
                         }
                     } else {
                         Write-Verbose "Looking for $( $psPackage ) without specific version"
                         If ( $ExcludeDependencies -eq $true ) {
-                            [void]@( Find-Package $psPackage -Source $packageSource.Name -ErrorAction Continue ).foreach({$pkg.add($_)}) # add elements directly instead of saving everything into a variable
+                            [void]@( Find-Package $psPackage -Source $packageSource.Name -ErrorAction Continue ).foreach({$pkg.add($_)})
                         } else {
-                            [void]@( Find-Package $psPackage -IncludeDependencies -Source $packageSource.Name -ErrorAction Continue ).foreach({$pkg.add($_)}) # add elements directly instead of saving everything into a variable                }
+                            [void]@( Find-Package $psPackage -IncludeDependencies -Source $packageSource.Name -ErrorAction Continue ).foreach({$pkg.add($_)})
                         }
                     }
 
-                    $pkg | ForEach-Object { # | Where-Object { $_.Name -notin $installedPackages.Name } # | Sort-Object Name, Version -Unique -Descending
+                    $pkg | ForEach-Object {
                         $p = $_
                         $pd = [PSCustomObject]@{
                             "GlobalFlag" = $globalFlag
-                            "Package" = $p
-                            "Name" = $p.Name
-                            "Version" = $p.Version
+                            "Package"    = $p
+                            "Name"       = $p.Name
+                            "Version"    = $p.Version
                         }
                         [void]$packagesToInstall.Add($pd)
-
                     }
 
                 }
 
                 Write-Log -Message "Done with searching for $( $packagesToInstall.Count ) packages"
 
-                # Install the packages now, we only use packages of the current repository, so in there if other repositories are used for cross-reference, this won't work at the moment
                 $pack = $packagesToInstall | Where-Object { $_.Package.Summary -notlike "*not reference directly*" -and $_.Package.Name -notlike "Xamarin.*"} | Where-Object { $_.Package.Source -eq $packageSource.Name } | Sort-Object Name, Version -Unique -Descending
                 Write-Log -Message "This is likely to install $( $pack.Count ) packages"
-                #$packagesToInstall | Where-Object { $_.Source -eq $packageSource.Name -and $_.Name -notin $installedPackages.Name } | Sort-Object Name -Unique | ForEach-Object { #where-object { $_.Source -eq $packageSource.Name } | Select-Object * -Unique | ForEach-Object {
 
-                $pack | ForEach-Object { #where-object { $_.Source -eq $packageSource.Name } | Select-Object * -Unique | ForEach-Object {
+                $i = 0
+                $pack | ForEach-Object {
 
                     $p = $_
 
                     If ( $p.GlobalFlag -eq $true ) {
                         Write-Log -message "Installing $( $p.Package.Name ) with version $( $p.Package.version ) from $( $p.Package.Source ) globally"
                         Install-Package -Name $p.Name -Scope $psScope -Source $packageSource.Name -RequiredVersion $p.Version -SkipDependencies -Force
-                        $g += 1
+                        $Script:installCount_g += 1
                     } else {
                         Write-Log -message "Installing $( $p.Name ) with version $( $p.version ) from $( $p.Package.Source ) locally"
                         Install-Package -Name $p.Name -Scope $psScope -Source $packageSource.Name -RequiredVersion $p.Version -SkipDependencies -Force -Destination $LocalPackageFolder
-                        $l += 1
+                        $Script:installCount_l += 1
                     }
 
-                    # Write progress
                     Write-Progress -Activity "Package installation in progress" -Status "$( [math]::Round($i/$pack.Count*100) )% Complete:" -PercentComplete ([math]::Round($i/$pack.Count*100))
+                    $i += 1
 
                 }
 
@@ -708,23 +592,44 @@ $psPackages = @(
 
         }
 
+        # Reset the process ID if another module overrode it
+        Set-ProcessId -Id $processId
+
+    }
+
+
+    End {
+
+        #-----------------------------------------------
+        # STATUS
+        #-----------------------------------------------
+
+        Write-Log -Message "STATUS:" -Severity INFO
+        Write-Log -Message "  $( $Script:installCount_l ) local packages installed into '$( $LocalPackageFolder )'" -Severity INFO
+        Write-Log -Message "  $( $Script:installCount_g ) global packages installed" -Severity INFO
+        Write-Log -Message "  $( $Script:installCount_m ) modules installed with scope '$( $psScope )'" -Severity INFO
+        Write-Log -Message "  $( $Script:installCount_s ) scripts installed with scope '$( $psScope )'" -Severity INFO
 
 
         #-----------------------------------------------
         # FINISHING
         #-----------------------------------------------
 
-        # Installation Status
-        Write-Log -Message "STATUS:" -Severity INFO
-        Write-Log -Message "  $( $l ) local packages installed into '$( $LocalPackageFolder )'" -Severity INFO
-        Write-Log -Message "  $( $g ) global packages installed" -Severity INFO
-        Write-Log -Message "  $( $m ) modules installed with scope '$( $psScope )'" -Severity INFO
-        Write-Log -Message "  $( $s ) scripts installed with scope '$( $psScope )'" -Severity INFO
-
-        # Performance information
         $processEnd = [datetime]::now
         $processDuration = New-TimeSpan -Start $processStart -End $processEnd
         Write-Log -Message "Done! Needed $( [int]$processDuration.TotalSeconds ) seconds in total" -Severity INFO
+
+        Write-Log -Message "Logfile override: $( Get-LogfileOverride )"
+
+        If ( $KeepLogfile -eq $false -and $null -ne $getLogfile -and '' -ne $getLogfile ) {
+            Write-Log -Message "Changing logfile back to '$( $currentLogfile )'"
+            Set-Logfile -Path $currentLogfile
+        }
+
+        # Set explicitly verbose output back
+        If ( $SuppressWarnings -ne $true -and $PSBoundParameters["Verbose"].IsPresent -eq $true -and $PSBoundParameters["Verbose"] -eq $True) {
+            $VerbosePreference = $originalVerbosity
+        }
 
     }
 
