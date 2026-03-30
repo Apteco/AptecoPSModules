@@ -5,7 +5,7 @@
 RootModule = 'WriteLog.psm1'
 
 # Die Versionsnummer dieses Moduls
-ModuleVersion = '0.10.1'
+ModuleVersion = '0.10.2'
 
 # Unterstützte PSEditions
 # CompatiblePSEditions = @()
@@ -148,6 +148,8 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.10.2 Added pester tests for this module
+       Rewritten Resize-Logfile after failed pester tests, also support now resizing of single files or all logs
 0.10.1 Feature: Added a new Switch for WriteLog to allow logging in UTC rather than only local timestamp
        Fix: Small fix for Linux/MacOS compatibility for getting the executing user and elevation status
 0.10.0 Feature: Additional log output format (Set-LogFormat / Get-LogFormat) and timestamp format (Set-TimeStampFormat / Get-TimestampFormat)
