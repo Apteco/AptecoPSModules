@@ -36,4 +36,5 @@ function Invoke-BufferedWrite {
     Invoke-DuckDBUpsert -Connection $Connection -TableName $TableName `
                         -Data $normalizedData -PKColumns $PKColumns `
                         -UseCsvImport:$UseCsvImport -SimpleTypesOnly:$SimpleTypesOnly
+    # Result object (Inserts, Updates) is passed through to the caller
 }
