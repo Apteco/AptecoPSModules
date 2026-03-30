@@ -107,6 +107,8 @@ Describe "Add-RowsToDuckDB" -Skip:(-not $script:duckDBAvailable) {
         Invoke-DuckDBQuery -Query "DROP TABLE IF EXISTS ard_upsert"     -ErrorAction SilentlyContinue
         Invoke-DuckDBQuery -Query "DROP TABLE IF EXISTS ard_schema"     -ErrorAction SilentlyContinue
         Invoke-DuckDBQuery -Query "DROP TABLE IF EXISTS ard_tx"         -ErrorAction SilentlyContinue
+        Invoke-DuckDBQuery -Query "DROP TABLE IF EXISTS ard_result"     -ErrorAction SilentlyContinue
+        Invoke-DuckDBQuery -Query "DROP TABLE IF EXISTS ard_multi_pk"   -ErrorAction SilentlyContinue
     }
 
     It "Inserts PSCustomObject rows" {
@@ -163,6 +165,118 @@ Describe "Add-RowsToDuckDB" -Skip:(-not $script:duckDBAvailable) {
 
         $result = Get-DuckDBData -Query "SELECT COUNT(*) AS cnt FROM ard_people"
         [int]$result.Rows[0]["cnt"] | Should -Be 25
+    }
+
+    # ---------------------------------------------------------------------------
+    # Result object (RowsInserted / RowsUpdated / RowsTotal)
+    # ---------------------------------------------------------------------------
+
+    It "Returns a result object with TableName, RowsInserted, RowsUpdated and RowsTotal properties" {
+        $result = [PSCustomObject]@{ Id = 1; Val = "a" } | Add-RowsToDuckDB -TableName "ard_result" -PKColumns "Id"
+        $result                                   | Should -Not -BeNullOrEmpty
+        $result.PSObject.Properties.Name          | Should -Contain "TableName"
+        $result.PSObject.Properties.Name          | Should -Contain "RowsInserted"
+        $result.PSObject.Properties.Name          | Should -Contain "RowsUpdated"
+        $result.PSObject.Properties.Name          | Should -Contain "RowsTotal"
+    }
+
+    It "TableName in result matches the target table" {
+        $result = [PSCustomObject]@{ Id = 1 } | Add-RowsToDuckDB -TableName "ard_result"
+        $result.TableName | Should -Be "ard_result"
+    }
+
+    It "Reports all rows as inserts and zero updates on plain INSERT (no PKColumns)" {
+        $rows = @(
+            [PSCustomObject]@{ Id = 1; Val = "a" }
+            [PSCustomObject]@{ Id = 2; Val = "b" }
+            [PSCustomObject]@{ Id = 3; Val = "c" }
+        )
+        $result = $rows | Add-RowsToDuckDB -TableName "ard_result"
+        $result.RowsInserted | Should -Be 3
+        $result.RowsUpdated  | Should -Be 0
+        $result.RowsTotal    | Should -Be 3
+    }
+
+    It "Reports all rows as inserts and zero updates on first UPSERT load" {
+        $rows = @(
+            [PSCustomObject]@{ Id = 1; Val = "first" }
+            [PSCustomObject]@{ Id = 2; Val = "first" }
+        )
+        $result = $rows | Add-RowsToDuckDB -TableName "ard_upsert" -PKColumns "Id"
+        $result.RowsInserted | Should -Be 2
+        $result.RowsUpdated  | Should -Be 0
+        $result.RowsTotal    | Should -Be 2
+    }
+
+    It "Reports all rows as updates and zero inserts when every PK already exists" {
+        @(
+            [PSCustomObject]@{ Id = 1; Val = "original" }
+            [PSCustomObject]@{ Id = 2; Val = "original" }
+        ) | Add-RowsToDuckDB -TableName "ard_upsert" -PKColumns "Id" | Out-Null
+
+        $result = @(
+            [PSCustomObject]@{ Id = 1; Val = "updated" }
+            [PSCustomObject]@{ Id = 2; Val = "updated" }
+        ) | Add-RowsToDuckDB -TableName "ard_upsert" -PKColumns "Id"
+
+        $result.RowsInserted | Should -Be 0
+        $result.RowsUpdated  | Should -Be 2
+        $result.RowsTotal    | Should -Be 2
+    }
+
+    It "Reports correct split when some rows are inserts and some are updates" {
+        @(
+            [PSCustomObject]@{ Id = 1; Val = "original" }
+            [PSCustomObject]@{ Id = 2; Val = "original" }
+        ) | Add-RowsToDuckDB -TableName "ard_upsert" -PKColumns "Id" | Out-Null
+
+        $result = @(
+            [PSCustomObject]@{ Id = 2; Val = "updated" }   # existing -> update
+            [PSCustomObject]@{ Id = 3; Val = "new" }       # new -> insert
+            [PSCustomObject]@{ Id = 4; Val = "new" }       # new -> insert
+        ) | Add-RowsToDuckDB -TableName "ard_upsert" -PKColumns "Id"
+
+        $result.RowsInserted | Should -Be 2
+        $result.RowsUpdated  | Should -Be 1
+        $result.RowsTotal    | Should -Be 3
+    }
+
+    It "Accumulates insert counts correctly across multiple batches" {
+        $rows = 1..25 | ForEach-Object { [PSCustomObject]@{ Num = $_ } }
+        $result = $rows | Add-RowsToDuckDB -TableName "ard_result" -BatchSize 10
+        $result.RowsInserted | Should -Be 25
+        $result.RowsUpdated  | Should -Be 0
+        $result.RowsTotal    | Should -Be 25
+    }
+
+    It "Accumulates update counts correctly across multiple batches" {
+        # Pre-load 25 rows
+        1..25 | ForEach-Object { [PSCustomObject]@{ Id = $_; Val = "old" } } |
+            Add-RowsToDuckDB -TableName "ard_upsert" -PKColumns "Id" | Out-Null
+
+        # Re-load same 25 rows (all updates) in small batches
+        $result = 1..25 | ForEach-Object { [PSCustomObject]@{ Id = $_; Val = "new" } } |
+            Add-RowsToDuckDB -TableName "ard_upsert" -PKColumns "Id" -BatchSize 10
+
+        $result.RowsInserted | Should -Be 0
+        $result.RowsUpdated  | Should -Be 25
+        $result.RowsTotal    | Should -Be 25
+    }
+
+    It "Reports correct counts with a composite (multi-column) primary key" {
+        @(
+            [PSCustomObject]@{ RegionId = 1; ProductId = 10; Sales = 100 }
+            [PSCustomObject]@{ RegionId = 1; ProductId = 20; Sales = 200 }
+        ) | Add-RowsToDuckDB -TableName "ard_multi_pk" -PKColumns "RegionId","ProductId" | Out-Null
+
+        $result = @(
+            [PSCustomObject]@{ RegionId = 1; ProductId = 10; Sales = 999 }   # update
+            [PSCustomObject]@{ RegionId = 2; ProductId = 10; Sales = 50  }   # insert
+        ) | Add-RowsToDuckDB -TableName "ard_multi_pk" -PKColumns "RegionId","ProductId"
+
+        $result.RowsInserted | Should -Be 1
+        $result.RowsUpdated  | Should -Be 1
+        $result.RowsTotal    | Should -Be 2
     }
 
 }
