@@ -4,7 +4,7 @@
 RootModule = 'EncryptCredential.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.3.0'
+ModuleVersion = '0.3.1'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -135,6 +135,8 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = "
+0.3.1 Fixed returning an exception, when decryption failed instead of writing
+      an error and returning an empty string
 0.3.0 Reworked the module with Claude AI to be more secure and robust, now using another way to create
       a keyfile for salting. The old encryption method is still supported, so all
       previously encrypted strings will stay valid UNTIL you call New-Keyfile. After that,
