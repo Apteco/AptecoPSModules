@@ -5,7 +5,7 @@
 RootModule = 'SqlPipeline.psm1'
 
 # Die Versionsnummer dieses Moduls
-ModuleVersion = '0.3.5'
+ModuleVersion = '0.3.6'
 
 # Unterstützte PSEditions
 # CompatiblePSEditions = @()
@@ -126,6 +126,7 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.3.6 Adding functionality to count updates and inserts when executing the MERGE
 0.3.5 Added function to show open DuckDB connections: Show-DuckDBConnection
 0.3.4 Fixing package installation with PowerShell 5.1 because Expand-Archive only supports *.zip files
 0.3.3 Extending Install-SqlPipeline to install DuckDB.net 1.4.4 when using PowerShell 5.1 (latest supported version), pwsh is supporting all latest versions
