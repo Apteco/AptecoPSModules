@@ -23,7 +23,9 @@ function Install-NuGetPackage {
 
     $pkgId    = $PackageId.ToLower()
     $url      = "https://api.nuget.org/v3-flatcontainer/$pkgId/$Version/$pkgId.$Version.nupkg"
-    $outFile  = Join-Path $OutputDir "$pkgId.$Version.nupkg"
+    # Download as .zip so Expand-Archive accepts it on Windows PowerShell 5.1,
+    # which rejects any extension other than .zip even though .nupkg is identical format.
+    $outFile  = Join-Path $OutputDir "$pkgId.$Version.zip"
     $unzipDir = Join-Path $OutputDir "$pkgId.$Version"
 
     Write-Verbose "Downloading $PackageId $Version ..."

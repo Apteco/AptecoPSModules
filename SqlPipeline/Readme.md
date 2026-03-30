@@ -24,8 +24,30 @@ Current functionality:
 Install the required DuckDB.NET NuGet packages into a `./lib` subfolder:
 
 ```PowerShell
+# PowerShell 7+ (latest DuckDB.NET)
 Install-SqlPipeline
+
+# Windows PowerShell 5.1 (pinned compatible versions)
+Install-SqlPipeline -WindowsPowerShell
 ```
+
+## PowerShell Version Compatibility
+
+| Feature | PowerShell 7+ | Windows PowerShell 5.1 |
+|---|---|---|
+| DuckDB.NET version | latest | 1.4.4 (maximum) |
+| Extra dependencies | none | `System.Memory` 4.6.0 |
+
+**Windows PowerShell 5.1** runs on .NET Framework 4.x, which is missing some APIs that newer DuckDB.NET versions require. Use the `-WindowsPowerShell` switch when installing on Windows PowerShell 5.1:
+
+```PowerShell
+Install-SqlPipeline -WindowsPowerShell
+```
+
+This installs:
+- `DuckDB.NET.Bindings.Full` 1.4.4
+- `DuckDB.NET.Data.Full` 1.4.4
+- `System.Memory` 4.6.0 (required polyfill not included in .NET Framework)
 
 ## Quick Start (in-memory, no setup needed)
 

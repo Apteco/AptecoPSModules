@@ -5,7 +5,7 @@
 RootModule = 'SqlPipeline.psm1'
 
 # Die Versionsnummer dieses Moduls
-ModuleVersion = '0.3.3'
+ModuleVersion = '0.3.4'
 
 # Unterstützte PSEditions
 # CompatiblePSEditions = @()
@@ -124,6 +124,7 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.3.4 Fixing package installation with PowerShell 5.1 because Expand-Archive only supports *.zip files
 0.3.3 Extending Install-SqlPipeline to install DuckDB.net 1.4.4 when using PowerShell 5.1 (latest supported version), pwsh is supporting all latest versions
       Fixing to not cancel the module import if SimplySQL does not match the current processor architecture
       Fixing returned values for last loaded timestamp, duckdb columns, existing table, Get-DuckDB data in general
