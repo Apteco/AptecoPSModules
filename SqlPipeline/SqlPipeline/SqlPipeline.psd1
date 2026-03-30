@@ -5,7 +5,7 @@
 RootModule = 'SqlPipeline.psm1'
 
 # Die Versionsnummer dieses Moduls
-ModuleVersion = '0.3.4'
+ModuleVersion = '0.3.5'
 
 # Unterstützte PSEditions
 # CompatiblePSEditions = @()
@@ -82,9 +82,11 @@ FunctionsToExport = @(
     "Invoke-DuckDBQuery"
     "Set-LoadMetadata"
     "Export-DuckDBToParquet"
+    "Show-DuckDBConnection"
 
     # General
     "Install-SqlPipeline"
+
 )
 
 # Aus diesem Modul zu exportierende Cmdlets. Um optimale Leistung zu erzielen, verwenden Sie keine Platzhalter und löschen den Eintrag nicht. Verwenden Sie ein leeres Array, wenn keine zu exportierenden Cmdlets vorhanden sind.
@@ -124,6 +126,7 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.3.5 Added function to show open DuckDB connections: Show-DuckDBConnection
 0.3.4 Fixing package installation with PowerShell 5.1 because Expand-Archive only supports *.zip files
 0.3.3 Extending Install-SqlPipeline to install DuckDB.net 1.4.4 when using PowerShell 5.1 (latest supported version), pwsh is supporting all latest versions
       Fixing to not cancel the module import if SimplySQL does not match the current processor architecture
