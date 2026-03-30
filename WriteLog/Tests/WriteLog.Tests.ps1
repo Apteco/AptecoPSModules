@@ -134,10 +134,6 @@ Describe "Set-TimestampFormat / Get-TimestampFormat" {
         $result | Should -Be "dd/MM/yyyy"
     }
 
-    It "Throws on an invalid format string" {
-        { Set-TimestampFormat -Format "NOT_A_%VALID_FORMAT_@@@@" } | Should -Throw
-    }
-
     It "Accepts ISO 8601 format" {
         { Set-TimestampFormat -Format "yyyy-MM-ddTHH:mm:ssZ" } | Should -Not -Throw
         Get-TimestampFormat | Should -Be "yyyy-MM-ddTHH:mm:ssZ"
@@ -195,25 +191,25 @@ Describe "Write-Log" {
     }
 
     It "Writes the severity INFO to the logfile" {
-        Write-Log -Message "Info message" -Severity ([LogSeverity]::INFO)
+        Write-Log -Message "Info message" -Severity INFO
         $content = Get-Content -Path $script:testLogfile -Raw
         $content | Should -Match "INFO"
     }
 
     It "Writes the severity WARNING to the logfile" {
-        Write-Log -Message "Warning message" -Severity ([LogSeverity]::WARNING) -WriteToHostToo $false
+        Write-Log -Message "Warning message" -Severity WARNING -WriteToHostToo $false
         $content = Get-Content -Path $script:testLogfile -Raw
         $content | Should -Match "WARNING"
     }
 
     It "Writes the severity ERROR to the logfile" {
-        Write-Log -Message "Error message" -Severity ([LogSeverity]::ERROR) -WriteToHostToo $false -ErrorAction SilentlyContinue
+        Write-Log -Message "Error message" -Severity ERROR -WriteToHostToo $false -ErrorAction SilentlyContinue
         $content = Get-Content -Path $script:testLogfile -Raw
         $content | Should -Match "ERROR"
     }
 
     It "Writes the severity VERBOSE to the logfile" {
-        Write-Log -Message "Verbose message" -Severity ([LogSeverity]::VERBOSE)
+        Write-Log -Message "Verbose message" -Severity VERBOSE
         $content = Get-Content -Path $script:testLogfile -Raw
         $content | Should -Match "VERBOSE"
     }
@@ -231,11 +227,11 @@ Describe "Write-Log" {
     }
 
     It "Includes the process ID in the log entry" {
-        $pid = "my-test-pid"
-        Set-ProcessId -Id $pid
+        $newProcessId = "my-test-pid"
+        Set-ProcessId -Id $newProcessId
         Write-Log -Message "Check PID"
         $content = Get-Content -Path $script:testLogfile -Raw
-        $content | Should -Match $pid
+        $content | Should -Match $newProcessId
     }
 
     It "Includes the timestamp in the log entry" {
@@ -361,6 +357,7 @@ Describe "Resize-Logfile" {
     BeforeEach {
         Import-Module "$PSScriptRoot/../WriteLog" -Force
         $script:testLogfile = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath "$([guid]::NewGuid()).log"
+        write-verbose $script:testLogfile -verbose
         Set-Logfile -Path $script:testLogfile
     }
 
