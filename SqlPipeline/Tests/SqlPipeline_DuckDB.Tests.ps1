@@ -20,6 +20,9 @@ BeforeDiscovery {
         } else {
             Install-SqlPipeline
         }
+        # Re-import so the psm1 re-runs and creates $Script:DefaultConnection
+        # with the newly installed packages.
+        Import-Module "$PSScriptRoot/../SqlPipeline" -Force
     }
 
     # Try again, if still false
