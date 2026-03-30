@@ -61,7 +61,7 @@ Function Convert-SecureToPlaintext {
             $return = (New-Object PSCredential "dummy",$stringSecure).GetNetworkCredential().Password
             $stringSecure.Dispose()
         } Catch {
-            Write-Error "Decryption failed, maybe the keyfile was exchanged or you copied the files to another machine?"
+            throw "Decryption failed, maybe the keyfile was exchanged or you copied the files to another machine? Original error: $( $_.Exception.Message )"
         }
 
         #return
