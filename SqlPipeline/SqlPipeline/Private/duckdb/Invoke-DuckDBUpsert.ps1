@@ -55,6 +55,17 @@ function Invoke-DuckDBUpsert {
         $setClause = ($setCols | ForEach-Object { """$_"" = excluded.""$_""" }) -join ', '
         $pkList    = $PKColumns -join ', '
 
+        # Count inserts vs updates before the merge
+        $joinClause = ($PKColumns | ForEach-Object { "t.`"$_`" = s.`"$_`"" }) -join " AND "
+        $countResult = Get-DuckDBData -Connection $Connection -Query @"
+            SELECT
+                COUNT(*) FILTER (WHERE EXISTS     (SELECT 1 FROM $TableName t WHERE $joinClause)) AS Updates,
+                COUNT(*) FILTER (WHERE NOT EXISTS (SELECT 1 FROM $TableName t WHERE $joinClause)) AS Inserts
+            FROM $stagingTable s
+"@
+        $insertCount = [long]$countResult.Rows[0]["Inserts"]
+        $updateCount = [long]$countResult.Rows[0]["Updates"]
+
         Write-Verbose "[$TableName] Performing UPSERT with PK columns: $pkList"
         Invoke-DuckDBQuery -Connection $Connection -Query @"
             INSERT INTO $TableName
@@ -62,16 +73,25 @@ function Invoke-DuckDBUpsert {
             ON CONFLICT ($pkList) DO UPDATE SET $setClause
 "@
     } else {
-        # No PK defined - plain INSERT
+        # No PK defined - plain INSERT; count staging rows
+        $countResult = Get-DuckDBData -Connection $Connection -Query "SELECT COUNT(*) AS cnt FROM $stagingTable"
+        $insertCount = [long]$countResult.Rows[0]["cnt"]
+        $updateCount = 0L
+
         Invoke-DuckDBQuery -Connection $Connection -Query @"
             INSERT INTO $TableName
             SELECT * FROM $stagingTable
 "@
     }
 
-    Write-Verbose "[$TableName] Merge completed."
+    Write-Verbose "[$TableName] Merge completed. Inserts: $insertCount, Updates: $updateCount."
 
     # Clean up staging table
     Invoke-DuckDBQuery -Connection $Connection -Query "DROP TABLE IF EXISTS $stagingTable"
     Write-Verbose "[$TableName] UPSERT completed."
+
+    [PSCustomObject]@{
+        Inserts = $insertCount
+        Updates = $updateCount
+    }
 }
