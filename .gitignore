@@ -8,3 +8,6 @@ tests.ps1
 *.db
 *.csv
 *.txt
+
+# Nuget packages
+**/lib/**
