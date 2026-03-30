@@ -7,12 +7,25 @@ Function Resize-Logfile {
 .DESCRIPTION
     The logfile, that is defined by $logfile or $Script:logfile needs to be cleaned from time to time.
     So this function rewrites the file with the last (most current) n lines.
+    Optionally a specific path can be provided via -Path, or all registered log files can be resized at once with -All.
 
 .PARAMETER RowsToKeep
     The number of lines you want to keep
 
+.PARAMETER Path
+    Optional path to a specific logfile to resize. If omitted, the main logfile ($Script:logfile) is used.
+
+.PARAMETER All
+    If set, resizes all registered log files: the main logfile and all additional textfile log files.
+
 .EXAMPLE
-    Clean-Logfile -RowsToKeep 200000
+    Resize-Logfile -RowsToKeep 200000
+
+.EXAMPLE
+    Resize-Logfile -RowsToKeep 200000 -Path "C:\Logs\myapp.log"
+
+.EXAMPLE
+    Resize-Logfile -RowsToKeep 200000 -All
 
 .INPUTS
     Int
@@ -27,41 +40,39 @@ Function Resize-Logfile {
 
     [cmdletbinding()]
     param(
-       [Parameter(Mandatory=$true)][int]$RowsToKeep #= 200000
+       [Parameter(Mandatory=$true)][int]$RowsToKeep
+      ,[Parameter(Mandatory=$false)][String]$Path = ""
+      ,[Parameter(Mandatory=$false)][Switch]$All
     )
 
-    # TODO [ ] use input path rather than a variable?
+    If ( -not [String]::IsNullOrWhiteSpace( $Path ) ) {
 
-    If ( $null -eq $logfile ) {
+        # Explicit path provided — resize only that file
+        Resize-SingleLogfile -Path $Path -RowsToKeep $RowsToKeep
 
-        Write-Warning -Message "There is no variable '`$logfile' present on 'Script' scope"
-        Write-Warning -Message "Please define a path in '`$logfile' or use 'Write-Log' once"
+    } ElseIf ( $All ) {
 
-    } else {
-
-        # Testing the path
-        If ( ( Test-Path -Path $logfile -IsValid ) -eq $false ) {
-            Write-Error -Message "Invalid variable '`$logfile'. The path '$( $logfile )' is invalid."
+        # Resize main logfile
+        If ( $null -eq $Script:logfile ) {
+            Write-Warning -Message "There is no variable '`$logfile' present on 'Script' scope"
+            Write-Warning -Message "Please define a path in '`$logfile' or use 'Write-Log' once"
         } else {
+            Resize-SingleLogfile -Path $Script:logfile -RowsToKeep $RowsToKeep
+        }
 
-            # [ ] TODO maybe implement another parameter to input date instead of no of rows, use streamreader for this instead
-            # [Datetime]::ParseExact("20221027130112","yyyyMMddHHmmss",$null)
+        # Resize all additional textfile log files
+        $Script:additionalLogs | Where-Object { $_.Type -eq "textfile" } | ForEach-Object {
+            Resize-SingleLogfile -Path $_.Options.Path -RowsToKeep $RowsToKeep
+        }
 
-            # Create a temporary file
-            $tmpdir = Get-TemporaryPath
-            $tempFile = Join-Path -Path $tmpdir -ChildPath "$( [guid]::newguid().toString() ).tmp" #New-TemporaryFile
+    } Else {
 
-            # Write only last lines to the new file
-            Get-Content -Tail $RowsToKeep -Encoding utf8 -Path $Script:logfile | Set-Content -path $tempFile.FullName -Encoding utf8
-
-            # delete original file
-            If ( (Test-Path -Path $logfile) -eq $true ) {
-                Remove-Item $logfile
-            }
-
-            # move file to new location
-            Move-Item -Path $tempFile.FullName -Destination $logfile
-
+        # Default: resize the main logfile
+        If ( $null -eq $Script:logfile ) {
+            Write-Warning -Message "There is no variable '`$logfile' present on 'Script' scope"
+            Write-Warning -Message "Please define a path in '`$logfile' or use 'Write-Log' once"
+        } else {
+            Resize-SingleLogfile -Path $Script:logfile -RowsToKeep $RowsToKeep
         }
 
     }

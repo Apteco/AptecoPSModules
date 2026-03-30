@@ -216,3 +216,31 @@ or delete them with one of these options
 Remove-AdditionalLogfile -Name "Textfile_1"
 Remove-AdditionalLogfile -Path "C:\Temp\test.txt"
 ```
+
+# Resizing log files
+
+Log files can grow large over time. Use `Resize-Logfile` to trim a log file down to its last n lines.
+
+## Resize the main log file
+
+```PowerShell
+Resize-Logfile -RowsToKeep 200000
+```
+
+Rewrites `$Script:logfile` keeping only the last 200000 lines.
+
+## Resize a specific log file
+
+```PowerShell
+Resize-Logfile -RowsToKeep 200000 -Path "C:\Logs\myapp.log"
+```
+
+The `-Path` parameter lets you target any log file directly, independent of `$Script:logfile`.
+
+## Resize all registered log files at once
+
+```PowerShell
+Resize-Logfile -RowsToKeep 200000 -All
+```
+
+Resizes the main log file and all additional textfile log files registered via `Add-AdditionalLogfile` in one call.
