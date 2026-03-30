@@ -86,6 +86,8 @@ function Add-RowsToDuckDB {
         }
         $buffer = [System.Collections.Generic.List[PSObject]]::new()
         $rowCount = 0
+        $totalInserts = 0L
+        $totalUpdates = 0L
         Write-Verbose "[$TableName] Add-RowsToDuckDB started (UseTransaction=$UseTransaction, BatchSize=$BatchSize)"
     }
 
@@ -100,8 +102,10 @@ function Add-RowsToDuckDB {
         # Without UseTransaction: write in batches once BatchSize is reached
         if (-not $UseTransaction -and $buffer.Count -ge $BatchSize) {
             Write-Verbose "[$TableName] Batch write: $($buffer.Count) rows"
-            Invoke-BufferedWrite -Connection $Connection -TableName $TableName `
+            $batchResult = Invoke-BufferedWrite -Connection $Connection -TableName $TableName `
                                  -Data $buffer -PKColumns $PKColumns -UseCsvImport:$UseCsvImport -SimpleTypesOnly:$SimpleTypesOnly
+            $totalInserts += $batchResult.Inserts
+            $totalUpdates += $batchResult.Updates
             $buffer.Clear()
         }
     }
@@ -113,12 +117,21 @@ function Add-RowsToDuckDB {
         }
 
         Write-Verbose "[$TableName] Final write: $($buffer.Count) rows (total: $rowCount)"
-        Invoke-BufferedWrite -Connection $Connection -TableName $TableName `
+        $finalResult = Invoke-BufferedWrite -Connection $Connection -TableName $TableName `
                              -Data $buffer -PKColumns $PKColumns -UseCsvImport:$UseCsvImport -SimpleTypesOnly:$SimpleTypesOnly
-        Write-Information "[$TableName] $rowCount rows inserted via pipeline."
+        $totalInserts += $finalResult.Inserts
+        $totalUpdates += $finalResult.Updates
+        Write-Information "[$TableName] $rowCount rows processed: $totalInserts inserts, $totalUpdates updates."
 
         # Force DuckDB to flush changes to disk (important for in-memory connections or when using transactions)
         Invoke-DuckDBQuery -Connection $Connection -Query "FORCE CHECKPOINT"
+
+        [PSCustomObject]@{
+            TableName    = $TableName
+            RowsInserted = $totalInserts
+            RowsUpdated  = $totalUpdates
+            RowsTotal    = $rowCount
+        }
 
     }
 }
