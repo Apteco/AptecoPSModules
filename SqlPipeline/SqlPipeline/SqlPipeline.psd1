@@ -5,7 +5,7 @@
 RootModule = 'SqlPipeline.psm1'
 
 # Die Versionsnummer dieses Moduls
-ModuleVersion = '0.3.2'
+ModuleVersion = '0.3.4'
 
 # Unterstützte PSEditions
 # CompatiblePSEditions = @()
@@ -20,7 +20,7 @@ Author = 'florian.von.bracht@apteco.de'
 CompanyName = 'Apteco GmbH'
 
 # Urheberrechtserklärung für dieses Modul
-Copyright = '(c) 2025 Apteco GmbH. All rights reserved.'
+Copyright = '(c) 2026 Apteco GmbH. All rights reserved.'
 
 # Beschreibung der von diesem Modul bereitgestellten Funktionen
 Description = 'Apteco PS Modules - Wrapper for SimplySQL
@@ -124,6 +124,12 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.3.4 Fixing package installation with PowerShell 5.1 because Expand-Archive only supports *.zip files
+0.3.3 Extending Install-SqlPipeline to install DuckDB.net 1.4.4 when using PowerShell 5.1 (latest supported version), pwsh is supporting all latest versions
+      Fixing to not cancel the module import if SimplySQL does not match the current processor architecture
+      Fixing returned values for last loaded timestamp, duckdb columns, existing table, Get-DuckDB data in general
+      Fixing datatype matching for DuckDB, as there is not Int32
+      Fixing the fallback of a closed connection to existing in-memory connection
 0.3.2 Renaming Close-DuckDBConnection to Close-SqlPipeline to not clash with Close-DuckDBConnection of AptecoPSFramework (which is used for direct DuckDB connections outside of SqlPipeline)
 0.3.1 Skipping comparison with complex datatypes with -SimpleTypesOnly for better import performance
       Adding a csv importer to export big files first into a temporary file and directly import them via DuckDB into a staging table

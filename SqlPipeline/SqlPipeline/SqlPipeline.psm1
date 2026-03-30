@@ -79,7 +79,9 @@ New-Variable -Name moduleRoot -Value $null -Scope Script -Force     # Current lo
 New-Variable -Name PipelineBuffer -Value $null -Scope Script -Force # Buffer for the incremental load pipeline
 New-Variable -Name PipelineOptions -Value $null -Scope Script -Force # Options for
 New-Variable -Name isDuckDBLoaded -Value $null -Scope Script -Force    # Flag indicating whether DuckDB.NET is available
-New-Variable -Name DefaultConnection -Value $null -Scope Script -Force  # Default DuckDB connection (in-memory, auto-initialized on module load)
+New-Variable -Name isSimplySqlLoaded -Value $null -Scope Script -Force  # Flag indicating whether SimplySql is available
+New-Variable -Name DefaultConnection   -Value $null -Scope Script -Force  # Default DuckDB connection (in-memory, auto-initialized on module load)
+New-Variable -Name InMemoryConnection -Value $null -Scope Script -Force  # The auto-initialized in-memory connection; used as fallback when a file connection is closed
 New-Variable -Name psModules -Value $null -Scope Script -Force          # Module dependencies
 New-Variable -Name psPackages -Value $null -Scope Script -Force         # NuGet package dependencies
 New-Variable -Name psAssemblies -Value $null -Scope Script -Force       # .NET assembly dependencies
@@ -91,6 +93,7 @@ $Script:moduleRoot = $PSScriptRoot.ToString()
 
 # Internal pipeline buffer per table
 $Script:isDuckDBLoaded = $false
+$Script:isSimplySqlLoaded = $false
 $Script:PipelineBuffer  = [System.Collections.Generic.Dictionary[string, System.Collections.Generic.List[PSObject]]]::new()
 $Script:PipelineOptions = [System.Collections.Generic.Dictionary[string, hashtable]]::new()
 
@@ -105,7 +108,12 @@ $Script:PipelineOptions = [System.Collections.Generic.Dictionary[string, hashtab
 # Load modules
 Write-Verbose "There are currently $($Script:psModules.Count) modules defined as dependencies: $($Script:psModules -join ", ")"
 If ( $Script:psModules.Count -gt 0 ) {
-    Import-Dependency -Module $psModules
+    try {
+        Import-Dependency -Module $psModules
+        $Script:isSimplySqlLoaded = $true
+    } catch {
+        Write-Warning "Failed to load one or more module dependencies ($($Script:psModules -join ', ')): $_. SimplySql-based functions will not be available. DuckDB functions will still work if DuckDB.NET is installed."
+    }
 }
 
 # TODO For future you need in linux maybe this module for outgrid-view, which is also supported on console only: microsoft.powershell.consoleguitools
@@ -122,7 +130,8 @@ $Script:psAssemblies | ForEach-Object {
 # is only required when a persistent file-based database is needed.
 if ($Script:isDuckDBLoaded) {
     try {
-        $Script:DefaultConnection = New-DuckDBConnection -DbPath ':memory:'
+        $Script:DefaultConnection   = New-DuckDBConnection -DbPath ':memory:'
+        $Script:InMemoryConnection  = $Script:DefaultConnection
         Initialize-PipelineMetadata -Connection $Script:DefaultConnection
         Write-Verbose "DuckDB in-memory connection initialized automatically. Call Initialize-SQLPipeline -DbPath to switch to a file-based database."
     } catch {

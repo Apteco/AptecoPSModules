@@ -1,5 +1,5 @@
 BeforeAll {
-    
+
     Write-Host "Hello World 1"
     Import-Module "$PSScriptRoot/../SqlPipeline" -Force -Verbose
     # Create a test SQLite connection
@@ -46,7 +46,7 @@ Describe "Add-RowsToSql" {
     }
 
     It "Throws if connection is not valid" {
-        { 
+        {
             [PSCustomObject]@{ Name = "Test" } | Add-RowsToSql -TableName "FailTable" -SQLConnectionName "notvalid"
         } | Should -Throw
     }

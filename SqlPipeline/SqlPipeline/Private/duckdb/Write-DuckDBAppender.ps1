@@ -23,6 +23,14 @@ function Write-DuckDBAppender {
         $appenderRow = $appender.CreateRow()
         foreach ($name in $propNames) {
             $val = $row.$name
+            # Normalize integer subtypes to Int64 before any other check,
+            # because DuckDB.NET appender has no Int32 overload and PowerShell
+            # would otherwise fall back to AppendValue(string).
+            if ($val -is [int] -or $val -is [System.Int16] -or $val -is [byte] -or $val -is [uint16] -or $val -is [uint32]) {
+                $val = [long]$val
+            } elseif ($val -is [float]) {
+                $val = [double]$val
+            }
             # Inlined ConvertTo-DuckDBValue
             if ($null -eq $val) {
                 [void]$appenderRow.AppendValue([DBNull]::Value)
@@ -37,7 +45,7 @@ function Write-DuckDBAppender {
         }
         $appenderRow.EndRow()
 
-        If ( $i % 100 -eq 0 ) {
+        If ( $i % 10000 -eq 0 ) {
             Write-Verbose "[$TableName] Appender: Row $i written."
         }
     }

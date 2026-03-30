@@ -20,6 +20,6 @@ function Get-DuckDBData {
     $reader = $cmd.ExecuteReader()
     $table = [System.Data.DataTable]::new()
     $table.Load($reader)
-    $table
+    ,$table
 
 }

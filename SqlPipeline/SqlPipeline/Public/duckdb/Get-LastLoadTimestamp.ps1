@@ -27,6 +27,5 @@ function Get-LastLoadTimestamp {
         Write-Verbose "[$TableName] No previous load found - performing full load."
         return [datetime]'2000-01-01'
     }
-    #return [datetime]$result.Rows[0]['last_loaded']
-    return [datetime]$result['last_loaded']
+    return [datetime]$result.Rows[0]['last_loaded']
 }
