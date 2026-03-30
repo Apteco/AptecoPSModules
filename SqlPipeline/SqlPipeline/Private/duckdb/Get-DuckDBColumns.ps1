@@ -11,9 +11,6 @@ function Get-DuckDBColumns {
     )
 
     $result = Get-DuckDBData -Connection $Connection -Query "DESCRIBE '$TableName'"
-    #return @($result.Rows | ForEach-Object { $_['column_name'] })
-    
-    # return
-    $result.column_name
+    return @($result.Rows | ForEach-Object { $_['column_name'] })
 
 }

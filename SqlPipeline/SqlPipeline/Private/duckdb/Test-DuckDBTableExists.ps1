@@ -16,7 +16,6 @@ function Test-DuckDBTableExists {
         WHERE  table_name = '$TableName'
           AND  table_schema = 'main'
 "@
-    #return ([int]$result.Rows[0]['cnt'] -gt 0)
-    return ([int]$result['cnt'] -gt 0)
+    return ([int]$result.Rows[0]['cnt'] -gt 0)
 
 }

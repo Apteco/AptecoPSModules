@@ -18,5 +18,12 @@ function Close-SqlPipeline {
         $Connection.Close()
         Write-Verbose 'DuckDB connection closed.'
     }
-    
+
+    # If the closed connection was the active default, restore the in-memory connection
+    # so that subsequent calls without -Connection still work.
+    if ([object]::ReferenceEquals($Connection, $Script:DefaultConnection)) {
+        $Script:DefaultConnection = $Script:InMemoryConnection
+        Write-Verbose 'Default connection restored to in-memory database.'
+    }
+
 }

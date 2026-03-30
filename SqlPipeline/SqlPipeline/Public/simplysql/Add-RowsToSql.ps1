@@ -161,6 +161,15 @@ function Add-RowsToSql {
     begin {
 
         #-----------------------------------------------
+        # CHECK SIMPLYSQL AVAILABILITY
+        #-----------------------------------------------
+
+        if (-not $Script:isSimplySqlLoaded) {
+            throw "SimplySql is not loaded. This may be due to platform incompatibility (e.g. ARM architecture). Use Add-RowsToDuckDB instead."
+        }
+
+
+        #-----------------------------------------------
         # INITIALISE
         #-----------------------------------------------
 
