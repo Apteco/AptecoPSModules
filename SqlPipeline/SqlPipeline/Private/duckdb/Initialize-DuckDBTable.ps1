@@ -15,7 +15,7 @@ function Initialize-DuckDBTable {
     param(
         [Parameter(Mandatory)] [DuckDB.NET.Data.DuckDBConnection]$Connection,
         [Parameter(Mandatory)] [string]$TableName,
-        [Parameter(Mandatory)] $SampleRow,
+        [Parameter(Mandatory)] $SampleRows,
         [string[]]$PKColumns = @()
     )
 
@@ -26,9 +26,13 @@ function Initialize-DuckDBTable {
 
     Write-Verbose "[$TableName] Creating new table..."
 
-    $colDefs = $SampleRow.PSObject.Properties | ForEach-Object {
-        $sqlType = ConvertTo-DuckDBType -Value $_.Value
-        "    ""$($_.Name)""  $sqlType"
+    # Use the first row for column names, but derive the type from all sample rows
+    # so that mixed-type columns (e.g. int and double) get the correct wider type.
+    $colDefs = $SampleRows[0].PSObject.Properties.Name | ForEach-Object {
+        $col     = $_
+        $values  = $SampleRows | ForEach-Object { $_.$col }
+        $sqlType = Get-DuckDBBestType -Values $values
+        "    ""$col""  $sqlType"
     }
 
     $pkDef = if ($PKColumns.Count -gt 0) {

@@ -431,3 +431,168 @@ Describe "Export-DuckDBToParquet" -Skip:(-not $script:duckDBAvailable) {
     }
 
 }
+
+
+Describe "Get-DuckDBBestType - multi-row type inference" -Skip:(-not $script:duckDBAvailable) {
+    # Get-DuckDBBestType is private, so all assertions go through Add-RowsToDuckDB
+    # and the resulting DuckDB column type (read back via DESCRIBE).
+
+    AfterEach {
+        "typ_int","typ_double","typ_mixed","typ_null","typ_bool_int",
+        "typ_bool_double","typ_incompat" | ForEach-Object {
+            Invoke-DuckDBQuery -Query "DROP TABLE IF EXISTS $_" -ErrorAction SilentlyContinue
+        }
+    }
+
+    It "Creates BIGINT column when all sampled rows are integer" {
+        1..20 | ForEach-Object { [PSCustomObject]@{ Val = [int]$_ } } |
+            Add-RowsToDuckDB -TableName "typ_int"
+
+        $colType = (Get-DuckDBData -Query "DESCRIBE typ_int").Rows |
+            Where-Object { $_["column_name"] -eq "Val" } | Select-Object -First 1
+        $colType["column_type"] | Should -Be "BIGINT"
+    }
+
+    It "Creates DOUBLE column when all sampled rows are double" {
+        1..20 | ForEach-Object { [PSCustomObject]@{ Val = [double]($_ + 0.1) } } |
+            Add-RowsToDuckDB -TableName "typ_double"
+
+        $colType = (Get-DuckDBData -Query "DESCRIBE typ_double").Rows |
+            Where-Object { $_["column_name"] -eq "Val" } | Select-Object -First 1
+        $colType["column_type"] | Should -Be "DOUBLE"
+    }
+
+    It "Widens to DOUBLE when first rows are int but later rows are double" {
+        # Old single-row detection would create BIGINT; multi-row sampling creates DOUBLE.
+        $rows = @(
+            1..10  | ForEach-Object { [PSCustomObject]@{ Val = [int]$_ } }
+            11..15 | ForEach-Object { [PSCustomObject]@{ Val = [double]($_ + 0.5) } }
+        )
+        $rows | Add-RowsToDuckDB -TableName "typ_mixed"
+
+        $colType = (Get-DuckDBData -Query "DESCRIBE typ_mixed").Rows |
+            Where-Object { $_["column_name"] -eq "Val" } | Select-Object -First 1
+        $colType["column_type"] | Should -Be "DOUBLE"
+    }
+
+    It "Skips null values and still infers DOUBLE from the non-null rows" {
+        $rows = @(
+            1..5  | ForEach-Object { [PSCustomObject]@{ Val = $null } }
+            6..15 | ForEach-Object { [PSCustomObject]@{ Val = [double]($_ * 1.5) } }
+        )
+        $rows | Add-RowsToDuckDB -TableName "typ_null"
+
+        $colType = (Get-DuckDBData -Query "DESCRIBE typ_null").Rows |
+            Where-Object { $_["column_name"] -eq "Val" } | Select-Object -First 1
+        $colType["column_type"] | Should -Be "DOUBLE"
+    }
+
+    It "Widens BOOLEAN+int to BIGINT" {
+        $rows = @(
+            [PSCustomObject]@{ Flag = $true }
+            [PSCustomObject]@{ Flag = $false }
+            [PSCustomObject]@{ Flag = [int]42 }
+        )
+        $rows | Add-RowsToDuckDB -TableName "typ_bool_int"
+
+        $colType = (Get-DuckDBData -Query "DESCRIBE typ_bool_int").Rows |
+            Where-Object { $_["column_name"] -eq "Flag" } | Select-Object -First 1
+        $colType["column_type"] | Should -Be "BIGINT"
+    }
+
+    It "Widens BOOLEAN+double to DOUBLE" {
+        $rows = @(
+            [PSCustomObject]@{ Flag = $true }
+            [PSCustomObject]@{ Flag = [double]3.14 }
+        )
+        $rows | Add-RowsToDuckDB -TableName "typ_bool_double"
+
+        $colType = (Get-DuckDBData -Query "DESCRIBE typ_bool_double").Rows |
+            Where-Object { $_["column_name"] -eq "Flag" } | Select-Object -First 1
+        $colType["column_type"] | Should -Be "DOUBLE"
+    }
+
+    It "Falls back to VARCHAR for incompatible types (string + int)" {
+        $rows = @(
+            [PSCustomObject]@{ Val = "hello" }
+            [PSCustomObject]@{ Val = [int]42 }
+        )
+        $rows | Add-RowsToDuckDB -TableName "typ_incompat"
+
+        $colType = (Get-DuckDBData -Query "DESCRIBE typ_incompat").Rows |
+            Where-Object { $_["column_name"] -eq "Val" } | Select-Object -First 1
+        $colType["column_type"] | Should -Be "VARCHAR"
+    }
+
+}
+
+
+Describe "Write-DuckDBAppender - numeric type correctness (byte-reinterpretation fix)" -Skip:(-not $script:duckDBAvailable) {
+    # Before the fix, DuckDB.NET's AppendValue(Int64) on a DOUBLE column reinterpreted
+    # the 8 raw bytes of the long as a double, turning 15 into ~7.4e-323.
+
+    AfterEach {
+        "apr_int_in_double","apr_many_mixed","apr_double_in_bigint" | ForEach-Object {
+            Invoke-DuckDBQuery -Query "DROP TABLE IF EXISTS $_" -ErrorAction SilentlyContinue
+        }
+    }
+
+    It "Stores integer value correctly in a DOUBLE column (not as ~7.4e-323)" {
+        # First row establishes the column as DOUBLE; second row supplies an int.
+        $rows = @(
+            [PSCustomObject]@{ Val = [double]1.5 }
+            [PSCustomObject]@{ Val = [int]15 }
+        )
+        $rows | Add-RowsToDuckDB -TableName "apr_int_in_double"
+
+        $result = Get-DuckDBData -Query "SELECT Val FROM apr_int_in_double ORDER BY Val"
+        [double]$result.Rows[0]["Val"] | Should -Be 1.5
+        [double]$result.Rows[1]["Val"] | Should -Be 15.0
+    }
+
+    It "Integer 15 in a DOUBLE column is greater than 10 (not a subnormal ~7.4e-323)" {
+        $rows = @(
+            [PSCustomObject]@{ Val = [double]1.0 }
+            [PSCustomObject]@{ Val = [int]15 }
+        )
+        $rows | Add-RowsToDuckDB -TableName "apr_int_in_double"
+
+        $result = Get-DuckDBData -Query "SELECT Val FROM apr_int_in_double WHERE Val > 10"
+        $result.Rows.Count | Should -Be 1
+        [double]$result.Rows[0]["Val"] | Should -Be 15.0
+    }
+
+    It "All mixed int/double values are stored correctly in a DOUBLE column" {
+        # Multi-row sampling widens the column to DOUBLE from the start,
+        # then the appender must still cast each int correctly.
+        $rows = @(
+            1..5  | ForEach-Object { [PSCustomObject]@{ Score = [double]($_ * 1.5) } }   # 1.5 3.0 4.5 6.0 7.5
+            6..10 | ForEach-Object { [PSCustomObject]@{ Score = [int]($_ * 10) } }        # 60 70 80 90 100
+        )
+        $rows | Add-RowsToDuckDB -TableName "apr_many_mixed"
+
+        $result = Get-DuckDBData -Query "SELECT Score FROM apr_many_mixed ORDER BY Score"
+        $result.Rows.Count | Should -Be 10
+
+        # All stored values must be sensible positive numbers (rules out subnormal garbage)
+        foreach ($row in $result.Rows) {
+            [double]$row["Score"] | Should -BeGreaterThan 0
+            [double]$row["Score"] | Should -BeLessOrEqual 100
+        }
+    }
+
+    It "Stores double value correctly in a BIGINT column" {
+        # Column created as BIGINT; a double like 3.0 should be stored as 3 (truncated).
+        $rows = @(
+            [PSCustomObject]@{ Val = [int]10 }
+            [PSCustomObject]@{ Val = [double]3.0 }
+        )
+        $rows | Add-RowsToDuckDB -TableName "apr_double_in_bigint"
+
+        $result = Get-DuckDBData -Query "SELECT Val FROM apr_double_in_bigint ORDER BY Val"
+        $result.Rows.Count | Should -Be 2
+        [long]$result.Rows[0]["Val"] | Should -Be 3
+        [long]$result.Rows[1]["Val"] | Should -Be 10
+    }
+
+}
