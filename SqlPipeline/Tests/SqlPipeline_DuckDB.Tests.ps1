@@ -389,6 +389,113 @@ Describe "Initialize-SQLPipeline and Close-SqlPipeline" -Skip:(-not $script:duck
 }
 
 
+Describe "Encryption (Initialize-SQLPipeline -EncryptionKey)" -Skip:(-not $script:duckDBAvailable) {
+
+    BeforeAll {
+        $script:encKey = 'pester-test-secret-key-32chars!!'
+    }
+
+    It "Returns a DuckDB connection object when -EncryptionKey is supplied" {
+        $filePath = Join-Path ([System.IO.Path]::GetTempPath()) "pester_enc_$(Get-Random).db"
+        $conn = Initialize-SQLPipeline -DbPath $filePath -EncryptionKey $script:encKey
+        $conn | Should -Not -BeNullOrEmpty
+        $conn.GetType().Name | Should -Be "DuckDBConnection"
+        Close-SqlPipeline -Connection $conn
+        Remove-Item $filePath     -Force -ErrorAction SilentlyContinue
+        Remove-Item "$filePath.wal" -Force -ErrorAction SilentlyContinue
+    }
+
+    It "Creates the encrypted database file on disk" {
+        $filePath = Join-Path ([System.IO.Path]::GetTempPath()) "pester_enc_$(Get-Random).db"
+        $conn = Initialize-SQLPipeline -DbPath $filePath -EncryptionKey $script:encKey
+        Test-Path $filePath | Should -Be $true
+        Close-SqlPipeline -Connection $conn
+        Remove-Item $filePath     -Force -ErrorAction SilentlyContinue
+        Remove-Item "$filePath.wal" -Force -ErrorAction SilentlyContinue
+    }
+
+    It "Connection state is Open after Initialize-SQLPipeline with encryption" {
+        $filePath = Join-Path ([System.IO.Path]::GetTempPath()) "pester_enc_$(Get-Random).db"
+        $conn = Initialize-SQLPipeline -DbPath $filePath -EncryptionKey $script:encKey
+        $conn.State | Should -Be "Open"
+        Close-SqlPipeline -Connection $conn
+        Remove-Item $filePath     -Force -ErrorAction SilentlyContinue
+        Remove-Item "$filePath.wal" -Force -ErrorAction SilentlyContinue
+    }
+
+    It "Can write and read data from an encrypted database" {
+        $filePath = Join-Path ([System.IO.Path]::GetTempPath()) "pester_enc_$(Get-Random).db"
+        $conn = Initialize-SQLPipeline -DbPath $filePath -EncryptionKey $script:encKey
+        [PSCustomObject]@{ Id = 1; Secret = "classified" } | Add-RowsToDuckDB -Connection $conn -TableName "enc_rw"
+        $result = Get-DuckDBData -Connection $conn -Query "SELECT * FROM enc_rw"
+        Close-SqlPipeline -Connection $conn
+        Remove-Item $filePath     -Force -ErrorAction SilentlyContinue
+        Remove-Item "$filePath.wal" -Force -ErrorAction SilentlyContinue
+
+        $result.Rows.Count         | Should -Be 1
+        $result.Rows[0]["Secret"]  | Should -Be "classified"
+    }
+
+    It "Encrypted data persists across reconnect with the correct key" {
+        $filePath = Join-Path ([System.IO.Path]::GetTempPath()) "pester_enc_$(Get-Random).db"
+
+        $conn1 = Initialize-SQLPipeline -DbPath $filePath -EncryptionKey $script:encKey
+        [PSCustomObject]@{ Id = 42; Val = "encrypted-persist" } |
+            Add-RowsToDuckDB -Connection $conn1 -TableName "enc_persist"
+        Close-SqlPipeline -Connection $conn1
+
+        $conn2  = Initialize-SQLPipeline -DbPath $filePath -EncryptionKey $script:encKey
+        $result = Get-DuckDBData -Connection $conn2 -Query "SELECT * FROM enc_persist"
+        Close-SqlPipeline -Connection $conn2
+        Remove-Item $filePath     -Force -ErrorAction SilentlyContinue
+        Remove-Item "$filePath.wal" -Force -ErrorAction SilentlyContinue
+
+        $result.Rows.Count        | Should -Be 1
+        $result.Rows[0]["Val"]    | Should -Be "encrypted-persist"
+    }
+
+    It "Opening an encrypted database with the wrong key throws" {
+        $filePath = Join-Path ([System.IO.Path]::GetTempPath()) "pester_enc_$(Get-Random).db"
+        $conn = Initialize-SQLPipeline -DbPath $filePath -EncryptionKey $script:encKey
+        Close-SqlPipeline -Connection $conn
+
+        { Initialize-SQLPipeline -DbPath $filePath -EncryptionKey "definitely-wrong-key" } | Should -Throw
+
+        Remove-Item $filePath     -Force -ErrorAction SilentlyContinue
+        Remove-Item "$filePath.wal" -Force -ErrorAction SilentlyContinue
+    }
+
+    It "Uses CTR cipher without throwing when -EncryptionCipher CTR is specified" {
+        $filePath = Join-Path ([System.IO.Path]::GetTempPath()) "pester_enc_$(Get-Random).db"
+        {
+            $conn = Initialize-SQLPipeline -DbPath $filePath -EncryptionKey $script:encKey -EncryptionCipher CTR
+            Close-SqlPipeline -Connection $conn
+        } | Should -Not -Throw
+        Remove-Item $filePath     -Force -ErrorAction SilentlyContinue
+        Remove-Item "$filePath.wal" -Force -ErrorAction SilentlyContinue
+    }
+
+    It "CTR-encrypted data can be read back with the same key and cipher" {
+        $filePath = Join-Path ([System.IO.Path]::GetTempPath()) "pester_enc_$(Get-Random).db"
+
+        $conn1 = Initialize-SQLPipeline -DbPath $filePath -EncryptionKey $script:encKey -EncryptionCipher CTR
+        [PSCustomObject]@{ Id = 1; Val = "ctr-value" } |
+            Add-RowsToDuckDB -Connection $conn1 -TableName "enc_ctr"
+        Close-SqlPipeline -Connection $conn1
+
+        $conn2  = Initialize-SQLPipeline -DbPath $filePath -EncryptionKey $script:encKey -EncryptionCipher CTR
+        $result = Get-DuckDBData -Connection $conn2 -Query "SELECT * FROM enc_ctr"
+        Close-SqlPipeline -Connection $conn2
+        Remove-Item $filePath     -Force -ErrorAction SilentlyContinue
+        Remove-Item "$filePath.wal" -Force -ErrorAction SilentlyContinue
+
+        $result.Rows.Count       | Should -Be 1
+        $result.Rows[0]["Val"]   | Should -Be "ctr-value"
+    }
+
+}
+
+
 Describe "Export-DuckDBToParquet" -Skip:(-not $script:duckDBAvailable) {
 
     BeforeAll {
