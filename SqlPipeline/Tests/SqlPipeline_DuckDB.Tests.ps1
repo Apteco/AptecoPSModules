@@ -433,20 +433,9 @@ Describe "Export-DuckDBToParquet" -Skip:(-not $script:duckDBAvailable) {
 }
 
 
-Describe "Get-DuckDBBestType — multi-row type inference" -Skip:(-not $script:duckDBAvailable) {
+Describe "Get-DuckDBBestType - multi-row type inference" -Skip:(-not $script:duckDBAvailable) {
     # Get-DuckDBBestType is private, so all assertions go through Add-RowsToDuckDB
     # and the resulting DuckDB column type (read back via DESCRIBE).
-
-    BeforeAll {
-        # Pester v5 runs It-blocks in their own scope; helpers must be defined
-        # inside BeforeAll so they are available during the Run phase.
-        function Get-ColumnType {
-            param([string]$Table, [string]$Column)
-            $schema = Get-DuckDBData -Query "DESCRIBE $Table"
-            $row    = $schema.Rows | Where-Object { $_["column_name"] -eq $Column } | Select-Object -First 1
-            return $row["column_type"]
-        }
-    }
 
     AfterEach {
         "typ_int","typ_double","typ_mixed","typ_null","typ_bool_int",
@@ -459,14 +448,18 @@ Describe "Get-DuckDBBestType — multi-row type inference" -Skip:(-not $script:d
         1..20 | ForEach-Object { [PSCustomObject]@{ Val = [int]$_ } } |
             Add-RowsToDuckDB -TableName "typ_int"
 
-        Get-ColumnType -Table "typ_int" -Column "Val" | Should -Be "BIGINT"
+        $colType = (Get-DuckDBData -Query "DESCRIBE typ_int").Rows |
+            Where-Object { $_["column_name"] -eq "Val" } | Select-Object -First 1
+        $colType["column_type"] | Should -Be "BIGINT"
     }
 
     It "Creates DOUBLE column when all sampled rows are double" {
         1..20 | ForEach-Object { [PSCustomObject]@{ Val = [double]($_ + 0.1) } } |
             Add-RowsToDuckDB -TableName "typ_double"
 
-        Get-ColumnType -Table "typ_double" -Column "Val" | Should -Be "DOUBLE"
+        $colType = (Get-DuckDBData -Query "DESCRIBE typ_double").Rows |
+            Where-Object { $_["column_name"] -eq "Val" } | Select-Object -First 1
+        $colType["column_type"] | Should -Be "DOUBLE"
     }
 
     It "Widens to DOUBLE when first rows are int but later rows are double" {
@@ -477,7 +470,9 @@ Describe "Get-DuckDBBestType — multi-row type inference" -Skip:(-not $script:d
         )
         $rows | Add-RowsToDuckDB -TableName "typ_mixed"
 
-        Get-ColumnType -Table "typ_mixed" -Column "Val" | Should -Be "DOUBLE"
+        $colType = (Get-DuckDBData -Query "DESCRIBE typ_mixed").Rows |
+            Where-Object { $_["column_name"] -eq "Val" } | Select-Object -First 1
+        $colType["column_type"] | Should -Be "DOUBLE"
     }
 
     It "Skips null values and still infers DOUBLE from the non-null rows" {
@@ -487,7 +482,9 @@ Describe "Get-DuckDBBestType — multi-row type inference" -Skip:(-not $script:d
         )
         $rows | Add-RowsToDuckDB -TableName "typ_null"
 
-        Get-ColumnType -Table "typ_null" -Column "Val" | Should -Be "DOUBLE"
+        $colType = (Get-DuckDBData -Query "DESCRIBE typ_null").Rows |
+            Where-Object { $_["column_name"] -eq "Val" } | Select-Object -First 1
+        $colType["column_type"] | Should -Be "DOUBLE"
     }
 
     It "Widens BOOLEAN+int to BIGINT" {
@@ -498,7 +495,9 @@ Describe "Get-DuckDBBestType — multi-row type inference" -Skip:(-not $script:d
         )
         $rows | Add-RowsToDuckDB -TableName "typ_bool_int"
 
-        Get-ColumnType -Table "typ_bool_int" -Column "Flag" | Should -Be "BIGINT"
+        $colType = (Get-DuckDBData -Query "DESCRIBE typ_bool_int").Rows |
+            Where-Object { $_["column_name"] -eq "Flag" } | Select-Object -First 1
+        $colType["column_type"] | Should -Be "BIGINT"
     }
 
     It "Widens BOOLEAN+double to DOUBLE" {
@@ -508,7 +507,9 @@ Describe "Get-DuckDBBestType — multi-row type inference" -Skip:(-not $script:d
         )
         $rows | Add-RowsToDuckDB -TableName "typ_bool_double"
 
-        Get-ColumnType -Table "typ_bool_double" -Column "Flag" | Should -Be "DOUBLE"
+        $colType = (Get-DuckDBData -Query "DESCRIBE typ_bool_double").Rows |
+            Where-Object { $_["column_name"] -eq "Flag" } | Select-Object -First 1
+        $colType["column_type"] | Should -Be "DOUBLE"
     }
 
     It "Falls back to VARCHAR for incompatible types (string + int)" {
@@ -518,13 +519,15 @@ Describe "Get-DuckDBBestType — multi-row type inference" -Skip:(-not $script:d
         )
         $rows | Add-RowsToDuckDB -TableName "typ_incompat"
 
-        Get-ColumnType -Table "typ_incompat" -Column "Val" | Should -Be "VARCHAR"
+        $colType = (Get-DuckDBData -Query "DESCRIBE typ_incompat").Rows |
+            Where-Object { $_["column_name"] -eq "Val" } | Select-Object -First 1
+        $colType["column_type"] | Should -Be "VARCHAR"
     }
 
 }
 
 
-Describe "Write-DuckDBAppender — numeric type correctness (byte-reinterpretation fix)" -Skip:(-not $script:duckDBAvailable) {
+Describe "Write-DuckDBAppender - numeric type correctness (byte-reinterpretation fix)" -Skip:(-not $script:duckDBAvailable) {
     # Before the fix, DuckDB.NET's AppendValue(Int64) on a DOUBLE column reinterpreted
     # the 8 raw bytes of the long as a double, turning 15 into ~7.4e-323.
 
