@@ -17,6 +17,11 @@ function Initialize-SQLPipeline {
 
     .PARAMETER EncryptionKey
         Optional encryption key (AES-256, requires DuckDB 1.4.0 or later).
+        Encryption is applied via ATTACH ... (ENCRYPTION_KEY '...') so the key
+        never appears in the connection string.
+
+    .PARAMETER EncryptionCipher
+        Cipher to use when EncryptionKey is set. 'GCM' (default, authenticated) or 'CTR' (faster, no integrity check).
 
     .EXAMPLE
         # File-based database
@@ -34,12 +39,17 @@ function Initialize-SQLPipeline {
     [OutputType([DuckDB.NET.Data.DuckDBConnection])]
     param(
         [Parameter(Mandatory)] [string]$DbPath,
-        [string]$EncryptionKey
+        [string]$EncryptionKey,
+        [ValidateSet('GCM', 'CTR')]
+        [string]$EncryptionCipher = 'GCM'
     )
 
     $absolutePath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($DbPath)
     $params = @{ DbPath = $absolutePath }
-    if ($EncryptionKey) { $params['EncryptionKey'] = $EncryptionKey }
+    if ($EncryptionKey) {
+        $params['EncryptionKey']    = $EncryptionKey
+        $params['EncryptionCipher'] = $EncryptionCipher
+    }
 
     $conn = New-DuckDBConnection @params
     Initialize-PipelineMetadata -Connection $conn
