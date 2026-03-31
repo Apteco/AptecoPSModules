@@ -8,6 +8,20 @@ function Write-DuckDBAppender {
         [switch]$SimpleTypesOnly = $false
     )
 
+    # Read column types from schema so we can cast numeric values correctly.
+    # DuckDB.NET's AppendValue reinterprets bytes rather than converting when
+    # the .NET type does not match the column type (e.g. Int64 into a DOUBLE
+    # column yields 7.4e-323 instead of 15).
+    $columnTypes = @{}
+    $schemaCmd = $Connection.CreateCommand()
+    $schemaCmd.CommandText = "DESCRIBE ""$TableName"""
+    $schemaReader = $schemaCmd.ExecuteReader()
+    while ($schemaReader.Read()) {
+        $columnTypes[$schemaReader.GetString(0)] = $schemaReader.GetString(1)
+    }
+    $schemaReader.Close()
+    $schemaCmd.Dispose()
+
     $appender = $Connection.CreateAppender($TableName)
     $propNames = $null  # cached once from first row
 
@@ -31,9 +45,38 @@ function Write-DuckDBAppender {
             } elseif ($val -is [float]) {
                 $val = [double]$val
             }
+
+            # Cast values to the declared column type so DuckDB.NET picks the
+            # correct AppendValue overload. Without this:
+            #   [long] → DOUBLE   reinterprets raw bytes (15 becomes 7.4e-323)
+            #   [bool] → BIGINT   throws "Cannot write Boolean to BigInt column"
+            #   [long] → VARCHAR  throws "Cannot write Int64 to Varchar column"
+            if ($null -ne $val -and $columnTypes.ContainsKey($name)) {
+                $colType  = $columnTypes[$name]
+                $isFloat  = $colType -eq 'DOUBLE'  -or $colType -eq 'FLOAT' -or
+                            $colType -eq 'REAL'    -or $colType -eq 'FLOAT4' -or $colType -eq 'FLOAT8'
+                $isInt    = $colType -eq 'BIGINT'  -or $colType -eq 'INTEGER' -or
+                            $colType -eq 'HUGEINT' -or $colType -eq 'INT8'   -or $colType -eq 'INT4'
+
+                if ($val -is [bool] -and $colType -ne 'BOOLEAN') {
+                    # bool cannot be appended to non-BOOLEAN columns
+                    if     ($isFloat) { $val = [double][int]$val }
+                    elseif ($isInt)   { $val = [long][int]$val }
+                    else              { $val = [string]$val }
+                } elseif ($val -is [long] -and $isFloat) {
+                    $val = [double]$val
+                } elseif ($val -is [double] -and $isInt) {
+                    $val = [long]$val
+                } elseif ($colType -eq 'VARCHAR' -and ($val -is [long] -or $val -is [double])) {
+                    $val = [string]$val
+                }
+            }
             # Inlined ConvertTo-DuckDBValue
             if ($null -eq $val) {
-                [void]$appenderRow.AppendValue([DBNull]::Value)
+                # AppendValue([DBNull]::Value) has wrong overload resolution on typed
+                # columns (e.g. resolves to AppendValue(bool) for DOUBLE). Use the
+                # dedicated AppendNullValue() method instead.
+                [void]$appenderRow.AppendNullValue()
             } elseif (-not $SimpleTypesOnly -and (
                       $val -is [System.Collections.IList] -or
                       $val -is [PSCustomObject] -or

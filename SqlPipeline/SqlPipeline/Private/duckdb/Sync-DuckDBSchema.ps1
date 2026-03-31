@@ -12,11 +12,11 @@ function Sync-DuckDBSchema {
     param(
         [Parameter(Mandatory)] [DuckDB.NET.Data.DuckDBConnection]$Connection,
         [Parameter(Mandatory)] [string]$TableName,
-        [Parameter(Mandatory)] $SampleRow
+        [Parameter(Mandatory)] $SampleRows
     )
 
     $existingCols = Get-DuckDBColumns -Connection $Connection -TableName $TableName
-    $incomingCols = $SampleRow.PSObject.Properties.Name
+    $incomingCols = $SampleRows[0].PSObject.Properties.Name
 
     $newCols = $incomingCols | Where-Object { $_ -notin $existingCols }
 
@@ -26,7 +26,8 @@ function Sync-DuckDBSchema {
     }
 
     foreach ($col in $newCols) {
-        $sqlType = ConvertTo-DuckDBType -Value $SampleRow.$col
+        $values  = $SampleRows | ForEach-Object { $_.$col }
+        $sqlType = Get-DuckDBBestType -Values $values
         Write-Verbose "[$TableName] New column: $col ($sqlType)"
         Invoke-DuckDBQuery -Connection $Connection -Query `
             "ALTER TABLE $TableName ADD COLUMN IF NOT EXISTS $col $sqlType"

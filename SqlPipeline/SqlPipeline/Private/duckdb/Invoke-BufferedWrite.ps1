@@ -18,12 +18,16 @@ function Invoke-BufferedWrite {
 
     if ($Data.Count -eq 0) { return }
 
+    # Use the first 100 rows for type inference so mixed-type columns
+    # (e.g. integer in one row, double in another) get the correct wider type.
+    $sampleRows = $Data.GetRange(0, [Math]::Min(100, $Data.Count))
+
     # 1. Create table if it does not exist
     Initialize-DuckDBTable -Connection $Connection -TableName $TableName `
-                           -SampleRow $Data[0] -PKColumns $PKColumns
+                           -SampleRows $sampleRows -PKColumns $PKColumns
 
     # 2. Extend schema with new columns
-    Sync-DuckDBSchema -Connection $Connection -TableName $TableName -SampleRow $Data[0]
+    Sync-DuckDBSchema -Connection $Connection -TableName $TableName -SampleRows $sampleRows
 
     # 3. Normalize missing columns
     $expectedCols   = Get-DuckDBColumns -Connection $Connection -TableName $TableName
