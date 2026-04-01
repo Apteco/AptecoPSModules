@@ -92,7 +92,8 @@ $conn = Initialize-SQLPipeline -DbPath '.\pipeline.db' -EncryptionKey 'my-secret
 | Parameter | Type | Description |
 |---|---|---|
 | `DbPath` | string (mandatory) | Path to the `.db` file. Created if it does not exist. |
-| `EncryptionKey` | string | Optional AES-256 encryption key. |
+| `EncryptionKey` | string | Optional AES-256 encryption key. Encryption is applied via `ATTACH ... (ENCRYPTION_KEY '...')`. |
+| `EncryptionCipher` | string | `GCM` (default, authenticated) or `CTR` (faster, no integrity check). Only used when `EncryptionKey` is set. |
 
 Returns the `DuckDBConnection` object. Also sets `$Script:DefaultConnection` so all functions work without `-Connection`.
 
@@ -260,6 +261,69 @@ Export-DuckDBToParquet -TableName 'contacts' -OutputPath '.\export\contacts.parq
 
 Close-SqlPipeline
 ```
+
+## Database Encryption
+
+SqlPipeline supports AES-256 encrypted DuckDB databases (requires DuckDB 1.4.0 or later). Pass `-EncryptionKey` to `Initialize-SQLPipeline` — everything else works identically to an unencrypted database.
+
+```PowerShell
+Import-Module SqlPipeline
+
+# Open (or create) an encrypted file-based database
+Initialize-SQLPipeline -DbPath '.\pipeline.db' -EncryptionKey 'my-secret-key'
+
+Import-Csv '.\orders.csv' | Add-RowsToDuckDB -TableName 'orders' -PKColumns 'order_id'
+
+Close-SqlPipeline
+```
+
+By default AES-GCM-256 is used (authenticated encryption). To use AES-CTR-256 instead (faster, no integrity check):
+
+```PowerShell
+Initialize-SQLPipeline -DbPath '.\pipeline.db' -EncryptionKey 'my-secret-key' -EncryptionCipher CTR
+```
+
+> **Note:** DuckDB 1.4.1+ requires the `httpfs` extension (OpenSSL) for writes to encrypted databases. SqlPipeline installs and loads it automatically when `-EncryptionKey` is provided.
+
+### Migrating an Existing Unencrypted Database to an Encrypted One
+
+The module's default in-memory connection can be used as a bridge to attach both the source and destination databases simultaneously and copy all tables in one step.
+
+```PowerShell
+Import-Module SqlPipeline
+
+# DuckDB 1.4.1+ requires httpfs (OpenSSL) for writes to encrypted databases.
+Invoke-DuckDBQuery -Query "INSTALL httpfs"
+Invoke-DuckDBQuery -Query "LOAD httpfs"
+
+# Attach the existing unencrypted database as the source.
+Invoke-DuckDBQuery -Query "ATTACH '.\pipeline.db' AS src"
+
+# Attach the new encrypted database as the destination (created automatically).
+Invoke-DuckDBQuery -Query "ATTACH '.\pipeline_encrypted.db' AS dst (ENCRYPTION_KEY 'my-secret-key', ENCRYPTION_CIPHER 'GCM')"
+
+# Copy all tables and their data from source to destination in one step.
+Invoke-DuckDBQuery -Query "COPY FROM DATABASE src TO dst"
+
+# Detach both databases cleanly.
+Invoke-DuckDBQuery -Query "DETACH src"
+Invoke-DuckDBQuery -Query "DETACH dst"
+```
+
+After verifying the encrypted database works correctly, replace the original file:
+
+```PowerShell
+Remove-Item      '.\pipeline.db'
+Rename-Item      '.\pipeline_encrypted.db' '.\pipeline.db'
+```
+
+From this point on open the database with `-EncryptionKey`:
+
+```PowerShell
+Initialize-SQLPipeline -DbPath '.\pipeline.db' -EncryptionKey 'my-secret-key'
+```
+
+---
 
 # SimplySQL Integration
 

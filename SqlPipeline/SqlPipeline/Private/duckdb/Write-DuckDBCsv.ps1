@@ -22,31 +22,50 @@ function Write-DuckDBCsv {
         [switch]$SimpleTypesOnly = $false
     )
 
-    # Pre-serialize complex objects to JSON so Export-Csv writes them as plain strings
-    $propNames = $null
-    $i = 0
-    $preparedData = foreach ($row in $Data) {
-        if ($null -eq $propNames) {
-            $propNames = @($row.PSObject.Properties.Name)
-        }
-        $ht = [ordered]@{}
-        foreach ($name in $propNames) {
-            $val = $row.$name
-            $ht[$name] = if ($null -eq $val) {
-                $null
-            } elseif (-not $SimpleTypesOnly -and (
-                      $val -is [System.Collections.IList] -or
-                      $val -is [PSCustomObject] -or
-                      $val -is [System.Collections.IDictionary])) {
-                ConvertTo-Json -InputObject $val -Compress -Depth 10
-            } else {
-                $val
+    # Pre-serialize complex objects to JSON so Export-Csv writes them as plain strings.
+    # SimpleTypesOnly: skip the loop entirely — no transformation needed.
+    # Otherwise: analyse the first row to find which columns hold complex types, then
+    # only run type checks + ConvertTo-Json on those columns for every subsequent row.
+    if ($SimpleTypesOnly) {
+        $preparedData = $Data
+    } else {
+        $propNames = $null
+        $complexCols = $null   # HashSet of column names that need JSON serialisation
+        $i = 0
+        $preparedData = foreach ($row in $Data) {
+            if ($null -eq $propNames) {
+                $propNames = @($row.PSObject.Properties.Name)
+                $complexCols = [System.Collections.Generic.HashSet[string]]::new()
+                foreach ($name in $propNames) {
+                    $val = $row.$name
+                    if ($null -ne $val -and (
+                        $val -is [System.Collections.IList] -or
+                        $val -is [PSCustomObject] -or
+                        $val -is [System.Collections.IDictionary])) {
+                        [void]$complexCols.Add($name)
+                    }
+                }
             }
-        }
-        [PSCustomObject]$ht
-        $i++
-        If ( $i % 100 -eq 0 ) {
-            Write-Verbose "[$TableName] Appender: Row $i written."
+
+            if ($complexCols.Count -eq 0) {
+                # No complex columns — emit the row as-is, no copy needed
+                $row
+            } else {
+                $ht = [ordered]@{}
+                foreach ($name in $propNames) {
+                    $val = $row.$name
+                    $ht[$name] = if ($null -ne $val -and $complexCols.Contains($name)) {
+                        ConvertTo-Json -InputObject $val -Compress -Depth 10
+                    } else {
+                        $val
+                    }
+                }
+                [PSCustomObject]$ht
+            }
+            $i++
+            if ($i % 100 -eq 0) {
+                Write-Verbose "[$TableName] Appender: Row $i written."
+            }
         }
     }
 
