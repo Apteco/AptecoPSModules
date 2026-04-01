@@ -23,20 +23,68 @@ function Write-DuckDBAppender {
     $schemaCmd.Dispose()
 
     $appender = $Connection.CreateAppender($TableName)
-    $propNames = $null  # cached once from first row
+    $propNames  = $null   # column names, cached from first row
+    $colAction  = $null   # [int[]] per-column action: 0=passthrough 1=float-col 2=int-col 3=varchar-col
+    $complexCols = $null  # HashSet of columns that hold complex types (null when SimpleTypesOnly)
 
     $i = 0
     foreach ($row in $Data) {
         $i++
 
-        # Cache property names from first row only
+        # On the first row: cache propNames, pre-compute per-column schema actions,
+        # and (unless SimpleTypesOnly) scan for complex-typed columns.
+        # This moves all hashtable lookups and string comparisons out of the hot path.
         if ($null -eq $propNames) {
             $propNames = @($row.PSObject.Properties.Name)
+
+            # Encode schema coercion rules as integers so the inner loop only needs
+            # an array index + switch(int) — no hashtable lookups or string compares.
+            #   0 = no schema entry / BOOLEAN / other  → passthrough
+            #   1 = float column  (DOUBLE / FLOAT / REAL / FLOAT4 / FLOAT8)
+            #   2 = int column    (BIGINT / INTEGER / HUGEINT / INT8 / INT4)
+            #   3 = varchar column (VARCHAR)
+            $colAction = [int[]]::new($propNames.Count)
+            for ($ci = 0; $ci -lt $propNames.Count; $ci++) {
+                $ct = $columnTypes[$propNames[$ci]]
+                if ($null -ne $ct) {
+                    if ($ct -eq 'DOUBLE' -or $ct -eq 'FLOAT' -or $ct -eq 'REAL' -or $ct -eq 'FLOAT4' -or $ct -eq 'FLOAT8') {
+                        $colAction[$ci] = 1
+                    } elseif ($ct -eq 'BIGINT' -or $ct -eq 'INTEGER' -or $ct -eq 'HUGEINT' -or $ct -eq 'INT8' -or $ct -eq 'INT4') {
+                        $colAction[$ci] = 2
+                    } elseif ($ct -eq 'VARCHAR') {
+                        $colAction[$ci] = 3
+                    }
+                }
+            }
+
+            # For non-SimpleTypesOnly: record which columns carry complex objects on
+            # the first row so subsequent rows only call -is/ConvertTo-Json on those.
+            if (-not $SimpleTypesOnly) {
+                $complexCols = [System.Collections.Generic.HashSet[string]]::new()
+                foreach ($name in $propNames) {
+                    $v = $row.$name
+                    if ($null -ne $v -and (
+                        $v -is [System.Collections.IList] -or
+                        $v -is [PSCustomObject] -or
+                        $v -is [System.Collections.IDictionary])) {
+                        [void]$complexCols.Add($name)
+                    }
+                }
+            }
         }
 
         $appenderRow = $appender.CreateRow()
-        foreach ($name in $propNames) {
-            $val = $row.$name
+        for ($ci = 0; $ci -lt $propNames.Count; $ci++) {
+            $val = $row.($propNames[$ci])
+
+            if ($null -eq $val) {
+                # AppendValue([DBNull]::Value) has wrong overload resolution on typed
+                # columns (e.g. resolves to AppendValue(bool) for DOUBLE). Use the
+                # dedicated AppendNullValue() method instead.
+                [void]$appenderRow.AppendNullValue()
+                continue
+            }
+
             # Normalize integer subtypes to Int64 before any other check,
             # because DuckDB.NET appender has no Int32 overload and PowerShell
             # would otherwise fall back to AppendValue(string).
@@ -51,36 +99,24 @@ function Write-DuckDBAppender {
             #   [long] → DOUBLE   reinterprets raw bytes (15 becomes 7.4e-323)
             #   [bool] → BIGINT   throws "Cannot write Boolean to BigInt column"
             #   [long] → VARCHAR  throws "Cannot write Int64 to Varchar column"
-            if ($null -ne $val -and $columnTypes.ContainsKey($name)) {
-                $colType  = $columnTypes[$name]
-                $isFloat  = $colType -eq 'DOUBLE'  -or $colType -eq 'FLOAT' -or
-                            $colType -eq 'REAL'    -or $colType -eq 'FLOAT4' -or $colType -eq 'FLOAT8'
-                $isInt    = $colType -eq 'BIGINT'  -or $colType -eq 'INTEGER' -or
-                            $colType -eq 'HUGEINT' -or $colType -eq 'INT8'   -or $colType -eq 'INT4'
-
-                if ($val -is [bool] -and $colType -ne 'BOOLEAN') {
-                    # bool cannot be appended to non-BOOLEAN columns
-                    if     ($isFloat) { $val = [double][int]$val }
-                    elseif ($isInt)   { $val = [long][int]$val }
-                    else              { $val = [string]$val }
-                } elseif ($val -is [long] -and $isFloat) {
-                    $val = [double]$val
-                } elseif ($val -is [double] -and $isInt) {
-                    $val = [long]$val
-                } elseif ($colType -eq 'VARCHAR' -and ($val -is [long] -or $val -is [double])) {
-                    $val = [string]$val
+            switch ($colAction[$ci]) {
+                1 { # float column
+                    if     ($val -is [bool]) { $val = [double][int]$val }
+                    elseif ($val -is [long]) { $val = [double]$val }
+                }
+                2 { # int column
+                    if     ($val -is [bool])   { $val = [long][int]$val }
+                    elseif ($val -is [double]) { $val = [long]$val }
+                }
+                3 { # varchar column
+                    if ($val -is [long] -or $val -is [double]) { $val = [string]$val }
                 }
             }
-            # Inlined ConvertTo-DuckDBValue
-            if ($null -eq $val) {
-                # AppendValue([DBNull]::Value) has wrong overload resolution on typed
-                # columns (e.g. resolves to AppendValue(bool) for DOUBLE). Use the
-                # dedicated AppendNullValue() method instead.
-                [void]$appenderRow.AppendNullValue()
-            } elseif (-not $SimpleTypesOnly -and (
-                      $val -is [System.Collections.IList] -or
-                      $val -is [PSCustomObject] -or
-                      $val -is [System.Collections.IDictionary])) {
+
+            if ($null -ne $complexCols -and $complexCols.Contains($propNames[$ci]) -and (
+                $val -is [System.Collections.IList] -or
+                $val -is [PSCustomObject] -or
+                $val -is [System.Collections.IDictionary])) {
                 [void]$appenderRow.AppendValue((ConvertTo-Json -InputObject $val -Compress -Depth 10))
             } else {
                 [void]$appenderRow.AppendValue($val)
@@ -88,7 +124,7 @@ function Write-DuckDBAppender {
         }
         $appenderRow.EndRow()
 
-        If ( $i % 10000 -eq 0 ) {
+        if ($i % 100 -eq 0) {
             Write-Verbose "[$TableName] Appender: Row $i written."
         }
     }
