@@ -5,7 +5,7 @@
 RootModule = 'SqlPipeline.psm1'
 
 # Die Versionsnummer dieses Moduls
-ModuleVersion = '0.3.9'
+ModuleVersion = '0.4.0'
 
 # Unterstützte PSEditions
 # CompatiblePSEditions = @()
@@ -126,6 +126,9 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.4.0 Added support for SQLServer, MySQL Postgres through the SimplySQL module
+      Instead of outputting all duckdb expected columns we just log the number of expected columns
+      Fixed a problem with named connections in the Add-RowsToSql function
 0.3.9 Performance improvement for appending rows with complex datatypes (e.g. arrays, objects) by only checking the first row for complex columns and then directly serializing values without checking every time
 0.3.8 Fixed the encryption for DuckDB connections
 0.3.7 DuckDB: multi-row type inference & appender fixes with numeric and boolean types
