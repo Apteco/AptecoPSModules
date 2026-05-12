@@ -5,7 +5,7 @@
 RootModule = 'ImportDependency.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.4.9'
+ModuleVersion = '0.4.10'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -118,6 +118,8 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+0.4.10 Fixed a problem when getting the python path on Windows
+       Fixed a problem with powershell core where a path was tried to be loaded, even when pscore is not installed
 0.4.9 Added a check to remove inaccessible paths from PSModulePath to avoid errors when loading modules
 0.4.8 Added all executionpolicies to Get-PSEnvironment
       Fixed a problem with checking elevation on Linux and MacOS
