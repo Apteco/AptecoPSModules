@@ -31,7 +31,7 @@ function Invoke-BufferedWrite {
 
     # 3. Normalize missing columns
     $expectedCols   = Get-DuckDBColumns -Connection $Connection -TableName $TableName
-    Write-Verbose "[$TableName] Expected columns in DuckDB: $($expectedCols -join ', ')"
+    Write-Verbose "[$TableName] No of expected columns in DuckDB: $( $expectedCols.Count )" #$($expectedCols -join ', ')"
     $normalizedData = $Data | ForEach-Object {
         Repair-DuckDBRow -Row $_ -ExpectedColumns $expectedCols
     }

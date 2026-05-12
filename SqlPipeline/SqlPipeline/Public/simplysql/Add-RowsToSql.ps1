@@ -192,6 +192,27 @@ function Add-RowsToSql {
             throw "Problem with SQL connection"
         }
 
+        $sqlProviderType   = switch -Wildcard ((SimplySql\Get-SqlConnection -ConnectionName $SQLConnectionName).GetType().Name) {
+            "SqlConnection"    { "SqlServer" }
+            "*Sqlite*"         { "SQLite" }
+            "NpgsqlConnection" { "PostGre" }
+            "MySqlConnection"  { "MySql" }
+            default            { "SQLite" }
+        }
+        $sqlColTextType    = if ($sqlProviderType -eq "SqlServer") { "NVARCHAR(MAX)" } else { "TEXT" }
+        $sqlAddColKeyword  = if ($sqlProviderType -eq "SqlServer") { "ADD" } else { "ADD COLUMN" }
+        Write-Verbose "SQL Provider: $( $sqlProviderType )"
+
+        $tableNameParts    = $TableName -split '\.'
+        $sqlTableNameOnly  = $tableNameParts[-1].Trim('[', ']', '"')
+        $sqlSchemaNameOnly = if ($tableNameParts.Count -gt 1) { $tableNameParts[-2].Trim('[', ']', '"') } else { $null }
+        # SQL Server temp tables: bracket-quote the name (handles special chars like -), drop any schema prefix
+        if ($sqlProviderType -eq "SqlServer" -and $sqlTableNameOnly.StartsWith('#')) {
+            $sqlTableIdentifier = "[$sqlTableNameOnly]"
+        } else {
+            $sqlTableIdentifier = ($tableNameParts | ForEach-Object { """$($_.Trim('[', ']', '"'))""" }) -join '.'
+        }
+
 
         #-----------------------------------------------
         # START TRANSACTION, IF SET
@@ -248,30 +269,71 @@ function Add-RowsToSql {
                     $columnParameterText = [Array]@()
                     For ($c = 0; $c -lt $columns.Count; $c++) {
                         $column = $columns[$c]
-                        $columnCreationText += """$( $column )"" TEXT" # TODO Later this could automatically check the DATATYPES
+                        $columnCreationText += """$( $column )"" $sqlColTextType" # TODO Later this could automatically check the DATATYPES
                         $columnParameterText += "@f$( $c )" #"@$( $column )"
                     }
 
-                    # Just try to find out if the table exists
-                    # If it cannot be created, it automatically jumps into the catch part
-                    # If it was able to create it, delete it directly for proper creation later
-                    #
                     $isTableExisting = $false
-                    $tableCheck = SimplySql\Invoke-SqlScalar -Query "SELECT CASE WHEN EXISTS (SELECT 1 FROM sqlite_master WHERE type='table' AND lower(name)=lower('$($TableName)')) THEN 1 ELSE 0 END AS tablecheck;"
+                    $tableExistsQuery = switch ($sqlProviderType) {
+                        "SqlServer" {
+                            if ($sqlTableNameOnly.StartsWith('#')) {
+                                "SELECT CASE WHEN OBJECT_ID(N'tempdb..$sqlTableNameOnly', N'U') IS NOT NULL THEN 1 ELSE 0 END AS tablecheck"
+                            } else {
+                                "SELECT CASE WHEN OBJECT_ID(N'$($TableName)', N'U') IS NOT NULL THEN 1 ELSE 0 END AS tablecheck"
+                            }
+                        }
+                        "PostGre"   {
+                            $sf = if ($sqlSchemaNameOnly) { "AND table_schema=lower('$sqlSchemaNameOnly')" } else { "AND table_schema=current_schema()" }
+                            "SELECT CASE WHEN EXISTS (SELECT 1 FROM information_schema.tables WHERE lower(table_name)=lower('$sqlTableNameOnly') $sf) THEN 1 ELSE 0 END AS tablecheck"
+                        }
+                        "MySql"     {
+                            $sf = if ($sqlSchemaNameOnly) { "AND TABLE_SCHEMA=lower('$sqlSchemaNameOnly')" } else { "AND TABLE_SCHEMA=DATABASE()" }
+                            "SELECT CASE WHEN EXISTS (SELECT 1 FROM information_schema.tables WHERE lower(table_name)=lower('$sqlTableNameOnly') $sf) THEN 1 ELSE 0 END AS tablecheck"
+                        }
+                        default     { "SELECT CASE WHEN EXISTS (SELECT 1 FROM sqlite_master WHERE type='table' AND lower(name)=lower('$sqlTableNameOnly')) THEN 1 ELSE 0 END AS tablecheck;" }
+                    }
+                    $tableCheck = SimplySql\Invoke-SqlScalar -ConnectionName $SQLConnectionName -Query $tableExistsQuery
                     If ( $tableCheck -eq 1) {
                         $isTableExisting = $true
                     }
 
                     # Create table if it is not existing
                     If ( $isTableExisting -eq $false ) {
-                        Write-Verbose "Create table ""$( $TableName )"""
-                        $createQueryText = "CREATE TABLE IF NOT EXISTS ""$( $TableName )"" ( $(( $columnCreationText -join ', ' )) )"
+                        Write-Verbose "Create table $sqlTableIdentifier"
+                        If ($sqlProviderType -eq "SqlServer") {
+                            if ($sqlTableNameOnly.StartsWith('#')) {
+                                $createQueryText = "IF OBJECT_ID(N'tempdb..$sqlTableNameOnly', N'U') IS NULL CREATE TABLE $sqlTableIdentifier ( $(( $columnCreationText -join ', ' )) )"
+                            } else {
+                                $createQueryText = "IF OBJECT_ID(N'$($TableName)', N'U') IS NULL CREATE TABLE $sqlTableIdentifier ( $(( $columnCreationText -join ', ' )) )"
+                            }
+                        } else {
+                            $createQueryText = "CREATE TABLE IF NOT EXISTS $sqlTableIdentifier ( $(( $columnCreationText -join ', ' )) )"
+                        }
                         #Write-Verbose $createQueryText
                         SimplySql\Invoke-SqlUpdate -Query $createQueryText -ConnectionName $SQLConnectionName | Out-Null
                     } else {
 
                         # Read the columns of the table
-                        $tableColumnTable = SimplySql\Invoke-SqlQuery -Query "PRAGMA table_info(""$( $TableName )"");" -Stream -ConnectionName $SQLConnectionName
+                        $tableColumnsQuery = switch ($sqlProviderType) {
+                            "SqlServer" {
+                                if ($sqlTableNameOnly.StartsWith('#')) {
+                                    "SELECT c.name FROM tempdb.sys.columns c WHERE c.object_id = OBJECT_ID(N'tempdb..$sqlTableNameOnly')"
+                                } else {
+                                    $sf = if ($sqlSchemaNameOnly) { "AND lower(TABLE_SCHEMA)=lower('$sqlSchemaNameOnly')" } else { "" }
+                                    "SELECT COLUMN_NAME AS name FROM INFORMATION_SCHEMA.COLUMNS WHERE lower(TABLE_NAME)=lower('$sqlTableNameOnly') $sf"
+                                }
+                            }
+                            "PostGre"   {
+                                $sf = if ($sqlSchemaNameOnly) { "AND table_schema=lower('$sqlSchemaNameOnly')" } else { "AND table_schema=current_schema()" }
+                                "SELECT column_name AS name FROM information_schema.columns WHERE lower(table_name)=lower('$sqlTableNameOnly') $sf"
+                            }
+                            "MySql"     {
+                                $sf = if ($sqlSchemaNameOnly) { "AND TABLE_SCHEMA=lower('$sqlSchemaNameOnly')" } else { "AND TABLE_SCHEMA=DATABASE()" }
+                                "SELECT COLUMN_NAME AS name FROM INFORMATION_SCHEMA.COLUMNS WHERE lower(TABLE_NAME)=lower('$sqlTableNameOnly') $sf"
+                            }
+                            default     { "PRAGMA table_info(""$sqlTableNameOnly"");" }
+                        }
+                        $tableColumnTable = SimplySql\Invoke-SqlQuery -Query $tableColumnsQuery -Stream -ConnectionName $SQLConnectionName
                         $tableColumns = @( $tableColumnTable.name )
 
                         # If the table is existing, create new columns, if parameter is set
@@ -281,7 +343,7 @@ function Add-RowsToSql {
                             For ($c = 0; $c -lt $columns.Count; $c++) {
                                 $column = $columns[$c]
                                 If ( $tableColumns -notcontains $column ) {
-                                    SimplySql\Invoke-SqlUpdate -Query "ALTER TABLE ""$( $TableName )"" ADD ""$( $column )""" -ConnectionName $SQLConnectionName | Out-Null
+                                    SimplySql\Invoke-SqlUpdate -Query "ALTER TABLE $sqlTableIdentifier $sqlAddColKeyword ""$( $column )"" $sqlColTextType" -ConnectionName $SQLConnectionName | Out-Null
                                 }
                             }
 
@@ -290,7 +352,7 @@ function Add-RowsToSql {
                     }
 
                     # Create the insert query
-                    $insertQuery = "INSERT INTO ""$( $TableName )"" (""$(( $columns -join '", "' ))"") VALUES ($(( $columnParameterText -join ', ' )))"
+                    $insertQuery = "INSERT INTO $sqlTableIdentifier (""$(( $columns -join '", "' ))"") VALUES ($(( $columnParameterText -join ', ' )))"
                     #Write-Verbose $insertQuery
 
                 }
@@ -324,7 +386,7 @@ function Add-RowsToSql {
                         $parameterObject["@f$( $i )"] = $InputObject.$key
                     }
                 }
-                $recordsInserted += SimplySql\Invoke-SqlUpdate -Query $insertQuery -Parameters $parameterObject -ConnectionName $SQLConnectionName #| Out-Null
+                $recordsInserted += SimplySql\Invoke-SqlUpdate -ConnectionName $SQLConnectionName -Query $insertQuery -Parameters $parameterObject
 
 
                 #-----------------------------------------------
