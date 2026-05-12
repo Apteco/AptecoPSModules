@@ -222,8 +222,8 @@ Write-Verbose "Checking more details about PS Core"
 
 # Check if pscore is installed
 $pwshCommand = Get-Command -commandType Application -Name "pwsh*"
-$Script:defaultPsCoreVersion = $pwshCommand[0].Version
 If ( $pwshCommand.Count -gt 0 ) {
+    $Script:defaultPsCoreVersion = $pwshCommand[0].Version
     $Script:isCoreInstalled = $true
     if ($Script:os -eq "Windows") {
         # For Windows
