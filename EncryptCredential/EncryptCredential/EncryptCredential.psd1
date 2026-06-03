@@ -4,7 +4,7 @@
 RootModule = 'EncryptCredential.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.3.1'
+ModuleVersion = '0.3.2'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -135,6 +135,7 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = "
+0.3.2 Fixed a bug where the module would not properly handle cases where the keyfile did not exist. Using New-Keyfile now instead of Create-Keyfile
 0.3.1 Fixed returning an exception, when decryption failed instead of writing
       an error and returning an empty string
 0.3.0 Reworked the module with Claude AI to be more secure and robust, now using another way to create

@@ -1,29 +1,3 @@
-<#
-"Hello World" | Get-PlaintextToSecure | Get-SecureToPlaintext
-
-WARNUNG: No keyfile present at '.\aes.key'. Creating it now
-Hello World
-
-
-"Hello World" | Get-PlaintextToSecure
-76492d1116743f0423413b16050a5345MgB8AHIATAAyADEAcwBiAGsATwBJAEgANQBFAEUAbwBsAHUANABWAE8AaQBtAEEAPQA9AHwAMQBmADMANAA0ADAAMAA2AGYANABmAGQAOQBmAGYAYwA4AGMAYQA0ADkAOQBjADcAZQA4ADEANgAxAGIANAAxADMANgBlADMANQAwADEAYgBiADEAZABkAGQAMgAzADAAMgA5AGQANQBmADgAMABkAGUANABmAGEANAAwAGMAMwA=
-
-
-Save this text into a variable like
-
-$t = "Hello World" | Get-PlaintextToSecure
-
-And decrypt it with
-
-$t | Get-SecureToPlaintext
-Hello World
-
-Please don't try to move the keyfile or the encrypted string to another machine. It uses a combination of AES encryption and SecureString, where the last one is dependent on the current machine or account.
-You can only decrypt the text on the same machine/account where you have encrypted it.
-
-If you don't provide a keyfile, it will be automatically generated with your first call of 'Get-PlaintextToSecure'
-
-#>
 
 Function Convert-PlaintextToSecure {
 
@@ -69,7 +43,7 @@ Function Convert-PlaintextToSecure {
 
         # Create the file, if not existing yet
         If ( (Test-Path -Path $Script:keyfile) -eq $false ) {
-            Create-KeyFile -Path $Script:keyfile -ByteLength 32
+            New-KeyFile -Path $Script:keyfile -ByteLength 32
         }
 
     }
