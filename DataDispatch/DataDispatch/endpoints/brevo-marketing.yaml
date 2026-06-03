@@ -1,0 +1,119 @@
+# endpoints/brevo-marketing.yaml
+# Dispatch-Konfiguration für den Endpunkt "brevo-marketing"
+# Ein Eintrag pro Ziel — alle Ziele werden pro Run verarbeitet.
+
+endpoint: brevo-marketing
+enabled: true
+batchSize: 100          # Records pro Run und Ziel
+
+targets:
+
+  # -------------------------------------------------------
+  # Ziel 1: CSV-Export — alle Felder automatisch
+  # -------------------------------------------------------
+  - name: "CSV Tagesexport"
+    type: csv
+    path: 'D:\Exports\brevo\{date}.csv'
+    delimiter: ";"
+    encoding: UTF8
+    append: true           # an Tagesdatei anhängen
+    includeHeaders: true
+
+  # -------------------------------------------------------
+  # Ziel 2: CSV-Export — explizite Spalten
+  # -------------------------------------------------------
+  - name: "CSV Email-Liste"
+    type: csv
+    path: 'D:\Exports\brevo\emails\{datetime}.csv'
+    delimiter: ","
+    encoding: UTF8BOM      # Excel-kompatibel
+    append: false
+    includeHeaders: true
+    columns:
+      - field: id
+        header: EventId
+      - field: received_at
+        header: Empfangen
+      - field: payload.email
+        header: Email
+      - field: payload.event
+        header: EventTyp
+      - field: payload.message_id
+        header: MessageId
+      - field: "$"
+        header: RawPayload
+
+  # -------------------------------------------------------
+  # Ziel 3: JSON Array
+  # -------------------------------------------------------
+  - name: "JSON Export"
+    type: json
+    path: 'D:\Exports\brevo\json\{datetime}.json'
+    pretty: true
+    mode: array
+    fields:
+      - field: id
+        as: eventId
+      - field: received_at
+        as: receivedAt
+      - field: payload.email
+        as: email
+      - field: payload.event
+        as: eventType
+      - field: "$"
+        as: fullPayload
+
+  # -------------------------------------------------------
+  # Ziel 4: SQL Server Tabellen-Mapping (andere Datenbank)
+  # -------------------------------------------------------
+  - name: "CRM Tabelle"
+    type: sqlserver
+    windowsAuth: true
+    server: localhost      # optional, sonst aus .env
+    database: CRM
+    table: dbo.BrevoEvents
+    columnMapping:
+      Email:       payload.email
+      EventType:   payload.event
+      MessageId:   payload.message_id
+      RawPayload:  "$"
+      ReceivedAt:  received_at
+
+  # -------------------------------------------------------
+  # Ziel 5: SQL Server Stored Procedure
+  # -------------------------------------------------------
+  - name: "CRM via SP"
+    type: sqlserver
+    windowsAuth: true
+    database: CRM
+    query: "EXEC dbo.usp_ImportBrevoEvent @email, @event_type, @payload"
+    parameters:
+      email:       payload.email
+      event_type:  payload.event
+      payload:     "$"
+
+  # -------------------------------------------------------
+  # Ziel 6: DuckDB Analytics
+  # -------------------------------------------------------
+  - name: "Analytics DuckDB"
+    type: duckdb
+    database: 'D:\Analytics\events.duckdb'
+    table: brevo_events
+    columnMapping:
+      email:       payload.email
+      event_type:  payload.event
+      payload:     "$"
+      received_at: received_at
+
+  # -------------------------------------------------------
+  # Ziel 7: SQL Server via SQL-Datei
+  # -------------------------------------------------------
+  - name: "CRM via SQL-Datei"
+    type: sqlserver
+    windowsAuth: true
+    database: CRM
+    queryFile: 'C:\FastStats\Scripts\webhook-dispatcher\sql\import-brevo.sql'
+    parameters:
+      email:       payload.email
+      event_type:  payload.event
+      payload:     "$"

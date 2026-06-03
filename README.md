@@ -29,6 +29,7 @@ Name|Type|Repository/<br/>Version|Platform|Tests|Downloads|
 [SqlPipeline](SqlPipeline/)|Module|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/SqlPipeline)](https://www.powershellgallery.com/packages/SqlPipeline)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/SqlPipeline)](https://www.powershellgallery.com/packages/SqlPipeline)<br/>![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)<br/>![Minimum Supported PowerShell Core Version](https://img.shields.io/badge/PSCore-7.0-blue.svg)|[![Pester Testing](https://img.shields.io/github/actions/workflow/status/Apteco/AptecoPSModules/sqlpipeline.tests.yml?branch=dev&label=Pester)](https://github.com/Apteco/AptecoPSModules/actions/workflows/sqlpipeline.tests.yml)|[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/SqlPipeline)](https://www.powershellgallery.com/packages/SqlPipeline)
 [OSMGeocode](OSMGeocode/)|Module|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/OSMGeocode)](https://www.powershellgallery.com/packages/OSMGeocode)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/OSMGeocode)](https://www.powershellgallery.com/packages/OSMGeocode)<br/>![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)||[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/OSMGeocode)](https://www.powershellgallery.com/packages/OSMGeocode)
 [ImportDependency](ImportDependency/)|Module|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/ImportDependency)](https://www.powershellgallery.com/packages/ImportDependency)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/ImportDependency)](https://www.powershellgallery.com/packages/ImportDependency)<br/>![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)||[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/ImportDependency)](https://www.powershellgallery.com/packages/ImportDependency)
+[DataDispatch](DataDispatch/)|Module|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/DataDispatch)](https://www.powershellgallery.com/packages/DataDispatch)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/DataDispatch)](https://www.powershellgallery.com/packages/DataDispatch)<br/>![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)||[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/DataDispatch)](https://www.powershellgallery.com/packages/DataDispatch)
 
 # Installation / Update
 
@@ -371,4 +372,16 @@ Import-Dependency -Module "WriteLog" -LocalPackage "System.Data.SQLite", "Npgsql
 
 ```PowerShell
 Import-Dependency -LocalPackageFolder "lib" -LoadWholePackageFolder -verbose```
+
+## DataDispatch
+
+Reads processed webhook events from SQL Server (`dbo.WebhookEvents`) and distributes them to configurable targets — SQL Server tables, stored procedures, CSV files, JSON/JSONL files, and DuckDB — based on YAML endpoint definitions. Runs as a Windows Scheduled Task every N minutes with automatic retry on failure.
+
+Use `Copy-DataDispatch` to deploy the dispatcher files to a target directory, then configure `.env` and `endpoints/*.yaml` before registering the Scheduled Task.
+
+```PowerShell
+Install-Module DataDispatch
+Import-Module DataDispatch
+Copy-DataDispatch -Destination 'C:\FastStats\Scripts\DataDispatch'
+```
 
