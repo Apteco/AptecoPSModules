@@ -1,0 +1,11 @@
+# Abhängigkeiten
+node_modules/
+
+# Lokale Konfiguration (enthält Secrets)
+.env
+
+# SQLite Datenbank
+data/
+
+# pm2 Laufzeitdaten (Logs, PIDs, dump)
+.pm2/
