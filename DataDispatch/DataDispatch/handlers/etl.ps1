@@ -29,6 +29,8 @@ YAML-Konfiguration:
         ZielName:    FullName
 #>
 
+# Password is read from an environment variable and must be converted for SimplySql credential auth.
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingConvertToSecureStringWithPlainText', '')]
 param(
     [object[]]  $Records,
     [hashtable] $Config,
