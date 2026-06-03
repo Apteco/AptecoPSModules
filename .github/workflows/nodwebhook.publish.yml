@@ -1,0 +1,127 @@
+name: NodeWebhook Publish
+
+on:
+  # Publish when the .psd1 lands on main (i.e. after a PR is merged)
+  push:
+    branches:
+      - main
+    paths:
+      - 'NodeWebhook/NodeWebhook/NodeWebhook.psd1'
+
+  # Allow manual re-publish from the Actions tab
+  workflow_dispatch:
+
+# Prevent two publish runs for the same module from overlapping
+concurrency:
+  group: nodwebhook-publish
+  cancel-in-progress: false
+
+jobs:
+
+  # ── 1. Lint ────────────────────────────────────────────────────────────────
+  lint:
+    name: PSScriptAnalyzer
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install PSScriptAnalyzer
+        shell: pwsh
+        run: Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
+
+      - name: Analyse — errors (blocking)
+        shell: pwsh
+        run: |
+          $results = Invoke-ScriptAnalyzer `
+            -Path 'NodeWebhook/NodeWebhook' `
+            -Recurse `
+            -Severity Error
+          if ($results) {
+            $results | Format-Table RuleName, Severity, ScriptName, Line, Message -AutoSize
+            Write-Error "PSScriptAnalyzer found $($results.Count) error(s). Fix before publishing."
+            exit 1
+          }
+          Write-Host "No errors found." -ForegroundColor Green
+
+      - name: Analyse — warnings (informational)
+        shell: pwsh
+        run: |
+          $results = Invoke-ScriptAnalyzer `
+            -Path 'NodeWebhook/NodeWebhook' `
+            -Recurse `
+            -Severity Warning
+          if ($results) {
+            $results | Format-Table RuleName, Severity, ScriptName, Line, Message -AutoSize
+            Write-Warning "$($results.Count) warning(s) found (not blocking)."
+          } else {
+            Write-Host "No warnings found." -ForegroundColor Green
+          }
+
+  # ── 2. Version check ───────────────────────────────────────────────────────
+  version-check:
+    name: Version check
+    runs-on: windows-latest
+    outputs:
+      should_publish: ${{ steps.check.outputs.should_publish }}
+      version: ${{ steps.check.outputs.version }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compare local version with PSGallery
+        id: check
+        shell: pwsh
+        run: |
+          $psd1    = Import-PowerShellDataFile 'NodeWebhook/NodeWebhook/NodeWebhook.psd1'
+          $local   = [version]$psd1.ModuleVersion
+          Write-Host "Local version : $local"
+
+          $gallery = Find-Module NodeWebhook -Repository PSGallery -ErrorAction SilentlyContinue
+          if ($gallery) {
+            $remote = [version]$gallery.Version
+            Write-Host "Gallery version: $remote"
+            if ($local -gt $remote) {
+              Write-Host "New version — will publish." -ForegroundColor Green
+              "should_publish=true"  >> $env:GITHUB_OUTPUT
+            } else {
+              Write-Host "Version $local already on PSGallery — skipping publish." -ForegroundColor Yellow
+              "should_publish=false" >> $env:GITHUB_OUTPUT
+            }
+          } else {
+            Write-Host "Module not yet on PSGallery — will publish." -ForegroundColor Green
+            "should_publish=true" >> $env:GITHUB_OUTPUT
+          }
+          "version=$local" >> $env:GITHUB_OUTPUT
+
+  # ── 3. Publish ─────────────────────────────────────────────────────────────
+  publish:
+    name: Publish to PSGallery
+    needs: [ lint, version-check ]
+    if: needs.version-check.outputs.should_publish == 'true'
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fix trailing whitespace
+        shell: pwsh
+        run: |
+          Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
+          Invoke-ScriptAnalyzer `
+            -Path 'NodeWebhook/NodeWebhook' `
+            -Recurse `
+            -IncludeRule PSAvoidTrailingWhitespace `
+            -Fix
+
+      - name: Publish
+        shell: pwsh
+        run: |
+          $path = 'NodeWebhook/NodeWebhook'
+          Set-PSRepository PSGallery -InstallationPolicy Trusted
+          Publish-Module `
+            -Path      $path `
+            -NuGetApiKey ${{ secrets.NUGET_API_KEY }} `
+            -Repository PSGallery `
+            -Verbose
+          Write-Host "Published NodeWebhook ${{ needs.version-check.outputs.version }}" -ForegroundColor Green

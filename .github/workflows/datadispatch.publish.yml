@@ -1,0 +1,144 @@
+name: DataDispatch Publish
+
+on:
+  # Publish when the .psd1 lands on main (i.e. after a PR is merged)
+  push:
+    branches:
+      - main
+    paths:
+      - 'DataDispatch/DataDispatch/DataDispatch.psd1'
+
+  # Allow manual re-publish from the Actions tab
+  workflow_dispatch:
+
+# Prevent two publish runs for the same module from overlapping
+concurrency:
+  group: datadispatch-publish
+  cancel-in-progress: false
+
+jobs:
+
+  # ── 1. Lint ────────────────────────────────────────────────────────────────
+  lint:
+    name: PSScriptAnalyzer
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        shell: pwsh
+        run: |
+          # Install runtime dependencies so PSScriptAnalyzer can resolve their cmdlets
+          # (WriteLog, SimplySql, powershell-yaml are used by the handlers at runtime)
+          Set-PSRepository PSGallery -InstallationPolicy Trusted
+          Install-Module PSScriptAnalyzer -Force  -Scope CurrentUser
+          Install-Module WriteLog         -Force  -Scope CurrentUser
+          Install-Module SimplySql        -Force  -Scope CurrentUser
+          Install-Module powershell-yaml  -Force  -Scope CurrentUser
+          Install-Module ImportDependency -Force  -Scope CurrentUser
+
+      - name: Analyse — errors (blocking)
+        shell: pwsh
+        run: |
+          $results = Invoke-ScriptAnalyzer `
+            -Path 'DataDispatch/DataDispatch' `
+            -Recurse `
+            -Severity Error
+          if ($results) {
+            $results | Format-Table RuleName, Severity, ScriptName, Line, Message -AutoSize
+            Write-Error "PSScriptAnalyzer found $($results.Count) error(s). Fix before publishing."
+            exit 1
+          }
+          Write-Host "No errors found." -ForegroundColor Green
+
+      - name: Analyse — warnings (informational)
+        shell: pwsh
+        run: |
+          $results = Invoke-ScriptAnalyzer `
+            -Path 'DataDispatch/DataDispatch' `
+            -Recurse `
+            -Severity Warning
+          if ($results) {
+            $results | Format-Table RuleName, Severity, ScriptName, Line, Message -AutoSize
+            Write-Warning "$($results.Count) warning(s) found (not blocking)."
+          } else {
+            Write-Host "No warnings found." -ForegroundColor Green
+          }
+
+  # ── 2. Version check ───────────────────────────────────────────────────────
+  version-check:
+    name: Version check
+    runs-on: windows-latest
+    outputs:
+      should_publish: ${{ steps.check.outputs.should_publish }}
+      version: ${{ steps.check.outputs.version }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compare local version with PSGallery
+        id: check
+        shell: pwsh
+        run: |
+          $psd1    = Import-PowerShellDataFile 'DataDispatch/DataDispatch/DataDispatch.psd1'
+          $local   = [version]$psd1.ModuleVersion
+          Write-Host "Local version : $local"
+
+          $gallery = Find-Module DataDispatch -Repository PSGallery -ErrorAction SilentlyContinue
+          if ($gallery) {
+            $remote = [version]$gallery.Version
+            Write-Host "Gallery version: $remote"
+            if ($local -gt $remote) {
+              Write-Host "New version — will publish." -ForegroundColor Green
+              "should_publish=true"  >> $env:GITHUB_OUTPUT
+            } else {
+              Write-Host "Version $local already on PSGallery — skipping publish." -ForegroundColor Yellow
+              "should_publish=false" >> $env:GITHUB_OUTPUT
+            }
+          } else {
+            Write-Host "Module not yet on PSGallery — will publish." -ForegroundColor Green
+            "should_publish=true" >> $env:GITHUB_OUTPUT
+          }
+          "version=$local" >> $env:GITHUB_OUTPUT
+
+  # ── 3. Publish ─────────────────────────────────────────────────────────────
+  publish:
+    name: Publish to PSGallery
+    needs: [ lint, version-check ]
+    if: needs.version-check.outputs.should_publish == 'true'
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        shell: pwsh
+        run: |
+          Set-PSRepository PSGallery -InstallationPolicy Trusted
+          Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
+          Install-Module WriteLog         -Force -Scope CurrentUser
+          Install-Module SimplySql        -Force -Scope CurrentUser
+          Install-Module powershell-yaml  -Force -Scope CurrentUser
+          Install-Module ImportDependency -Force -Scope CurrentUser
+
+      - name: Fix trailing whitespace
+        shell: pwsh
+        run: |
+          Invoke-ScriptAnalyzer `
+            -Path 'DataDispatch/DataDispatch' `
+            -Recurse `
+            -IncludeRule PSAvoidTrailingWhitespace `
+            -Fix
+
+      - name: Publish
+        shell: pwsh
+        run: |
+          $path = 'DataDispatch/DataDispatch'
+          Set-PSRepository PSGallery -InstallationPolicy Trusted
+          Publish-Module `
+            -Path        $path `
+            -NuGetApiKey ${{ secrets.NUGET_API_KEY }} `
+            -Repository  PSGallery `
+            -Verbose
+          Write-Host "Published DataDispatch ${{ needs.version-check.outputs.version }}" -ForegroundColor Green
