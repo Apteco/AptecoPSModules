@@ -29,6 +29,7 @@ Name|Type|Repository/<br/>Version|Platform|Tests|Downloads|
 [SqlPipeline](SqlPipeline/)|Module|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/SqlPipeline)](https://www.powershellgallery.com/packages/SqlPipeline)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/SqlPipeline)](https://www.powershellgallery.com/packages/SqlPipeline)<br/>![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)<br/>![Minimum Supported PowerShell Core Version](https://img.shields.io/badge/PSCore-7.0-blue.svg)|[![Pester Testing](https://img.shields.io/github/actions/workflow/status/Apteco/AptecoPSModules/sqlpipeline.tests.yml?branch=dev&label=Pester)](https://github.com/Apteco/AptecoPSModules/actions/workflows/sqlpipeline.tests.yml)|[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/SqlPipeline)](https://www.powershellgallery.com/packages/SqlPipeline)
 [OSMGeocode](OSMGeocode/)|Module|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/OSMGeocode)](https://www.powershellgallery.com/packages/OSMGeocode)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/OSMGeocode)](https://www.powershellgallery.com/packages/OSMGeocode)<br/>![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)||[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/OSMGeocode)](https://www.powershellgallery.com/packages/OSMGeocode)
 [ImportDependency](ImportDependency/)|Module|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/ImportDependency)](https://www.powershellgallery.com/packages/ImportDependency)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/ImportDependency)](https://www.powershellgallery.com/packages/ImportDependency)<br/>![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)||[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/ImportDependency)](https://www.powershellgallery.com/packages/ImportDependency)
+[NodeWebhook](NodeWebhook/)|Module|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/NodeWebhook)](https://www.powershellgallery.com/packages/NodeWebhook)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/NodeWebhook)](https://www.powershellgallery.com/packages/NodeWebhook)<br/>![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)||[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/NodeWebhook)](https://www.powershellgallery.com/packages/NodeWebhook)
 [DataDispatch](DataDispatch/)|Module|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/DataDispatch)](https://www.powershellgallery.com/packages/DataDispatch)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/DataDispatch)](https://www.powershellgallery.com/packages/DataDispatch)<br/>![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)||[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/DataDispatch)](https://www.powershellgallery.com/packages/DataDispatch)
 
 # Installation / Update
@@ -372,6 +373,20 @@ Import-Dependency -Module "WriteLog" -LocalPackage "System.Data.SQLite", "Npgsql
 
 ```PowerShell
 Import-Dependency -LocalPackageFolder "lib" -LoadWholePackageFolder -verbose```
+
+## NodeWebhook
+
+A Node.js webhook receiver (Fastify 5) with a SQLite queue and a SQL Server worker, packaged as a PowerShell module for easy deployment on Windows servers with IIS.
+
+Use `Copy-NodeWebhook` to deploy the application files to a target directory, then run `setup.ps1` to install npm dependencies, configure IIS ARR as a reverse proxy, and register pm2 as an autostart Windows service.
+
+An optional `pm2_watchdog.ps1` script can be scheduled to monitor process health and restart crashed apps automatically.
+
+```PowerShell
+Install-Module NodeWebhook
+Import-Module NodeWebhook
+Copy-NodeWebhook -Destination 'C:\FastStats\Scripts\node_webhook'
+```
 
 ## DataDispatch
 

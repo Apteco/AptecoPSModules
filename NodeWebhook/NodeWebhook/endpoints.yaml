@@ -1,0 +1,52 @@
+# endpoints.yaml
+# Erreichbar unter: POST /webhook/<name>/<key>
+#
+# Absicherung pro Endpunkt — alle Felder ausser "key" sind optional:
+#
+#   key           – URL-Key (Pflicht), wird in der URL übergeben
+#   apiKey        – Wert der im Header erwartet wird
+#   apiKeyHeader  – Header-Name für apiKey (default: x-api-key)
+#   bearerToken   – Bearer Token (Authorization: Bearer <token>)
+#   allowedIps    – IP-Whitelist (leer = alle erlaubt)
+#   bodyLimit     – max. Payload-Größe in Bytes (default: 1 MB)
+#   headers       – zusätzliche Header in DB speichern
+#   description   – Freitext, nur zur Dokumentation
+
+endpoints:
+
+  brevo-marketing:
+    key: "reygz6r3tj2s8219eb5dnvjmez4h9fh"
+    description: "Brevo Marketing Webhook mit Bearer Token"
+    bearerToken: "ce159d9b-4857-4303-b23f-c22e98a328ea"
+
+  # Beispiel 1: nur URL-Key
+  einfach:
+    key: "url-secret-abc123"
+    description: "Minimale Absicherung — nur URL-Key"
+
+  # Beispiel 2: URL-Key + X-Api-Key Header
+  mit-api-key:
+    key: "url-secret-xyz"
+    description: "URL-Key und API-Key Header"
+    apiKey: "mein-api-key-geheim"
+    apiKeyHeader: "x-api-key"         # default, kann weggelassen werden
+
+  # Beispiel 3: URL-Key + Bearer Token
+  mit-bearer:
+    key: "url-secret-456"
+    description: "URL-Key und Bearer Token"
+    bearerToken: "mein-bearer-token-geheim"
+
+  # Beispiel 4: alle Sicherheitsstufen kombiniert
+  maximal:
+    key: "url-secret-789"
+    description: "URL-Key + API-Key Header + Bearer Token + IP-Whitelist"
+    apiKey: "api-key-geheim"
+    apiKeyHeader: "x-api-key"
+    bearerToken: "bearer-token-geheim"
+    allowedIps:
+      - "10.0.0.1"
+      - "192.168.1.100"
+    bodyLimit: 524288                  # 512 KB
+    headers:
+      - "x-custom-event"
