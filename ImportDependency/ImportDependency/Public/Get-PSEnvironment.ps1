@@ -106,7 +106,7 @@
             "FrameworkPreference"           = $Script:frameworkPreference -join ', '
             "PackageManagement"             = $Script:packageManagement
             "PowerShellGet"                 = $Script:powerShellGet
-            "VcRedist"                      = $Script:vcredist
+            "VcRedist"                      = Get-VcRedistStatus              # Always re-checked live, not cached from import time
             "BackgroundCheckCompleted"      = $didBackgroundCheck
             "InstalledModules"              = $Script:installedModules              # This is updated by a background job
             "InstalledGlobalPackages"       = $Script:installedGlobalPackages       # This is updated by a background job

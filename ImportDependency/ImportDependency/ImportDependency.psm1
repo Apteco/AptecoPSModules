@@ -588,53 +588,10 @@ If ( $Script:isCoreInstalled -eq $True ) {
 
 Write-Verbose "Checking VCRedist"
 
-# Check the vcredist installation
-$vcredistInstalled = $False
-$vcredist64 = $False
-$vcRedistCollection = $null
-
-# Possible registry paths for Visual C++ Redistributable installations
-If ( $Script:os -eq "Windows" ) {
-
-    try {
-
-        # Attempt to retrieve the Visual C++ Redistributable 14 registry entry
-        $vcReg = [Array]@( Get-ItemProperty 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\VisualStudio\*\VC\Runtimes\*' -ErrorAction Stop )
-
-        If ( $vcReg.Count -gt 0 ) {
-            $vcredistInstalled = $True
-
-            $vcRedistCollection = [hashtable]@{}
-            $vcReg | ForEach-Object {
-                $vcRegItem = $_
-                If ( $vcRegItem.PSChildName -like "*64" -and $vcRegItem.Installed -gt 0 ) {
-                    $vcredist64 = $True
-                }
-                $vcRedistCollection.Add($vcRegItem.PSChildName, ([PSCustomObject]@{
-                            "Version"   = $vcRegItem.Version
-                            "Major"     = $vcRegItem.Major
-                            "Minor"     = $vcRegItem.Minor
-                            "Build"     = $vcRegItem.Build
-                            "Installed" = $vcRegItem.Installed
-                        }
-                    )
-                )
-
-            }
-
-        }
-    } catch {
-        Write-Verbose "VCRedist is not installed"
-    }
-
-
-}
-
-$Script:vcredist = [PSCustomObject]@{
-    "installed" = $vcredistInstalled
-    "is64bit"   = $vcredist64
-    "versions" = $vcRedistCollection
-}
+# Initial snapshot at import time. Get-PSEnvironment re-checks this live on every call via
+# Get-VcRedistStatus rather than reading this cached value, since vcredist can be installed
+# after this module was imported (e.g. via InstallDependency's Install-VcRedist).
+$Script:vcredist = Get-VcRedistStatus
 
 
 #-----------------------------------------------
