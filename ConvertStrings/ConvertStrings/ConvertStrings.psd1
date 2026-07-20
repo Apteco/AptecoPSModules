@@ -4,7 +4,7 @@
 RootModule = 'ConvertStrings.psm1'
 
 # Die Versionsnummer dieses Moduls
-ModuleVersion = '0.0.6'
+ModuleVersion = '0.1.0'
 
 # Unterstützte PSEditions
 # CompatiblePSEditions = @()
@@ -76,6 +76,7 @@ FunctionsToExport = @(
     'Get-StringHash'
     'Convert-StringEncoding'
     'Get-RandomString'
+    'Add-BomIfMissing'
 )
 
 # Aus diesem Modul zu exportierende Cmdlets. Um optimale Leistung zu erzielen, verwenden Sie keine Platzhalter und löschen den Eintrag nicht. Verwenden Sie ein leeres Array, wenn keine zu exportierenden Cmdlets vorhanden sind.
@@ -115,6 +116,7 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.1.0 New function Add-BomIfMissing to add a BOM to a file if it is missing
 0.0.6 Updated copyright to 2025
 0.0.5 Bumped the copyright year to 2024
 0.0.4 Fixed the function name for Set-Token (removed the plural)
