@@ -12,7 +12,7 @@
 RootModule = 'InvokeWebRequestUTF8.psm1'
 
 # Die Versionsnummer dieses Moduls
-ModuleVersion = '0.1.0'
+ModuleVersion = '0.1.1'
 
 # Unterstützte PSEditions
 # CompatiblePSEditions = @()
@@ -27,7 +27,7 @@ Author = 'florian.von.bracht@apteco.de'
 CompanyName = 'Apteco GmbH'
 
 # Urheberrechtserklärung für dieses Modul
-Copyright = '(c) 2025 Apteco GmbH. All rights reserved.'
+Copyright = '(c) 2026 Apteco GmbH. All rights reserved.'
 
 # Beschreibung der von diesem Modul bereitgestellten Funktionen
 Description = 'Apteco PS Modules - PowerShell WebRequest UTF8
@@ -119,6 +119,7 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.1.1 Fixing parameter notation from [string] to [String] for Body parameter in Invoke-WebRequestUTF8 function
 0.1.0 Added support for UTF8 body data. So both directions work now with UTF8 encoding in PowerShell 5.1
 0.0.5 Updated copyright to 2025
 0.0.4 Bumped the copyright year to 2024

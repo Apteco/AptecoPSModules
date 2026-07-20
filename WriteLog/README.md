@@ -5,7 +5,7 @@ Execute commands like
 
 ```PowerShell
 Write-Log -message "Hello World"
-Write-Log -message "Hello World" -severity ([LogSeverity]::ERROR)
+Write-Log -message "Hello World" -severity ERROR
 "Hello World" | Write-Log
 ```
 

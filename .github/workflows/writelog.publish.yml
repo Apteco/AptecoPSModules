@@ -1,42 +1,127 @@
-# This is a basic workflow to help you get started with Actions
 name: WriteLog Publish
 
-# Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the "main" branch
-  pull_request:
+  # Publish when the .psd1 lands on main (i.e. after a PR is merged)
+  push:
     branches:
       - main
-    types: [opened, synchronize, reopened]
     paths:
-      - 'WriteLog/**.psd1'
+      - 'WriteLog/WriteLog/WriteLog.psd1'
 
-  # Allows you to run this workflow manually from the Actions tab
+  # Allow manual re-publish from the Actions tab
   workflow_dispatch:
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+# Prevent two publish runs for the same module from overlapping
+concurrency:
+  group: writelog-publish
+  cancel-in-progress: false
+
 jobs:
-  # This workflow contains a single job called "build"
-  psgallery_publish:
 
-    # This job will only run if the pull request is from the 'dev' branch to the 'main' branch
-    if: github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'dev'
-
-    # The type of runner that the job will run on
+  # ── 1. Lint ────────────────────────────────────────────────────────────────
+  lint:
+    name: PSScriptAnalyzer
     runs-on: windows-latest
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - name: checkout
-        uses: actions/checkout@v5
+      - uses: actions/checkout@v5
 
-      # Runs a set of commands using the runners shell
-      - name: Publishing
+      - name: Install PSScriptAnalyzer
+        shell: pwsh
+        run: Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
+
+      - name: Analyse — errors (blocking)
         shell: pwsh
         run: |
-          $path = "WriteLog/WriteLog"
-          Install-Module -Name PSScriptAnalyzer -force
-          Import-Module PSScriptAnalyzer
-          Invoke-ScriptAnalyzer -Path $path -Recurse -IncludeRule PSAvoidTrailingWhitespace -Fix
-          Publish-Module -Path $path -NuGetApiKey ${{ secrets.NUGET_API_KEY }} -Repository PSGallery
+          $results = Invoke-ScriptAnalyzer `
+            -Path 'WriteLog/WriteLog' `
+            -Recurse `
+            -Severity Error
+          if ($results) {
+            $results | Format-Table RuleName, Severity, ScriptName, Line, Message -AutoSize
+            Write-Error "PSScriptAnalyzer found $($results.Count) error(s). Fix before publishing."
+            exit 1
+          }
+          Write-Host "No errors found." -ForegroundColor Green
+
+      - name: Analyse — warnings (informational)
+        shell: pwsh
+        run: |
+          $results = Invoke-ScriptAnalyzer `
+            -Path 'WriteLog/WriteLog' `
+            -Recurse `
+            -Severity Warning
+          if ($results) {
+            $results | Format-Table RuleName, Severity, ScriptName, Line, Message -AutoSize
+            Write-Warning "$($results.Count) warning(s) found (not blocking)."
+          } else {
+            Write-Host "No warnings found." -ForegroundColor Green
+          }
+
+  # ── 2. Version check ───────────────────────────────────────────────────────
+  version-check:
+    name: Version check
+    runs-on: windows-latest
+    outputs:
+      should_publish: ${{ steps.check.outputs.should_publish }}
+      version: ${{ steps.check.outputs.version }}
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Compare local version with PSGallery
+        id: check
+        shell: pwsh
+        run: |
+          $psd1    = Import-PowerShellDataFile 'WriteLog/WriteLog/WriteLog.psd1'
+          $local   = [version]$psd1.ModuleVersion
+          Write-Host "Local version : $local"
+
+          $gallery = Find-Module WriteLog -Repository PSGallery -ErrorAction SilentlyContinue
+          if ($gallery) {
+            $remote = [version]$gallery.Version
+            Write-Host "Gallery version: $remote"
+            if ($local -gt $remote) {
+              Write-Host "New version — will publish." -ForegroundColor Green
+              "should_publish=true"  >> $env:GITHUB_OUTPUT
+            } else {
+              Write-Host "Version $local already on PSGallery — skipping publish." -ForegroundColor Yellow
+              "should_publish=false" >> $env:GITHUB_OUTPUT
+            }
+          } else {
+            Write-Host "Module not yet on PSGallery — will publish." -ForegroundColor Green
+            "should_publish=true" >> $env:GITHUB_OUTPUT
+          }
+          "version=$local" >> $env:GITHUB_OUTPUT
+
+  # ── 3. Publish ─────────────────────────────────────────────────────────────
+  publish:
+    name: Publish to PSGallery
+    needs: [ lint, version-check ]
+    if: needs.version-check.outputs.should_publish == 'true'
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Fix trailing whitespace
+        shell: pwsh
+        run: |
+          Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
+          Invoke-ScriptAnalyzer `
+            -Path 'WriteLog/WriteLog' `
+            -Recurse `
+            -IncludeRule PSAvoidTrailingWhitespace `
+            -Fix
+
+      - name: Publish
+        shell: pwsh
+        run: |
+          $path = 'WriteLog/WriteLog'
+          Set-PSRepository PSGallery -InstallationPolicy Trusted
+          Publish-Module `
+            -Path        $path `
+            -NuGetApiKey ${{ secrets.NUGET_API_KEY }} `
+            -Repository  PSGallery `
+            -Verbose
+          Write-Host "Published WriteLog ${{ needs.version-check.outputs.version }}" -ForegroundColor Green

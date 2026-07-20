@@ -5,7 +5,7 @@
 RootModule = 'ImportDependency.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.4.10'
+ModuleVersion = '0.4.11'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -118,6 +118,10 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+0.4.11 Adding some more verbose output to help with debugging
+       Fixed module import failing with "Access is denied" in locked-down environments like Windows Sandbox,
+         where the Get-CimInstance fallback for architecture detection is blocked. Now falls back further to
+         Is64BitOperatingSystem, which does not need WMI/CIM access       
 0.4.10 Fixed a problem when getting the python path on Windows
        Fixed a problem with powershell core where a path was tried to be loaded, even when pscore is not installed
 0.4.9 Added a check to remove inaccessible paths from PSModulePath to avoid errors when loading modules

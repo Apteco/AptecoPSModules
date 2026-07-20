@@ -4,7 +4,7 @@ Function Invoke-WebRequestUTF8 {
 
     [CmdletBinding()]
     param (
-        #[Parameter(Mandatory=$true)][string]$AdditionalString
+        #[Parameter(Mandatory=$true)][String]$AdditionalString
     )
     DynamicParam { Get-BaseParameters "Invoke-WebRequest" }
 
@@ -17,7 +17,7 @@ Function Invoke-WebRequestUTF8 {
         $updatedParameters = Skip-UnallowedBaseParameters -Base "Invoke-WebRequest" -Parameters $PSBoundParameters
         
         # Encode the body to UTF8 if it's a string due to issues with default encoding in PowerShell 5.1
-        If ( $updatedParameters.ContainsKey("Body") -and $bodyToEncode -is [string] ) {
+        If ( $updatedParameters.ContainsKey("Body") -and $bodyToEncode -is [String] ) {
             # Encode Body to UTF8 bytes
             $updatedParameters.Body = [System.Text.Encoding]::UTF8.GetBytes($bodyToEncode)
         }
