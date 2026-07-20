@@ -129,6 +129,10 @@ If ( $preCheckOs -eq "Windows" -and $preCheckisCore -eq $false ) {
 
 Write-Verbose "Loading public and private functions"
 
+# Captured once here since $PSScriptRoot only resolves to the module root at this top-level
+# scope; Private functions dot-sourced from their own file would otherwise see their own folder.
+$Script:moduleRoot = $PSScriptRoot.ToString()
+
 $Public  = @( Get-ChildItem -Path "$( $PSScriptRoot )/Public/*.ps1" -ErrorAction SilentlyContinue )
 $Private = @( Get-ChildItem -Path "$( $PSScriptRoot )/Private/*.ps1" -ErrorAction SilentlyContinue )
 
@@ -428,158 +432,18 @@ if ($Script:os -eq "Windows") {
 
 Write-Verbose "Checking PackageManagement and PowerShellGet versions"
 
-# Check if PackageManagement and PowerShellGet are available
-$Script:packageManagement = ( Get-Module -Name "PackageManagement" -ListAvailable -ErrorAction SilentlyContinue | Sort-Object Version -Descending | Select-Object -First 1 ).Version.toString()
-$Script:powerShellGet = ( Get-Module -Name "PowerShellGet" -ListAvailable -ErrorAction SilentlyContinue | Sort-Object Version -Descending | Select-Object -First 1 ).Version.toString()
+# Initial snapshot at import time. Get-PSEnvironment re-checks this live on every call via
+# Get-LatestModuleVersion rather than reading this cached value, since PackageManagement/
+# PowerShellGet can be installed/updated after this module was imported.
+$Script:packageManagement = Get-LatestModuleVersion -Name "PackageManagement"
+$Script:powerShellGet = Get-LatestModuleVersion -Name "PowerShellGet"
 
 
 Write-Verbose "Add background jobs to work out the installed modules and packages"
 
-
-
-#-----------------------------------------------
-# CHECKING POWERHELL 64BIT IN BACKGROUND
-#-----------------------------------------------
-
-$Script:backgroundJobs = [System.Collections.ArrayList]@()
-If ( $Script:isCoreInstalled -eq $True ) {
-    
-    [void]$Script:backgroundJobs.Add((
-        Start-Job -ScriptBlock {
-            pwsh { [System.Environment]::Is64BitProcess }
-        } -Name "PwshIs64Bit"
-    ))
-
-}
-
-
-#-----------------------------------------------
-# CHECKING POWERHELL MODULES IN BACKGROUND
-#-----------------------------------------------
-
-# Add jobs to find out more about installed modules and packages in the background
-
-# TODO add in multiple paths for pscore ?
-
-[void]$Script:backgroundJobs.Add((
-    Start-Job -ScriptBlock {
-        param($ModuleRoot, $OS)
-
-        # On Unix split by :
-
-        $pathSeparator = if ($IsWindows -or $OS -match 'Windows') { ';' } else { ':' }
-
-        $env:PSModulePath -split $pathSeparator | ForEach-Object {
-            $modulePath = $_
-            if (Test-Path $modulePath) {
-                Get-ChildItem $modulePath -Filter *.psd1 -Recurse -ErrorAction SilentlyContinue | ForEach-Object {
-                    $content = Get-Content $_.FullName -Raw
-                    
-                    # Extract version
-                    if ($content -match "ModuleVersion\s*=\s*(['\`"])(.+?)\1") {
-                        $version = $matches[2]
-                    } else {
-                        $version = 'Unknown'
-                    }
-
-                    # Extract PowerShellVersion
-                    if ($content -match "PowerShellVersion\s*=\s*(['\`"])(.+?)\1") {
-                        $psVersion = $matches[2]
-                    } else {
-                        $psVersion = 'Not Specified'
-                    }
-                    
-                    # Extract CompatiblePSEditions
-                    if ($content -match "CompatiblePSEditions\s*=\s*@\(([^)]+)\)") {
-                        $editions = $matches[1] -replace "['\`"\s]", '' -split ','
-                    } else {
-                        $editions = @('Desktop') # Default for older modules
-                    }
-
-                    # Extract Tags from PSData
-                    if ($content -match "PSData\s*=\s*@\{[^}]*Tags\s*=\s*@\(([^)]+)\)") {
-                        $tags = $matches[1] -replace "['\`"\s]", '' -split ',' | Where-Object { $_ }
-                    } else {
-                        $tags = @()
-                    }
-
-                    # Extract Author
-                    if ($content -match "Author\s*=\s*(['\`"])(.+?)\1") {
-                        $author = $matches[2]
-                    } else {
-                        $author = 'Unknown'
-                    }
-                    
-                    # Extract CompanyName
-                    if ($content -match "CompanyName\s*=\s*(['\`"])(.+?)\1") {
-                        $companyName = $matches[2]
-                    } else {
-                        $companyName = 'Unknown'
-                    }
-                    
-                    # Determine path-based edition
-                    $pathEdition = if ($modulePath -match 'WindowsPowerShell') {
-                        'WindowsPowerShell'
-                    } elseif ($modulePath -match 'PowerShell\\[67]') {
-                        'PSCore'
-                    } else {
-                        'Shared'
-                    }
-                    
-                    [PSCustomObject][Ordered]@{
-                        Name                 = $_.BaseName
-                        Version              = $version
-                        PowerShellVersion    = $psVersion
-                        Author               = $author
-                        CompanyName          = $companyName
-                        PathEdition          = $pathEdition
-                        CompatibleEditions   = $editions -join ', '
-                        Tags                 = $tags -join ', '
-                        Path                 = $_.DirectoryName
-                    }
-                }
-            }
-        } 
-
-    } -Name "InstalledModule" -ArgumentList $PSScriptRoot.ToString(), $preCheckOs
-))
-
-
-#-----------------------------------------------
-# CHECKING GLOBAL NUGET PACKAGES IN BACKGROUND
-#-----------------------------------------------
-
-[void]$Script:backgroundJobs.Add((
-    Start-Job -ScriptBlock {
-        param($ModuleRoot, $OS)
-
-        # Load the needed assemblies
-        Add-Type -AssemblyName System.IO.Compression.FileSystem -ErrorAction Stop
-
-        # Paths are dependent on the os
-        if ($OS -eq "Windows") {
-            $pathsToCheck = @( 
-                ( Join-Path $env:USERPROFILE ".nuget\packages" )
-                "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles") )\PackageManagement\NuGet\Packages"
-                "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles(x86)") )\PackageManagement\NuGet\Packages"
-            )
-        } else {
-            $pathsToCheck = @( 
-                ( Join-Path $HOME ".nuget/packages" )
-            )
-        }
-
-        # Dot source the needed function
-        . ( Join-Path $ModuleRoot "/Public/Get-LocalPackage.ps1" )
-
-        # Load the packages
-        $packages = Get-LocalPackage -NugetRoot $pathsToCheck
-
-        $packages
-
-    } -Name "InstalledGlobalPackages" -ArgumentList $PSScriptRoot.ToString(), $preCheckOs
-
-))
+# Extracted into Start-EnvironmentBackgroundJob (Private) so Update-BackgroundJob can also call it
+# to re-scan on demand, instead of only ever running once at import time.
+Start-EnvironmentBackgroundJob
 
 
 #-----------------------------------------------

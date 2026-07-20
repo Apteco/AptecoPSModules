@@ -104,8 +104,8 @@
             "IsElevated"                    = $Script:isElevated
             "RuntimePreference"             = $Script:runtimePreference -join ', '
             "FrameworkPreference"           = $Script:frameworkPreference -join ', '
-            "PackageManagement"             = $Script:packageManagement
-            "PowerShellGet"                 = $Script:powerShellGet
+            "PackageManagement"             = Get-LatestModuleVersion -Name "PackageManagement"    # Always re-checked live, not cached from import time
+            "PowerShellGet"                 = Get-LatestModuleVersion -Name "PowerShellGet"        # Always re-checked live, not cached from import time
             "VcRedist"                      = Get-VcRedistStatus              # Always re-checked live, not cached from import time
             "BackgroundCheckCompleted"      = $didBackgroundCheck
             "InstalledModules"              = $Script:installedModules              # This is updated by a background job

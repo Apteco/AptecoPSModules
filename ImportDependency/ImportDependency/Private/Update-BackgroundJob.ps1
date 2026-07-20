@@ -11,6 +11,14 @@ function Update-BackgroundJob {
     [CmdletBinding()]
     param()
 
+    If ( $Script:backgroundJobs.Count -eq 0 ) {
+        # No jobs in flight -- either this is the first call and the import-time jobs already
+        # finished and were consumed by an earlier call, or nothing was ever started. Either way,
+        # kick off a fresh scan so repeated calls actually reflect current state (e.g. a package
+        # that was installed after this module was imported) instead of silently going stale.
+        Start-EnvironmentBackgroundJob
+    }
+
     If ( $Script:backgroundJobs.Count -gt 0 ) {
 
         # Wait for the jobs to complete (optional, depending on your needs)
