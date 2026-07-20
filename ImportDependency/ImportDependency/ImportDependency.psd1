@@ -5,7 +5,7 @@
 RootModule = 'ImportDependency.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.4.11'
+ModuleVersion = '0.4.12'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -118,6 +118,9 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+0.4.12 Fixed Get-PSEnvironment returning a stale VcRedist status cached from module import time. It is now
+       always re-checked live, so installs/removals done after import (e.g. via InstallDependency''s
+       Install-VcRedist) show up immediately on the next Get-PSEnvironment call
 0.4.11 Adding some more verbose output to help with debugging
        Fixed module import failing with "Access is denied" in locked-down environments like Windows Sandbox,
          where the Get-CimInstance fallback for architecture detection is blocked. Now falls back further to
