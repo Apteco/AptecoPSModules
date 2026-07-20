@@ -55,14 +55,21 @@
         $didBackgroundCheck = $False
         $didLocalPackageCheck = $False
 
+        Write-Verbose "Gathering PowerShell environment information..."
+        Write-Verbose "  Background check for installed modules and global packages: $( $SkipBackgroundCheck )"
+        Write-Verbose "  Local package check for folder: $( $LocalPackageFolder )"
+        Write-Verbose "  Skip local package check: $( $SkipLocalPackageCheck )"
+
         # Update background job to gather modules and global packages
         If ( $SkipBackgroundCheck -ne $True ) {
+            Write-Verbose "Performing background check for installed modules and global packages..."
             Update-BackgroundJob
             $didBackgroundCheck = $True
         }
 
         # Check local lib folder
         If ( $SkipLocalPackageCheck -ne $True ) {
+            Write-Verbose "Checking local package folder: $( $LocalPackageFolder )"
             #If ( [System.Version]::Parse($Script:powerShellGet) -lt [System.Version]::Parse("2.2.5") -and $Script:isCore -eq $True ) {
                 # The check is invalid, please update!
             #    throw "Please install PowerShellGet in pwsh with administrator privilege to minimum of 2.2.5 like 'Install-Module PowerShellGet -Force -AllowClobber'"
