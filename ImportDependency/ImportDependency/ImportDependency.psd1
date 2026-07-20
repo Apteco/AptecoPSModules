@@ -5,7 +5,7 @@
 RootModule = 'ImportDependency.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.4.12'
+ModuleVersion = '0.4.14'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -118,6 +118,16 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+0.4.14 Fixed InstalledModules/InstalledGlobalPackages only ever being scanned once, at module import
+       time. Update-BackgroundJob only received results from jobs already in flight and never started
+       new ones, so every Get-PSEnvironment call after the first silently returned the same stale
+       snapshot -- newly installed modules/packages only showed up after Import-Module -Force. The job
+       start logic is now in Start-EnvironmentBackgroundJob, which Update-BackgroundJob calls again
+       whenever no jobs are currently running, so it genuinely re-scans on every non-skipped call
+0.4.13 Fixed the same staleness problem for PackageManagement/PowerShellGet: Get-PSEnvironment was returning the
+       version cached from module import time instead of the current one, causing repeated unnecessary
+       "outdated, updating now" attempts even after PackageManagement/PowerShellGet had already been updated
+       mid-session. New Get-LatestModuleVersion is now checked live on every Get-PSEnvironment call
 0.4.12 Fixed Get-PSEnvironment returning a stale VcRedist status cached from module import time. It is now
        always re-checked live, so installs/removals done after import (e.g. via InstallDependency''s
        Install-VcRedist) show up immediately on the next Get-PSEnvironment call
