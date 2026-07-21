@@ -147,6 +147,12 @@ Install-Dependencies -LocalPackage MailKit -verbose
 Import-Dependency -LoadWholePackageFolder -LocalPackageFolder "./lib" -verbose
 ```
 
+`-LocalPackageFolder` also accepts an absolute path, so you are not limited to a `lib` folder relative to the current directory:
+
+```PowerShell
+Import-Dependency -LoadWholePackageFolder -LocalPackageFolder "C:\some\other\path\lib" -verbose
+```
+
 ## Check the current PowerShell environment
 
 Use this to get a good overview of the current environment. This is useful information for loading dependencies or to operate on different operating systems etc.

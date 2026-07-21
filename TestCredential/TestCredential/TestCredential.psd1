@@ -5,7 +5,7 @@
 RootModule = 'TestCredential.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.0.5'
+ModuleVersion = '0.0.6'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -20,7 +20,7 @@ Author = 'florian.von.bracht@apteco.de'
 CompanyName = 'Apteco GmbH'
 
 # Copyright statement for this module
-Copyright = '(c) 2025 Apteco GmbH. All rights reserved.'
+Copyright = '(c) 2026 Apteco GmbH. All rights reserved.'
 
 # Description of the functionality provided by this module
 Description = 'Apteco PS Modules - PowerShell Credentials Test
@@ -124,6 +124,7 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+0.0.6 Enhancing some spellings
 0.0.5 Fixed tags in the manifest
       Fixed pipeline mode
 0.0.4 Updated copyright to 2025
