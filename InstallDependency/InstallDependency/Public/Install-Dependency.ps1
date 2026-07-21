@@ -1,6 +1,5 @@
 
 # TODO make sure to use PowerShellGet v2.2.4 or higher and PackageManagement v1.4 or higher
-# TODO make heavy use of ImportDependency
 # TODO always use -allowclobber where possible
 # TODO for packages, have a look at this one
 
@@ -26,16 +25,19 @@ Function Install-Dependency {
 
 <#
 .SYNOPSIS
-    Downloads and installs the latest versions of some scripts, modules and packages (saved in current folder of machine folder) from the PowerShell Gallery and NuGet.
+    Downloads and installs the latest versions of some modules and packages (saved in current folder or machine folder) from the PowerShell Gallery and NuGet.
 .DESCRIPTION
-    Script to install dependencies from the PowerShell Gallery and NuGet. It is possible to install scripts, modules and packages.
+    Function to install dependencies from the PowerShell Gallery and NuGet. It is possible to install modules and packages.
     The packages can be installed from the PowerShell Gallery and packages from a NuGet repository.
     Packages can defined as a raw string array or as a pscustomobject with a specific version number.
 
-    Please make sure to have the Modules WriteLog and PowerShellGet (>= 2.2.4) installed.
+    Uses Get-PSEnvironment (from the ImportDependency module) to discover already-installed modules and
+    local/global NuGet packages, so it only installs or updates what is actually missing or outdated.
+
+    Please make sure to have the Modules WriteLog and ImportDependency, and PowerShellGet (>= 2.2.4), installed.
 
 .EXAMPLE
-    Install-Dependencies -Module "WriteLog" -LocalPackage "SQLitePCLRaw.core", "Npgsql" -Verbose
+    Install-Dependency -Module "WriteLog" -LocalPackage "SQLitePCLRaw.core", "Npgsql" -Verbose
 .EXAMPLE
     $packages = [Array]@(
         [PSCustomObject]@{
@@ -44,10 +46,8 @@ Function Install-Dependency {
             includeDependencies = $true
         }
     )
-    Install-Dependencies -Module "WriteLog" -LocalPackage $packages -Verbose
+    Install-Dependency -Module "WriteLog" -LocalPackage $packages -Verbose
 
-.PARAMETER Script
-    Array of scripts to install on local machine via PowerShellGallery.
 .PARAMETER Module
     Array of modules to install on local machine via PowerShellGallery.
 .PARAMETER GlobalPackage
@@ -58,6 +58,11 @@ Function Install-Dependency {
     Folder name of the local package folder. Default is "lib".
 .PARAMETER ExcludeDependencies
     By default, this script is installing dependencies for every nuget package. This can be deactivated with this switch.
+.PARAMETER KeepPackage
+    By default, the raw .nupkg files left behind by Install-Package -Destination inside LocalPackageFolder are
+    removed after a successful install (matching Install-NuGetPackage's default). The .nuspec is extracted out
+    of each .nupkg first, so the package stays discoverable by Get-LocalPackage/Import-Dependency. Set this
+    switch to keep the .nupkg files instead.
 .PARAMETER SuppressWarnings
     Flag to log warnings, but not redirect to the host.
 .PARAMETER KeepLogfile
@@ -73,22 +78,22 @@ Function Install-Dependency {
     Param(
 
          [Parameter(Mandatory=$false)]
-         [String[]]$Script = [Array]@()
-
-        ,[Parameter(Mandatory=$false)]
          [String[]]$Module = [Array]@()
 
         ,[Parameter(Mandatory=$false)]
-         [String[]]$GlobalPackage = [Array]@()
+         [Object[]]$GlobalPackage = [Array]@()   # String, or PSCustomObject with name/version -- [String[]] would coerce PSCustomObjects to strings before this even runs
 
         ,[Parameter(Mandatory=$false)]
-         [String[]]$LocalPackage = [Array]@()
+         [Object[]]$LocalPackage = [Array]@()    # String, or PSCustomObject with name/version -- [String[]] would coerce PSCustomObjects to strings before this even runs
 
         ,[Parameter(Mandatory=$false)]
          [String]$LocalPackageFolder = "lib"
 
         ,[Parameter(Mandatory=$false)]
          [Switch]$ExcludeDependencies = $false
+
+        ,[Parameter(Mandatory=$false)]
+         [Switch]$KeepPackage = $false        # Keep the raw .nupkg files in LocalPackageFolder after install (default: remove them, like Install-NuGetPackage)
 
         ,[Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()]
          [Switch]$SuppressWarnings = $false           # Flag to log warnings, but not put redirect to the host
@@ -143,8 +148,10 @@ Function Install-Dependency {
         # DOING SOME CHECKS
         #-----------------------------------------------
 
-        # Check if this is Pwsh Core
-        $psEnv = Get-PSEnvironment -SkipLocalPackageCheck
+        # Check if this is Pwsh Core. Also gathers already-installed modules and
+        # local/global NuGet packages (for the given folder) so the checks below
+        # don't need to re-query PowerShellGet/PackageManagement themselves.
+        $psEnv = Get-PSEnvironment -LocalPackageFolder $LocalPackageFolder
         $isCore = $psEnv.IsCore
         Write-Log -Message "Using PowerShell version $( $psEnv.PSVersion ) and $( $psEnv.PSEdition ) edition"
 
@@ -196,7 +203,6 @@ Function Install-Dependency {
         Write-Log -Message "Using installation scope: $( $psScope )" -Severity VERBOSE
 
         # Initialise counters (used across Process and reported in End)
-        $Script:installCount_s = 0
         $Script:installCount_m = 0
         $Script:installCount_l = 0
         $Script:installCount_g = 0
@@ -211,28 +217,36 @@ Function Install-Dependency {
         #-----------------------------------------------
 
         # TODO Implement version checks with [System.Version]::Parse("x.y.z")
-        If ( $Script.Count -gt 0 -or $Module.Count -gt 0 ) {
+        If ( $Module.Count -gt 0 ) {
             $powershellRepo = @( Get-PackageSource -ProviderName $powerShellSourceProviderName )
             If ( $powershellRepo.Count -eq 0 ) {
-                Write-Log "No module/script repository found! Please make sure to add a repository to your machine!" -Severity WARNING
+                Write-Log "No module repository found! Please make sure to add a repository to your machine!" -Severity WARNING
             }
         }
 
-        # Install newer PackageManagement if needed
-        $currentPM = get-installedmodule | where-object { $_.Name -eq "PackageManagement" }
-        If ( $currentPM.Version -eq "1.0.0.1" -or $currentPM.Count -eq 0 ) {
-            Write-Log "PackageManagement is outdated with v$( $currentPM.Version ). This is updating it now." -Severity WARNING
-            Install-Package -Name PackageManagement -Force
+        # Install newer PackageManagement if needed (already known from Get-PSEnvironment, no extra lookup needed).
+        # -ProviderName disambiguates against NuGet.org, which coincidentally also hosts a package
+        # named "PackageManagement" -- without it, Install-Package errors with "multiple packages matched".
+        If ( $psEnv.PackageManagement -eq "1.0.0.1" -or [String]::IsNullOrEmpty( $psEnv.PackageManagement ) ) {
+            Write-Log "PackageManagement is outdated with v$( $psEnv.PackageManagement ). This is updating it now." -Severity WARNING
+            try {
+                Install-Package -Name PackageManagement -ProviderName $powerShellSourceProviderName -Force | Out-Null
+            } catch {
+                Write-Log "Could not update PackageManagement: $( $_.Exception.Message )" -Severity WARNING
+            }
         }
 
-        # Install newer PowerShellGet if needed
-        $currentPSGet = get-installedmodule | where-object { $_.Name -eq "PowerShellGet" }
-        If ( $currentPSGet.Version -eq "1.0.0.1" -or $currentPSGet.Count -eq 0 ) {
-            Write-Log "PowerShellGet is outdated with v$( $currentPSGet.Version ). This is updating it now." -Severity WARNING
-            Install-Package -Name PowerShellGet -Force
+        # Install newer PowerShellGet if needed (already known from Get-PSEnvironment, no extra lookup needed)
+        If ( $psEnv.PowerShellGet -eq "1.0.0.1" -or [String]::IsNullOrEmpty( $psEnv.PowerShellGet ) ) {
+            Write-Log "PowerShellGet is outdated with v$( $psEnv.PowerShellGet ). This is updating it now." -Severity WARNING
+            try {
+                Install-Package -Name PowerShellGet -ProviderName $powerShellSourceProviderName -Force | Out-Null
+            } catch {
+                Write-Log "Could not update PowerShellGet: $( $_.Exception.Message )" -Severity WARNING
+            }
         }
 
-        If ( $Script.Count -gt 0 -or $Module.Count -gt 0 ) {
+        If ( $Module.Count -gt 0 ) {
 
             try {
 
@@ -243,11 +257,11 @@ Function Install-Dependency {
                 If ( $powershellRepo.count -ge 1 ) {
                     Write-Log -Message "You have at minimum 1 $( $powerShellSourceProviderName ) repository. Good!"  -Severity VERBOSE
                 } elseif ( $powershellRepo.count -eq 0 ) {
-                    Write-Log -Message "You don't have $( $powerShellSourceProviderName ) as a module/script source, do you want to register it now?" -Severity WARNING
+                    Write-Log -Message "You don't have $( $powerShellSourceProviderName ) as a module source, do you want to register it now?" -Severity WARNING
                     $registerPsRepoDecision = $Host.UI.PromptForChoice("", "Register $( $powerShellSourceProviderName ) as repository?", @('&Yes'; '&No'), 1)
                     If ( $registerPsRepoDecision -eq "0" ) {
 
-                        Register-PSRepository -Name $powerShellSourceName -SourceLocation $powerShellSourceLocation
+                        Register-PSRepository -Name $powerShellSourceName -SourceLocation $powerShellSourceLocation | Out-Null
 
                         # Load sources again
                         $powershellRepo = @( Get-PSRepository -ProviderName $powerShellSourceProviderName )
@@ -262,7 +276,7 @@ Function Install-Dependency {
                 If ( $powershellRepo.count -gt 1 ) {
 
                     $psGetSources = $powershellRepo.Name
-                    $psGetSourceChoice = Request-Choice -title "Script/module Source" -message "Which $( $powerShellSourceProviderName ) repository do you want to use?" -choices $psGetSources
+                    $psGetSourceChoice = Request-Choice -title "Module Source" -message "Which $( $powerShellSourceProviderName ) repository do you want to use?" -choices $psGetSources
                     $psGetSource = $psGetSources[$psGetSourceChoice -1]
 
                 } elseif ( $powershellRepo.count -eq 1 ) {
@@ -279,9 +293,9 @@ Function Install-Dependency {
                 # Do you want to trust that source?
                 If ( $psGetSource.IsTrusted -eq $false ) {
                     Write-Log -Message "Your source is not trusted. Do you want to trust it now?" -Severity WARNING
-                    $trustChoice = Request-Choice -title "Trust script/module Source" -message "Do you want to trust $( $psGetSource.Name )?" -choices @("Yes", "No")
+                    $trustChoice = Request-Choice -title "Trust module Source" -message "Do you want to trust $( $psGetSource.Name )?" -choices @("Yes", "No")
                     If ( $trustChoice -eq 1 ) {
-                        Set-PSRepository -Name $psGetSource.Name -InstallationPolicy Trusted
+                        Set-PSRepository -Name $psGetSource.Name -InstallationPolicy Trusted | Out-Null
                     }
                 }
 
@@ -290,69 +304,6 @@ Function Install-Dependency {
                 Write-Log -Message "There is a problem with the repository check!" -Severity WARNING
 
             }
-
-        }
-
-
-        #-----------------------------------------------
-        # CHECK SCRIPT DEPENDENCIES FOR INSTALLATION AND UPDATE
-        #-----------------------------------------------
-
-        If ( $Script.Count -gt 0 ) {
-
-            try {
-
-                Write-Log "Checking Script dependencies" -Severity VERBOSE
-
-                $Script | ForEach-Object {
-
-                    $psScript = $_
-
-                    Write-Log "Checking script: $( $psScript )" -Severity VERBOSE
-
-                    $installedScripts = Get-InstalledScript
-
-                    If ( $ExcludeDependencies -eq $true ) {
-                        $psScriptDependencies = Find-Script -Name $psScript
-                    } else {
-                        $psScriptDependencies = Find-Script -Name $psScript -IncludeDependencies
-                    }
-
-                    $psScriptDependencies | ForEach-Object {
-
-                        $scr = $_
-
-                        If ( $installedScripts.Name -contains $scr.Name ) {
-                            Write-Log -Message "Script $( $scr.Name ) is already installed" -Severity VERBOSE
-
-                            $alreadyInstalledScript = $installedScripts | Where-Object { $_.Name -eq $scr.Name }
-
-                            If ( $scr.Version -gt $alreadyInstalledScript.Version ) {
-                                Write-Log -Message "Script $( $scr.Name ) is installed with an older version $( $alreadyInstalledScript.Version ) than the available version $( $scr.Version )" -Severity VERBOSE
-                                Update-Script -Name $scr.Name
-                                $Script:installCount_s += 1
-                            } else {
-                                Write-Log -Message "No need to update $( $scr.Name )" -Severity VERBOSE
-                            }
-                        } else {
-                            Write-Log -Message "Installing Script $( $scr.Name )" -Severity VERBOSE
-                            Install-Script -Name $scr.Name -Scope $psScope
-                            $Script:installCount_s += 1
-                        }
-
-                    }
-
-                }
-
-            } catch {
-
-                Write-Log -Message "Cannot install scripts!" -Severity WARNING
-
-            }
-
-        } else {
-
-            Write-Log "There is no script to install" -Severity VERBOSE
 
         }
 
@@ -367,13 +318,15 @@ Function Install-Dependency {
 
                 Write-Log "Checking Module dependencies" -Severity VERBOSE
 
+                # Already known from Get-PSEnvironment (scanned once in Begin), so no
+                # per-module Get-InstalledModule round-trip is needed here anymore.
+                $installedModules = @( $psEnv.InstalledModules | Where-Object { $null -ne $_ } )
+
                 $Module | Where-Object { $_ -notin @("PowerShellGet","PackageManagement") } | ForEach-Object {
 
                     $psModule = $_
 
                     Write-Log "Checking module: $( $psModule )" -Severity VERBOSE
-
-                    $installedModules = Get-InstalledModule
 
                     If ( $ExcludeDependencies -eq $true ) {
                         $psModuleDependencies = Find-Module -Name $psModule
@@ -384,22 +337,25 @@ Function Install-Dependency {
                     $psModuleDependencies | ForEach-Object {
 
                         $mod = $_
+                        $installedMatches = @( $installedModules | Where-Object { $_.Name -eq $mod.Name } )
 
-                        If ( $installedModules.Name -contains $mod.Name ) {
+                        If ( $installedMatches.Count -gt 0 ) {
+
                             Write-Log -Message "Module $( $mod.Name ) is already installed" -Severity VERBOSE
 
-                            $alreadyInstalledModule = $installedModules | Where-Object { $_.Name -eq $mod.Name }
+                            # Multiple entries can exist per module (e.g. WindowsPowerShell vs PSCore paths), take the newest
+                            $alreadyInstalledModule = $installedMatches | Sort-Object { [version]( $_.Version -replace '[^0-9.]', '0' ) } -Descending | Select-Object -First 1
 
-                            If ( $mod.Version -gt $alreadyInstalledModule.Version ) {
+                            If ( [version]( $mod.Version.ToString() -replace '[^0-9.]', '0' ) -gt [version]( $alreadyInstalledModule.Version -replace '[^0-9.]', '0' ) ) {
                                 Write-Log -Message "Module $( $mod.Name ) is installed with an older version $( $alreadyInstalledModule.Version ) than the available version $( $mod.Version )" -Severity VERBOSE
-                                Update-Module -Name $mod.Name
+                                Update-Module -Name $mod.Name | Out-Null
                                 $Script:installCount_m += 1
                             } else {
                                 Write-Log -Message "No need to update $( $mod.Name )" -Severity VERBOSE
                             }
                         } else {
                             Write-Log -Message "Installing Module $( $mod.Name )" -Severity VERBOSE
-                            Install-Module -Name $mod.Name -Scope $psScope -AllowClobber
+                            Install-Module -Name $mod.Name -Scope $psScope -AllowClobber | Out-Null
                             $Script:installCount_m += 1
                         }
 
@@ -439,7 +395,7 @@ Function Install-Dependency {
                     $registerNugetDecision = $Host.UI.PromptForChoice("", "Register $( $packageSourceProviderName ) as repository?", @('&Yes'; '&No'), 1)
                     If ( $registerNugetDecision -eq "0" ) {
 
-                        Register-PackageSource -Name $packageSourceName -Location $packageSourceLocation -ProviderName $packageSourceProviderName
+                        Register-PackageSource -Name $packageSourceName -Location $packageSourceLocation -ProviderName $packageSourceProviderName | Out-Null
 
                         # Load sources again
                         $sources = @( Get-PackageSource -ProviderName $packageSourceProviderName )
@@ -473,7 +429,7 @@ Function Install-Dependency {
                     Write-Log -Message "Your source is not trusted. Do you want to trust it now?" -Severity WARNING
                     $trustChoice = Request-Choice -title "Trust Package Source" -message "Do you want to trust $( $packageSource.Name )?" -choices @("Yes", "No")
                     If ( $trustChoice -eq 1 ) {
-                        Set-PackageSource -Name $packageSource.Name -Trusted
+                        Set-PackageSource -Name $packageSource.Name -Trusted | Out-Null
                     }
                 }
 
@@ -497,14 +453,15 @@ Function Install-Dependency {
                 Write-Log "Check lib folder" -Severity VERBOSE
 
                 If ( (Test-Path -Path $LocalPackageFolder) -eq $false ) {
-                    New-Item -Name $LocalPackageFolder -ItemType Directory
+                    New-Item -Path $LocalPackageFolder -ItemType Directory
                 }
 
                 Write-Log "Checking package dependencies with $( $packageSource.Name )" -Severity VERBOSE
 
-                $localPackages = Get-Package -Destination $LocalPackageFolder
-                $globalPackages = Get-Package
-                $installedPackages = $localPackages + $globalPackages
+                # Already known from Get-PSEnvironment (scanned once in Begin for $LocalPackageFolder),
+                # so no separate Get-Package round-trip is needed here anymore.
+                $installedLocalPackages  = @( $psEnv.InstalledLocalPackages  | Where-Object { $null -ne $_ } )
+                $installedGlobalPackages = @( $psEnv.InstalledGlobalPackages | Where-Object { $null -ne $_ } )
                 $packagesToInstall = [System.Collections.ArrayList]@()
                 @( $LocalPackage + $GlobalPackage ) | ForEach-Object {
 
@@ -542,8 +499,27 @@ Function Install-Dependency {
                         }
                     }
 
+                    $installedForScope = If ( $globalFlag -eq $true ) { $installedGlobalPackages } else { $installedLocalPackages }
+
                     $pkg | ForEach-Object {
+
                         $p = $_
+                        $installedPackageMatches = @( $installedForScope | Where-Object { $_.Id -eq $p.Name } )
+
+                        If ( $installedPackageMatches.Count -gt 0 ) {
+
+                            # Multiple copies can exist on disk (nuspec/zip reads), take the newest
+                            $alreadyInstalledPackage = $installedPackageMatches | Sort-Object { [version]( $_.Version -replace '[^0-9.]', '0' ) } -Descending | Select-Object -First 1
+
+                            If ( [version]( $alreadyInstalledPackage.Version -replace '[^0-9.]', '0' ) -ge [version]( $p.Version.ToString() -replace '[^0-9.]', '0' ) ) {
+                                Write-Log -Message "Package $( $p.Name ) is already installed with version $( $alreadyInstalledPackage.Version ) ($( If ( $globalFlag ) { 'global' } else { 'local' } )), skipping" -Severity VERBOSE
+                                return
+                            } else {
+                                Write-Log -Message "Package $( $p.Name ) is installed with an older version $( $alreadyInstalledPackage.Version ) than the available version $( $p.Version )" -Severity VERBOSE
+                            }
+
+                        }
+
                         $pd = [PSCustomObject]@{
                             "GlobalFlag" = $globalFlag
                             "Package"    = $p
@@ -557,7 +533,11 @@ Function Install-Dependency {
 
                 Write-Log -Message "Done with searching for $( $packagesToInstall.Count ) packages"
 
-                $pack = $packagesToInstall | Where-Object { $_.Package.Summary -notlike "*not reference directly*" -and $_.Package.Name -notlike "Xamarin.*"} | Where-Object { $_.Package.Source -eq $packageSource.Name } | Sort-Object Name, Version -Unique -Descending
+                # @() forces this to always be an array, even with 0 or 1 matches -- without it, a
+                # single match collapses to a scalar object. Windows PowerShell 5.1 (Desktop, unlike
+                # PS 6+) has no .Count on scalars, so $pack.Count below is $null, and dividing by it
+                # in Write-Progress throws "Attempted to divide by zero", aborting the whole install
+                $pack = @( $packagesToInstall | Where-Object { $_.Package.Summary -notlike "*not reference directly*" -and $_.Package.Name -notlike "Xamarin.*"} | Where-Object { $_.Package.Source -eq $packageSource.Name } | Sort-Object Name, Version -Unique -Descending )
                 Write-Log -Message "This is likely to install $( $pack.Count ) packages"
 
                 $i = 0
@@ -567,11 +547,11 @@ Function Install-Dependency {
 
                     If ( $p.GlobalFlag -eq $true ) {
                         Write-Log -message "Installing $( $p.Package.Name ) with version $( $p.Package.version ) from $( $p.Package.Source ) globally"
-                        Install-Package -Name $p.Name -Scope $psScope -Source $packageSource.Name -RequiredVersion $p.Version -SkipDependencies -Force
+                        Install-Package -Name $p.Name -Scope $psScope -Source $packageSource.Name -RequiredVersion $p.Version -SkipDependencies -Force | Out-Null
                         $Script:installCount_g += 1
                     } else {
                         Write-Log -message "Installing $( $p.Name ) with version $( $p.version ) from $( $p.Package.Source ) locally"
-                        Install-Package -Name $p.Name -Scope $psScope -Source $packageSource.Name -RequiredVersion $p.Version -SkipDependencies -Force -Destination $LocalPackageFolder
+                        Install-Package -Name $p.Name -Scope $psScope -Source $packageSource.Name -RequiredVersion $p.Version -SkipDependencies -Force -Destination $LocalPackageFolder | Out-Null
                         $Script:installCount_l += 1
                     }
 
@@ -580,9 +560,65 @@ Function Install-Dependency {
 
                 }
 
+                # Install-Package -Destination leaves the raw .nupkg file as a sibling of the
+                # extracted lib/ref/runtimes folders. Only touches LocalPackageFolder, never the
+                # global/machine package cache, which is shared state we should not clean up here.
+                If ( $KeepPackage -eq $false -and $Script:installCount_l -gt 0 ) {
+                    $nupkgFiles = @( Get-ChildItem -Path $LocalPackageFolder -Filter "*.nupkg" -Recurse -File -ErrorAction SilentlyContinue )
+                    If ( $nupkgFiles.Count -gt 0 ) {
+                        Write-Log -Message "Removing $( $nupkgFiles.Count ) .nupkg file(s) from '$( $LocalPackageFolder )' (use -KeepPackage to keep them)" -Severity VERBOSE
+                        $nupkgFiles | ForEach-Object {
+
+                            $nupkgFile = $_
+                            $pkgFolder = $nupkgFile.DirectoryName
+
+                            # Extract just the tiny .nuspec first so Get-LocalPackage (ImportDependency) can
+                            # still discover this package via its fast nuspec path once the .nupkg is gone --
+                            # without it, a package folder with only lib/ref/runtimes has no metadata source
+                            # left at all and Import-Dependency silently stops finding it.
+                            #
+                            # Retried: Install-Package -Destination can still be holding a lock on the
+                            # freshly written .nupkg for a moment (observed on Windows PowerShell 5.1's
+                            # legacy PackageManagement NuGet provider), so an immediate open/delete can fail
+                            # with a sharing violation. Never let that abort the rest of the install --
+                            # worst case the .nupkg is just left behind for this one package.
+                            $attempt = 0
+                            $cleanedUp = $false
+                            do {
+                                $attempt += 1
+                                try {
+                                    $zip = [System.IO.Compression.ZipFile]::OpenRead($nupkgFile.FullName)
+                                    try {
+                                        $nuspecEntry = $zip.Entries | Where-Object { $_.FullName -like "*.nuspec" } | Select-Object -First 1
+                                        If ( $null -ne $nuspecEntry ) {
+                                            $nuspecPath = Join-Path $pkgFolder $nuspecEntry.Name
+                                            If ( (Test-Path -Path $nuspecPath) -eq $false ) {
+                                                [System.IO.Compression.ZipFileExtensions]::ExtractToFile($nuspecEntry, $nuspecPath) | Out-Null
+                                            }
+                                        }
+                                    } finally {
+                                        $zip.Dispose()
+                                    }
+
+                                    Remove-Item -Path $nupkgFile.FullName -Force
+                                    $cleanedUp = $true
+                                } catch {
+                                    If ( $attempt -ge 3 ) {
+                                        Write-Log -Message "Could not remove '$( $nupkgFile.FullName )' after $( $attempt ) attempt(s): $( $_.Exception.Message )" -Severity WARNING
+                                        $cleanedUp = $true
+                                    } else {
+                                        Start-Sleep -Milliseconds 300
+                                    }
+                                }
+                            } while ( $cleanedUp -eq $false )
+
+                        }
+                    }
+                }
+
             } catch {
 
-                Write-Log -Message "Cannot install local packages!" -Severity WARNING
+                Write-Log -Message "Cannot install local packages! $( $_.Exception.Message )" -Severity WARNING
 
             }
 
@@ -608,7 +644,6 @@ Function Install-Dependency {
         Write-Log -Message "  $( $Script:installCount_l ) local packages installed into '$( $LocalPackageFolder )'" -Severity INFO
         Write-Log -Message "  $( $Script:installCount_g ) global packages installed" -Severity INFO
         Write-Log -Message "  $( $Script:installCount_m ) modules installed with scope '$( $psScope )'" -Severity INFO
-        Write-Log -Message "  $( $Script:installCount_s ) scripts installed with scope '$( $psScope )'" -Severity INFO
 
 
         #-----------------------------------------------

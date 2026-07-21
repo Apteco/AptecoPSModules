@@ -5,7 +5,7 @@
 RootModule = 'InstallDependency.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.2.0'
+ModuleVersion = '0.3.10'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -27,7 +27,7 @@ Description = 'Apteco PS Modules - PowerShell install dependencies
 
 Module to install dependencies from PowerShell Gallery and NuGet.
 
-Downloads and installs the latest versions of some scripts, modules and packages (saved in current folder of machine folder) from the PowerShell Gallery and NuGet.
+Downloads and installs the latest versions of some modules and packages (saved in current folder or machine folder) from the PowerShell Gallery and NuGet.
 '
 
 # Minimum version of the PowerShell engine required by this module
@@ -72,6 +72,8 @@ RequiredModules = @(
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
 FunctionsToExport = @(
     "Install-Dependency"
+    ,"Install-NuGetPackage"
+    ,"Install-VcRedist"
 )
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
@@ -104,13 +106,58 @@ PrivateData = @{
         LicenseUri = 'https://gist.github.com/gitfvb/58930387ee8677b5ccef93ffc115d836'
 
         # A URL to the main website for this project.
-        ProjectUri = 'https://github.com/Apteco/AptecoPSModules/tree/main/ImportDependency'
+        ProjectUri = 'https://github.com/Apteco/AptecoPSModules/tree/main/InstallDependency'
 
         # A URL to an icon representing this module.
         IconUri = 'https://www.apteco.de/sites/default/files/favicon_3.ico'
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+0.3.10 Found the real cause behind the 0.3.9 "Cannot install local packages!" abort: $pack (the list of
+       packages to install) was not forced into an array, so a single match collapsed to a scalar
+       object. Windows PowerShell 5.1 (Desktop) has no .Count on scalars (unlike PS 6+), so
+       $pack.Count was $null, and Write-Progress''s $i/$pack.Count division threw "Attempted to divide
+       by zero", aborting the whole install loop before the .nupkg cleanup was ever reached. $pack is
+       now always wrapped in @() so .Count is well-defined regardless of match count or PS edition
+0.3.9 Fixed the 0.3.8 .nupkg cleanup being able to abort the entire local/global package install loop:
+      Install-Package -Destination can still hold a lock on the freshly written .nupkg for a moment
+      (observed on Windows PowerShell 5.1''s legacy PackageManagement NuGet provider), so an immediate
+      open/delete could fail with a sharing violation, which was unhandled and aborted the rest of the
+      run with an unhelpful "Cannot install local packages!" warning. The cleanup now retries a few
+      times with a short delay and never lets a single package''s cleanup failure abort the others, and
+      the outer warning now includes the actual exception message
+0.3.8 Initial release of the InstallDependency modul to replace Install-Dependencies script
+      Fixed the 0.4.6 cleanup deleting the .nupkg outright, which removed the package''s only remaining
+      metadata source (no .nuspec, no .nupkg left) -- Get-LocalPackage could no longer discover it at
+      all, so Import-Dependency silently stopped finding/loading it. Now extracts just the tiny .nuspec
+      out of the .nupkg before removing it, so the package stays discoverable via Get-LocalPackage''s
+      fast nuspec path without needing to keep the full .nupkg around
+0.3.7 Added -KeepPackage switch (default: off, matching Install-NuGetPackage) that removes the raw .nupkg
+      files Install-Package -Destination leaves behind as siblings of the extracted lib/ref/runtimes
+      folders in LocalPackageFolder after a successful install. Only ever touches LocalPackageFolder,
+      never the global/machine package cache
+0.3.6 Fixed -LocalPackage/-GlobalPackage being typed [String[]], which silently coerced any
+      PSCustomObject (e.g. @{name="Npgsql"; version="8.0.7"}) passed for version pinning into its
+      string representation before the function body ever ran -- so version pinning never actually
+      worked, for any version. Changed to [Object[]] so PSCustomObject entries pass through intact.
+      This bug predates the module (inherited from the original Install-Dependencies script)
+0.3.5 Fixed Install-Package failing with "multiple packages matched ''PackageManagement''" (NuGet.org
+      coincidentally hosts a same-named package) by specifying -ProviderName when updating PackageManagement/
+      PowerShellGet, and wrapped both updates in try/catch so a failure there cannot abort the whole run
+0.3.4 Suppressed the return values of Install-Package/Install-Module/Update-Module/Register-PSRepository/
+      Set-PSRepository/Register-PackageSource/Set-PackageSource, which were being written to the pipeline
+      unsuppressed and dumped as full PackageManagement/PowerShellGet objects to the console/caller
+0.3.3 Fixed module import failing with "Cannot index into a null array" when pwsh (PowerShell Core) is not
+      installed (e.g. Windows Sandbox) -> the pwsh version was read before checking whether pwsh was found at all
+0.3.2 Fixed module import failing with "Access is denied" in locked-down environments like Windows Sandbox,
+      where the Get-CimInstance fallback for architecture detection is blocked. Now falls back further to
+      Is64BitOperatingSystem, which does not need WMI/CIM access
+0.3.1 Added Install-VcRedist to check for and install the Visual C++ Redistributable (x64), moved here from
+      AptecoPSFramework''s own installation script so any consumer can reuse it
+0.3.0 Removed -Script support (PowerShellGet scripts are deprecated in favor of modules). Install-Dependency now
+      reuses Get-PSEnvironment (from ImportDependency) for already-installed modules and local/global NuGet
+      packages instead of querying Get-InstalledModule/Get-Package itself, and local/global packages are now
+      skipped when already installed at a current version, matching how modules already behaved
 0.2.0 Migration of Install-Dependencies script to Install-Dependency module
 '
         # Prerelease string of this module
