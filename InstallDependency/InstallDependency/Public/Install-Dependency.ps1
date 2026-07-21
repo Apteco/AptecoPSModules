@@ -571,22 +571,42 @@ Function Install-Dependency {
                             # Extract just the tiny .nuspec first so Get-LocalPackage (ImportDependency) can
                             # still discover this package via its fast nuspec path once the .nupkg is gone --
                             # without it, a package folder with only lib/ref/runtimes has no metadata source
-                            # left at all and Import-Dependency silently stops finding it
-                            try {
-                                $zip = [System.IO.Compression.ZipFile]::OpenRead($nupkgFile.FullName)
-                                $nuspecEntry = $zip.Entries | Where-Object { $_.FullName -like "*.nuspec" } | Select-Object -First 1
-                                If ( $null -ne $nuspecEntry ) {
-                                    $nuspecPath = Join-Path $pkgFolder $nuspecEntry.Name
-                                    If ( (Test-Path -Path $nuspecPath) -eq $false ) {
-                                        [System.IO.Compression.ZipFileExtensions]::ExtractToFile($nuspecEntry, $nuspecPath) | Out-Null
+                            # left at all and Import-Dependency silently stops finding it.
+                            #
+                            # Retried: Install-Package -Destination can still be holding a lock on the
+                            # freshly written .nupkg for a moment (observed on Windows PowerShell 5.1's
+                            # legacy PackageManagement NuGet provider), so an immediate open/delete can fail
+                            # with a sharing violation. Never let that abort the rest of the install --
+                            # worst case the .nupkg is just left behind for this one package.
+                            $attempt = 0
+                            $cleanedUp = $false
+                            do {
+                                $attempt += 1
+                                try {
+                                    $zip = [System.IO.Compression.ZipFile]::OpenRead($nupkgFile.FullName)
+                                    try {
+                                        $nuspecEntry = $zip.Entries | Where-Object { $_.FullName -like "*.nuspec" } | Select-Object -First 1
+                                        If ( $null -ne $nuspecEntry ) {
+                                            $nuspecPath = Join-Path $pkgFolder $nuspecEntry.Name
+                                            If ( (Test-Path -Path $nuspecPath) -eq $false ) {
+                                                [System.IO.Compression.ZipFileExtensions]::ExtractToFile($nuspecEntry, $nuspecPath) | Out-Null
+                                            }
+                                        }
+                                    } finally {
+                                        $zip.Dispose()
+                                    }
+
+                                    Remove-Item -Path $nupkgFile.FullName -Force
+                                    $cleanedUp = $true
+                                } catch {
+                                    If ( $attempt -ge 3 ) {
+                                        Write-Log -Message "Could not remove '$( $nupkgFile.FullName )' after $( $attempt ) attempt(s): $( $_.Exception.Message )" -Severity WARNING
+                                        $cleanedUp = $true
+                                    } else {
+                                        Start-Sleep -Milliseconds 300
                                     }
                                 }
-                                $zip.Dispose()
-                            } catch {
-                                Write-Log -Message "Could not extract .nuspec from '$( $nupkgFile.FullName )' before removing it: $( $_.Exception.Message )" -Severity WARNING
-                            }
-
-                            Remove-Item -Path $nupkgFile.FullName -Force
+                            } while ( $cleanedUp -eq $false )
 
                         }
                     }
@@ -594,7 +614,7 @@ Function Install-Dependency {
 
             } catch {
 
-                Write-Log -Message "Cannot install local packages!" -Severity WARNING
+                Write-Log -Message "Cannot install local packages! $( $_.Exception.Message )" -Severity WARNING
 
             }
 

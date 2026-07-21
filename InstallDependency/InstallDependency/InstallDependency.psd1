@@ -5,7 +5,7 @@
 RootModule = 'InstallDependency.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.3.8'
+ModuleVersion = '0.3.9'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -113,6 +113,13 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+0.3.9 Fixed the 0.3.8 .nupkg cleanup being able to abort the entire local/global package install loop:
+      Install-Package -Destination can still hold a lock on the freshly written .nupkg for a moment
+      (observed on Windows PowerShell 5.1''s legacy PackageManagement NuGet provider), so an immediate
+      open/delete could fail with a sharing violation, which was unhandled and aborted the rest of the
+      run with an unhelpful "Cannot install local packages!" warning. The cleanup now retries a few
+      times with a short delay and never lets a single package''s cleanup failure abort the others, and
+      the outer warning now includes the actual exception message
 0.3.8 Initial release of the InstallDependency modul to replace Install-Dependencies script
       Fixed the 0.4.6 cleanup deleting the .nupkg outright, which removed the package''s only remaining
       metadata source (no .nuspec, no .nupkg left) -- Get-LocalPackage could no longer discover it at
