@@ -227,6 +227,13 @@ Function Import-Dependency {
 
             Write-Log -Message "There are $( $packagesToLoad.Count ) packages to load"
 
+            # Collapse multiple versions of the same package Id (e.g. an edition-split DuckDB.NET
+            # pair) down to the single version compatible with this PS edition, so only one of them
+            # ever gets loaded into the process -- see Select-CompatiblePackage for why that matters
+            $packagesToLoad = [System.Collections.ArrayList]@( Select-CompatiblePackage -Package $packagesToLoad )
+
+            Write-Log -Message "After de-duplicating by package Id, there are $( $packagesToLoad.Count ) packages to load"
+
             # Load through the packages objects instead of going through the folders
             $i = 0
             $packagesToLoad | ForEach-Object {

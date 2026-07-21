@@ -5,7 +5,7 @@
 RootModule = 'ImportDependency.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.4.15'
+ModuleVersion = '0.4.16'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -118,6 +118,10 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+0.4.16 Added a new function Select-CompatiblePackage to select the best matching version of a package
+       for the current runtime and framework, and updated Import-Dependency to use it. This allows
+       Import-Dependency to load the correct DuckDB.NET build for Windows PowerShell 5.1 (netstandard2.0)
+       vs PowerShell Core (Windows and Linux)
 0.4.15 Fixed Get-LocalPackage returning the .nupkg FILE itself as Path for packages found via the zip
        branch (Source="zip"), instead of the folder containing it. Install-Package -Destination extracts
        lib/ref/runtimes as siblings of the .nupkg it keeps, but Import-Dependency''s loader does
