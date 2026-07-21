@@ -1,14 +1,24 @@
 BeforeAll {
     Import-Module "$PSScriptRoot/../InstallDependency" -Force
 
-    # Make sure the repositories Install-Dependency expects by default are
-    # registered and trusted, so its interactive "register/trust?" prompts
-    # never trigger in a non-interactive CI run. Idempotent.
+    # Make sure the repository Install-Dependency expects (a trusted NuGet source) is
+    # registered, so its interactive "register/trust?" prompts never trigger in a
+    # non-interactive CI run. Some runners (observed on Windows PowerShell 5.1 on GitHub
+    # Actions) ship with a pre-registered NuGet source of their own that is not trusted;
+    # merely trying to flip it to Trusted can silently fail depending on the provider/
+    # environment, and Install-Dependency then keeps using that untrusted source rather
+    # than hitting the interactive trust prompt path, so genuinely existing packages stop
+    # resolving. Only touch the machine's package sources when the current state isn't
+    # already exactly what's needed (one trusted NuGet source) -- e.g. a dev machine that
+    # already has a trusted nuget.org source registered is left alone.
     try {
-        if (-not (Get-PackageSource -ProviderName NuGet -ErrorAction SilentlyContinue)) {
+        $existingNuGetSources = @( Get-PackageSource -ProviderName NuGet -ErrorAction SilentlyContinue )
+        $alreadyGood = $existingNuGetSources.Count -eq 1 -and $existingNuGetSources[0].IsTrusted -eq $true
+        if (-not $alreadyGood) {
+            $existingNuGetSources | ForEach-Object {
+                Unregister-PackageSource -Name $_.Name -ProviderName NuGet -ErrorAction SilentlyContinue
+            }
             Register-PackageSource -Name "NuGet v2" -Location "https://www.nuget.org/api/v2" -ProviderName NuGet -Trusted -ErrorAction Stop | Out-Null
-        } else {
-            Get-PackageSource -ProviderName NuGet | ForEach-Object { Set-PackageSource -Name $_.Name -Trusted -ErrorAction SilentlyContinue | Out-Null }
         }
     } catch { }
     try {
