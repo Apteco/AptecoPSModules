@@ -5,7 +5,7 @@
 RootModule = 'ImportDependency.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.4.14'
+ModuleVersion = '0.4.15'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -118,6 +118,12 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+0.4.15 Fixed Get-LocalPackage returning the .nupkg FILE itself as Path for packages found via the zip
+       branch (Source="zip"), instead of the folder containing it. Install-Package -Destination extracts
+       lib/ref/runtimes as siblings of the .nupkg it keeps, but Import-Dependency''s loader does
+       Get-Item -Path $pkg.Path and then Test-Path "<Path>/lib" -- which is always false (silently, no
+       error) when Path is a file. This caused Import-Dependency to report 0 for every load/fail counter
+       even though packages were found and their files were completely valid, e.g. Npgsql/DuckDB.NET
 0.4.14 Fixed InstalledModules/InstalledGlobalPackages only ever being scanned once, at module import
        time. Update-BackgroundJob only received results from jobs already in flight and never started
        new ones, so every Get-PSEnvironment call after the first silently returned the same stale
