@@ -217,8 +217,8 @@ Write-Verbose "Checking more details about PS Core"
 
 # Check if pscore is installed
 $pwshCommand = Get-Command -commandType Application -Name "pwsh*"
-$Script:defaultPsCoreVersion = $pwshCommand[0].Version
 If ( $pwshCommand.Count -gt 0 ) {
+    $Script:defaultPsCoreVersion = $pwshCommand[0].Version
     $Script:isCoreInstalled = $true
     if ($Script:os -eq "Windows") {
         # For Windows
@@ -255,10 +255,21 @@ If ( $null -ne [System.Runtime.InteropServices.RuntimeInformation]::ProcessArchi
 
     # Used code from: https://gist.github.com/asheroto/cfa26dd00177a03c81635ea774406b2b
     # Get OS details using Get-CimInstance because the registry key for Name is not always correct with Windows 11
-    $osDetails = Get-CimInstance -ClassName Win32_OperatingSystem
+    try {
 
-    # Get architecture details of the OS (not the processor)
-    $arch = $osDetails.OSArchitecture
+        $osDetails = Get-CimInstance -ClassName Win32_OperatingSystem -ErrorAction Stop
+
+        # Get architecture details of the OS (not the processor)
+        $arch = $osDetails.OSArchitecture
+
+    } catch {
+
+        # CIM/WMI can be blocked in locked-down environments (e.g. Windows Sandbox's WDAGUtilityAccount),
+        # so fall back to a check that does not need WMI access
+        Write-Verbose "Could not query Win32_OperatingSystem via CIM, falling back to Is64BitOperatingSystem: $( $_.Exception.Message )"
+        $arch = If ( [System.Environment]::Is64BitOperatingSystem ) { "64-bit" } else { "32-bit" }
+
+    }
 
 }
 
