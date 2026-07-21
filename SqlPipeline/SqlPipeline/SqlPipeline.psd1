@@ -5,7 +5,7 @@
 RootModule = 'SqlPipeline.psm1'
 
 # Die Versionsnummer dieses Moduls
-ModuleVersion = '0.4.0'
+ModuleVersion = '0.4.1'
 
 # Unterstützte PSEditions
 # CompatiblePSEditions = @()
@@ -126,6 +126,13 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.4.1 Feature: Install-SqlPipeline now uses the InstallDependency module instead of a hand-rolled NuGet
+               downloader, and always installs both the Windows PowerShell-pinned DuckDB.NET 1.4.4 set
+               (plus its System.Memory/System.Runtime.CompilerServices.Unsafe polyfills) and the unpinned
+               "latest" set for pwsh into the same lib folder -> the -WindowsPowerShell switch was removed,
+               it is no longer needed
+               Fix: Added the missing System.Runtime.CompilerServices.Unsafe polyfill for Windows PowerShell,
+               pinned to exactly 6.0.0 to avoid an AssemblyVersion mismatch in later versions
 0.4.0 Added support for SQLServer, MySQL Postgres through the SimplySQL module
       Instead of outputting all duckdb expected columns we just log the number of expected columns
       Fixed a problem with named connections in the Add-RowsToSql function
