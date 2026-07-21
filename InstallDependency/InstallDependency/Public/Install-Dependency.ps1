@@ -1,26 +1,4 @@
 
-# TODO make sure to use PowerShellGet v2.2.4 or higher and PackageManagement v1.4 or higher
-# TODO always use -allowclobber where possible
-# TODO for packages, have a look at this one
-
-<#
-
-# Download the two DuckDB packages from Nuget without Install-Package or Save-Package
-Invoke-WebRequest -UseBasicParsing -Uri https://www.nuget.org/api/v2/package/DuckDB.NET.Bindings.Full -OutFile ./lib
-Invoke-WebRequest -UseBasicParsing -Uri https://www.nuget.org/api/v2/package/DuckDB.NET.Data.Full -OutFile ./lib
-
-# Expand and delete the nupkg files
-Set-Location ./lib
-Get-ChildItem -Path ./lib/ -Filter *.nupkg | % { Expand-Archive -Path $_; Remove-Item -Path $_ }
-Set-Location ..
-
-# Import the lib folder
-import-module importdependency
-import-dependency -LoadWholePackageFolder -LocalPackageFolder .\lib
-
-#>
-
-
 Function Install-Dependency {
 
 <#
@@ -472,6 +450,12 @@ Function Install-Dependency {
                         $globalFlag = $true
                     }
 
+                    # An explicit pinned version (e.g. to keep an older, edition-specific build like
+                    # DuckDB.NET 1.4.4 installed alongside a newer 1.5.0 for the same package Id) means
+                    # this exact version is the thing that must exist on disk -- not "any version at
+                    # least this new", which is the right semantics for an unpinned "give me latest" request
+                    $isPinned = ( ($psPackage.gettype()).Name -eq "PsCustomObject" ) -and ( $null -ne $psPackage.version )
+
                     Write-Log "Checking package: $( $psPackage )" -severity VERBOSE
 
                     If ( ($psPackage.gettype()).Name -eq "PsCustomObject" ) {
@@ -508,14 +492,31 @@ Function Install-Dependency {
 
                         If ( $installedPackageMatches.Count -gt 0 ) {
 
-                            # Multiple copies can exist on disk (nuspec/zip reads), take the newest
-                            $alreadyInstalledPackage = $installedPackageMatches | Sort-Object { [version]( $_.Version -replace '[^0-9.]', '0' ) } -Descending | Select-Object -First 1
+                            If ( $isPinned -eq $true ) {
 
-                            If ( [version]( $alreadyInstalledPackage.Version -replace '[^0-9.]', '0' ) -ge [version]( $p.Version.ToString() -replace '[^0-9.]', '0' ) ) {
-                                Write-Log -Message "Package $( $p.Name ) is already installed with version $( $alreadyInstalledPackage.Version ) ($( If ( $globalFlag ) { 'global' } else { 'local' } )), skipping" -Severity VERBOSE
-                                return
+                                # Exact version was explicitly requested -- only this exact version on disk
+                                # satisfies it. A newer sibling version installed for another package Id
+                                # purpose (e.g. a different PS edition) must not shadow this pinned install
+                                $exactMatch = @( $installedPackageMatches | Where-Object { $_.Version -eq $p.Version.ToString() } )
+                                If ( $exactMatch.Count -gt 0 ) {
+                                    Write-Log -Message "Package $( $p.Name ) $( $p.Version ) is already installed ($( If ( $globalFlag ) { 'global' } else { 'local' } )), skipping" -Severity VERBOSE
+                                    return
+                                } else {
+                                    Write-Log -Message "Package $( $p.Name ) $( $p.Version ) is pinned but not yet installed (other version(s) present: $( ( $installedPackageMatches.Version -join ', ' ) )), installing" -Severity VERBOSE
+                                }
+
                             } else {
-                                Write-Log -Message "Package $( $p.Name ) is installed with an older version $( $alreadyInstalledPackage.Version ) than the available version $( $p.Version )" -Severity VERBOSE
+
+                                # Multiple copies can exist on disk (nuspec/zip reads), take the newest
+                                $alreadyInstalledPackage = $installedPackageMatches | Sort-Object { [version]( $_.Version -replace '[^0-9.]', '0' ) } -Descending | Select-Object -First 1
+
+                                If ( [version]( $alreadyInstalledPackage.Version -replace '[^0-9.]', '0' ) -ge [version]( $p.Version.ToString() -replace '[^0-9.]', '0' ) ) {
+                                    Write-Log -Message "Package $( $p.Name ) is already installed with version $( $alreadyInstalledPackage.Version ) ($( If ( $globalFlag ) { 'global' } else { 'local' } )), skipping" -Severity VERBOSE
+                                    return
+                                } else {
+                                    Write-Log -Message "Package $( $p.Name ) is installed with an older version $( $alreadyInstalledPackage.Version ) than the available version $( $p.Version )" -Severity VERBOSE
+                                }
+
                             }
 
                         }
