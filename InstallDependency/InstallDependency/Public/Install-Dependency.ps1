@@ -533,7 +533,11 @@ Function Install-Dependency {
 
                 Write-Log -Message "Done with searching for $( $packagesToInstall.Count ) packages"
 
-                $pack = $packagesToInstall | Where-Object { $_.Package.Summary -notlike "*not reference directly*" -and $_.Package.Name -notlike "Xamarin.*"} | Where-Object { $_.Package.Source -eq $packageSource.Name } | Sort-Object Name, Version -Unique -Descending
+                # @() forces this to always be an array, even with 0 or 1 matches -- without it, a
+                # single match collapses to a scalar object. Windows PowerShell 5.1 (Desktop, unlike
+                # PS 6+) has no .Count on scalars, so $pack.Count below is $null, and dividing by it
+                # in Write-Progress throws "Attempted to divide by zero", aborting the whole install
+                $pack = @( $packagesToInstall | Where-Object { $_.Package.Summary -notlike "*not reference directly*" -and $_.Package.Name -notlike "Xamarin.*"} | Where-Object { $_.Package.Source -eq $packageSource.Name } | Sort-Object Name, Version -Unique -Descending )
                 Write-Log -Message "This is likely to install $( $pack.Count ) packages"
 
                 $i = 0

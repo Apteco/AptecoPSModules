@@ -5,7 +5,7 @@
 RootModule = 'InstallDependency.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.3.9'
+ModuleVersion = '0.3.10'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -113,6 +113,12 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+0.3.10 Found the real cause behind the 0.3.9 "Cannot install local packages!" abort: $pack (the list of
+       packages to install) was not forced into an array, so a single match collapsed to a scalar
+       object. Windows PowerShell 5.1 (Desktop) has no .Count on scalars (unlike PS 6+), so
+       $pack.Count was $null, and Write-Progress''s $i/$pack.Count division threw "Attempted to divide
+       by zero", aborting the whole install loop before the .nupkg cleanup was ever reached. $pack is
+       now always wrapped in @() so .Count is well-defined regardless of match count or PS edition
 0.3.9 Fixed the 0.3.8 .nupkg cleanup being able to abort the entire local/global package install loop:
       Install-Package -Destination can still hold a lock on the freshly written .nupkg for a moment
       (observed on Windows PowerShell 5.1''s legacy PackageManagement NuGet provider), so an immediate
