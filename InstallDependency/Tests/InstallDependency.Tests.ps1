@@ -392,7 +392,12 @@ Describe "Install-NuGetPackage" {
 
 }
 
-Describe "Install-VcRedist" {
+Describe "Install-VcRedist" -Skip:([System.Environment]::OSVersion.Platform -ne 'Win32NT') {
+    # Install-VcRedist itself short-circuits to "return $true" on non-Windows before ever touching
+    # Get-VcRedistStatus/Request-Choice/Start-BitsTransfer/Start-Process (vcredist is a Windows-only
+    # concept), so none of the mocked behaviour below is reachable off Windows. [System.Environment]::
+    # OSVersion.Platform is used over $IsWindows because $IsWindows does not exist in Windows
+    # PowerShell 5.1 (Desktop edition only defines it from PS 6+).
 
     BeforeEach {
         Mock -ModuleName InstallDependency Start-BitsTransfer { }
