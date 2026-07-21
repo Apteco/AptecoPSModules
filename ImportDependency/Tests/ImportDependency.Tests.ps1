@@ -139,6 +139,67 @@ Describe "Get-LocalPackage" {
         Remove-Item -Path $anotherDir -Recurse -Force -ErrorAction SilentlyContinue
     }
 
+    Context "Packages found via a raw .nupkg file (Install-Package -Destination layout)" {
+
+        BeforeAll {
+            Add-Type -AssemblyName System.IO.Compression.FileSystem
+
+            # Mimics what Install-Package -Destination produces: a package-root folder
+            # containing the raw .nupkg file *and* the extracted lib/ref/runtimes folders
+            # as siblings (not nested inside the nupkg).
+            $script:nupkgPkgDir = Join-Path ([System.IO.Path]::GetTempPath()) "pester_importdep_nupkg_$(Get-Random)"
+            New-Item -ItemType Directory -Path $script:nupkgPkgDir | Out-Null
+
+            $libDir = Join-Path $script:nupkgPkgDir "lib/net48"
+            New-Item -ItemType Directory -Path $libDir | Out-Null
+            Set-Content -Path (Join-Path $libDir "ZippedPkg.dll") -Value "fake dll content"
+
+            $nuspecSource = Join-Path $script:nupkgPkgDir "ZippedPkg.nuspec"
+            @"
+<?xml version="1.0" encoding="utf-8"?>
+<package><metadata><id>ZippedPkg</id><version>3.1.4</version><description>Zip test</description><authors>Zip Author</authors></metadata></package>
+"@ | Set-Content -Path $nuspecSource -Encoding UTF8
+
+            $script:nupkgPath = Join-Path $script:nupkgPkgDir "ZippedPkg.3.1.4.nupkg"
+            $zip = [System.IO.Compression.ZipFile]::Open($script:nupkgPath, "Create")
+            [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zip, $nuspecSource, "ZippedPkg.nuspec") | Out-Null
+            $zip.Dispose()
+
+            # The loose nuspec file is only there to build the zip -- remove it so this
+            # package is exclusively discoverable via the .nupkg (zip) branch
+            Remove-Item -Path $nuspecSource -Force
+        }
+
+        AfterAll {
+            Remove-Item -Path $script:nupkgPkgDir -Recurse -Force -ErrorAction SilentlyContinue
+        }
+
+        It "Returns the correct package Id and version from inside the zip" {
+            $result = Get-LocalPackage -NugetRoot $script:nupkgPkgDir
+            $pkg = $result | Where-Object { $_.Id -eq "ZippedPkg" }
+            $pkg | Should -Not -BeNullOrEmpty
+            $pkg.Version | Should -Be "3.1.4"
+        }
+
+        It "Source property is 'zip'" {
+            $result = Get-LocalPackage -NugetRoot $script:nupkgPkgDir
+            ($result | Where-Object { $_.Id -eq "ZippedPkg" }).Source | Should -Be "zip"
+        }
+
+        It "Path points to the package folder, not the .nupkg file itself (regression: Import-Dependency does Get-Item -Path `$pkg.Path and then Test-Path '<Path>/lib', which is always false if Path is a file)" {
+            $result = Get-LocalPackage -NugetRoot $script:nupkgPkgDir
+            $pkg = $result | Where-Object { $_.Id -eq "ZippedPkg" }
+            $pkg.Path | Should -Be $script:nupkgPkgDir
+            (Get-Item -Path $pkg.Path).PSIsContainer | Should -Be $true
+        }
+
+        It "The returned Path resolves a sibling lib folder, matching what Import-Dependency's loader expects" {
+            $result = Get-LocalPackage -NugetRoot $script:nupkgPkgDir
+            $pkg = $result | Where-Object { $_.Id -eq "ZippedPkg" }
+            Test-Path (Join-Path $pkg.Path "lib") | Should -Be $true
+        }
+    }
+
 }
 
 

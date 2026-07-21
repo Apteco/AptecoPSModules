@@ -64,7 +64,7 @@ Function Get-LocalPackage {
                             Description = $meta.description
                             Authors     = $meta.authors
                             SizeMB      = [math]::Round(($sizeBytes / 1MB), 2)
-                            Path    = $_.FullName
+                            Path    = $pkgFolder   # the folder next to the .nupkg, not the .nupkg file itself -- Install-Package -Destination extracts lib/ref/runtimes as siblings of the kept .nupkg
                             Source  = "zip"
                         } ) | Out-Null
                     }
