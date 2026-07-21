@@ -4,7 +4,7 @@ BeforeDiscovery {
     # Helper to create test files
     function New-TestFile {
         param(
-            [string]$Path,
+            [String]$Path,
             [int]$Rows,
             [switch]$Csv,
             [System.Text.Encoding]$Encoding = [System.Text.Encoding]::UTF8

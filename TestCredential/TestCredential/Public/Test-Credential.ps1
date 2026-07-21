@@ -52,7 +52,7 @@ function Test-Credential {
 
         # The action script to check the credentials
         $scriptBlock = {
-            $tmpFile = Join-Path -Path ( $Env:Temp ) -ChildPath "/$( [guid]::NewGuid().toString() ).test"
+            $tmpFile = Join-Path -Path ( $Env:Temp ) -ChildPath "/$( [guid]::NewGuid().toString() ).test" # $Env:Temp is windows only, but this module is also windows only
             Remove-Item -Path $tmpFile
         }
 

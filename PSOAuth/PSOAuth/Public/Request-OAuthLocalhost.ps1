@@ -266,8 +266,8 @@ function Request-OAuthLocalhost {
                     #write-host "$($context.Request.UserHostAddress)  =>  $($context.Request.Url)" -f 'mag'
 
                     # the html/data you want to send to the browser
-                    # you could replace this with: [string]$html = Get-Content "C:\some\path\index.html" -Raw
-                    [string]$html = "Waiting for Code."
+                    # you could replace this with: [String]$html = Get-Content "C:\some\path\index.html" -Raw
+                    [String]$html = "Waiting for Code."
 
                     #resposed to the request
                     $buffer = [System.Text.Encoding]::UTF8.GetBytes($html) # convert htmtl to bytes
@@ -295,8 +295,8 @@ function Request-OAuthLocalhost {
                     #write-host "$($context.Request.UserHostAddress)  =>  $($context.Request.Url)" -f 'mag'
 
                     # the html/data you want to send to the browser
-                    # you could replace this with: [string]$html = Get-Content "C:\some\path\index.html" -Raw
-                    [string]$html = "<h1>Received code: $( $code )</h1>"
+                    # you could replace this with: [String]$html = Get-Content "C:\some\path\index.html" -Raw
+                    [String]$html = "<h1>Received code: $( $code )</h1>"
 
                     #resposed to the request
                     $buffer = [System.Text.Encoding]::UTF8.GetBytes($html) # convert htmtl to bytes
