@@ -354,3 +354,118 @@ Describe "Import-Dependency" {
     }
 
 }
+
+
+# ---------------------------------------------------------------------------
+Describe "Select-CompatiblePackage" {
+# ---------------------------------------------------------------------------
+
+    BeforeAll {
+        # Two versions of the same package Id, each only compatible with a different target
+        # framework -- mirrors an edition-split package like DuckDB.NET.Bindings.Full where a
+        # Desktop-compatible 1.4.4 sits next to a Core-only 1.5.0 in the same lib folder.
+        $script:dualDir = Join-Path ([System.IO.Path]::GetTempPath()) "pester_selectpkg_$(Get-Random)"
+
+        $script:oldVersionPath = Join-Path $script:dualDir "DualPkg.1.0.0"
+        New-Item -ItemType Directory -Path (Join-Path $script:oldVersionPath "lib/net48") -Force | Out-Null
+        Set-Content -Path (Join-Path $script:oldVersionPath "lib/net48/DualPkg.dll") -Value "old"
+
+        $script:newVersionPath = Join-Path $script:dualDir "DualPkg.2.0.0"
+        New-Item -ItemType Directory -Path (Join-Path $script:newVersionPath "lib/net8.0") -Force | Out-Null
+        Set-Content -Path (Join-Path $script:newVersionPath "lib/net8.0/DualPkg.dll") -Value "new"
+
+        function script:New-TestPackage {
+            param($Id, $Version, $Path)
+            [PSCustomObject]@{ Id = $Id; Version = $Version; Path = $Path; Description = ""; Authors = ""; Source = "nuspec"; SizeMB = 0 }
+        }
+
+        $script:oldPkg = New-TestPackage -Id "DualPkg" -Version "1.0.0" -Path $script:oldVersionPath
+        $script:newPkg = New-TestPackage -Id "DualPkg" -Version "2.0.0" -Path $script:newVersionPath
+
+        # Several tests below override this module-scoped variable to force a specific edition's
+        # framework preference deterministically; restore it in AfterAll so later test runs against
+        # this same imported module instance still see the real, edition-derived value
+        $script:originalFrameworkPreference = InModuleScope ImportDependency { $Script:frameworkPreference }
+    }
+
+    AfterAll {
+        Remove-Item -Path $script:dualDir -Recurse -Force -ErrorAction SilentlyContinue
+        InModuleScope ImportDependency -Parameters @{ Original = $script:originalFrameworkPreference } {
+            $Script:frameworkPreference = $Original
+        }
+    }
+
+    It "Returns a single package unchanged when there is no duplicate Id" {
+        InModuleScope ImportDependency -Parameters @{ OldPkg = $script:oldPkg } {
+            $result = @( Select-CompatiblePackage -Package @( $OldPkg ) )
+            $result.Count | Should -Be 1
+            $result[0].Version | Should -Be "1.0.0"
+        }
+    }
+
+    It "Picks the older version when only its framework is compatible" {
+        InModuleScope ImportDependency -Parameters @{ OldPkg = $script:oldPkg; NewPkg = $script:newPkg } {
+            $Script:frameworkPreference = @("net48")
+            $result = @( Select-CompatiblePackage -Package @( $OldPkg, $NewPkg ) )
+            $result.Count | Should -Be 1
+            $result[0].Version | Should -Be "1.0.0"
+        }
+    }
+
+    It "Picks the newer version when only its framework is compatible" {
+        InModuleScope ImportDependency -Parameters @{ OldPkg = $script:oldPkg; NewPkg = $script:newPkg } {
+            $Script:frameworkPreference = @("net8.0")
+            $result = @( Select-CompatiblePackage -Package @( $OldPkg, $NewPkg ) )
+            $result.Count | Should -Be 1
+            $result[0].Version | Should -Be "2.0.0"
+        }
+    }
+
+    It "Never returns both versions of the same Id, even when both are compatible" {
+        InModuleScope ImportDependency -Parameters @{ OldPkg = $script:oldPkg; NewPkg = $script:newPkg } {
+            $Script:frameworkPreference = @("net48", "net8.0")
+            $result = @( Select-CompatiblePackage -Package @( $OldPkg, $NewPkg ) )
+            $result.Count | Should -Be 1
+            $result[0].Version | Should -Be "2.0.0"
+        }
+    }
+
+    It "Falls back to the highest version when none are compatible" {
+        InModuleScope ImportDependency -Parameters @{ OldPkg = $script:oldPkg; NewPkg = $script:newPkg } {
+            $Script:frameworkPreference = @("net481")
+            $result = @( Select-CompatiblePackage -Package @( $OldPkg, $NewPkg ) )
+            $result.Count | Should -Be 1
+            $result[0].Version | Should -Be "2.0.0"
+        }
+    }
+
+    It "Treats a package with no lib folder as always compatible and picks the highest version" {
+        $runtimeOnlyDir = Join-Path ([System.IO.Path]::GetTempPath()) "pester_selectpkg_rt_$(Get-Random)"
+        $v1 = Join-Path $runtimeOnlyDir "RtPkg.1.0.0"
+        $v2 = Join-Path $runtimeOnlyDir "RtPkg.2.0.0"
+        New-Item -ItemType Directory -Path (Join-Path $v1 "runtimes/win-x64/native") -Force | Out-Null
+        New-Item -ItemType Directory -Path (Join-Path $v2 "runtimes/win-x64/native") -Force | Out-Null
+
+        $pkg1 = [PSCustomObject]@{ Id = "RtPkg"; Version = "1.0.0"; Path = $v1 }
+        $pkg2 = [PSCustomObject]@{ Id = "RtPkg"; Version = "2.0.0"; Path = $v2 }
+
+        InModuleScope ImportDependency -Parameters @{ Pkg1 = $pkg1; Pkg2 = $pkg2 } {
+            $result = @( Select-CompatiblePackage -Package @( $Pkg1, $Pkg2 ) )
+            $result.Count | Should -Be 1
+            $result[0].Version | Should -Be "2.0.0"
+        }
+
+        Remove-Item -Path $runtimeOnlyDir -Recurse -Force -ErrorAction SilentlyContinue
+    }
+
+    It "Keeps unrelated package Ids independent" {
+        $otherPkg = [PSCustomObject]@{ Id = "OtherPkg"; Version = "9.9.9"; Path = $script:newVersionPath }
+        InModuleScope ImportDependency -Parameters @{ OldPkg = $script:oldPkg; NewPkg = $script:newPkg; OtherPkg = $otherPkg } {
+            $Script:frameworkPreference = @("net48", "net8.0")
+            $result = @( Select-CompatiblePackage -Package @( $OldPkg, $NewPkg, $OtherPkg ) )
+            $result.Count | Should -Be 2
+            ( $result.Id | Sort-Object -Unique ) | Should -Be @( "DualPkg", "OtherPkg" )
+        }
+    }
+
+}

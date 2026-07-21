@@ -151,6 +151,49 @@ Parameter|Explanation
 
 > PowerShellGet *scripts* (`Install-Script`/`Find-Script`) are intentionally not supported — use modules instead.
 
+### Example: DuckDB.NET across Windows PowerShell and pwsh, in one shared lib folder
+
+`DuckDB.NET.Bindings.Full`/`DuckDB.NET.Data.Full` dropped their `netstandard2.0` build after version `1.4.4` — later versions only ship `net8.0`/`net10.0` builds, which Windows PowerShell 5.1 (running on .NET Framework) cannot load at all. So if a script needs to run under both Windows PowerShell and pwsh, `1.4.4` is the newest version Windows PowerShell can use, while pwsh can take the newest version available.
+
+You do not need two separate `lib` folders for this. Install both into the same one — `Install-Dependency` (with the fix described in this module's changelog) keeps distinct pinned versions of the same package Id side by side rather than treating a newer version as already covering an older pinned request, and [`ImportDependency`](../ImportDependency)'s loader (`Select-CompatiblePackage`) picks the one whose target-framework folder matches whichever PowerShell edition is actually running, so only one of them is ever loaded into the process:
+
+```PowerShell
+$packages = [Array]@(
+    # Windows PowerShell 5.1 pin: the last version with a netstandard2.0 build, plus the two BCL
+    # polyfills its netstandard2.0 dependency group declares
+    [PSCustomObject]@{ name = "DuckDB.NET.Bindings.Full"; version = "1.4.4" }
+    [PSCustomObject]@{ name = "DuckDB.NET.Data.Full";     version = "1.4.4" }
+    [PSCustomObject]@{ name = "System.Memory";            version = "4.6.0" }
+    [PSCustomObject]@{ name = "System.Runtime.CompilerServices.Unsafe"; version = "6.0.0" }
+
+    # pwsh: no pin needed, always take the newest build directly
+    "DuckDB.NET.Bindings.Full"
+    "DuckDB.NET.Data.Full"
+)
+
+Install-Dependency -LocalPackage $packages -ExcludeDependencies -Verbose
+```
+
+> Pin `System.Runtime.CompilerServices.Unsafe` to exactly `6.0.0`, not a later one. Its NuGet package version and the `AssemblyVersion` embedded in its DLL drift apart across releases: `6.1.0`'s `net462` build embeds `AssemblyVersion 6.0.1.0`, while its `netstandard2.0` build embeds `6.0.0.0`. Windows PowerShell's target-framework preference tries `net462` before `netstandard2.0`, so `6.1.0` loads the wrong identity there and `DuckDB.NET.Bindings 1.4.4` (built against `6.0.0.0`) fails at first use with a `FileNotFoundException`. `6.0.0` has no `net462` build at all, so every build it does ship reports `6.0.0.0` consistently, regardless of which one gets picked.
+
+Run this same command from either Windows PowerShell or pwsh — it installs the same six packages either way, since installing has nothing to do with which one actually gets loaded later. Then, from **Windows PowerShell 5.1**:
+
+```PowerShell
+Import-Module ImportDependency
+Import-Dependency -LoadWholePackageFolder
+# DuckDB.NET.Bindings/Data 1.4.4 (netstandard2.0) get loaded; 1.5.x+ is skipped as incompatible
+[DuckDB.NET.Data.DuckDBConnection]::new("Data Source=:memory:")
+```
+
+And from **pwsh**:
+
+```PowerShell
+Import-Module ImportDependency
+Import-Dependency -LoadWholePackageFolder
+# The newest DuckDB.NET.Bindings/Data (net8.0/net10.0) get loaded; 1.4.4 is skipped in favour of it
+[DuckDB.NET.Data.DuckDBConnection]::new("Data Source=:memory:")
+```
+
 ## Install-NuGetPackage
 
 Downloads and extracts a single NuGet package directly from `nuget.org` without going through `Install-Package`/`Find-Package`. Useful when you just need the raw package contents (e.g. `lib/` DLLs) without registering a NuGet repository.

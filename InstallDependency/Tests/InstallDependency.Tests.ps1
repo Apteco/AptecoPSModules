@@ -246,6 +246,35 @@ Describe "Install-Dependency" {
             $logContent | Should -Not -Match "Installing Newtonsoft\.Json"
         }
 
+        It "Installs a pinned version even when a newer version of the same Id already exists locally (regression: dual-version installs for edition-split packages like DuckDB.NET were silently skipped because any newer sibling version was treated as already covering the pin)" {
+            Mock -ModuleName InstallDependency Get-PSEnvironment {
+                New-FakePSEnvironment -InstalledLocalPackages @( [PSCustomObject]@{ Id = "Newtonsoft.Json"; Version = "999.999.999" } )
+            }
+
+            Install-Dependency -LocalPackage ( [PSCustomObject]@{ name = "Newtonsoft.Json"; version = "12.0.1" } ) -LocalPackageFolder $script:testLocalFolder -ExcludeDependencies
+
+            $logContent = Get-Content -Path (Join-Path $script:testWorkDir "dependencies_install.log") -Raw
+            $logContent | Should -Match "Newtonsoft\.Json 12\.0\.1 is pinned but not yet installed"
+            $logContent | Should -Not -Match "skipping"
+
+            $found = Get-LocalPackage -NugetRoot $script:testLocalFolder
+            ( $found | Where-Object { $_.Id -eq "Newtonsoft.Json" -and $_.Version -eq "12.0.1" } ) | Should -Not -BeNullOrEmpty
+        }
+
+        It "Skips a pinned version only when that exact version is already installed, not just any version of the same Id" {
+            Mock -ModuleName InstallDependency Get-PSEnvironment {
+                New-FakePSEnvironment -InstalledLocalPackages @(
+                    [PSCustomObject]@{ Id = "Newtonsoft.Json"; Version = "12.0.1" }
+                    [PSCustomObject]@{ Id = "Newtonsoft.Json"; Version = "999.999.999" }
+                )
+            }
+
+            Install-Dependency -LocalPackage ( [PSCustomObject]@{ name = "Newtonsoft.Json"; version = "12.0.1" } ) -LocalPackageFolder $script:testLocalFolder -ExcludeDependencies
+
+            $logContent = Get-Content -Path (Join-Path $script:testWorkDir "dependencies_install.log") -Raw
+            $logContent | Should -Match "Newtonsoft\.Json 12\.0\.1 is already installed \(local\), skipping"
+        }
+
     }
 
     Context "Global package installation" {

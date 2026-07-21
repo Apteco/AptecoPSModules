@@ -5,7 +5,7 @@
 RootModule = 'InstallDependency.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.3.10'
+ModuleVersion = '0.3.11'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -20,7 +20,7 @@ Author = 'florian.von.bracht@apteco.de'
 CompanyName = 'Apteco GmbH'
 
 # Copyright statement for this module
-Copyright = '(c) 2025 Apteco GmbH. All rights reserved.'
+Copyright = '(c) 2026 Apteco GmbH. All rights reserved.'
 
 # Description of the functionality provided by this module
 Description = 'Apteco PS Modules - PowerShell install dependencies
@@ -72,8 +72,8 @@ RequiredModules = @(
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
 FunctionsToExport = @(
     "Install-Dependency"
-    ,"Install-NuGetPackage"
-    ,"Install-VcRedist"
+    "Install-NuGetPackage"
+    "Install-VcRedist"
 )
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
@@ -113,6 +113,9 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+0.3.11 Added a pinned version support to keep the same version of a package installed for all environments.
+       This is needed for DuckDB.NET to keep the same version for Windows PowerShell 5.1 (netstandard2.0)
+       and PowerShell Core (Windows and Linux)
 0.3.10 Found the real cause behind the 0.3.9 "Cannot install local packages!" abort: $pack (the list of
        packages to install) was not forced into an array, so a single match collapsed to a scalar
        object. Windows PowerShell 5.1 (Desktop) has no .Count on scalars (unlike PS 6+), so
