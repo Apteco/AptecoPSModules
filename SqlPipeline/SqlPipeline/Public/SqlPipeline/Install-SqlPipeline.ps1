@@ -1,58 +1,30 @@
-# TODO Move Download-NuGetPackage to a common module and use it in Install-SqlPipeline
-
 
 function Install-SqlPipeline {
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory=$false)]
-        [switch]$WindowsPowerShell
     )
 
     process {
 
         Write-Verbose "Starting installation of SQLPipeline dependencies..."
 
-        # Windows PowerShell 5.1 requires specific older package versions:
-        #   DuckDB.NET 1.4.4 (last version compatible with .NET Framework / WinPS 5.1)
-        #   System.Memory 4.6.0 (required polyfill not included in .NET Framework)
-        $packagesToInstall = if ($WindowsPowerShell) {
-            [Array]@(
-                [PSCustomObject]@{ Name = "DuckDB.NET.Bindings.Full"; Version = "1.4.4" }
-                [PSCustomObject]@{ Name = "DuckDB.NET.Data.Full";     Version = "1.4.4" }
-                [PSCustomObject]@{ Name = "System.Memory";            Version = "4.6.0" }
-            )
-        } else {
-            $Script:psPackages
+        # Check if InstallDependency is present -- it does the actual pinned/latest version
+        # installation and correctly keeps distinct pinned versions of the same package Id side
+        # by side (needed here since $Script:psPackages pins DuckDB.NET 1.4.4 for Windows
+        # PowerShell alongside an unpinned "latest" request for pwsh, both installed unconditionally
+        # so the same lib folder works for either PowerShell edition)
+        If ( @( Get-InstalledModule | Where-Object { $_.Name -eq "InstallDependency" } ).Count -lt 1 ) {
+            Write-Verbose "Missing dependency, executing: 'Install-Module InstallDependency'"
+            Install-Module InstallDependency -Force -AllowClobber
         }
+        Import-Module InstallDependency -Force
 
-        If ( $packagesToInstall.Count -gt 0 ) {
+        $outputDir = Join-Path -Path $PWD.Path -ChildPath "/lib"
 
-            $pse = Get-PSEnvironment
-            Write-Verbose "There are currently $($packagesToInstall.Count) packages to install."
-            Write-Verbose "Checking for already installed packages..."
-            Write-Verbose "Installed local packages: $( $pse.InstalledLocalPackages.Id -join ", ")"
-            Write-Verbose "To update already installed packages, please remove them first and then run Install-SqlPipeline again."
+        Install-Dependency -LocalPackage $Script:psPackages -LocalPackageFolder $outputDir -ExcludeDependencies
 
-            $outputDir = Join-Path -Path $PWD.Path -ChildPath "/lib"
-            New-Item -Path $outputDir -ItemType Directory -Force | Out-Null
-
-            $packagesToInstall | ForEach-Object {
-                $pkg = $_
-                $pkgName    = if ( $pkg -is [string] ) { $pkg } elseif ( $pkg -is [pscustomobject] -and $pkg.Name ) { $pkg.Name } else { throw "Invalid package definition: $pkg" }
-                $pkgVersion = if ( $pkg -is [pscustomobject] -and $pkg.Version ) { $pkg.Version } else { "" }
-                Write-Verbose "Checking if package $pkgName is already installed..."
-                If ( -not ( $pse.InstalledLocalPackages.Id -contains $pkgName ) ) {
-                    Write-Verbose "Package $pkgName is not installed. Downloading and installing..."
-                    Install-NuGetPackage -PackageId $pkgName -Version $pkgVersion -OutputDir $outputDir
-                } else {
-                    Write-Verbose "Package $pkgName is already installed. Skipping download."
-                }
-            }
-
-            # Now try the re-import of all packages
-            Import-Package
-
-        }
+        # Now try the re-import of all packages
+        Import-Package
 
     }
 

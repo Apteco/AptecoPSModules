@@ -24,30 +24,23 @@ Current functionality:
 Install the required DuckDB.NET NuGet packages into a `./lib` subfolder:
 
 ```PowerShell
-# PowerShell 7+ (latest DuckDB.NET)
 Install-SqlPipeline
-
-# Windows PowerShell 5.1 (pinned compatible versions)
-Install-SqlPipeline -WindowsPowerShell
 ```
+
+This installs everything needed for **both** PowerShell 7+ and Windows PowerShell 5.1 into the same `./lib` folder in one go, so the folder can be shared between the two without re-running the installer per edition. [`ImportDependency`](../ImportDependency)'s loader picks the version that matches whichever PowerShell edition actually imports the module.
 
 ## PowerShell Version Compatibility
 
 | Feature | PowerShell 7+ | Windows PowerShell 5.1 |
 |---|---|---|
 | DuckDB.NET version | latest | 1.4.4 (maximum) |
-| Extra dependencies | none | `System.Memory` 4.6.0 |
+| Extra dependencies | none | `System.Memory` 4.6.0, `System.Runtime.CompilerServices.Unsafe` 6.0.0 |
 
-**Windows PowerShell 5.1** runs on .NET Framework 4.x, which is missing some APIs that newer DuckDB.NET versions require. Use the `-WindowsPowerShell` switch when installing on Windows PowerShell 5.1:
-
-```PowerShell
-Install-SqlPipeline -WindowsPowerShell
-```
-
-This installs:
+**Windows PowerShell 5.1** runs on .NET Framework 4.x, which is missing some APIs that newer DuckDB.NET versions require. `Install-SqlPipeline` installs these for it too:
 - `DuckDB.NET.Bindings.Full` 1.4.4
 - `DuckDB.NET.Data.Full` 1.4.4
 - `System.Memory` 4.6.0 (required polyfill not included in .NET Framework)
+- `System.Runtime.CompilerServices.Unsafe` 6.0.0 (required polyfill not included in .NET Framework; pin exactly this version -- later ones ship a `net462` build with a mismatched embedded `AssemblyVersion` that Windows PowerShell prefers over the compatible `netstandard2.0` build, causing a `FileNotFoundException` at first use)
 
 ## Quick Start (in-memory, no setup needed)
 

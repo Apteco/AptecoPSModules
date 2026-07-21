@@ -14,12 +14,9 @@ BeforeDiscovery {
         $script:duckDBAvailable = $true
     } catch {
         $script:duckDBAvailable = $false
-        # Windows PowerShell 5.1 requires older pinned versions of DuckDB.NET + System.Memory
-        if ($PSVersionTable.PSEdition -eq 'Desktop' -or $PSVersionTable.PSVersion.Major -le 5) {
-            Install-SqlPipeline -WindowsPowerShell
-        } else {
-            Install-SqlPipeline
-        }
+        # Install-SqlPipeline now always installs both the Windows PowerShell-pinned DuckDB.NET 1.4.4
+        # set and the unpinned "latest" set for pwsh into the same lib folder -- no per-edition switch needed
+        Install-SqlPipeline
         # Re-import so the psm1 re-runs and creates $Script:DefaultConnection
         # with the newly installed packages.
         Import-Module "$PSScriptRoot/../SqlPipeline" -Force
