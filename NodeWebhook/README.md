@@ -118,6 +118,15 @@ and creates a Scheduled Task for autostart on reboot.
 .\setup.ps1 -Action uninstall    # Remove pm2 processes and scheduled task
 ```
 
+To allow larger payloads, add this settings
+
+```PowerShell
+& "$env:windir\system32\inetsrv\appcmd.exe" list config -section:system.webServer/serverRuntime
+& "$env:windir\system32\inetsrv\appcmd.exe" set config -section:system.webServer/serverRuntime /uploadReadAheadSize:52428800 /commit:apphost
+iisreset
+```
+
+
 Optional parameters:
 
 | Parameter | Default | Description |

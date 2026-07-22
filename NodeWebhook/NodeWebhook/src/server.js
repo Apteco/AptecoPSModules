@@ -7,10 +7,11 @@
 //   1. URL-Key          — :key in der URL (immer aktiv)
 //   2. X-Api-Key Header — apiKey + apiKeyHeader (optional)
 //   3. Bearer Token     — bearerToken im Authorization-Header (optional)
-//   4. IP-Whitelist     — allowedIps (optional)
+//   4. IP-Whitelist     — allowedIps, unterstützt einzelne IPs und CIDR-Ranges (optional)
 
 import 'dotenv/config';
 import Fastify from 'fastify';
+import ipRangeCheck from 'ip-range-check';
 import { getDb, enqueue } from './db.js';
 import { loadEndpoints } from './config.js';
 
@@ -39,7 +40,39 @@ if (process.env.LOG_PRETTY === 'true') {
 
 const app = Fastify({
   logger:    loggerConfig,
-  bodyLimit: 1_048_576,
+  // 20 MB Body-Limit — genug Puffer für Brevo-Webhooks mit großen Arrays
+  // (z.B. 23.000 list_addition / contact_updated Events ≈ 5-7 MB JSON).
+  // War vorher 1 MB (Fastify-Default) — führte bei großen Payloads zu
+  // einem 413 *vor* dem Erreichen unseres Handlers, ohne Log-Eintrag.
+  bodyLimit: 40 * 1_048_576,
+});
+
+// ------------------------------------------------------------
+// Request-/Response-Logging für ALLE eingehenden Requests
+// (auch die, die später z.B. an Auth/Body-Limit scheitern)
+// ------------------------------------------------------------
+app.addHook('onRequest', async (request) => {
+  request.log.info(
+    { method: request.method, url: request.url, ip: request.ip, contentLength: request.headers['content-length'] },
+    'Incoming request'
+  );
+});
+
+app.addHook('onResponse', async (request, reply) => {
+  request.log.info(
+    { method: request.method, url: request.url, statusCode: reply.statusCode, responseTime: reply.elapsedTime },
+    'Request completed'
+  );
+});
+
+// Fängt auch Fehler ab, die VOR dem Route-Handler auftreten
+// (z.B. 413 Payload Too Large, JSON-Parse-Fehler, 404 auf unbekannte Routen)
+app.setErrorHandler((err, request, reply) => {
+  request.log.error(
+    { err, method: request.method, url: request.url, statusCode: err.statusCode },
+    'Request-Fehler (vor oder im Handler)'
+  );
+  reply.code(err.statusCode ?? 500).send({ error: err.message ?? 'Internal error' });
 });
 
 // ------------------------------------------------------------
@@ -96,10 +129,10 @@ app.post('/webhook/:endpoint/:key', async (request, reply) => {
     }
   }
 
-  // 5. IP-Whitelist prüfen (falls konfiguriert)
+  // 5. IP-Whitelist prüfen — unterstützt einzelne IPs und CIDR-Ranges
   if (cfg.allowedIps.length > 0) {
     const clientIp = request.ip;
-    if (!cfg.allowedIps.includes(clientIp)) {
+    if (!ipRangeCheck(clientIp, cfg.allowedIps)) {
       request.log.warn({ endpointName, ip: clientIp }, 'IP nicht erlaubt');
       return reply.code(403).send({ error: 'Forbidden' });
     }

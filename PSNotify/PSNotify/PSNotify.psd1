@@ -5,7 +5,7 @@
 RootModule = 'PSNotify.psm1'
 
 # Die Versionsnummer dieses Moduls
-ModuleVersion = '0.1.1'
+ModuleVersion = '0.2.1'
 
 # Unterstützte PSEditions
 # CompatiblePSEditions = @()
@@ -20,14 +20,14 @@ Author = 'florian.von.bracht@apteco.de'
 CompanyName = 'Apteco GmbH'
 
 # Urheberrechtserklärung für dieses Modul
-Copyright = '(c) 2025 Apteco GmbH. All rights reserved.'
+Copyright = '(c) 2026 Apteco GmbH. All rights reserved.'
 
 # Beschreibung der von diesem Modul bereitgestellten Funktionen
 Description = 'Apteco PS Modules - PowerShell Notify
 
-This module allows you to trigger messages via email, Telegram, Slack and Teams. You can use
-the channels separated from each other or combined as a group, when you want to inform via
-multiple different channels.
+This module allows you to trigger messages via email, Telegram, Slack, Teams, generic webhooks
+and a local Mock channel for testing. You can use the channels separated from each other or
+combined as a group, when you want to inform via multiple different channels.
 
 Have a look at the GitHub repository for more information: https://github.com/Apteco/AptecoPSModules/tree/main/PSNotify
 
@@ -115,6 +115,18 @@ FunctionsToExport = @(
     'Remove-TeamsChannel'
     'Send-TeamsNotification'
 
+    # Mock
+    'Add-MockChannel'
+    'Get-MockChannel'
+    'Remove-MockChannel'
+    'Send-MockNotification'
+
+    # Webhook
+    'Add-WebhookChannel'
+    'Get-WebhookChannel'
+    'Remove-WebhookChannel'
+    'Send-WebhookNotification'
+
     # Group
     'Add-NotificationGroup'
     'Add-NotificationGroupTarget'
@@ -172,6 +184,13 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.2.1 Added $env:PSNOTIFY_HOME to override where the store and lib folder are kept,
+      e.g. for tests or isolated instances. Falls back to the previous
+      LocalApplicationData location when unset, so existing installs are unaffected
+0.2.0 Added Mock channel (writes each notification to a local file, useful for testing)
+      Added Webhook channel (generic POST to any URL, e.g. for n8n/Zapier/custom endpoints)
+      Send-GroupNotification now dispatches to Send-<Type>Notification by convention
+      instead of a hardcoded switch, so new channel types no longer require changes there
 0.1.1 Fixed some minor bugs identified by Claude AI
 0.1.0 Added internal enum for ChannelType
       Adding aliases for Verbs with plurals

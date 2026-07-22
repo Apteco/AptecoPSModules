@@ -5,7 +5,7 @@
 RootModule = 'OSMGeocode.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.0.9'
+ModuleVersion = '0.0.10'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -20,7 +20,7 @@ Author = 'florian.von.bracht@apteco.de'
 CompanyName = 'Apteco GmbH'
 
 # Copyright statement for this module
-Copyright = '(c) 2025 Apteco GmbH. All rights reserved.'
+Copyright = '(c) 2026 Apteco GmbH. All rights reserved.'
 
 # Description of the functionality provided by this module
 Description = 'Apteco PS Modules - OpenStreetMaps Geocoding
@@ -52,10 +52,7 @@ PowerShellVersion = '5.1'
 # Modules that must be imported into the global environment prior to importing this module
 # Using our own dependency module later for more scripts/modules/packages
 RequiredModules = @(
-    #"WriteLog"
-    #"SqlServer"
-    #"EncryptCredential"
-    #"ConvertUnixTimestamp"
+    "ImportDependency"
 )
 
 
@@ -84,16 +81,16 @@ FunctionsToExport = @(
     "Add-ToHashCache"
     "Get-HashCache"
     "Reset-HashCache"
-) #'*'
+)
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
-CmdletsToExport = @() #'*'
+CmdletsToExport = @()
 
 # Variables to export from this module
-VariablesToExport = @() #'*'
+VariablesToExport = @()
 
 # Aliases to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no aliases to export.
-AliasesToExport = @() #'*'
+AliasesToExport = @()
 
 # DSC resources to export from this module
 # DscResourcesToExport = @()
@@ -126,6 +123,7 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.0.10 Replacing Import-Dependencies with a new module ImportDependency to handle dependencies better
 0.0.9 Enhancing the spelling
 0.0.8 Updated copyright to 2025
 0.0.7 Fixed temporary module and script path loading

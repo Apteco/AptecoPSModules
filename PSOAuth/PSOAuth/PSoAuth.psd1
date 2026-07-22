@@ -5,7 +5,7 @@
 RootModule = 'PSOAuth.psm1'
 
 # Die Versionsnummer dieses Moduls
-ModuleVersion = '0.1.4'
+ModuleVersion = '0.1.5'
 
 # Unterstützte PSEditions
 # CompatiblePSEditions = @()
@@ -20,7 +20,7 @@ Author = 'florian.von.bracht@apteco.de'
 CompanyName = 'Apteco GmbH'
 
 # Urheberrechtserklärung für dieses Modul
-Copyright = '(c) 2025 Apteco GmbH. All rights reserved.'
+Copyright = '(c) 2026 Apteco GmbH. All rights reserved.'
 
 # Beschreibung der von diesem Modul bereitgestellten Funktionen
 Description = 'Apteco PS Modules - PowerShell oAuth
@@ -113,6 +113,7 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.1.5 Replacing Import-Dependencies with a new module ImportDependency to handle dependencies better
 0.1.4 Enhancing some spellings
 0.1.3 Added a switch when setting the logfile if it should be overridden or not
 0.1.2 Fixed temporary module and script path loading

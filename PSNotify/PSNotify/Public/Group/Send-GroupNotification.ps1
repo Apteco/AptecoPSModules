@@ -28,23 +28,34 @@
         $targets = Get-NotificationTargets | where-object { $_.MemberOf -contains $group.GroupId }
 
         # Send a message to each target
-        # TODO this needs to be refined later, Send-Notification does not exist yet
+        # Every channel type is expected to expose a "Send-<Type>Notification" function.
+        # Which of the candidate arguments below actually get passed is derived from that
+        # function's own parameter list, so new channel types plug in here automatically.
         foreach ( $target in $targets ) {
-            #Send-Notification -Channel $target.Channel -Target $target.TargetName -Message $Message
-            Switch ( $target.type ) {
-                "Telegram" {
-                    Send-TelegramNotification -Name $target.Name -Target $target.targetname -Text $Message
-                }
-                "Teams" {
-                    Send-TeamsNotification -Name $target.Name -Text $Message -Title $Subject
-                }
-                "Slack" {
-                    Send-SlackNotification -Name $target.Name -Target $target.targetname -Text $Message
-                }
-                "EMail" {
-                    Send-MailNotification -Name $target.Name -Target $target.targetname -Text $Message -Subject $Subject
+
+            $commandName = "Send-$( $target.type )Notification"
+            $command = Get-Command -Name $commandName -CommandType Function -ErrorAction SilentlyContinue
+
+            If ( $null -eq $command ) {
+                throw "No notification function found for channel type '$( $target.type )' (expected '$( $commandName )')"
+            }
+
+            $candidateArgs = [Ordered]@{
+                "Name" = $target.Name
+                "Target" = $target.targetname
+                "Text" = $Message
+                "Subject" = $Subject
+                "Title" = $Subject
+            }
+
+            $callArgs = @{}
+            foreach ( $key in $candidateArgs.Keys ) {
+                If ( $command.Parameters.ContainsKey($key) -and [String]::IsNullOrEmpty($candidateArgs[$key]) -eq $false ) {
+                    $callArgs[$key] = $candidateArgs[$key]
                 }
             }
+
+            & $commandName @callArgs
 
         }
 

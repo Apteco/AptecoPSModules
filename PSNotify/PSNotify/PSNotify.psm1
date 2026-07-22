@@ -23,6 +23,8 @@ Enum ChannelType {
     Teams    = 1
     Slack    = 2
     Telegram = 3
+    Mock     = 4
+    Webhook  = 5
 }
 
 
@@ -77,8 +79,16 @@ $Script:store = [PSCustomObject]@{
 #-----------------------------------------------
 
 # Default folders and files
-$localAppData = [Environment]::GetFolderPath("LocalApplicationData")
-$localTargetFolder = "$( $localAppData )/AptecoPSModules/PSNotify"
+# Set $env:PSNOTIFY_HOME before importing the module to redirect where the store
+# (channels/groups/settings) and downloaded libs are kept, e.g. for tests or to run
+# isolated instances side by side. Falls back to the per-user LocalApplicationData
+# folder when unset, which keeps existing installations working unchanged.
+If ( [String]::IsNullOrEmpty($env:PSNOTIFY_HOME) -eq $false ) {
+    $localTargetFolder = $env:PSNOTIFY_HOME
+} else {
+    $localAppData = [Environment]::GetFolderPath("LocalApplicationData")
+    $localTargetFolder = "$( $localAppData )/AptecoPSModules/PSNotify"
+}
 $Script:defaultStorefile = "$( $localTargetFolder )/store.json"
 $Script:localLibFolder = "$( $localTargetFolder )/lib"
 
