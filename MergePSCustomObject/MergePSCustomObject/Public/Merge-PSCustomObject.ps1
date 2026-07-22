@@ -286,6 +286,17 @@ function Merge-PSCustomObject {
 
                     Write-Verbose "Merging hashtables from '$( $propEqual )'"
 
+                    # Check if we have all dependencies available. Get-InstalledModule only knows about
+                    # PowerShellGet-installed modules, so it misses a MergeHashtable that is merely
+                    # imported into the session (e.g. from a local path) -- Get-Module catches both cases
+                    If ( -not ( Get-Module -Name "MergeHashtable" ) -and -not ( Get-Module -Name "MergeHashtable" -ListAvailable ) )
+                    {
+                        Write-Warning "You need to install the module 'MergeHashtable' to use this feature"
+                        Write-Warning "Install-Module -Name MergeHashtable"
+                        Write-Warning "https://www.powershellgallery.com/packages/MergeHashtable"
+                        throw "Please install 'MergeHashtable'"
+                    }
+
                     # Recursively call this function, if it is nested hashtable
                     $params = [Hashtable]@{
                         "Left" = $Left.($propEqual)

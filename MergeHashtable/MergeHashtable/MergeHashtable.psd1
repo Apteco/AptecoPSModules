@@ -12,7 +12,7 @@
 RootModule = 'MergeHashtable.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.2.0'
+ModuleVersion = '0.2.1'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -152,6 +152,9 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+0.2.1 Fixed the MergePSCustomObject dependency check using Get-InstalledModule, which only knows about
+      PowerShellGet-installed modules and misses one that is merely imported into the session (e.g. from
+      a local path) -- now uses Get-Module so both cases are recognised
 0.2.0 New release to 0.2.0 after it is now integrated into AptecoPSFramework module
       Fixed another bug with Add-Member and .add()
 0.1.2 Fixed a bug where merging ArrayList properties with -MergeArrays used Add-Member instead of adding a real

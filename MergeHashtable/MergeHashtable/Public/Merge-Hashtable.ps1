@@ -266,8 +266,10 @@ function Merge-Hashtable {
 
                     Write-Verbose "Going recursively into '$( $propEqual )'"
 
-                    # Check if we have all dependencies installed
-                    If (( Get-InstalledModule | Where-Object { $_.Name -eq "MergePSCustomObject" } ).count -eq 0 )
+                    # Check if we have all dependencies available. Get-InstalledModule only knows about
+                    # PowerShellGet-installed modules, so it misses a MergePSCustomObject that is merely
+                    # imported into the session (e.g. from a local path) -- Get-Module catches both cases
+                    If ( -not ( Get-Module -Name "MergePSCustomObject" ) -and -not ( Get-Module -Name "MergePSCustomObject" -ListAvailable ) )
                     {
                         Write-Warning "You need to install the module 'MergePSCustomObject' to use this feature"
                         Write-Warning "Install-Module -Name MergePSCustomObject"
@@ -326,7 +328,7 @@ function Merge-Hashtable {
                 } elseif ( $countLeft -gt 0 -and $countRight -eq 0 ) {
 
                     # just overwrite existing values if datatypes of attribute are different or no merging is wished
-                    $joined | Add-Member -MemberType NoteProperty -Name $propEqual -Value $Left.($propEqual)
+                    $joined.Add($propEqual, $Left.($propEqual))
                     Write-Verbose "Overwrite '$( $propEqual )' with value from left side"
                     #Write-Verbose "Datatypes of '$( $propEqual )' are not the same on left and right"
 
