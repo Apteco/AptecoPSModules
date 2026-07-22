@@ -1,7 +1,7 @@
 ﻿
 $psScripts = [Array]@(
     "Install-Dependencies"
-    "Import-Dependencies"
+    #"Import-Dependencies"
 )
 
 $psModules = [Array]@(
@@ -9,6 +9,7 @@ $psModules = [Array]@(
     "SimplySql"
     "ConvertStrings"
     "SqlPipeline"
+    "ImportDependency"
     #"MeasureRows"
     #"EncryptCredential"
     #"ExtendFunction"
