@@ -2,11 +2,10 @@ BeforeAll {
     # Import the module
     Import-Module $PSScriptRoot/../"MergeHashtable" -Force
 
-    # Sibling module needed for the -MergePSCustomObjects recursion tests further down
-    if ( -not ( Get-Module -ListAvailable -Name "MergePSCustomObject" ) ) {
-        Install-Module -Name MergePSCustomObject -Force -Scope CurrentUser -Repository PSGallery
-    }
-    Import-Module MergePSCustomObject -Force
+    # Sibling module needed for the -MergePSCustomObjects recursion tests further down.
+    # Imported from the local checkout (not PSGallery) so both modules under test are always the
+    # current repo code, avoiding version skew between a locally-changed module and a stale published one
+    Import-Module $PSScriptRoot/../../"MergePSCustomObject/MergePSCustomObject" -Force
 }
 
 Describe 'Merge-Hashtable' {
@@ -104,7 +103,9 @@ Describe 'Merge-Hashtable' {
 
             $result = Merge-Hashtable -Left $left -right $right -MergeHashtables
 
-            $result.nested["firstname"] | Should -Be "Flo"
+            # Must be a real hashtable key, not just an ETS NoteProperty (regression for an Add-Member/.Add() mixup)
+            $result.Keys | Should -Contain "nested"
+            $result["nested"]["firstname"] | Should -Be "Flo"
 
         }
 

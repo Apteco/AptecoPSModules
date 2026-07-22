@@ -1,12 +1,11 @@
 BeforeAll {
+    # Import the sibling module from the local checkout FIRST (not PSGallery) so it satisfies
+    # MergePSCustomObject.psd1's RequiredModules entry with this repo's current code, not whatever
+    # happens to be published -- avoids version skew between the two modules under test
+    Import-Module $PSScriptRoot/../../"MergeHashtable/MergeHashtable" -Force
+
     # Import the module
     Import-Module $PSScriptRoot/../"MergePSCustomObject" -Force
-
-    # Sibling module needed for the -MergeHashtables recursion tests further down
-    if ( -not ( Get-Module -ListAvailable -Name "MergeHashtable" ) ) {
-        Install-Module -Name MergeHashtable -Force -Scope CurrentUser -Repository PSGallery
-    }
-    Import-Module MergeHashtable -Force
 
     # From https://stackoverflow.com/questions/50870891/how-to-compare-two-arrays-with-custom-objects-in-pester
     # Changed to send back the difference

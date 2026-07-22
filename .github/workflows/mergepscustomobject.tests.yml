@@ -7,6 +7,8 @@ on:
     paths:
       - 'MergePSCustomObject/**.ps1'
       - 'MergePSCustomObject/**.psm1'
+      - 'MergeHashtable/**.ps1'
+      - 'MergeHashtable/**.psm1'
 
   workflow_dispatch:
 
@@ -26,12 +28,8 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v5
 
-      - name: Set up repositories - powershell
-        if: matrix.shell == 'powershell'
-        shell: powershell
-        run: |
-          Set-PSRepository psgallery -InstallationPolicy trusted
-          Install-Module MergeHashtable -Repository PSGallery -Scope CurrentUser
+      # No PSGallery setup needed -- Merge-PSCustomObject.Tests.ps1 imports the sibling
+      # MergeHashtable module from this same checkout, not from PSGallery
 
       - name: Run Pester Tests (powershell on ${{ matrix.os }})
         if: matrix.shell == 'powershell'
@@ -39,13 +37,6 @@ jobs:
           CI: true
         shell: powershell
         run: Invoke-Pester -Path MergePSCustomObject/Test/ -Output Detailed -Passthru
-
-      - name: Set up repositories - pwsh
-        if: matrix.shell != 'powershell'
-        shell: pwsh
-        run: |
-          Set-PSRepository psgallery -InstallationPolicy trusted
-          Install-Module MergeHashtable -Repository PSGallery -Scope CurrentUser
 
       - name: Run Pester Tests (pwsh on ${{ matrix.os }})
         if: matrix.shell != 'powershell'
