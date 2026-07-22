@@ -5,7 +5,7 @@
 RootModule = 'PSNotify.psm1'
 
 # Die Versionsnummer dieses Moduls
-ModuleVersion = '0.2.1'
+ModuleVersion = '0.2.2'
 
 # Unterstützte PSEditions
 # CompatiblePSEditions = @()
@@ -184,6 +184,7 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.2.2 Fixing Add-EmailChannel to suppress some warnings
 0.2.1 Added $env:PSNOTIFY_HOME to override where the store and lib folder are kept,
       e.g. for tests or isolated instances. Falls back to the previous
       LocalApplicationData location when unset, so existing installs are unaffected
