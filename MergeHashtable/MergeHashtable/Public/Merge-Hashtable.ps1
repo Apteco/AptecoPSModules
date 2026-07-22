@@ -305,7 +305,7 @@ function Merge-Hashtable {
                     $newArr.AddRange($Left.($propEqual))
                     $newArr.AddRange($Right.($propEqual))
                     $newArrSorted = [System.Collections.ArrayList]@( $newArr | Sort-Object -Unique )
-                    $joined | Add-Member -MemberType NoteProperty -Name $propEqual -Value $newArrSorted
+                    $joined.Add($propEqual, $newArrSorted)
 
                 } elseif ( $MergeHashtables -eq $true -and $Left.($propEqual) -is [hashtable] -and $Right.($propEqual) -is [hashtable] -and @( $Right.($propEqual).Keys ).Count -gt 0) {
 
