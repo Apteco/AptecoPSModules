@@ -2,7 +2,7 @@
 @{
 
 RootModule        = 'NodeWebhook.psm1'
-ModuleVersion     = '0.0.1'
+ModuleVersion     = '0.0.2'
 GUID              = 'cb1e6ffe-efe3-4ce9-97cb-ab4696b0c938'
 Author            = 'florian.von.bracht@apteco.de'
 CompanyName       = 'Apteco GmbH'
@@ -33,6 +33,7 @@ PrivateData = @{
         ProjectUri = 'https://github.com/Apteco/AptecoPSModules/tree/main/NodeWebhook'
         IconUri    = 'https://www.apteco.de/sites/default/files/favicon_3.ico'
         ReleaseNotes = '
+0.0.2 Allowing larger payloads to receive
 0.0.1 Initial release
 '
     }
