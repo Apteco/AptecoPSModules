@@ -22,6 +22,13 @@ Import-Module PSNotify -Verbose
 
 This will install the module. After installation there will be an automatic "store" file created in the current user account. Then you can add different channels to that module.
 
+By default the store (channels/groups/settings) and any downloaded libs (e.g. MailKit) are kept under `%LOCALAPPDATA%\AptecoPSModules\PSNotify`. If you want to redirect that, e.g. to run isolated instances side by side or for tests, set `$env:PSNOTIFY_HOME` to a different folder **before** importing the module:
+
+```PowerShell
+$env:PSNOTIFY_HOME = "C:\temp\PSNotifyInstance2"
+Import-Module PSNotify -Verbose
+```
+
 When you have problems with the installation, please add the script folder in your session first. This can be done via
 
 ```PowerShell
@@ -33,7 +40,7 @@ $scriptPath = @( [System.Environment]::GetEnvironmentVariable("Path") -split ";"
 $Env:Path = ( $scriptPath | Sort-Object -unique ) -join ";"
 ```
 
-A "channel" is something like `Teams|Slack|Email|Telegram`. A target specifies a defined #channel in slack or a chat in telegram. A group is a combination of different targets
+A "channel" is something like `Teams|Slack|Email|Telegram|Webhook|Mock`. A target specifies a defined #channel in slack or a chat in telegram. A group is a combination of different targets
 
 # Telegram
 
@@ -229,6 +236,38 @@ If ($attachments.Count -gt 0) {
     }
     pwsh -command $sendMailScriptBlock -args (,$attachments)
 }
+```
+
+# Webhook
+
+Generic channel for any endpoint that accepts an HTTP POST with a JSON body, e.g. n8n, Zapier, Make, or your own API.
+
+## Add channel to PSNotify
+
+```PowerShell
+Import-Module PSNotify
+Add-WebhookChannel -Name "MyNewWebhookChannel" -Url "https://example.com/hooks/abc123"
+
+Send-WebhookNotification -Name "MyNewWebhookChannel" -Title "Great title!" -Text "Hello World"
+```
+
+By default this posts `{ "title": ..., "text": ... }`. If the receiving endpoint expects a different JSON shape, pass your own payload with `-Body` instead:
+
+```PowerShell
+Send-WebhookNotification -Name "MyNewWebhookChannel" -Text "Hello World" -Body ([PSCustomObject]@{ "event" = "build.finished"; "status" = "ok" })
+```
+
+# Mock
+
+A local channel for testing pipelines that trigger notifications, without needing real credentials or hitting any external service. Every call to `Send-MockNotification` writes one JSON file into the configured folder instead of sending anything.
+
+## Add channel to PSNotify
+
+```PowerShell
+Import-Module PSNotify
+Add-MockChannel -Name "MyNewMockChannel" -Folder "C:\temp\mock-notifications"
+
+Send-MockNotification -Name "MyNewMockChannel" -Title "Great title!" -Text "Hello World"
 ```
 
 # FAQ
