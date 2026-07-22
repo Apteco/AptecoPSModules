@@ -12,7 +12,7 @@
 RootModule = 'MergePSCustomObject.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.2.0'
+ModuleVersion = '0.2.1'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -90,8 +90,10 @@ PowerShellVersion = '5.1'
 # ProcessorArchitecture = ''
 
 # Modules that must be imported into the global environment prior to importing this module
+# MergeHashtable is only needed for the -MergeHashtables recursion feature, so it is a soft
+# dependency (checked lazily at call time in Merge-PSCustomObject.ps1), not a hard requirement here
 RequiredModules = @(
-    "MergeHashtable"
+    #"MergeHashtable"
 )
 
 # Assemblies that must be loaded prior to importing this module
@@ -151,6 +153,10 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+0.2.1 Removed the hard RequiredModules dependency on MergeHashtable -- it is only needed for the
+      -MergeHashtables recursion feature, so it is now a soft dependency checked lazily at call time
+      instead, matching how MergeHashtable already treats its own dependency on this module. Neither
+      module forces the other to be installed unless you actually use the cross-type recursion flag
 0.2.0 New release to 0.2.0 after it is now integrated into AptecoPSFramework module
 0.1.2 Updated the copyright year to 2025
 0.1.1 Fixed a problem where values from left were overwritten with empty object from right
