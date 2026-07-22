@@ -4,7 +4,7 @@
 RootModule = 'EncryptCredential.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.3.2'
+ModuleVersion = '0.3.3'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -135,6 +135,9 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = "
+0.3.3 Fixed Convert-PlaintextToSecure calling New-Keyfile (the public, confirmation-gated wrapper with no -Path/-ByteLength params)
+      instead of the private New-KeyfileRaw when auto-creating a missing keyfile. This threw a parameter binding error
+      on any machine without an existing keyfile yet, e.g. fresh CI runners.
 0.3.2 Fixed a bug where the module would not properly handle cases where the keyfile did not exist. Using New-Keyfile now instead of Create-Keyfile
 0.3.1 Fixed returning an exception, when decryption failed instead of writing
       an error and returning an empty string

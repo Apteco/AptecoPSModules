@@ -29,6 +29,8 @@ Function Convert-PlaintextToSecure {
 #>
 
     [cmdletbinding()]
+    # The whole point of this function is to encrypt a caller-supplied plaintext string; there is no credential to source a SecureString from instead.
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingConvertToSecureStringWithPlainText', '')]
     param(
          [Parameter(Mandatory=$true,ValueFromPipeline)][String]$String
         #,[Parameter(Mandatory=$false)][String]$KeyfilePath = ".\aes.key"
@@ -43,7 +45,7 @@ Function Convert-PlaintextToSecure {
 
         # Create the file, if not existing yet
         If ( (Test-Path -Path $Script:keyfile) -eq $false ) {
-            New-KeyFile -Path $Script:keyfile -ByteLength 32
+            New-KeyfileRaw -Path $Script:keyfile -ByteLength 32 -Force
         }
 
     }

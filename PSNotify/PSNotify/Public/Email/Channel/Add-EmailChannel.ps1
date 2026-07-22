@@ -2,6 +2,8 @@
 
 
     [CmdletBinding()]
+    # Username/password are stored as separate channel definition fields (password is secured before storage), not used for live authentication via PSCredential.
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingUsernameAndPasswordParams', '')]
     param (
 
          [Parameter(Mandatory = $true)]
