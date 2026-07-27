@@ -5,7 +5,7 @@
 RootModule = 'ImportDependency.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.4.17'
+ModuleVersion = '0.4.18'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -118,6 +118,15 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+0.4.18 Fixed Import-Dependency''s native-library (runtimes folder) loader discarding the return handle
+       from the kernel32 LoadLibrary fallback and unconditionally logging success as "possibly loaded"
+       even when the call had actually failed. A freshly-extracted native DLL (e.g. duckdb.dll) can
+       still be momentarily locked by Windows Defender''s real-time scan right after Install-Dependency
+       writes it to disk (observed in a clean Windows Sandbox), causing LoadLibrary to fail silently on
+       the first attempt with no retry -- and since consumers like AptecoPSFramework''s
+       Test-DuckDBAvailable cache "available" once the separate managed assembly loads, that native
+       load failure became permanent for the rest of the session. The handle is now checked for real,
+       with up to 3 attempts 500ms apart before giving up
 0.4.17 Fixed Import-Dependency aborting its entire load loop (silently leaving every later package
        unloaded) when a single-version package''s /ref or /lib only contains NuGet''s "_._" empty-TFM
        placeholder convention (a runtime-only package with no managed assembly for any TFM, e.g.
