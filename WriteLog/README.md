@@ -192,7 +192,7 @@ Set-LogFormat -Format "TIMESTAMP`tPROCESSID`tSEVERITY`t64BITOS`t64BITPROC`tUSER`
 
 # Additional log targets
 
-With version 0.10.0 WriteLog introduced additional logfiles. Maybe databases in future, but files for now. So you can log the same message into multiple logfiles at the same time. Just add files with
+With version 0.10.0 WriteLog introduced additional logfiles. So you can log the same message into multiple logfiles at the same time. Just add files with
 
 ```PowerShell
 Add-AdditionalLogfile -Path "C:\Temp\test1.txt" -verbose
@@ -215,6 +215,89 @@ or delete them with one of these options
 ```PowerShell
 Remove-AdditionalLogfile -Name "Textfile_1"
 Remove-AdditionalLogfile -Path "C:\Temp\test.txt"
+```
+
+## Logging into a database
+
+With version 0.10.4 WriteLog introduced `Add-AdditionalDatabase`. Unlike `Add-AdditionalLogfile`, WriteLog has no built-in knowledge of any particular database - you supply a `-Writer` scriptblock that receives every log entry as a hashtable (`TIMESTAMP`, `PROCESSID`, `SEVERITY`, `MESSAGE`, `PROCRAM`, `PROCCPU`, ...) and is responsible for writing it wherever you like. This keeps WriteLog itself free of any database dependency - load whatever driver/module you need lazily inside the scriptblock.
+
+Here is an example writing into a local SQLite database using [Microsoft.Data.Sqlite](https://www.nuget.org/packages/Microsoft.Data.Sqlite.Core) pulled in as a plain NuGet package via [InstallDependency](https://github.com/Apteco/AptecoPSModules/tree/main/InstallDependency)/[ImportDependency](https://github.com/Apteco/AptecoPSModules/tree/main/ImportDependency), instead of a wrapper module like PSSQLite. This is deliberate: PSSQLite (and any other `System.Data.SQLite`-based option) bundles native binaries only for win-x86/win-x64/linux-x64/osx-x64 - there is no ARM64 build, so it fails outright on native ARM64 pwsh (e.g. Copilot+ PCs). `Microsoft.Data.Sqlite`'s native layer (`SQLitePCLRaw.lib.e_sqlite3`) does ship `win-arm64`, and both editions below were verified end-to-end on real Windows PowerShell 5.1 and ARM64 pwsh:
+
+```PowerShell
+Import-Module WriteLog
+Set-Logfile -Path ".\script.log"
+
+# Lazily install/import InstallDependency and ImportDependency, then use them to fetch the SQLite
+# packages as plain NuGet packages into a local lib folder
+If ( -not ( Get-Module -Name "InstallDependency" -ListAvailable ) ) { Install-Module -Name "InstallDependency" -Scope CurrentUser -Force }
+If ( -not ( Get-Module -Name "ImportDependency"  -ListAvailable ) ) { Install-Module -Name "ImportDependency"  -Scope CurrentUser -Force }
+Import-Module -Name "InstallDependency"
+Import-Module -Name "ImportDependency"
+
+# Microsoft.Data.Sqlite.Core + the SQLitePCLRaw pieces (ADO.NET provider + its native SQLite
+# binary), plus the BCL polyfills SQLitePCLRaw's netstandard2.0 build needs on Windows PowerShell
+$sqlitePackages = @(
+    "Microsoft.Data.Sqlite.Core"
+    "SQLitePCLRaw.core"
+    "SQLitePCLRaw.provider.e_sqlite3"
+    "SQLitePCLRaw.lib.e_sqlite3"
+    "SQLitePCLRaw.config.e_sqlite3"
+    "System.Memory"
+    "System.Buffers"
+    "System.Numerics.Vectors"
+    "System.Runtime.CompilerServices.Unsafe"
+)
+
+Install-Dependency -LocalPackage $sqlitePackages -LocalPackageFolder ".\lib"
+Import-Dependency   -LocalPackage $sqlitePackages -LocalPackageFolder ".\lib"
+
+# Windows PowerShell (.NET Framework) does not unify differing exact assembly versions the way
+# pwsh does -- SQLitePCLRaw's provider and Microsoft.Data.Sqlite were each built against a
+# slightly different exact System.Memory version, so redirect any request to whichever copy is
+# already loaded. Not needed on pwsh, so only registered on Desktop.
+If ( $PSVersionTable.PSEdition -eq "Desktop" ) {
+    [AppDomain]::CurrentDomain.add_AssemblyResolve({
+        param($resolveSender, $resolveArgs)
+        $requestedName = ([Reflection.AssemblyName]$resolveArgs.Name).Name
+        [AppDomain]::CurrentDomain.GetAssemblies() | Where-Object { $_.GetName().Name -eq $requestedName } | Select-Object -First 1
+    })
+}
+
+[SQLitePCL.Batteries_V2]::Init()
+
+$dbPath = ".\logs.sqlite"
+
+# Create the table once, before registering the writer
+$conn = New-Object Microsoft.Data.Sqlite.SqliteConnection("Data Source=$dbPath")
+$conn.Open()
+$cmd = $conn.CreateCommand()
+$cmd.CommandText = "CREATE TABLE IF NOT EXISTS logs (Timestamp TEXT, ProcessId TEXT, Severity TEXT, Message TEXT)"
+[void]$cmd.ExecuteNonQuery()
+$conn.Close()
+
+Add-AdditionalDatabase -Name "SqliteLog" -Writer {
+    param($LogEntry)
+    $conn = New-Object Microsoft.Data.Sqlite.SqliteConnection("Data Source=$dbPath")
+    $conn.Open()
+    $cmd = $conn.CreateCommand()
+    $cmd.CommandText = "INSERT INTO logs (Timestamp, ProcessId, Severity, Message) VALUES (@Timestamp, @ProcessId, @Severity, @Message)"
+    [void]$cmd.Parameters.AddWithValue("@Timestamp", $LogEntry.TIMESTAMP)
+    [void]$cmd.Parameters.AddWithValue("@ProcessId", $LogEntry.PROCESSID)
+    [void]$cmd.Parameters.AddWithValue("@Severity", $LogEntry.SEVERITY)
+    [void]$cmd.Parameters.AddWithValue("@Message", $LogEntry.MESSAGE)
+    [void]$cmd.ExecuteNonQuery()
+    $conn.Close()
+}
+
+Write-Log -Message "Hello SQLite" -Severity INFO
+```
+
+Every `Write-Log` call now also inserts a row into `logs.sqlite`. If the writer throws (e.g. the database is locked or unreachable), `Write-Log` catches it and emits a warning instead of failing the log call, so a broken database target never breaks the caller.
+
+Remove it again the same way as a textfile target, by name:
+
+```PowerShell
+Remove-AdditionalLogfile -Name "SqliteLog"
 ```
 
 # Resizing log files

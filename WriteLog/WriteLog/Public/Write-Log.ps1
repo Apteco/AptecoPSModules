@@ -136,7 +136,13 @@ Function Write-Log {
                         }
                         Invoke-CommandRetry -Command 'Out-File' -Args $addLogArgs -retries 10 -MillisecondsDelay $randomDelay | Out-Null
                     }
-                    # TODO add database support in future
+                    "database" {
+                        Try {
+                            & $addLog.Options.Writer $vs
+                        } Catch {
+                            Write-Warning -Message "Failed to write to additional database log '$( $addLog.Name )': $( $_.Exception.Message )"
+                        }
+                    }
                     Default {
                         Write-Warning -Message "Unknown additional log type '$( $addLog.Type )' for additional log '$( $addLog.Name )'."
                     }
