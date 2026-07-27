@@ -251,7 +251,16 @@ Function Import-Dependency {
                 # Check the package ref folder
                 If ( ( Test-Path -Path "$( $package.FullName )/ref" ) -eq $true ) {
                     $dotnetFolder = $null
-                    $dotnetFolder = Get-BestReferencePath -PackageRoot $package.FullName -ErrorAction silentlycontinue
+                    # Get-BestReferencePath throws (rather than writing a non-terminating error) when
+                    # no folder matches, e.g. a package whose /ref only contains NuGet's "_._" empty-TFM
+                    # placeholder convention (no actual managed assembly for any declared TFM) -- without
+                    # the try/catch here, that throw would abort this whole foreach loop, silently
+                    # leaving every later package (including this one's own /lib and /runtimes) unloaded
+                    try {
+                        $dotnetFolder = Get-BestReferencePath -PackageRoot $package.FullName -ErrorAction Stop
+                    } catch {
+                        $dotnetFolder = $null
+                    }
                     If ( $null -ne $dotnetFolder ) {
                         If ( (Test-Path -Path $dotnetFolder)  -eq $true -and $packageLoaded -eq 0) {
                             Get-ChildItem -Path $dotnetFolder -Filter "*.dll" | ForEach-Object {
@@ -284,7 +293,15 @@ Function Import-Dependency {
                 # Check the package lib folder
                 if ( ( Test-Path -Path "$( $package.FullName )/lib" ) -eq $true -and $packageLoaded -eq 0) {
                     $dotnetFolder = $null
-                    $dotnetFolder = Get-BestFrameworkPath -PackageRoot $package.FullName -ErrorAction silentlycontinue
+                    # Same as Get-BestReferencePath above: Get-BestFrameworkPath throws when no /lib
+                    # subfolder has an actual .dll (e.g. a runtime-only package like SQLitePCLRaw.lib.e_sqlite3,
+                    # whose /lib TFM folders only contain NuGet's "_._" placeholder) -- catch it here so this
+                    # one package's missing managed assembly doesn't abort loading every other package
+                    try {
+                        $dotnetFolder = Get-BestFrameworkPath -PackageRoot $package.FullName -ErrorAction Stop
+                    } catch {
+                        $dotnetFolder = $null
+                    }
                     If ( $null -ne $dotnetFolder ) {
                         If ( (Test-Path -Path $dotnetFolder)  -eq $true -and $packageLoaded -eq 0) {
                             Get-ChildItem -Path $dotnetFolder -Filter "*.dll" | ForEach-Object {

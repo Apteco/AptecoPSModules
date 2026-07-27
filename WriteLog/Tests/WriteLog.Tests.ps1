@@ -352,6 +352,72 @@ Describe "Add-AdditionalLogfile / Remove-AdditionalLogfile / Get-AdditionalLog" 
 
 }
 
+Describe "Add-AdditionalDatabase" {
+
+    BeforeEach {
+        Import-Module "$PSScriptRoot/../WriteLog" -Force
+        $script:testLogfile = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath "$([guid]::NewGuid()).log"
+        Set-Logfile -Path $script:testLogfile
+    }
+
+    AfterEach {
+        if (Test-Path $script:testLogfile) {
+            Remove-Item $script:testLogfile -Force
+        }
+    }
+
+    It "Adds a database log target and Get-AdditionalLog returns it" {
+        Add-AdditionalDatabase -Name "MyDb" -Writer { param($LogEntry) }
+        $logs = Get-AdditionalLog
+        $logs.Count | Should -Be 1
+        $logs[0].Type | Should -Be "database"
+        $logs[0].Name | Should -Be "MyDb"
+    }
+
+    It "Auto-generates a name when none is provided" {
+        Add-AdditionalDatabase -Writer { param($LogEntry) }
+        $logs = Get-AdditionalLog
+        $logs[0].Name | Should -Match "^Database_"
+    }
+
+    It "Auto-increments database names correctly" {
+        Add-AdditionalDatabase -Writer { param($LogEntry) }
+        Add-AdditionalDatabase -Writer { param($LogEntry) }
+        $logs = Get-AdditionalLog
+        $logs[0].Name | Should -Be "Database_1"
+        $logs[1].Name | Should -Be "Database_2"
+    }
+
+    It "Invokes the Writer scriptblock with the log entry when Write-Log is called" {
+        # Writer scriptblocks run dynamically scoped inside Write-Log, not lexically closed over
+        # this test's local scope, so hand data back via a Global variable rather than a closure.
+        $Global:writeLogDbCapture = $null
+        try {
+            Add-AdditionalDatabase -Name "Capture" -Writer {
+                param($LogEntry)
+                $Global:writeLogDbCapture = $LogEntry.MESSAGE
+            }
+            Write-Log -Message "Database writer test" -WriteToHostToo $false
+            $Global:writeLogDbCapture | Should -Be "Database writer test"
+        } finally {
+            Remove-Variable -Name writeLogDbCapture -Scope Global -ErrorAction SilentlyContinue
+        }
+    }
+
+    It "Logs a warning and does not throw when the Writer scriptblock fails" {
+        Add-AdditionalDatabase -Name "Failing" -Writer { param($LogEntry) throw "boom" }
+        { Write-Log -Message "Should not throw" -WriteToHostToo $false -WarningAction SilentlyContinue } | Should -Not -Throw
+    }
+
+    It "Removes a database log target by name" {
+        Add-AdditionalDatabase -Name "ToRemove" -Writer { param($LogEntry) }
+        Remove-AdditionalLogfile -Name "ToRemove"
+        $logs = Get-AdditionalLog
+        $logs | Where-Object { $_.Name -eq "ToRemove" } | Should -BeNullOrEmpty
+    }
+
+}
+
 Describe "Resize-Logfile" {
 
     BeforeEach {

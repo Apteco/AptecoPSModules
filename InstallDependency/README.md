@@ -280,6 +280,199 @@ The previous [`Install-Dependencies`](../Install-Dependencies) script is superse
 - Logging, OS/elevation detection, and already-installed modules/local/global packages are now discovered via a single upfront `Get-PSEnvironment` call (from the shared [`ImportDependency`](../ImportDependency) module) instead of being re-queried separately throughout the function via `Get-InstalledModule`/`Get-Package`
 - Local/global NuGet packages that are already installed at a current version are now skipped, matching how modules already behaved (previously packages were always re-searched and reinstalled)
 
+# FAQ
+
+The examples below were all verified end-to-end (install, load, query) on both Windows PowerShell 5.1 and pwsh, including native ARM64 pwsh. They follow the same pattern as the [DuckDB.NET example](#example-duckdbnet-across-windows-powershell-and-pwsh-in-one-shared-lib-folder) above: a native/DB package that dropped its `netstandard2.0` build at some version gets pinned to its last `netstandard2.0`-capable version for Windows PowerShell, plus an unpinned entry for pwsh to always get the newest build.
+
+## How do I install just DuckDB?
+
+Covered in detail [above](#example-duckdbnet-across-windows-powershell-and-pwsh-in-one-shared-lib-folder). Short version:
+
+```PowerShell
+$packages = [Array]@(
+    [PSCustomObject]@{ name = "DuckDB.NET.Bindings.Full"; version = "1.4.4" }
+    [PSCustomObject]@{ name = "DuckDB.NET.Data.Full";     version = "1.4.4" }
+    [PSCustomObject]@{ name = "System.Memory";            version = "4.6.0" }
+    [PSCustomObject]@{ name = "System.Runtime.CompilerServices.Unsafe"; version = "6.0.0" }
+
+    "DuckDB.NET.Bindings.Full"   # pwsh: newest build, no pin needed
+    "DuckDB.NET.Data.Full"
+)
+Install-Dependency -LocalPackage $packages -LocalPackageFolder ".\lib" -ExcludeDependencies
+```
+
+Fire up a query with `ImportDependency`:
+
+```PowerShell
+Import-Module ImportDependency
+Import-Dependency -LoadWholePackageFolder -LocalPackageFolder ".\lib"
+
+$conn = [DuckDB.NET.Data.DuckDBConnection]::new("Data Source=:memory:")
+$conn.Open()
+$cmd = $conn.CreateCommand()
+$cmd.CommandText = "SELECT 41 + 1 AS answer"
+$reader = $cmd.ExecuteReader()
+[void]$reader.Read()
+$reader["answer"]   # 42
+$conn.Close()
+```
+
+DuckDB also needs the Visual C++ Redistributable — run `Install-VcRedist` once beforehand (see above).
+
+## How do I install just SQLite (`Microsoft.Data.Sqlite`)?
+
+Prefer `Microsoft.Data.Sqlite` (via `SQLitePCLRaw`) over `System.Data.SQLite`-based options (`PSSQLite`, `System.Data.SQLite.Core`) — those only ship native binaries for win-x86/win-x64/linux-x64/osx-x64, with no ARM64 build at all, so they fail outright on native ARM64 pwsh. `SQLitePCLRaw.lib.e_sqlite3` does ship `win-arm64`.
+
+Unlike DuckDB, none of these packages need a version pin — the same set works unchanged on both editions:
+
+```PowerShell
+$packages = [Array]@(
+    "Microsoft.Data.Sqlite.Core"
+    "SQLitePCLRaw.core"
+    "SQLitePCLRaw.provider.e_sqlite3"
+    "SQLitePCLRaw.lib.e_sqlite3"
+    "SQLitePCLRaw.config.e_sqlite3"
+    "System.Memory"
+    "System.Buffers"
+    "System.Numerics.Vectors"
+    "System.Runtime.CompilerServices.Unsafe"
+)
+Install-Dependency -LocalPackage $packages -LocalPackageFolder ".\lib" -ExcludeDependencies
+```
+
+Fire up a query:
+
+```PowerShell
+Import-Module ImportDependency
+Import-Dependency -LocalPackage $packages -LocalPackageFolder ".\lib"
+
+# Windows PowerShell (.NET Framework) does not unify differing exact assembly versions the way pwsh
+# does -- redirect any request to whichever copy of an assembly is already loaded. Not needed on pwsh.
+If ( $PSVersionTable.PSEdition -eq "Desktop" ) {
+    [AppDomain]::CurrentDomain.add_AssemblyResolve({
+        param($resolveSender, $resolveArgs)
+        $requestedName = ( [Reflection.AssemblyName]$resolveArgs.Name ).Name
+        [AppDomain]::CurrentDomain.GetAssemblies() | Where-Object { $_.GetName().Name -eq $requestedName } | Select-Object -First 1
+    })
+}
+
+[SQLitePCL.Batteries_V2]::Init()   # registers the native provider, once per process
+
+$conn = New-Object Microsoft.Data.Sqlite.SqliteConnection("Data Source=:memory:")
+$conn.Open()
+$cmd = $conn.CreateCommand()
+$cmd.CommandText = "SELECT 41 + 1 AS answer"
+$reader = $cmd.ExecuteReader()
+[void]$reader.Read()
+$reader["answer"]   # 42
+$conn.Close()
+```
+
+> The `AssemblyResolve` handler is needed generally whenever a Windows PowerShell process ends up with two packages that were each built against a slightly different exact version of the same shared assembly (here, `SQLitePCLRaw.provider.e_sqlite3` and `Microsoft.Data.Sqlite` reference different exact `System.Memory` identities) — pwsh does not have this problem, so it's only registered on Desktop.
+
+## How do I install just Npgsql (PostgreSQL)?
+
+Npgsql dropped its `netstandard2.0` build after `8.0.9` — the same situation as DuckDB.NET, so it needs the same dual-pin treatment. Its own dependencies (`Microsoft.Extensions.Logging.Abstractions`, `System.Text.Json`, etc.) are Microsoft's own Extensions/BCL packages, which — unlike Npgsql/DuckDB.NET themselves — keep shipping `net462`/`netstandard2.0` builds alongside the newest ones for many major versions, so those only need one unpinned "latest" install each, no dual-pin:
+
+```PowerShell
+$packages = [Array]@(
+    [PSCustomObject]@{ name = "Npgsql"; version = "8.0.9" }   # last version with a netstandard2.0 build
+    "Npgsql"   # pwsh: newest build, no pin needed
+
+    # Npgsql's dependencies -- one unpinned "latest" install covers both editions
+    "Microsoft.Bcl.HashCode"
+    "Microsoft.Bcl.AsyncInterfaces"
+    "Microsoft.Extensions.Logging.Abstractions"
+    "System.Collections.Immutable"
+    "System.Diagnostics.DiagnosticSource"
+    "System.Runtime.CompilerServices.Unsafe"
+    "System.Text.Json"
+    "System.Threading.Channels"
+    "System.Threading.Tasks.Extensions"
+    "System.Buffers"
+    "System.Memory"
+    "System.Numerics.Vectors"
+)
+Install-Dependency -LocalPackage $packages -LocalPackageFolder ".\lib" -ExcludeDependencies
+```
+
+Fire up a query (needs a reachable PostgreSQL server — this just shows the pattern):
+
+```PowerShell
+Import-Module ImportDependency
+Import-Dependency -LocalPackage ( $packages | ForEach-Object { if ( $_ -is [String] ) { $_ } else { $_.name } } | Select-Object -Unique ) -LocalPackageFolder ".\lib"
+
+If ( $PSVersionTable.PSEdition -eq "Desktop" ) {
+    [AppDomain]::CurrentDomain.add_AssemblyResolve({
+        param($resolveSender, $resolveArgs)
+        $requestedName = ( [Reflection.AssemblyName]$resolveArgs.Name ).Name
+        [AppDomain]::CurrentDomain.GetAssemblies() | Where-Object { $_.GetName().Name -eq $requestedName } | Select-Object -First 1
+    })
+}
+
+$conn = New-Object Npgsql.NpgsqlConnection("Host=localhost;Port=5432;Database=mydb;Username=myuser;Password=mypassword")
+$conn.Open()
+$cmd = $conn.CreateCommand()
+$cmd.CommandText = "SELECT 41 + 1 AS answer"
+$reader = $cmd.ExecuteReader()
+[void]$reader.Read()
+$reader["answer"]   # 42
+$conn.Close()
+```
+
+`-ExcludeDependencies` means only packages you list by name are installed — the exact set above (Npgsql's `.NETStandard2.0` dependency group plus its own transitive `netstandard2.0` needs) was found by trial and error via its `.nuspec`; a future Npgsql version could add or drop one.
+
+## How do I install more than one of these together?
+
+Just combine the package lists into one `Install-Dependency`/`Import-Dependency` call sharing one `lib` folder — but de-duplicate the polyfills they have in common instead of listing them once per package, pinned to the same version everywhere:
+
+Package|Needed by|Pinned version
+-|-|-
+`System.Memory`|DuckDB, SQLite, Npgsql|`4.6.0`
+`System.Runtime.CompilerServices.Unsafe`|DuckDB, SQLite, Npgsql|`6.0.0`
+`System.Buffers`|SQLite, Npgsql|`4.6.1`
+`System.Numerics.Vectors`|SQLite, Npgsql|`4.6.1`
+
+This matters, not just tidiness: `Import-Dependency`'s loader (`Select-CompatiblePackage`) picks exactly one installed version per package Id for the whole process. If DuckDB's `lib` folder pins `System.Memory` to `4.6.0` while an Npgsql install elsewhere in the same folder pins a different exact version, only one of them actually loads — and whichever DuckDB/Npgsql/SQLite build was compiled against the *other* one fails with a `FileNotFoundException` on Windows PowerShell (see the `AssemblyResolve` note above; pwsh isn't affected). Reusing one pin for a shared polyfill removes that conflict at the source instead of relying on `AssemblyResolve` to paper over it.
+
+```PowerShell
+$packages = [Array]@(
+    # Shared polyfills -- one pin covers DuckDB + SQLite + Npgsql on Windows PowerShell
+    [PSCustomObject]@{ name = "System.Memory";            version = "4.6.0" }
+    [PSCustomObject]@{ name = "System.Runtime.CompilerServices.Unsafe"; version = "6.0.0" }
+    [PSCustomObject]@{ name = "System.Buffers";           version = "4.6.1" }
+    [PSCustomObject]@{ name = "System.Numerics.Vectors";  version = "4.6.1" }
+
+    # DuckDB.NET
+    [PSCustomObject]@{ name = "DuckDB.NET.Bindings.Full"; version = "1.4.4" }
+    [PSCustomObject]@{ name = "DuckDB.NET.Data.Full";     version = "1.4.4" }
+    "DuckDB.NET.Bindings.Full"
+    "DuckDB.NET.Data.Full"
+
+    # Microsoft.Data.Sqlite
+    "Microsoft.Data.Sqlite.Core"
+    "SQLitePCLRaw.core"
+    "SQLitePCLRaw.provider.e_sqlite3"
+    "SQLitePCLRaw.lib.e_sqlite3"
+    "SQLitePCLRaw.config.e_sqlite3"
+
+    # Npgsql
+    [PSCustomObject]@{ name = "Npgsql"; version = "8.0.9" }
+    "Npgsql"
+    "Microsoft.Bcl.HashCode"
+    "Microsoft.Bcl.AsyncInterfaces"
+    "Microsoft.Extensions.Logging.Abstractions"
+    "System.Collections.Immutable"
+    "System.Diagnostics.DiagnosticSource"
+    "System.Text.Json"
+    "System.Threading.Channels"
+    "System.Threading.Tasks.Extensions"
+)
+Install-Dependency -LocalPackage $packages -LocalPackageFolder ".\lib" -ExcludeDependencies
+```
+
+Only installing two of the three (e.g. just DuckDB + SQLite, skipping Npgsql) works the same way — just drop the block you don't need and keep the shared-polyfill block, since whichever of DuckDB/SQLite/Npgsql you do keep still needs it.
+
 # Contribution
 
 You are free to use this code, put in some changes and use a pull request to feedback improvements :-)

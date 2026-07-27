@@ -5,7 +5,7 @@
 RootModule = 'WriteLog.psm1'
 
 # Die Versionsnummer dieses Moduls
-ModuleVersion = '0.10.3'
+ModuleVersion = '0.10.4'
 
 # Unterstützte PSEditions
 # CompatiblePSEditions = @()
@@ -106,6 +106,7 @@ FunctionsToExport = @(
     "Get-LogFormat"
 
     "Add-AdditionalLogfile"
+    "Add-AdditionalDatabase"
     "Remove-AdditionalLogfile"
     "Get-AdditionalLog"
 
@@ -148,6 +149,9 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.10.4 Feature: Added Add-AdditionalDatabase to fan log entries out to a database via a caller-supplied -Writer scriptblock,
+                keeping WriteLog itself free of any database dependency. Handled in the "database" case of the
+                additional log type switch in Write-Log, previously a TODO
 0.10.3 Fixed a scalar output problem for PowerShell 5.1 when calling Get-AdditionalLog with one entry
 0.10.2 Added pester tests for this module
        Rewritten Resize-Logfile after failed pester tests, also support now resizing of single files or all logs
