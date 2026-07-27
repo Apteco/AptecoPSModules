@@ -5,7 +5,7 @@
 RootModule = 'ImportDependency.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.4.18'
+ModuleVersion = '0.4.19'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -118,6 +118,11 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+0.4.19 Widened 0.4.18''s kernel32 LoadLibrary retry from 3 fixed 500ms attempts (~2s total) to 10 attempts
+       with exponential backoff capped at 3s (~18s worst case). Confirmed in a clean Windows Sandbox that
+       3 retries was still too short for Windows Defender''s real-time scan of a freshly-extracted native
+       DLL (e.g. duckdb.dll) to clear -- the exact same file, same LoadLibrary call, succeeded when tried
+       manually a few seconds after the widened-but-still-too-short retry window had already given up
 0.4.18 Fixed Import-Dependency''s native-library (runtimes folder) loader discarding the return handle
        from the kernel32 LoadLibrary fallback and unconditionally logging success as "possibly loaded"
        even when the call had actually failed. A freshly-extracted native DLL (e.g. duckdb.dll) can
