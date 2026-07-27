@@ -273,10 +273,25 @@ If ( $null -ne [System.Runtime.InteropServices.RuntimeInformation]::ProcessArchi
 
     } catch {
 
-        # CIM/WMI can be blocked in locked-down environments (e.g. Windows Sandbox's WDAGUtilityAccount),
-        # so fall back to a check that does not need WMI access
-        Write-Verbose "Could not query Win32_OperatingSystem via CIM, falling back to Is64BitOperatingSystem: $( $_.Exception.Message )"
-        $arch = If ( [System.Environment]::Is64BitOperatingSystem ) { "64-bit" } else { "32-bit" }
+        # CIM/WMI can be blocked in locked-down environments (e.g. Windows Sandbox's WDAGUtilityAccount).
+        # Confirmed in exactly that environment: RuntimeInformation.ProcessArchitecture (the primary check
+        # above) came back empty there too, on an otherwise perfectly ordinary ARM64 machine (works fine
+        # outside the sandbox on the same hardware/PS build) -- so both of the first two checks can fail
+        # at once on a real ARM64 box. Is64BitOperatingSystem alone only distinguishes 32-bit vs 64-bit; it
+        # cannot tell ARM64 from x64, so it used to normalize to a generic "64-bit" that got misclassified
+        # as "x64" further down -- causing DuckDB's native loader to pick the wrong (win-x64 instead of
+        # win-arm64) runtime folder entirely, and fail with ERROR_BAD_EXE_FORMAT despite a perfectly valid
+        # x64 binary being loaded (it was just the wrong architecture for the real CPU). PROCESSOR_ARCHITECTURE
+        # is set directly by the OS and was confirmed to still be available and correct in that same
+        # locked-down sandbox, so check it before falling back further.
+        Write-Verbose "Could not query Win32_OperatingSystem via CIM: $( $_.Exception.Message )"
+        If ( -not [String]::IsNullOrEmpty( $env:PROCESSOR_ARCHITECTURE ) ) {
+            Write-Verbose "Falling back to the PROCESSOR_ARCHITECTURE environment variable"
+            $arch = $env:PROCESSOR_ARCHITECTURE
+        } else {
+            Write-Verbose "Falling back to Is64BitOperatingSystem"
+            $arch = If ( [System.Environment]::Is64BitOperatingSystem ) { "64-bit" } else { "32-bit" }
+        }
 
     }
 

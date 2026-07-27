@@ -5,7 +5,7 @@
 RootModule = 'ImportDependency.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.4.19'
+ModuleVersion = '0.4.20'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -118,6 +118,19 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+0.4.20 Fixed the real root cause behind 0.4.18/0.4.19: on a genuinely ARM64 Windows machine, both
+       RuntimeInformation.ProcessArchitecture AND the Get-CimInstance Win32_OperatingSystem fallback
+       can come back empty/blocked at once (confirmed in Windows Sandbox''s locked-down WDAGUtilityAccount
+       context -- the exact same PowerShell build reports ARM64 correctly outside the sandbox on the same
+       hardware). The remaining fallback, Is64BitOperatingSystem, only distinguishes 32-bit vs 64-bit and
+       cannot tell ARM64 from x64, so it normalized to a generic "64-bit" that got misclassified as "x64" --
+       causing DuckDB''s native loader to pick the wrong (win-x64 instead of win-arm64) runtime folder and
+       fail with ERROR_BAD_EXE_FORMAT (193), despite loading a perfectly valid x64 binary; it was simply the
+       wrong architecture for the real CPU. That final fallback now checks the PROCESSOR_ARCHITECTURE
+       environment variable first (confirmed still available and correct in that same sandbox) before
+       falling back further to the bitness-only check. 0.4.18/0.4.19''s LoadLibrary retry logic remains in
+       place as a genuine improvement (no more silently swallowed native-load failures) but was not the fix
+       for this specific problem
 0.4.19 Widened 0.4.18''s kernel32 LoadLibrary retry from 3 fixed 500ms attempts (~2s total) to 10 attempts
        with exponential backoff capped at 3s (~18s worst case). Confirmed in a clean Windows Sandbox that
        3 retries was still too short for Windows Defender''s real-time scan of a freshly-extracted native
