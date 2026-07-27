@@ -5,7 +5,7 @@
 RootModule = 'ImportDependency.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.4.16'
+ModuleVersion = '0.4.17'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -118,6 +118,14 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+0.4.17 Fixed Import-Dependency aborting its entire load loop (silently leaving every later package
+       unloaded) when a single-version package''s /ref or /lib only contains NuGet''s "_._" empty-TFM
+       placeholder convention (a runtime-only package with no managed assembly for any TFM, e.g.
+       SQLitePCLRaw.lib.e_sqlite3). Get-BestReferencePath/Get-BestFrameworkPath throw in that case, and
+       -ErrorAction SilentlyContinue does not suppress a throw -- only Select-CompatiblePackage''s own
+       call was try/catch-protected, so this only showed up for packages with exactly one installed
+       version, which skip Select-CompatiblePackage''s multi-version filtering entirely. Both call sites
+       in Import-Dependency are now wrapped in try/catch, same as Select-CompatiblePackage already was
 0.4.16 Added a new function Select-CompatiblePackage to select the best matching version of a package
        for the current runtime and framework, and updated Import-Dependency to use it. This allows
        Import-Dependency to load the correct DuckDB.NET build for Windows PowerShell 5.1 (netstandard2.0)
