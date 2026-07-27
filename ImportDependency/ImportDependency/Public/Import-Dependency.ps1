@@ -369,15 +369,38 @@ Function Import-Dependency {
                                     $runtimeLoaded = 1
                                     #"Loaded $( $dotnetFolder )"
                                 } catch [System.BadImageFormatException] {
-                                    # Try it one more time with LoadLibrary through Kernel, if the kernel was loaded
+                                    # LoadFile only works for managed assemblies -- a native library (like
+                                    # duckdb.dll) always lands here on Windows PowerShell/.NET Framework, so
+                                    # fall back to the real Win32 LoadLibrary via kernel32, if it was defined.
                                     If ( $kernel32Loaded -eq $true ) {
-                                        Write-Log -Severity "WARNING" -Message "Failed! Using kernel32 for loading package runtime '$( $f.FullName )'" -WriteToHostToo $writeToHost
-                                        [void][Kernel32]::LoadLibrary($f.FullName)
-                                        Write-Log -Severity "WARNING" -Message "Last kernel32 error: $( [Kernel32]::GetError() )" -WriteToHostToo $writeToHost # Error list: https://learn.microsoft.com/en-us/windows/win32/debug/system-error-codes--0-499-
-                                        #Write-Log "$( [Kernel32]::GetEnv() )"
-                                        $runtimePossiblyLoaded = 1
+
+                                        # The returned handle was previously discarded ([void]) and success was
+                                        # assumed unconditionally ("possibly loaded") -- but LoadLibrary can fail
+                                        # silently, e.g. a freshly-extracted DLL still momentarily locked by
+                                        # Windows Defender's real-time scan (observed in a clean Windows Sandbox:
+                                        # the very same file loaded fine seconds later with an identical call).
+                                        # Check the handle for real, and retry a few times before giving up.
+                                        $handle = [IntPtr]::Zero
+                                        $kernelAttempt = 0
+                                        do {
+                                            $kernelAttempt += 1
+                                            $handle = [Kernel32]::LoadLibrary($f.FullName)
+                                            If ( $handle -eq [IntPtr]::Zero -and $kernelAttempt -lt 3 ) {
+                                                Start-Sleep -Milliseconds 500
+                                            }
+                                        } while ( $handle -eq [IntPtr]::Zero -and $kernelAttempt -lt 3 )
+
+                                        If ( $handle -ne [IntPtr]::Zero ) {
+                                            Write-Verbose -Message "  Loaded package runtime '$( $f.FullName )' via kernel32 LoadLibrary (attempt $( $kernelAttempt ))"
+                                            $runtimeLoaded = 1
+                                        } else {
+                                            Write-Log -Severity "WARNING" -Message "Failed to load package runtime '$( $f.FullName )' via kernel32 after $( $kernelAttempt ) attempt(s). Last kernel32 error: $( [Kernel32]::GetError() )" -WriteToHostToo $writeToHost # Error list: https://learn.microsoft.com/en-us/windows/win32/debug/system-error-codes--0-499-
+                                            $runtimeLoadError = 1
+                                        }
+
+                                    } else {
+                                        $runtimeLoadError = 1
                                     }
-                                    #$useKernel32 = 1
                                 }  catch {
                                     $runtimeLoadError = 1
                                 }
