@@ -377,18 +377,25 @@ Function Import-Dependency {
                                         # The returned handle was previously discarded ([void]) and success was
                                         # assumed unconditionally ("possibly loaded") -- but LoadLibrary can fail
                                         # silently, e.g. a freshly-extracted DLL still momentarily locked by
-                                        # Windows Defender's real-time scan (observed in a clean Windows Sandbox:
-                                        # the very same file loaded fine seconds later with an identical call).
-                                        # Check the handle for real, and retry a few times before giving up.
+                                        # Windows Defender's real-time scan (confirmed in a clean Windows Sandbox:
+                                        # the very same file, same LoadLibrary call, succeeded a few seconds
+                                        # later -- a first attempt at 3 retries / ~2s total was still too short
+                                        # for a scan on a resource-constrained sandbox VM). Check the handle for
+                                        # real, and retry with exponential backoff (same shape as Add-JobLog's
+                                        # retry-on-locked-database logic) before giving up.
                                         $handle = [IntPtr]::Zero
                                         $kernelAttempt = 0
+                                        $kernelMaxAttempts = 10
+                                        $kernelDelayMs = 200
                                         do {
                                             $kernelAttempt += 1
                                             $handle = [Kernel32]::LoadLibrary($f.FullName)
-                                            If ( $handle -eq [IntPtr]::Zero -and $kernelAttempt -lt 3 ) {
-                                                Start-Sleep -Milliseconds 500
+                                            If ( $handle -eq [IntPtr]::Zero -and $kernelAttempt -lt $kernelMaxAttempts ) {
+                                                Start-Sleep -Milliseconds $kernelDelayMs
+                                                # Exponential backoff, capped at 3s
+                                                $kernelDelayMs = [Math]::Min($kernelDelayMs * 2, 3000)
                                             }
-                                        } while ( $handle -eq [IntPtr]::Zero -and $kernelAttempt -lt 3 )
+                                        } while ( $handle -eq [IntPtr]::Zero -and $kernelAttempt -lt $kernelMaxAttempts )
 
                                         If ( $handle -ne [IntPtr]::Zero ) {
                                             Write-Verbose -Message "  Loaded package runtime '$( $f.FullName )' via kernel32 LoadLibrary (attempt $( $kernelAttempt ))"
