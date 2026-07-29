@@ -4,7 +4,7 @@
 RootModule = 'EncryptCredential.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.3.3'
+ModuleVersion = '0.4.0'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -42,14 +42,19 @@ Hello World
 
 You better save the strings into variables ;-)
 
-This module is used to double encrypt sensitive data like credentials, tokens etc. They cannot be stolen pretty easily as it uses SecureStrings.
+This module is used to double encrypt sensitive data like credentials, tokens etc.
 
-At the first encryption or when calling Export-Keyfile a new random keyfile will be generated for salting with AES.
-The key ist saved per default in your users profile, but can be exported into any other folder and use it from there.
-Be aware that the encrypted strings are only valid for the executing machine as it uses SecureStrings that cannot be
-copied over to other machines.
+Encryption happens in two layers: AES-256 with a random keyfile plus a machine-bound layer
+(DPAPI on Windows, machine-id derived keys on Linux/macOS). So even if an attacker steals the
+encrypted string AND the keyfile, it cannot be decrypted on another machine. With
+-Scope User the string is additionally bound to the current user account.
 
-You can use `Import-Keyfile` to use a keyfile that has been exported before.
+At the first encryption a new random keyfile will be generated automatically.
+The key is saved per default in your users profile, but can be exported into any other folder
+via Export-Keyfile and loaded from there via Import-Keyfile.
+
+Strings encrypted with older versions of this module stay decryptable (legacy format is
+detected automatically).
 
 '
 
@@ -135,6 +140,19 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = "
+0.4.0 Encrypted strings are now really bound to the machine they were created on:
+      a second encryption layer via DPAPI (Windows) or machine-id derived keys with
+      AES + HMAC integrity protection (Linux/macOS) wraps the existing keyfile encryption.
+      So a stolen ciphertext plus keyfile is useless on another machine.
+      New -Scope parameter on Convert-PlaintextToSecure:
+      'Machine' (default), 'User' (additionally bound to the current account) and
+      'Portable' (old single-layer behaviour for moving ciphertexts between machines).
+      Decryption stays downwards compatible - strings from older versions are detected
+      and decrypted with the keyfile only.
+      Export-Keyfile now re-applies restrictive file permissions to the exported copy
+      and no longer switches to the new path if the copy failed.
+      Import-Keyfile now validates that the file is a usable 16/24/32 byte AES key.
+      Added a Pester test suite.
 0.3.3 Fixed Convert-PlaintextToSecure calling New-Keyfile (the public, confirmation-gated wrapper with no -Path/-ByteLength params)
       instead of the private New-KeyfileRaw when auto-creating a missing keyfile. This threw a parameter binding error
       on any machine without an existing keyfile yet, e.g. fresh CI runners.

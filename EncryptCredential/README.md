@@ -28,16 +28,91 @@ Hello World
 
 You better save the strings into variables ;-)
 
-This module is used to double encrypt sensitive data like credentials, tokens etc. They cannot be stolen pretty easily as it uses SecureStrings.
+This module is used to double encrypt sensitive data like credentials, tokens etc.
 
-At the first encryption or when calling `Export-Keyfile` a new random keyfile will be generated for salting with AES.
-The key ist saved per default in your users profile, but can be exported into any other folder and use it from there.
-Be aware that the encrypted strings are only valid for the executing machine as it uses SecureStrings that cannot be
-copied over to other machines.
+# Security model
 
-If you don't provide a keyfile, it will be automatically generated with your first call of 'Get-PlaintextToSecure'
+Since version 0.4.0 encryption happens in two layers:
+
+1. **Keyfile layer**: AES-256 via SecureString with a random 32 byte keyfile. The keyfile is created
+   automatically on first use, stored in your user profile (`%LOCALAPPDATA%\AptecoPSModules\key.aes`)
+   and restricted to your user account (NTFS ACL on Windows, `chmod 600` on Linux/macOS).
+2. **Machine binding layer**: the result is encrypted a second time bound to the machine.
+   On Windows this uses DPAPI with the keyfile as additional entropy, on Linux/macOS AES-256 with
+   keys derived from the keyfile and the machine id (`/etc/machine-id`), protected against
+   tampering with HMAC-SHA256.
+
+So even if an attacker steals **both** the encrypted string **and** the keyfile, they cannot decrypt
+it on another machine.
+
+The `-Scope` parameter of `Convert-PlaintextToSecure` controls the binding:
+
+| Scope | Meaning |
+|-------|---------|
+| `Machine` (default) | Decryptable only on this machine, by any account that can read the keyfile |
+| `User` | Decryptable only on this machine AND only by the account that encrypted it |
+| `Portable` | Legacy single-layer format (keyfile only) - only use this if you need to move ciphertexts to another machine together with the keyfile |
+
+```PowerShell
+# Bind to this machine and the current user account
+"Hello World" | Convert-PlaintextToSecure -Scope User
+```
+
+Strings encrypted with versions before 0.4.0 are detected automatically and stay decryptable
+(downwards compatible). Note for the `Machine` scope on Windows: encryption works across accounts
+on the same machine, e.g. you can encrypt as an admin user and decrypt as a service account - as
+long as that account can read the keyfile (use `Export-Keyfile` to place it somewhere both
+accounts can access, or grant read access on the file).
+
+Limitations you should know about:
+
+- Anyone who can execute code as your user on this machine (or as any keyfile-reading account
+  for `Machine` scope) can decrypt the values. This is inherent to any non-interactive
+  credential storage.
+- On Linux/macOS there is no DPAPI, so machine binding is derived from `/etc/machine-id`.
+  An attacker who steals the keyfile AND the machine id can reconstruct the key offline.
+
+# Migration from versions before 0.4.0
+
+Nothing breaks when you update: strings encrypted with 0.3.x and earlier are detected by their
+format and keep decrypting with the keyfile only. But they do **not** get the new machine binding
+automatically - they stay as secure (or insecure) as before. To benefit from the new protection,
+re-encrypt them once on the machine where they are used:
+
+```PowerShell
+# Decrypt with the old format, re-encrypt with the new machine-bound format
+$newString = $oldString | Convert-SecureToPlaintext | Convert-PlaintextToSecure
+```
+
+Then replace the stored value (e.g. in your settings file) with `$newString`.
+
+Important points for the migration:
+
+- Keep your existing keyfile. Do **not** call `New-Keyfile` before all old strings are
+  re-encrypted, otherwise they become unreadable.
+- Re-encrypt **on the machine that will decrypt later**, under an account that can read the
+  keyfile. With `-Scope User` it must be exactly the account that will decrypt later
+  (e.g. the service account), so for shared machine setups stay with the default `Machine` scope.
+- You can identify already migrated strings by their prefix: new machine-bound strings start
+  with `ApSec2|`, legacy strings with `76492d1116743f0423413b16050a5345`.
+- If you previously copied the keyfile to several machines to share encrypted settings files,
+  that only continues to work with `-Scope Portable`. The recommended way is instead to
+  re-encrypt the credentials once per machine, so every machine holds its own machine-bound
+  ciphertexts.
+- The re-encryption briefly handles the plaintext in your session, so run it in a trusted
+  interactive session and avoid writing the plaintext to logs or transcripts
+  (`Stop-Transcript` if in doubt).
+
+# Keyfile handling
+
+At the first encryption a new random keyfile will be generated automatically.
+The key is saved per default in your users profile, but can be exported into any other folder
+with `Export-Keyfile` and used from there.
 
 You can use `Import-Keyfile` to use a keyfile that has been exported before.
+
+`New-Keyfile` regenerates the keyfile - all previously encrypted strings become invalid, so
+re-encrypt your credentials afterwards.
 
 
 # Installation
