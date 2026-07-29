@@ -5,7 +5,7 @@
 RootModule = 'InstallDependency.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.3.11'
+ModuleVersion = '0.3.12'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -113,6 +113,10 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+0.3.12 Re-import PackageManagement/PowerShellGet in-session right after updating them, since Import-Module -Force
+       merely stacks the new version alongside the old one still loaded in-process and cmdlets kept resolving
+       to the stale binaries until the whole PowerShell session was restarted.
+       Fix with -AllowClobber when installing local packages
 0.3.11 Added a pinned version support to keep the same version of a package installed for all environments.
        This is needed for DuckDB.NET to keep the same version for Windows PowerShell 5.1 (netstandard2.0)
        and PowerShell Core (Windows and Linux)
