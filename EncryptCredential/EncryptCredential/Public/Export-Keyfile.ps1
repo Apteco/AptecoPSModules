@@ -58,20 +58,27 @@ Function Export-Keyfile {
             New-KeyfileRaw -Path $Script:keyfile -ByteLength 32
         }
 
-        # Move the keyfile to the new destination
+        # Copy the keyfile to the new destination - only switch to it if the copy succeeded
         If ( (Test-Path -Path $Path -IsValid) -eq $true ) {
             If ( (Test-Path -Path $Path) -eq $true -and $Force -eq $false ) {
                 Write-Error "There is already an file at the path '$( $Path )'. Please use -Force to overwrite the file"
             } else {
+
                 Copy-Item -Path $Script:keyfile -Destination $Path -Force
+
+                # The copy inherits the destination folder permissions, so restrict it again
+                Set-KeyfilePermission -Path $Path
+
+                # Change it to the new path
+                $Script:keyfile = $Path
+
+                # Return
+                ( Get-Item -Path $Script:keyfile )
+
             }
+        } else {
+            Write-Error "The path '$( $Path )' is not valid"
         }
-
-        # Change it to the new path
-        $Script:keyfile = $Path
-
-        # Return
-        ( Get-Item -Path $Script:keyfile )
 
     }
 

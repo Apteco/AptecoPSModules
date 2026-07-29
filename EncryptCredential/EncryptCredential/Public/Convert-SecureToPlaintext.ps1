@@ -55,9 +55,21 @@ Function Convert-SecureToPlaintext {
         # read key bytes (handles both binary and legacy text format)
         $salt = Read-Keyfile -Path $Script:keyfile
 
+        # If the string carries the machine-bound outer layer, remove it first.
+        # Legacy strings (created before 0.4.0 or with -Scope Portable) skip this and
+        # go straight to the keyfile decryption -> downwards compatible.
+        $innerString = $String
+        If ( $String -like 'ApSec2|*' ) {
+            Try {
+                $innerString = Unprotect-MachineBoundString -String $String -KeyBytes $salt
+            } Catch {
+                throw "Decryption of the machine-bound layer failed. The string was probably encrypted on another machine or by another user account, or the keyfile was exchanged. Original error: $( $_.Exception.Message )"
+            }
+        }
+
         #convert
         Try {
-            $stringSecure = ConvertTo-SecureString -String $String -Key $salt
+            $stringSecure = ConvertTo-SecureString -String $innerString -Key $salt
             $return = (New-Object PSCredential "dummy",$stringSecure).GetNetworkCredential().Password
             $stringSecure.Dispose()
         } Catch {

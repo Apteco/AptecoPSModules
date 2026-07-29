@@ -45,21 +45,7 @@ Function New-KeyfileRaw {
             [System.IO.File]::WriteAllBytes($Path, $Key)
 
             # Restrict file access to the current user only
-            If ($PSVersionTable.PSEdition -eq 'Desktop' -or $IsWindows) {
-                # Windows: remove inherited ACEs, grant current user full control
-                $acl = Get-Acl -Path $Path
-                $acl.SetAccessRuleProtection($true, $false)
-                $rule = New-Object System.Security.AccessControl.FileSystemAccessRule(
-                    [System.Security.Principal.WindowsIdentity]::GetCurrent().Name,
-                    "FullControl",
-                    [System.Security.AccessControl.AccessControlType]::Allow
-                )
-                $acl.SetAccessRule($rule)
-                Set-Acl -Path $Path -AclObject $acl
-            } else {
-                # Linux/macOS: owner read/write only (600)
-                & chmod 600 $Path
-            }
+            Set-KeyfilePermission -Path $Path
 
         } else {
 
