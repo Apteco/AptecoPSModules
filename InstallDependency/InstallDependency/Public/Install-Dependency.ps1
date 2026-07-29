@@ -208,7 +208,14 @@ Function Install-Dependency {
         If ( $psEnv.PackageManagement -eq "1.0.0.1" -or [String]::IsNullOrEmpty( $psEnv.PackageManagement ) ) {
             Write-Log "PackageManagement is outdated with v$( $psEnv.PackageManagement ). This is updating it now." -Severity WARNING
             try {
-                Install-Package -Name PackageManagement -ProviderName $powerShellSourceProviderName -Force | Out-Null
+                Install-Package -Name PackageManagement -ProviderName $powerShellSourceProviderName -Force -AllowClobber | Out-Null
+                # The installed binaries won't be used until re-imported: 'Import-Module -Force' merely stacks
+                # the new version alongside the old one still loaded in this process, and cmdlets keep resolving
+                # to the old module. Removing first, then a bare re-import (auto-picks the newest available
+                # version), is what actually swaps the active binaries in-session.
+                Remove-Module -Name PackageManagement -Force -ErrorAction SilentlyContinue
+                Import-Module -Name PackageManagement -ErrorAction Stop
+                Write-Log "PackageManagement re-imported as v$( (Get-Module PackageManagement).Version )" -Severity VERBOSE
             } catch {
                 Write-Log "Could not update PackageManagement: $( $_.Exception.Message )" -Severity WARNING
             }
@@ -218,7 +225,11 @@ Function Install-Dependency {
         If ( $psEnv.PowerShellGet -eq "1.0.0.1" -or [String]::IsNullOrEmpty( $psEnv.PowerShellGet ) ) {
             Write-Log "PowerShellGet is outdated with v$( $psEnv.PowerShellGet ). This is updating it now." -Severity WARNING
             try {
-                Install-Package -Name PowerShellGet -ProviderName $powerShellSourceProviderName -Force | Out-Null
+                Install-Package -Name PowerShellGet -ProviderName $powerShellSourceProviderName -Force -AllowClobber | Out-Null
+                # Same in-session reload issue as PackageManagement above.
+                Remove-Module -Name PowerShellGet -Force -ErrorAction SilentlyContinue
+                Import-Module -Name PowerShellGet -ErrorAction Stop
+                Write-Log "PowerShellGet re-imported as v$( (Get-Module PowerShellGet).Version )" -Severity VERBOSE
             } catch {
                 Write-Log "Could not update PowerShellGet: $( $_.Exception.Message )" -Severity WARNING
             }
