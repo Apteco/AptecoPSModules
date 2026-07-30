@@ -32,6 +32,7 @@ Name|Type|Repository/<br/>Version|Platform|Tests|Downloads|
 [ImportDependency](ImportDependency/)|Module|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/ImportDependency)](https://www.powershellgallery.com/packages/ImportDependency)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/ImportDependency)](https://www.powershellgallery.com/packages/ImportDependency)<br/>![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)||[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/ImportDependency)](https://www.powershellgallery.com/packages/ImportDependency)
 [NodeWebhook](NodeWebhook/)|Module|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/NodeWebhook)](https://www.powershellgallery.com/packages/NodeWebhook)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/NodeWebhook)](https://www.powershellgallery.com/packages/NodeWebhook)<br/>![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)||[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/NodeWebhook)](https://www.powershellgallery.com/packages/NodeWebhook)
 [DataDispatch](DataDispatch/)|Module|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/DataDispatch)](https://www.powershellgallery.com/packages/DataDispatch)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/DataDispatch)](https://www.powershellgallery.com/packages/DataDispatch)<br/>![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)||[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/DataDispatch)](https://www.powershellgallery.com/packages/DataDispatch)
+[InvokeAptecoOrbit](InvokeAptecoOrbit/)|Module|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/InvokeAptecoOrbit)](https://www.powershellgallery.com/packages/InvokeAptecoOrbit)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/InvokeAptecoOrbit)](https://www.powershellgallery.com/packages/InvokeAptecoOrbit)<br/>![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)<br/>![Minimum Supported PowerShell Core Version](https://img.shields.io/badge/PSCore-7.0-blue.svg)|[![Pester Testing](https://img.shields.io/github/actions/workflow/status/Apteco/AptecoPSModules/invokeaptecoorbit.tests.yml?branch=dev&label=Pester)](https://github.com/Apteco/AptecoPSModules/actions/workflows/invokeaptecoorbit.tests.yml)|[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/InvokeAptecoOrbit)](https://www.powershellgallery.com/packages/InvokeAptecoOrbit)
 [TestCertificate](TestCertificate/)|Module|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/TestCertificate)](https://www.powershellgallery.com/packages/TestCertificate)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/TestCertificate)](https://www.powershellgallery.com/packages/TestCertificate)<br/>![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)<br/>![Minimum Supported PowerShell Core Version](https://img.shields.io/badge/PSCore-7.0-blue.svg)|[![Pester Testing](https://img.shields.io/github/actions/workflow/status/Apteco/AptecoPSModules/testcertificate.tests.yml?branch=dev&label=Pester)](https://github.com/Apteco/AptecoPSModules/actions/workflows/testcertificate.tests.yml)|[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/TestCertificate)](https://www.powershellgallery.com/packages/TestCertificate)
 
 # Installation / Update
@@ -414,6 +415,19 @@ Use `Copy-DataDispatch` to deploy the dispatcher files to a target directory, th
 Install-Module DataDispatch
 Import-Module DataDispatch
 Copy-DataDispatch -Destination 'C:\FastStats\Scripts\DataDispatch'
+```
+
+## InvokeAptecoOrbit
+
+Authenticates against an Apteco Orbit API instance and calls its endpoints, including downloading paginated data (like a PeopleStage system's campaign list) without hand-rolling the paging loop yourself. The session/access token is cached to disk, encrypted at rest via EncryptCredential.
+
+Only the `SIMPLE` login type is currently supported.
+
+```PowerShell
+Install-Module InvokeAptecoOrbit
+Import-Module InvokeAptecoOrbit
+Connect-AptecoOrbit -BaseUrl "https://partner.apteco.io/OrbitAPI/" -DataView "Demo" -Credential (Get-Credential)
+Get-AptecoOrbitCampaigns -System "Demo"
 ```
 
 ## TestCertificate
