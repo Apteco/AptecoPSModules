@@ -11,7 +11,9 @@ function Invoke-AptecoOrbit {
         Looks up the endpoint definition (HTTP method + url template) from the Orbit API's own
         endpoint catalog, resolves path/query parameters, attaches the bearer token from the
         active session (see Connect-AptecoOrbit) and performs the request. On a single 401 it
-        refreshes the session once and retries.
+        refreshes the session once and retries. On any other failure, the real Orbit API error
+        response body is surfaced in the thrown error where available, instead of a generic
+        "The remote server returned an error" message.
 
     .PARAMETER Key
         The endpoint key/name as returned by the Orbit API's About/Endpoints catalog, e.g. "GetPeopleStageSystem"
@@ -101,6 +103,11 @@ function Invoke-AptecoOrbit {
                     Write-Verbose "Orbit session expired or rejected, refreshing and retrying once"
                     Get-OrbitSession -Force
                     continue
+                }
+
+                $responseBody = Get-OrbitErrorResponseBody -ErrorRecord $_
+                if ( $null -ne $responseBody -and "" -ne "$( $responseBody )" ) {
+                    throw "Orbit API call '$( $Key )' failed with status $( $statusCode ): $( $responseBody )"
                 }
 
                 throw

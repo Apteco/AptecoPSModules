@@ -14,17 +14,18 @@ Get-AptecoOrbitPagedData -Key "GetElementStatusForDescendants" -PathParameters @
 
 # Or use the ready-made campaign download, which also adds a folder breadcrumb per campaign
 Get-AptecoOrbitCampaigns -System "Demo"
+
+# Export a FastStats audience and download the resulting file (async export + poll + download)
+Export-AptecoOrbitAudience -System "Demo" -AudienceId 246 -WorkbookItemId "<workbook-item-guid>" -OutFile "C:\Temp\export.csv"
 ```
 
 The session/access token is cached to disk (encrypted at rest via
 [EncryptCredential](https://github.com/Apteco/AptecoPSModules/tree/main/EncryptCredential) by
 default) and reused until it expires, so repeated script runs do not need to log in every time.
 
+Both the `SIMPLE` (default) and `SALTED` login types are supported - pass `-LoginType SALTED` to `Connect-AptecoOrbit` if your instance requires it.
+
 ## Known limitations
 
-* Only the `SIMPLE` login type is currently implemented. The Orbit API also offers a `SALTED`
-  login (a multi-step, salted-hash exchange) - it is not implemented, since the exact hash
-  algorithm/salting order a given instance expects was never verified end-to-end. Calling
-  `Connect-AptecoOrbit` with that login type throws a clear error instead of guessing.
 * This module has not yet been exercised against a live Orbit instance; please report any
   endpoint/response shape mismatches.

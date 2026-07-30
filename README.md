@@ -419,15 +419,14 @@ Copy-DataDispatch -Destination 'C:\FastStats\Scripts\DataDispatch'
 
 ## InvokeAptecoOrbit
 
-Authenticates against an Apteco Orbit API instance and calls its endpoints, including downloading paginated data (like a PeopleStage system's campaign list) without hand-rolling the paging loop yourself. The session/access token is cached to disk, encrypted at rest via EncryptCredential.
-
-Only the `SIMPLE` login type is currently supported.
+Authenticates against an Apteco Orbit API instance and calls its endpoints, including downloading paginated data (like a PeopleStage system's campaign list) and exporting/downloading a FastStats audience (async export + poll + download), without hand-rolling either loop yourself. The session/access token is cached to disk, encrypted at rest via EncryptCredential. Both the `SIMPLE` and `SALTED` login types are supported.
 
 ```PowerShell
 Install-Module InvokeAptecoOrbit
 Import-Module InvokeAptecoOrbit
 Connect-AptecoOrbit -BaseUrl "https://partner.apteco.io/OrbitAPI/" -DataView "Demo" -Credential (Get-Credential)
 Get-AptecoOrbitCampaigns -System "Demo"
+Export-AptecoOrbitAudience -System "Demo" -AudienceId 246 -WorkbookItemId "<workbook-item-guid>" -OutFile "C:\Temp\export.csv"
 ```
 
 ## TestCertificate

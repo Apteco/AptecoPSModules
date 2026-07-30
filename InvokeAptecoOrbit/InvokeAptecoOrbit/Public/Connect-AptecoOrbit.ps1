@@ -13,8 +13,6 @@ function Connect-AptecoOrbit {
         via EncryptCredential by default) and reused until it expires, so repeated script runs
         do not need to log in every time.
 
-        Only the "SIMPLE" login type is currently supported.
-
     .PARAMETER BaseUrl
         Base url of the Orbit API, e.g. https://partner.apteco.io/OrbitAPI/
 
@@ -23,6 +21,9 @@ function Connect-AptecoOrbit {
 
     .PARAMETER Credential
         Username/password to authenticate with
+
+    .PARAMETER LoginType
+        "SIMPLE" (default) or "SALTED", matching what the target Orbit instance expects.
 
     .PARAMETER SessionFile
         Where to cache the session. Defaults to a file in the temp folder.
@@ -59,6 +60,7 @@ function Connect-AptecoOrbit {
         ,[Parameter(Mandatory=$true)]
          [System.Management.Automation.PSCredential]
          [System.Management.Automation.Credential()]$Credential
+        ,[Parameter(Mandatory=$false)][ValidateSet("SIMPLE","SALTED")][String]$LoginType = $Script:settings.loginType
         ,[Parameter(Mandatory=$false)][String]$SessionFile = $Script:settings.sessionFile
         ,[Parameter(Mandatory=$false)][Int]$Ttl = $Script:settings.ttl
         ,[Parameter(Mandatory=$false)][Bool]$EncryptToken = $Script:settings.encryptToken
@@ -69,6 +71,7 @@ function Connect-AptecoOrbit {
 
     $Script:settings.base = $BaseUrl.TrimEnd("/") + "/"
     $Script:settings.dataView = $DataView
+    $Script:settings.loginType = $LoginType
     $Script:settings.sessionFile = $SessionFile
     $Script:settings.ttl = $Ttl
     $Script:settings.encryptToken = $EncryptToken

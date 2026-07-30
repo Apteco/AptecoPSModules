@@ -4,7 +4,7 @@
 RootModule = 'InvokeAptecoOrbit.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.1.0'
+ModuleVersion = '0.2.0'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -31,8 +31,9 @@ loop yourself.
 Connect-AptecoOrbit -DataView "Demo" -Credential (Get-Credential)
 Invoke-AptecoOrbit -Key "GetPeopleStageSystem" -QueryParameters @{ systemName = "Demo" }
 Get-AptecoOrbitCampaigns -System "Demo"
+Export-AptecoOrbitAudience -System "Demo" -AudienceId 246 -WorkbookItemId "<workbook-item-guid>" -OutFile "C:\Temp\export.csv"
 
-Only the "SIMPLE" login type is currently supported.
+Both the "SIMPLE" and "SALTED" login types are supported.
 '
 
 # Minimum version of the PowerShell engine required by this module
@@ -80,6 +81,7 @@ FunctionsToExport = @(
     "Invoke-AptecoOrbit"
     "Get-AptecoOrbitPagedData"
     "Get-AptecoOrbitCampaigns"
+    "Export-AptecoOrbitAudience"
 )
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
@@ -119,6 +121,7 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+0.2.0 Implemented the SALTED login flow, added Export-AptecoOrbitAudience (async export + poll + download), and surfaced the real Orbit API error body in thrown errors instead of a generic exception
 0.1.0 Initial release: Connect-AptecoOrbit, Invoke-AptecoOrbit, Get-AptecoOrbitPagedData, Get-AptecoOrbitCampaigns
 '
         # Prerelease string of this module
