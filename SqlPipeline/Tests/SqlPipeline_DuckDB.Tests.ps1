@@ -326,6 +326,132 @@ Describe "Set-LoadMetadata and Get-LastLoadTimestamp" -Skip:(-not $script:duckDB
 }
 
 
+Describe "Invoke-IncrementalLoad" -Skip:(-not $script:duckDBAvailable) {
+
+    AfterEach {
+        Invoke-DuckDBQuery -Query "DROP TABLE IF EXISTS il_orders"  -ErrorAction SilentlyContinue
+        Invoke-DuckDBQuery -Query "DROP TABLE IF EXISTS il_schema"  -ErrorAction SilentlyContinue
+        Invoke-DuckDBQuery -Query "DROP TABLE IF EXISTS il_missing" -ErrorAction SilentlyContinue
+        Invoke-DuckDBQuery -Query "DELETE FROM _load_metadata WHERE table_name LIKE 'il_%'" -ErrorAction SilentlyContinue
+    }
+
+    It "Creates the table and loads all rows on first (full) load" {
+        Invoke-IncrementalLoad -TableName "il_orders" -PKColumns "Id" -ApiFetcher {
+            param($Since)
+            @(
+                [PSCustomObject]@{ Id = 1; Val = "a" }
+                [PSCustomObject]@{ Id = 2; Val = "b" }
+            )
+        }
+
+        $result = Get-DuckDBData -Query "SELECT * FROM il_orders"
+        $result.Rows.Count | Should -Be 2
+    }
+
+    It "Passes the fallback timestamp (2000-01-01) to the fetcher on the very first load" {
+        Invoke-IncrementalLoad -TableName "il_orders" -ApiFetcher {
+            param($Since)
+            $Script:receivedSince = $Since
+            @([PSCustomObject]@{ Id = 1; Val = "a" })
+        }
+        $Script:receivedSince | Should -Be ([datetime]"2000-01-01")
+    }
+
+    It "Records success metadata with the correct row count" {
+        Invoke-IncrementalLoad -TableName "il_orders" -ApiFetcher {
+            param($Since)
+            @([PSCustomObject]@{ Id = 1; Val = "a" }, [PSCustomObject]@{ Id = 2; Val = "b" })
+        }
+
+        $meta = Get-DuckDBData -Query "SELECT status, rows_loaded FROM _load_metadata WHERE table_name = 'il_orders'"
+        $meta.Rows[0]["status"]           | Should -Be "success"
+        [int]$meta.Rows[0]["rows_loaded"] | Should -Be 2
+    }
+
+    It "Passes the previous load's timestamp to the fetcher on the next run" {
+        Invoke-IncrementalLoad -TableName "il_orders" -ApiFetcher {
+            param($Since)
+            @([PSCustomObject]@{ Id = 1; Val = "a" })
+        }
+        $firstRunTimestamp = Get-LastLoadTimestamp -TableName "il_orders"
+
+        Invoke-IncrementalLoad -TableName "il_orders" -ApiFetcher {
+            param($Since)
+            $Script:receivedSince = $Since
+            @([PSCustomObject]@{ Id = 2; Val = "b" })
+        }
+
+        $Script:receivedSince | Should -Be $firstRunTimestamp
+    }
+
+    It "Performs UPSERT on matching PK across two loads" {
+        Invoke-IncrementalLoad -TableName "il_orders" -PKColumns "Id" -ApiFetcher {
+            param($Since) @([PSCustomObject]@{ Id = 1; Val = "original" })
+        }
+        Invoke-IncrementalLoad -TableName "il_orders" -PKColumns "Id" -ApiFetcher {
+            param($Since) @([PSCustomObject]@{ Id = 1; Val = "updated" })
+        }
+
+        $result = Get-DuckDBData -Query "SELECT * FROM il_orders WHERE Id = 1"
+        $result.Rows.Count     | Should -Be 1
+        $result.Rows[0]["Val"] | Should -Be "updated"
+    }
+
+    It "Records zero rows and success when the fetcher returns no data" {
+        Invoke-IncrementalLoad -TableName "il_orders" -ApiFetcher {
+            param($Since) @()
+        }
+
+        $meta = Get-DuckDBData -Query "SELECT status, rows_loaded FROM _load_metadata WHERE table_name = 'il_orders'"
+        $meta.Rows[0]["status"]           | Should -Be "success"
+        [int]$meta.Rows[0]["rows_loaded"] | Should -Be 0
+    }
+
+    It "Does not create the table when the first fetch returns no data" {
+        Invoke-IncrementalLoad -TableName "il_orders" -ApiFetcher {
+            param($Since) $null
+        }
+
+        { Get-DuckDBData -Query "SELECT * FROM il_orders" -ErrorAction Stop } | Should -Throw
+    }
+
+    It "Extends the schema when the fetcher returns a new field on a later load" {
+        Invoke-IncrementalLoad -TableName "il_schema" -ApiFetcher {
+            param($Since) @([PSCustomObject]@{ Id = 1 })
+        }
+        Invoke-IncrementalLoad -TableName "il_schema" -ApiFetcher {
+            param($Since) @([PSCustomObject]@{ Id = 2; Extra = "new-field" })
+        }
+
+        $result = Get-DuckDBData -Query "SELECT Extra FROM il_schema WHERE Id = 2"
+        $result.Rows[0]["Extra"] | Should -Be "new-field"
+    }
+
+    It "Fills columns no longer returned by the fetcher with NULL" {
+        Invoke-IncrementalLoad -TableName "il_missing" -ApiFetcher {
+            param($Since) @([PSCustomObject]@{ Id = 1; Val = "a" })
+        }
+        Invoke-IncrementalLoad -TableName "il_missing" -ApiFetcher {
+            param($Since) @([PSCustomObject]@{ Id = 2 })  # Val no longer supplied by the API
+        }
+
+        $result = Get-DuckDBData -Query "SELECT Val FROM il_missing WHERE Id = 2"
+        $result.Rows[0]["Val"] | Should -BeNullOrEmpty
+    }
+
+    It "Records error status and rethrows when the fetcher throws" {
+        { Invoke-IncrementalLoad -TableName "il_orders" -ApiFetcher {
+            param($Since) throw "boom"
+        } } | Should -Throw "*boom*"
+
+        $meta = Get-DuckDBData -Query "SELECT status, error_msg FROM _load_metadata WHERE table_name = 'il_orders'"
+        $meta.Rows[0]["status"]    | Should -Be "error"
+        $meta.Rows[0]["error_msg"] | Should -Be "boom"
+    }
+
+}
+
+
 Describe "Initialize-SQLPipeline and Close-SqlPipeline" -Skip:(-not $script:duckDBAvailable) {
 
     BeforeAll {

@@ -5,7 +5,7 @@
 RootModule = 'InstallDependency.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.3.12'
+ModuleVersion = '0.3.13'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -74,6 +74,7 @@ FunctionsToExport = @(
     "Install-Dependency"
     "Install-NuGetPackage"
     "Install-VcRedist"
+    "Grant-LogonAsBatchRight"
 )
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
@@ -113,6 +114,9 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+0.3.13 Added Grant-LogonAsBatchRight to grant an account the "Log on as a batch job" right, needed to run a
+       scheduled task under a service account. Rescued from an old local-only script, previously duplicated
+       across a couple of one-off deployment scripts
 0.3.12 Re-import PackageManagement/PowerShellGet in-session right after updating them, since Import-Module -Force
        merely stacks the new version alongside the old one still loaded in-process and cmdlets kept resolving
        to the stale binaries until the whole PowerShell session was restarted.
