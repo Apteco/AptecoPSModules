@@ -42,6 +42,14 @@ $Script:psPackages = [Array]@(
     "DuckDB.NET.Bindings.Full"
     "DuckDB.NET.Data.Full"
 
+    # DuckDB.NET.Data.Full 1.5.5 added Apache Arrow result streaming and now declares a hard
+    # dependency on Apache.Arrow in its own .nuspec. Install-Dependency is called with
+    # -ExcludeDependencies (see Install-SqlPipeline), so this transitive dependency is never
+    # resolved/downloaded automatically -- it has to be listed here explicitly, same as the two
+    # DuckDB.NET packages above. Without it, DuckDB.NET.Data.dll fails to load at runtime with
+    # "Could not load file or assembly 'Apache.Arrow' ...".
+    "Apache.Arrow"
+
     <#
     [PSCustomObject]@{
         name="Npgsql"
