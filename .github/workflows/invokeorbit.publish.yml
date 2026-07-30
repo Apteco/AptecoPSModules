@@ -26,9 +26,12 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Install PSScriptAnalyzer
+      - name: Install dependencies
         shell: pwsh
-        run: Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
+        run: |
+          Set-PSRepository PSGallery -InstallationPolicy Trusted
+          Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
+          Install-Module ImportDependency -Force -Scope CurrentUser
 
       - name: Analyse — errors (blocking)
         shell: pwsh
@@ -107,7 +110,9 @@ jobs:
       - name: Fix trailing whitespace
         shell: pwsh
         run: |
+          Set-PSRepository PSGallery -InstallationPolicy Trusted
           Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
+          Install-Module ImportDependency -Force -Scope CurrentUser
           Invoke-ScriptAnalyzer `
             -Path 'InvokeOrbit/InvokeOrbit' `
             -Recurse `
