@@ -5,7 +5,7 @@
 RootModule = 'SqlPipeline.psm1'
 
 # Die Versionsnummer dieses Moduls
-ModuleVersion = '0.4.1'
+ModuleVersion = '0.4.2'
 
 # Unterstützte PSEditions
 # CompatiblePSEditions = @()
@@ -126,6 +126,9 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.4.2 Added the actual Invoke-IncrementalLoad function -- it was already listed in FunctionsToExport but
+      had never been implemented as a real file, so importing worked but calling it would fail with
+      "command not found"
 0.4.1 Feature: Install-SqlPipeline now uses the InstallDependency module instead of a hand-rolled NuGet
                downloader, and always installs both the Windows PowerShell-pinned DuckDB.NET 1.4.4 set
                (plus its System.Memory/System.Runtime.CompilerServices.Unsafe polyfills) and the unpinned

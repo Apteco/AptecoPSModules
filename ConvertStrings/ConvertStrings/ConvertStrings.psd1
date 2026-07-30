@@ -4,7 +4,7 @@
 RootModule = 'ConvertStrings.psm1'
 
 # Die Versionsnummer dieses Moduls
-ModuleVersion = '0.1.0'
+ModuleVersion = '0.2.0'
 
 # Unterstützte PSEditions
 # CompatiblePSEditions = @()
@@ -30,6 +30,8 @@ Multiple functions to convert strings, e.g. to change the encoding or to hash a 
 - Get-StringHash
 - Convert-StringEncoding
 - Get-RandomString
+- Convert-XMLtoPSObject
+- Out-HashTableToXml
 
 Please have a look at the help of the functions for more information or the github repository
 '
@@ -77,6 +79,8 @@ FunctionsToExport = @(
     'Convert-StringEncoding'
     'Get-RandomString'
     'Add-BomIfMissing'
+    'Convert-XMLtoPSObject'
+    'Out-HashTableToXml'
 )
 
 # Aus diesem Modul zu exportierende Cmdlets. Um optimale Leistung zu erzielen, verwenden Sie keine Platzhalter und löschen den Eintrag nicht. Verwenden Sie ein leeres Array, wenn keine zu exportierenden Cmdlets vorhanden sind.
@@ -116,6 +120,8 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.2.0 New functions Convert-XMLtoPSObject and Out-HashTableToXml to convert between xml and PSCustomObject/
+      Hashtable, rescued from old local-only scripts
 0.1.0 New function Add-BomIfMissing to add a BOM to a file if it is missing
 0.0.6 Updated copyright to 2025
 0.0.5 Bumped the copyright year to 2024
