@@ -32,6 +32,7 @@ Name|Type|Repository/<br/>Version|Platform|Tests|Downloads|
 [ImportDependency](ImportDependency/)|Module|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/ImportDependency)](https://www.powershellgallery.com/packages/ImportDependency)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/ImportDependency)](https://www.powershellgallery.com/packages/ImportDependency)<br/>![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)||[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/ImportDependency)](https://www.powershellgallery.com/packages/ImportDependency)
 [NodeWebhook](NodeWebhook/)|Module|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/NodeWebhook)](https://www.powershellgallery.com/packages/NodeWebhook)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/NodeWebhook)](https://www.powershellgallery.com/packages/NodeWebhook)<br/>![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)||[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/NodeWebhook)](https://www.powershellgallery.com/packages/NodeWebhook)
 [DataDispatch](DataDispatch/)|Module|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/DataDispatch)](https://www.powershellgallery.com/packages/DataDispatch)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/DataDispatch)](https://www.powershellgallery.com/packages/DataDispatch)<br/>![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)||[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/DataDispatch)](https://www.powershellgallery.com/packages/DataDispatch)
+[TestCertificate](TestCertificate/)|Module|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/TestCertificate)](https://www.powershellgallery.com/packages/TestCertificate)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/TestCertificate)](https://www.powershellgallery.com/packages/TestCertificate)<br/>![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)<br/>![Minimum Supported PowerShell Core Version](https://img.shields.io/badge/PSCore-7.0-blue.svg)|[![Pester Testing](https://img.shields.io/github/actions/workflow/status/Apteco/AptecoPSModules/testcertificate.tests.yml?branch=dev&label=Pester)](https://github.com/Apteco/AptecoPSModules/actions/workflows/testcertificate.tests.yml)|[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/TestCertificate)](https://www.powershellgallery.com/packages/TestCertificate)
 
 # Installation / Update
 
@@ -413,5 +414,16 @@ Use `Copy-DataDispatch` to deploy the dispatcher files to a target directory, th
 Install-Module DataDispatch
 Import-Module DataDispatch
 Copy-DataDispatch -Destination 'C:\FastStats\Scripts\DataDispatch'
+```
+
+## TestCertificate
+
+Retrieves the SSL/TLS certificate presented by a HTTPS url - without needing that connection to be trusted first - so you can inspect it or pin its SHA-256 thumbprint.
+
+```PowerShell
+Install-Module TestCertificate
+Import-Module TestCertificate
+Get-SslCertificate -Url "https://www.apteco.de"
+Get-SHA256Thumbprint -Url "https://www.apteco.de"
 ```
 
