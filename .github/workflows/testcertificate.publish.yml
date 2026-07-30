@@ -1,4 +1,4 @@
-name: InvokeOrbit Publish
+name: TestCertificate Publish
 
 on:
   # Publish when the .psd1 lands on main (i.e. after a PR is merged)
@@ -6,14 +6,14 @@ on:
     branches:
       - main
     paths:
-      - 'InvokeOrbit/InvokeOrbit/InvokeOrbit.psd1'
+      - 'TestCertificate/TestCertificate/TestCertificate.psd1'
 
   # Allow manual re-publish from the Actions tab
   workflow_dispatch:
 
 # Prevent two publish runs for the same module from overlapping
 concurrency:
-  group: invokeorbit-publish
+  group: testcertificate-publish
   cancel-in-progress: false
 
 jobs:
@@ -34,7 +34,7 @@ jobs:
         shell: pwsh
         run: |
           $results = Invoke-ScriptAnalyzer `
-            -Path 'InvokeOrbit/InvokeOrbit' `
+            -Path 'TestCertificate/TestCertificate' `
             -Recurse `
             -Severity Error
           if ($results) {
@@ -48,7 +48,7 @@ jobs:
         shell: pwsh
         run: |
           $results = Invoke-ScriptAnalyzer `
-            -Path 'InvokeOrbit/InvokeOrbit' `
+            -Path 'TestCertificate/TestCertificate' `
             -Recurse `
             -Severity Warning
           if ($results) {
@@ -73,11 +73,11 @@ jobs:
         id: check
         shell: pwsh
         run: |
-          $psd1    = Import-PowerShellDataFile 'InvokeOrbit/InvokeOrbit/InvokeOrbit.psd1'
+          $psd1    = Import-PowerShellDataFile 'TestCertificate/TestCertificate/TestCertificate.psd1'
           $local   = [version]$psd1.ModuleVersion
           Write-Host "Local version : $local"
 
-          $gallery = Find-Module InvokeOrbit -Repository PSGallery -ErrorAction SilentlyContinue
+          $gallery = Find-Module TestCertificate -Repository PSGallery -ErrorAction SilentlyContinue
           if ($gallery) {
             $remote = [version]$gallery.Version
             Write-Host "Gallery version: $remote"
@@ -109,7 +109,7 @@ jobs:
         run: |
           Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
           Invoke-ScriptAnalyzer `
-            -Path 'InvokeOrbit/InvokeOrbit' `
+            -Path 'TestCertificate/TestCertificate' `
             -Recurse `
             -IncludeRule PSAvoidTrailingWhitespace `
             -Fix
@@ -117,11 +117,11 @@ jobs:
       - name: Publish
         shell: pwsh
         run: |
-          $path = 'InvokeOrbit/InvokeOrbit'
+          $path = 'TestCertificate/TestCertificate'
           Set-PSRepository PSGallery -InstallationPolicy Trusted
           Publish-Module `
             -Path        $path `
             -NuGetApiKey ${{ secrets.NUGET_API_KEY }} `
             -Repository  PSGallery `
             -Verbose
-          Write-Host "Published InvokeOrbit ${{ needs.version-check.outputs.version }}" -ForegroundColor Green
+          Write-Host "Published TestCertificate ${{ needs.version-check.outputs.version }}" -ForegroundColor Green

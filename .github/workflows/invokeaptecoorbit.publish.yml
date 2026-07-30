@@ -1,4 +1,4 @@
-name: OrbitDownloader Publish
+name: InvokeAptecoOrbit Publish
 
 on:
   # Publish when the .psd1 lands on main (i.e. after a PR is merged)
@@ -6,14 +6,14 @@ on:
     branches:
       - main
     paths:
-      - 'OrbitDownloader/OrbitDownloader/OrbitDownloader.psd1'
+      - 'InvokeAptecoOrbit/InvokeAptecoOrbit/InvokeAptecoOrbit.psd1'
 
   # Allow manual re-publish from the Actions tab
   workflow_dispatch:
 
 # Prevent two publish runs for the same module from overlapping
 concurrency:
-  group: orbitdownloader-publish
+  group: invokeaptecoorbit-publish
   cancel-in-progress: false
 
 jobs:
@@ -26,15 +26,18 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Install PSScriptAnalyzer
+      - name: Install dependencies
         shell: pwsh
-        run: Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
+        run: |
+          Set-PSRepository PSGallery -InstallationPolicy Trusted
+          Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
+          Install-Module ImportDependency -Force -Scope CurrentUser
 
       - name: Analyse — errors (blocking)
         shell: pwsh
         run: |
           $results = Invoke-ScriptAnalyzer `
-            -Path 'OrbitDownloader/OrbitDownloader' `
+            -Path 'InvokeAptecoOrbit/InvokeAptecoOrbit' `
             -Recurse `
             -Severity Error
           if ($results) {
@@ -48,7 +51,7 @@ jobs:
         shell: pwsh
         run: |
           $results = Invoke-ScriptAnalyzer `
-            -Path 'OrbitDownloader/OrbitDownloader' `
+            -Path 'InvokeAptecoOrbit/InvokeAptecoOrbit' `
             -Recurse `
             -Severity Warning
           if ($results) {
@@ -73,11 +76,11 @@ jobs:
         id: check
         shell: pwsh
         run: |
-          $psd1    = Import-PowerShellDataFile 'OrbitDownloader/OrbitDownloader/OrbitDownloader.psd1'
+          $psd1    = Import-PowerShellDataFile 'InvokeAptecoOrbit/InvokeAptecoOrbit/InvokeAptecoOrbit.psd1'
           $local   = [version]$psd1.ModuleVersion
           Write-Host "Local version : $local"
 
-          $gallery = Find-Module OrbitDownloader -Repository PSGallery -ErrorAction SilentlyContinue
+          $gallery = Find-Module InvokeAptecoOrbit -Repository PSGallery -ErrorAction SilentlyContinue
           if ($gallery) {
             $remote = [version]$gallery.Version
             Write-Host "Gallery version: $remote"
@@ -107,9 +110,11 @@ jobs:
       - name: Fix trailing whitespace
         shell: pwsh
         run: |
+          Set-PSRepository PSGallery -InstallationPolicy Trusted
           Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
+          Install-Module ImportDependency -Force -Scope CurrentUser
           Invoke-ScriptAnalyzer `
-            -Path 'OrbitDownloader/OrbitDownloader' `
+            -Path 'InvokeAptecoOrbit/InvokeAptecoOrbit' `
             -Recurse `
             -IncludeRule PSAvoidTrailingWhitespace `
             -Fix
@@ -117,11 +122,11 @@ jobs:
       - name: Publish
         shell: pwsh
         run: |
-          $path = 'OrbitDownloader/OrbitDownloader'
+          $path = 'InvokeAptecoOrbit/InvokeAptecoOrbit'
           Set-PSRepository PSGallery -InstallationPolicy Trusted
           Publish-Module `
             -Path        $path `
             -NuGetApiKey ${{ secrets.NUGET_API_KEY }} `
             -Repository  PSGallery `
             -Verbose
-          Write-Host "Published OrbitDownloader ${{ needs.version-check.outputs.version }}" -ForegroundColor Green
+          Write-Host "Published InvokeAptecoOrbit ${{ needs.version-check.outputs.version }}" -ForegroundColor Green
