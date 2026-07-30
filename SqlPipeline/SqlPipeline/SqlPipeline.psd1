@@ -5,7 +5,7 @@
 RootModule = 'SqlPipeline.psm1'
 
 # Die Versionsnummer dieses Moduls
-ModuleVersion = '0.4.2'
+ModuleVersion = '0.4.3'
 
 # Unterstützte PSEditions
 # CompatiblePSEditions = @()
@@ -126,9 +126,15 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
-0.4.2 Added the actual Invoke-IncrementalLoad function -- it was already listed in FunctionsToExport but
+0.4.3 Added the actual Invoke-IncrementalLoad function -- it was already listed in FunctionsToExport but
       had never been implemented as a real file, so importing worked but calling it would fail with
       "command not found"
+      Fixed the pwsh (Core) "latest" DuckDB.NET.Data.Full install failing to load at runtime with
+      "Could not load file or assembly Apache.Arrow ..." -- DuckDB.NET.Data.Full 1.5.5 added Apache Arrow
+      result streaming and now declares a hard dependency on Apache.Arrow in its own .nuspec, but
+      Install-Dependency is called with -ExcludeDependencies, so this new transitive dependency was never
+      resolved/downloaded. Added Apache.Arrow explicitly to the pwsh package list to fix it. Windows
+      PowerShell 5.1 was unaffected since it stays pinned to DuckDB.NET.Data.Full 1.4.4
 0.4.1 Feature: Install-SqlPipeline now uses the InstallDependency module instead of a hand-rolled NuGet
                downloader, and always installs both the Windows PowerShell-pinned DuckDB.NET 1.4.4 set
                (plus its System.Memory/System.Runtime.CompilerServices.Unsafe polyfills) and the unpinned
