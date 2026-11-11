@@ -18,6 +18,10 @@ function Invoke-BufferedWrite {
 
     if ($Data.Count -eq 0) { return }
 
+    # try/catch { throw }: .NET exceptions from DuckDB are only statement-terminating in PowerShell.
+    # Rethrowing makes them terminating so Add-RowsToDuckDB and the calling script stop instead of continuing silently.
+    try {
+
     # Use the first 100 rows for type inference so mixed-type columns
     # (e.g. integer in one row, double in another) get the correct wider type.
     $sampleRows = $Data.GetRange(0, [Math]::Min(100, $Data.Count))
@@ -41,4 +45,8 @@ function Invoke-BufferedWrite {
                         -Data $normalizedData -PKColumns $PKColumns `
                         -UseCsvImport:$UseCsvImport -SimpleTypesOnly:$SimpleTypesOnly
     # Result object (Inserts, Updates) is passed through to the caller
+
+    } catch {
+        throw
+    }
 }

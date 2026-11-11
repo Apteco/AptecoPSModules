@@ -74,14 +74,32 @@ function Write-DuckDBCsv {
         [System.IO.Path]::GetRandomFileName() + '.csv'
     )
 
+    # Export-Csv formats numbers and dates with the *current* culture, e.g. on de-DE 12.5 becomes "12,5"
+    # and dates become "11.11.2026 10:20:30" (milliseconds dropped) -> DuckDB cannot cast them.
+    # Temporarily switch to an invariant culture with ISO date/time patterns for the export.
+    $csvCulture = [System.Globalization.CultureInfo]::InvariantCulture.Clone()
+    $csvCulture.DateTimeFormat.ShortDatePattern = 'yyyy-MM-dd'
+    $csvCulture.DateTimeFormat.LongTimePattern  = 'HH:mm:ss.FFFFFFF'
+    $previousCulture = [System.Globalization.CultureInfo]::CurrentCulture
+
     try {
         Write-Verbose "[$TableName] Writing data to temporary CSV file: $tmpFile"
-        $preparedData | Export-Csv -Path $tmpFile -NoTypeInformation -Encoding UTF8
+        try {
+            [System.Globalization.CultureInfo]::CurrentCulture = $csvCulture
+            $preparedData | Export-Csv -Path $tmpFile -NoTypeInformation -Encoding UTF8
+        } finally {
+            [System.Globalization.CultureInfo]::CurrentCulture = $previousCulture
+        }
         Write-Verbose "[$TableName] CSV file created. Starting COPY FROM..."
-        # DuckDB requires forward slashes; NULLSTR '' maps empty strings back to NULL
+        # DuckDB requires forward slashes; NULLSTR '' maps empty strings back to NULL.
+        # The dialect is fixed (Export-Csv always writes RFC 4180: comma, every field double-quoted,
+        # quotes escaped by doubling), so the sniffer is switched off. The sniffer can otherwise fail
+        # with "not possible to automatically detect the CSV parsing dialect", e.g. when a value is just '"'.
+        # Column types come from the target table. MAX_LINE_SIZE is raised for long text fields (default 2 MB).
         $duckPath = $tmpFile.Replace('\', '/')
+        $copyOptions = "FORMAT csv, HEADER true, DELIMITER ',', QUOTE '`"', ESCAPE '`"', NULLSTR '', AUTO_DETECT false, MAX_LINE_SIZE 104857600"
         Invoke-DuckDBQuery -Connection $Connection `
-            -Query "COPY $TableName FROM '$duckPath' (HEADER, NULLSTR '')"
+            -Query "COPY $TableName FROM '$duckPath' ($copyOptions)"
         Write-Verbose "[$TableName] CSV COPY FROM completed: $($Data.Count) rows"
     } finally {
         if (Test-Path $tmpFile) {

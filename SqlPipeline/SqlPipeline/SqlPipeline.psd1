@@ -5,7 +5,7 @@
 RootModule = 'SqlPipeline.psm1'
 
 # Die Versionsnummer dieses Moduls
-ModuleVersion = '0.4.3'
+ModuleVersion = '0.4.4'
 
 # Unterstützte PSEditions
 # CompatiblePSEditions = @()
@@ -126,6 +126,8 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.4.4 More errorhandling and logging
+      Better handling of culture variants and escaping
 0.4.3 Added the actual Invoke-IncrementalLoad function -- it was already listed in FunctionsToExport but
       had never been implemented as a real file, so importing worked but calling it would fail with
       "command not found"

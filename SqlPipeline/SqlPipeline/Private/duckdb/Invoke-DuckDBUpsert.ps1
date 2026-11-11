@@ -31,6 +31,13 @@ function Invoke-DuckDBUpsert {
 
     $stagingTable = "stg_$TableName"
 
+    # Everything runs inside try/catch/finally:
+    # - .NET exceptions (e.g. from ExecuteNonQuery) are only statement-terminating in PowerShell, so without
+    #   this the function would just carry on with the next statement and silently lose the batch.
+    #   catch { throw } turns them into terminating errors for the caller.
+    # - finally always drops the staging table, so a failed batch cannot leak rows into the next one.
+    try {
+
     # Create staging table
     Invoke-DuckDBQuery -Connection $Connection -Query @"
         CREATE TEMP TABLE IF NOT EXISTS $stagingTable
@@ -41,7 +48,14 @@ function Invoke-DuckDBUpsert {
 
     # Write data into staging table
     if ($UseCsvImport) {
-        Write-DuckDBCsv -Connection $Connection -TableName $stagingTable -Data $Data -SimpleTypesOnly:$SimpleTypesOnly
+        try {
+            Write-DuckDBCsv -Connection $Connection -TableName $stagingTable -Data $Data -SimpleTypesOnly:$SimpleTypesOnly
+        } catch {
+            # Fall back to the appender for this batch so the data still gets loaded
+            Write-Warning "[$TableName] CSV import failed, falling back to the appender for this batch of $($Data.Count) rows. Reason: $($_.Exception.Message)"
+            Invoke-DuckDBQuery -Connection $Connection -Query "DELETE FROM $stagingTable"
+            Write-DuckDBAppender -Connection $Connection -TableName $stagingTable -Data $Data -SimpleTypesOnly:$SimpleTypesOnly
+        }
     } else {
         Write-DuckDBAppender -Connection $Connection -TableName $stagingTable -Data $Data -SimpleTypesOnly:$SimpleTypesOnly
     }
@@ -86,8 +100,16 @@ function Invoke-DuckDBUpsert {
 
     Write-Verbose "[$TableName] Merge completed. Inserts: $insertCount, Updates: $updateCount."
 
-    # Clean up staging table
-    Invoke-DuckDBQuery -Connection $Connection -Query "DROP TABLE IF EXISTS $stagingTable"
+    } catch {
+        throw
+    } finally {
+        # Clean up staging table
+        try {
+            Invoke-DuckDBQuery -Connection $Connection -Query "DROP TABLE IF EXISTS $stagingTable"
+        } catch {
+            Write-Warning "[$TableName] Could not drop staging table '$stagingTable': $($_.Exception.Message)"
+        }
+    }
     Write-Verbose "[$TableName] UPSERT completed."
 
     [PSCustomObject]@{
