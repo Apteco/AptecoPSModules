@@ -8,6 +8,22 @@ function Write-DuckDBAppender {
         [switch]$SimpleTypesOnly = $false
     )
 
+    # Fast path: the per-cell loop compiled as C# (see DuckDBFastAppender.cs). It looks up every table column
+    # by name on each row, so the rows do not have to be normalized with Repair-DuckDBRow before.
+    if ($Script:isFastAppenderLoaded) {
+        $jsonConverter = [System.Func[object, string]] {
+            param($value)
+            ConvertTo-Json -InputObject $value -Compress -Depth 10
+        }
+        # A single row arrives unwrapped from the pipeline (and a hashtable row would be enumerated as its entries).
+        # Direct assignment on purpose: '$rows = if (...) { @($Data) }' would unroll the 1-element array again.
+        $rows = $Data
+        if ($rows -isnot [System.Collections.IList]) { $rows = @($Data) }
+        $written = [SqlPipeline.DuckDBFastAppenderV1]::Write($Connection, $TableName, $rows, $jsonConverter)
+        Write-Verbose "[$TableName] Fast appender finished: $written rows written."
+        return
+    }
+
     # Read column types from schema so we can cast numeric values correctly.
     # DuckDB.NET's AppendValue reinterprets bytes rather than converting when
     # the .NET type does not match the column type (e.g. Int64 into a DOUBLE

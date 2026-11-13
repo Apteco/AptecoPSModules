@@ -80,6 +80,7 @@ New-Variable -Name PipelineBuffer -Value $null -Scope Script -Force # Buffer for
 New-Variable -Name PipelineOptions -Value $null -Scope Script -Force # Options for
 New-Variable -Name isDuckDBLoaded -Value $null -Scope Script -Force    # Flag indicating whether DuckDB.NET is available
 New-Variable -Name isSimplySqlLoaded -Value $null -Scope Script -Force  # Flag indicating whether SimplySql is available
+New-Variable -Name isFastAppenderLoaded -Value $null -Scope Script -Force # Flag indicating whether the compiled C# appender is available
 New-Variable -Name DefaultConnection   -Value $null -Scope Script -Force  # Default DuckDB connection (in-memory, auto-initialized on module load)
 New-Variable -Name InMemoryConnection -Value $null -Scope Script -Force  # The auto-initialized in-memory connection; used as fallback when a file connection is closed
 New-Variable -Name psModules -Value $null -Scope Script -Force          # Module dependencies
@@ -94,6 +95,7 @@ $Script:moduleRoot = $PSScriptRoot.ToString()
 # Internal pipeline buffer per table
 $Script:isDuckDBLoaded = $false
 $Script:isSimplySqlLoaded = $false
+$Script:isFastAppenderLoaded = $false
 $Script:PipelineBuffer  = [System.Collections.Generic.Dictionary[string, System.Collections.Generic.List[PSObject]]]::new()
 $Script:PipelineOptions = [System.Collections.Generic.Dictionary[string, hashtable]]::new()
 
@@ -129,6 +131,10 @@ $Script:psAssemblies | ForEach-Object {
 # Auto-initialize an in-memory DuckDB connection so that Initialize-SQLPipeline
 # is only required when a persistent file-based database is needed.
 if ($Script:isDuckDBLoaded) {
+
+    # Compile the C# appender (fast path for Write-DuckDBAppender); falls back to the PowerShell loop if this fails
+    $Script:isFastAppenderLoaded = Initialize-DuckDBFastAppender
+
     try {
         $Script:DefaultConnection   = New-DuckDBConnection -DbPath ':memory:'
         $Script:InMemoryConnection  = $Script:DefaultConnection

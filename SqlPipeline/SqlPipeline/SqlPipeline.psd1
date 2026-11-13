@@ -5,7 +5,7 @@
 RootModule = 'SqlPipeline.psm1'
 
 # Die Versionsnummer dieses Moduls
-ModuleVersion = '0.4.4'
+ModuleVersion = '0.4.5'
 
 # Unterstützte PSEditions
 # CompatiblePSEditions = @()
@@ -126,6 +126,15 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.4.5 Performance: the DuckDB appender loop now runs as C# (Private/duckdb/DuckDBFastAppender.cs), compiled at
+      module import via Add-Type against the loaded DuckDB.NET (1.4.4 on Windows PowerShell, latest on pwsh).
+      Measured with 118 columns / 10,000 rows in pwsh: 726 s -> 3.4 s. Repair-DuckDBRow is skipped on this path,
+      as the C# appender looks up every table column by name on each row. Falls back to the PowerShell loop
+      with a warning when compiling is not possible (e.g. Constrained Language Mode / AppLocker)
+      Fix: values are now converted to the exact column type. The PowerShell appender wrote garbage into
+      INTEGER, FLOAT, DECIMAL and HUGEINT columns (DuckDB.NET reinterprets bytes on a type mismatch)
+      Fix: appender errors name table, row, column and value type, and no longer risk a process crash
+      (DuckDB.NET crashes when an appender is disposed after a failed AppendValue without Close())
 0.4.4 More errorhandling and logging
       Better handling of culture variants and escaping
 0.4.3 Added the actual Invoke-IncrementalLoad function -- it was already listed in FunctionsToExport but

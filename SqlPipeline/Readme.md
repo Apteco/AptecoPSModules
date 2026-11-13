@@ -14,7 +14,7 @@ Current functionality:
 - Automatic table creation from PSObject data
 - Schema evolution (new fields via ALTER TABLE)
 - Normalization of missing fields (columns no longer provided)
-- Bulk insert via Appender (fast) and temporary CSV import (even faster)
+- Bulk insert via Appender (fastest; compiled C# at import via Add-Type, falls back to a PowerShell loop if compiling is not possible) and temporary CSV import
 - UPSERT via staging table + INSERT ON CONFLICT
 - Metadata management (last load timestamp per table)
 

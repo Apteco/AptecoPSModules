@@ -41,9 +41,11 @@ function Add-RowsToDuckDB {
         Number of rows per staging batch (default: 10000). Only relevant without -UseTransaction.
 
     .PARAMETER UseCsvImport
-        Use a temporary CSV file + DuckDB COPY FROM instead of the default row-by-row appender.
-        Faster for large datasets. Use -SimpleTypesOnly alongside this for an additional speedup
-        when the data contains no complex objects (lists, dicts, nested PSObjects).
+        Use a temporary CSV file + DuckDB COPY FROM instead of the default appender.
+        Since 0.4.5 the appender runs as compiled C# and is usually faster (measured on 118 columns:
+        appender ~3.4 s vs. CSV ~8.4 s per 10,000 rows in pwsh). The CSV import is only faster when the
+        compiled appender is not available (e.g. Add-Type blocked by Constrained Language Mode), then
+        use -SimpleTypesOnly alongside this when the data contains no complex objects.
 
     .EXAMPLE
         # Apteco style: pipeline input

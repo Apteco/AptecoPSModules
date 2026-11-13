@@ -34,10 +34,17 @@ function Invoke-BufferedWrite {
     Sync-DuckDBSchema -Connection $Connection -TableName $TableName -SampleRows $sampleRows
 
     # 3. Normalize missing columns
-    $expectedCols   = Get-DuckDBColumns -Connection $Connection -TableName $TableName
-    Write-Verbose "[$TableName] No of expected columns in DuckDB: $( $expectedCols.Count )" #$($expectedCols -join ', ')"
-    $normalizedData = $Data | ForEach-Object {
-        Repair-DuckDBRow -Row $_ -ExpectedColumns $expectedCols
+    # The compiled appender looks up every table column by name on each row (missing -> NULL), so it needs no
+    # normalization. Repair-DuckDBRow costs a function call plus a rebuilt object per row, which adds up on wide tables.
+    # The CSV import (Export-Csv takes the columns from the first row) and the PowerShell appender still need it.
+    if ($Script:isFastAppenderLoaded -and -not $UseCsvImport) {
+        $normalizedData = $Data
+    } else {
+        $expectedCols   = Get-DuckDBColumns -Connection $Connection -TableName $TableName
+        Write-Verbose "[$TableName] No of expected columns in DuckDB: $( $expectedCols.Count )" #$($expectedCols -join ', ')"
+        $normalizedData = $Data | ForEach-Object {
+            Repair-DuckDBRow -Row $_ -ExpectedColumns $expectedCols
+        }
     }
 
     # 4. UPSERT or INSERT

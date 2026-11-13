@@ -826,3 +826,93 @@ Describe "Write-DuckDBAppender - numeric type correctness (byte-reinterpretation
     }
 
 }
+
+
+Describe "Write-DuckDBAppender - compiled C# fast path (DuckDBFastAppender.cs)" -Skip:(-not $script:duckDBAvailable) {
+
+    BeforeAll {
+        $script:sqlPipelineModule = Get-Module SqlPipeline
+    }
+
+    AfterEach {
+        "fa_types","fa_rows","fa_err","fa_fallback" | ForEach-Object {
+            Invoke-DuckDBQuery -Query "DROP TABLE IF EXISTS $_" -ErrorAction SilentlyContinue
+        }
+    }
+
+    It "Compiles the fast appender on module import" {
+        & $script:sqlPipelineModule { $Script:isFastAppenderLoaded } | Should -BeTrue
+    }
+
+    It "Converts values to the exact column type (INTEGER, FLOAT, DECIMAL, HUGEINT, BOOLEAN, VARCHAR, JSON)" {
+        # The PowerShell appender wrote garbage here (e.g. [long]1 into INTEGER became -6804536),
+        # because DuckDB.NET reinterprets the bytes on a type mismatch.
+        Invoke-DuckDBQuery -Query "CREATE TABLE fa_types (i INTEGER, f FLOAT, dec DECIMAL(10,2), h HUGEINT, ok BOOLEAN, s VARCHAR, j JSON, ts TIMESTAMP)"
+        $rows = @(
+            [PSCustomObject]@{ i = [long]5; f = [double]1.25; dec = "12.5"; h = [long]9; ok = 1; s = 42; j = @{ a = 1 }; ts = [datetime]"2026-11-13 10:20:30" }
+        )
+        & $script:sqlPipelineModule { param($r) Write-DuckDBAppender -Connection $Script:DefaultConnection -TableName fa_types -Data $r } $rows
+
+        $row = (Get-DuckDBData -Query "SELECT i, f, dec, h, ok, s, j::VARCHAR AS j, ts FROM fa_types").Rows[0]
+        [int]$row["i"]        | Should -Be 5
+        [double]$row["f"]     | Should -Be 1.25
+        [decimal]$row["dec"]  | Should -Be 12.5
+        [long]$row["h"]       | Should -Be 9
+        $row["ok"]            | Should -BeTrue
+        $row["s"]             | Should -Be "42"
+        $row["j"]             | Should -Be '{"a":1}'
+        $row["ts"]            | Should -Be ([datetime]"2026-11-13 10:20:30")
+    }
+
+    It "Matches columns by name: different property order, missing (NULL) and extra properties, hashtable rows" {
+        Invoke-DuckDBQuery -Query "CREATE TABLE fa_rows (id BIGINT, name VARCHAR, score DOUBLE)"
+        $rows = [System.Collections.Generic.List[object]]::new()
+        $rows.Add([PSCustomObject]@{ score = 1.5; name = "a"; id = 1 })          # different order
+        $rows.Add([PSCustomObject]@{ ID = 2; extra = "ignored" })                 # missing + extra, other casing
+        $rows.Add(@{ id = 3; name = "c" })                                        # hashtable row
+        & $script:sqlPipelineModule { param($r) Write-DuckDBAppender -Connection $Script:DefaultConnection -TableName fa_rows -Data $r } $rows
+
+        $result = Get-DuckDBData -Query "SELECT id, name, score FROM fa_rows ORDER BY id"
+        $result.Rows.Count | Should -Be 3
+        $result.Rows[0]["name"]  | Should -Be "a"
+        [double]$result.Rows[0]["score"] | Should -Be 1.5
+        $result.Rows[1]["name"]  | Should -Be ([DBNull]::Value)
+        $result.Rows[1]["score"] | Should -Be ([DBNull]::Value)
+        $result.Rows[2]["name"]  | Should -Be "c"
+    }
+
+    It "Accepts a single row that is not wrapped in an array" {
+        Invoke-DuckDBQuery -Query "CREATE TABLE fa_rows (id BIGINT)"
+        & $script:sqlPipelineModule { Write-DuckDBAppender -Connection $Script:DefaultConnection -TableName fa_rows -Data ([PSCustomObject]@{ id = 7 }) }
+        [long](Get-DuckDBData -Query "SELECT id FROM fa_rows").Rows[0]["id"] | Should -Be 7
+    }
+
+    It "Throws a descriptive error for an unconvertible value instead of crashing, target table unchanged" {
+        [PSCustomObject]@{ id = 1; n = 5 } | Add-RowsToDuckDB -TableName "fa_err" | Out-Null
+
+        { [PSCustomObject]@{ id = 2; n = "notanumber" } | Add-RowsToDuckDB -TableName "fa_err" } |
+            Should -Throw -ExpectedMessage "*column 'n' (BIGINT)*"
+
+        [long](Get-DuckDBData -Query "SELECT COUNT(*) AS cnt FROM fa_err").Rows[0]["cnt"] | Should -Be 1
+        [long](Get-DuckDBData -Query "SELECT COUNT(*) AS cnt FROM duckdb_tables() WHERE table_name = 'stg_fa_err'").Rows[0]["cnt"] | Should -Be 0
+    }
+
+    It "Falls back to the PowerShell appender when the fast appender is not available" {
+        $previous = & $script:sqlPipelineModule { $Script:isFastAppenderLoaded }
+        try {
+            & $script:sqlPipelineModule { $Script:isFastAppenderLoaded = $false }
+            @(
+                [PSCustomObject]@{ id = 1; val = "a"; score = 1.5 }
+                [PSCustomObject]@{ id = 2; val = "b" }
+            ) | Add-RowsToDuckDB -TableName "fa_fallback" -PKColumns "id" | Out-Null
+        } finally {
+            & $script:sqlPipelineModule { param($p) $Script:isFastAppenderLoaded = $p } $previous
+        }
+
+        $result = Get-DuckDBData -Query "SELECT id, val, score FROM fa_fallback ORDER BY id"
+        $result.Rows.Count | Should -Be 2
+        [double]$result.Rows[0]["score"] | Should -Be 1.5
+        $result.Rows[1]["score"] | Should -Be ([DBNull]::Value)
+    }
+
+}
