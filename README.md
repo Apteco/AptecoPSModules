@@ -35,6 +35,14 @@ Name|Type|Repository/<br/>Version|Platform|Tests|Downloads|
 [InvokeAptecoOrbit](InvokeAptecoOrbit/)|Module|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/InvokeAptecoOrbit)](https://www.powershellgallery.com/packages/InvokeAptecoOrbit)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/InvokeAptecoOrbit)](https://www.powershellgallery.com/packages/InvokeAptecoOrbit)<br/>![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)<br/>![Minimum Supported PowerShell Core Version](https://img.shields.io/badge/PSCore-7.0-blue.svg)|[![Pester Testing](https://img.shields.io/github/actions/workflow/status/Apteco/AptecoPSModules/invokeaptecoorbit.tests.yml?branch=dev&label=Pester)](https://github.com/Apteco/AptecoPSModules/actions/workflows/invokeaptecoorbit.tests.yml)|[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/InvokeAptecoOrbit)](https://www.powershellgallery.com/packages/InvokeAptecoOrbit)
 [TestCertificate](TestCertificate/)|Module|[![PowerShell Gallery Version (including pre-releases)](https://img.shields.io/powershellgallery/v/TestCertificate)](https://www.powershellgallery.com/packages/TestCertificate)|[![PowerShell Gallery Platform Support](https://img.shields.io/powershellgallery/p/TestCertificate)](https://www.powershellgallery.com/packages/TestCertificate)<br/>![Minimum Supported PowerShell Version](https://img.shields.io/badge/PowerShell-5.1-blue.svg)<br/>![Minimum Supported PowerShell Core Version](https://img.shields.io/badge/PSCore-7.0-blue.svg)|[![Pester Testing](https://img.shields.io/github/actions/workflow/status/Apteco/AptecoPSModules/testcertificate.tests.yml?branch=dev&label=Pester)](https://github.com/Apteco/AptecoPSModules/actions/workflows/testcertificate.tests.yml)|[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/TestCertificate)](https://www.powershellgallery.com/packages/TestCertificate)
 
+## Modules available on request
+
+These modules are not published here or on PowerShell Gallery, but can be shared on request. Please ask your Apteco contact for them.
+
+Name|Type|Description
+-|-|-
+IncrementalExtract|Module|Inspect, append and cut increments of FastStats Designer incremental extracts - e.g. remove the newest increments to extract them again, keep a rolling window of the latest increments or append delimited files as new increments, without a full re-extract
+
 # Installation / Update
 
 If you want to install an module just do it like
