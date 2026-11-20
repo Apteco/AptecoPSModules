@@ -323,11 +323,12 @@ DuckDB also needs the Visual C++ Redistributable — run `Install-VcRedist` once
 
 Prefer `Microsoft.Data.Sqlite` (via `SQLitePCLRaw`) over `System.Data.SQLite`-based options (`PSSQLite`, `System.Data.SQLite.Core`) — those only ship native binaries for win-x86/win-x64/linux-x64/osx-x64, with no ARM64 build at all, so they fail outright on native ARM64 pwsh. `SQLitePCLRaw.lib.e_sqlite3` does ship `win-arm64`.
 
-Unlike DuckDB, none of these packages need a version pin — the same set works unchanged on both editions:
+`Microsoft.Data.Sqlite.Core` dropped its `netstandard2.0` build with 11.0.0 (11.x only ships `net10.0`), the same situation as DuckDB.NET after 1.4.4, so it gets the same dual-pin treatment: a pinned 10.x for Windows PowerShell plus an unpinned "latest" for pwsh, both in the same `lib` folder. `Import-Dependency` loads only the one matching the running PowerShell; pwsh on .NET 8/9 (7.4/7.5) can't load `net10.0` either and automatically falls back to the 10.x pin. `10.0.10` is the same pin AptecoPSFramework uses, so both can share a `lib` folder. The `SQLitePCLRaw` packages still ship `net471`/`netstandard2.0` builds next to `net8.0`, so they need no pin:
 
 ```PowerShell
 $packages = [Array]@(
-    "Microsoft.Data.Sqlite.Core"
+    [PSCustomObject]@{ name = "Microsoft.Data.Sqlite.Core"; version = "10.0.10" }   # Windows PowerShell: 10.x is the last major with a netstandard2.0 build
+    "Microsoft.Data.Sqlite.Core"   # pwsh: newest build, no pin needed
     "SQLitePCLRaw.core"
     "SQLitePCLRaw.provider.e_sqlite3"
     "SQLitePCLRaw.lib.e_sqlite3"
@@ -343,18 +344,8 @@ Install-Dependency -LocalPackage $packages -LocalPackageFolder ".\lib" -ExcludeD
 Fire up a query:
 
 ```PowerShell
-Import-Module ImportDependency
-Import-Dependency -LocalPackage $packages -LocalPackageFolder ".\lib"
-
-# Windows PowerShell (.NET Framework) does not unify differing exact assembly versions the way pwsh
-# does -- redirect any request to whichever copy of an assembly is already loaded. Not needed on pwsh.
-If ( $PSVersionTable.PSEdition -eq "Desktop" ) {
-    [AppDomain]::CurrentDomain.add_AssemblyResolve({
-        param($resolveSender, $resolveArgs)
-        $requestedName = ( [Reflection.AssemblyName]$resolveArgs.Name ).Name
-        [AppDomain]::CurrentDomain.GetAssemblies() | Where-Object { $_.GetName().Name -eq $requestedName } | Select-Object -First 1
-    })
-}
+Import-Module ImportDependency   # >= 0.4.21 for -RedirectAssemblies
+Import-Dependency -LocalPackage ( $packages | ForEach-Object { if ( $_ -is [String] ) { $_ } else { $_.name } } | Select-Object -Unique ) -LocalPackageFolder ".\lib" -RedirectAssemblies
 
 [SQLitePCL.Batteries_V2]::Init()   # registers the native provider, once per process
 
@@ -368,7 +359,9 @@ $reader["answer"]   # 42
 $conn.Close()
 ```
 
-> The `AssemblyResolve` handler is needed generally whenever a Windows PowerShell process ends up with two packages that were each built against a slightly different exact version of the same shared assembly (here, `SQLitePCLRaw.provider.e_sqlite3` and `Microsoft.Data.Sqlite` reference different exact `System.Memory` identities) — pwsh does not have this problem, so it's only registered on Desktop.
+> `-RedirectAssemblies` is needed whenever a Windows PowerShell process ends up with two packages that were each built against a slightly different exact version of the same shared assembly (here, `SQLitePCLRaw.provider.e_sqlite3` and `Microsoft.Data.Sqlite` reference different exact `System.Memory` identities). A .NET Framework application would solve this with `<bindingRedirect>`s in its `app.config`, but Windows PowerShell has none, so the first use fails with a `FileNotFoundException`. The switch calls `Register-AssemblyRedirect`, which registers one compiled `AssemblyResolve` handler per process that answers with the already loaded copy (same name and public key token, any version). It is harmless on pwsh.
+>
+> Don't use a PowerShell scriptblock (`[AppDomain]::CurrentDomain.add_AssemblyResolve({ ... })`) for this, as earlier versions of this README did: with the Npgsql dependency set it crashed `powershell.exe` with a `StackOverflowException`, and it cannot run on the .NET thread-pool threads that libraries like Npgsql use for async I/O and connection pooling.
 
 ## How do I install just Npgsql (PostgreSQL)?
 
@@ -387,6 +380,9 @@ $packages = [Array]@(
     "System.Diagnostics.DiagnosticSource"
     "System.Runtime.CompilerServices.Unsafe"
     "System.Text.Json"
+    "System.Text.Encodings.Web"                                # needed by System.Text.Json
+    "System.IO.Pipelines"                                      # needed by System.Text.Json >= 9
+    "Microsoft.Extensions.DependencyInjection.Abstractions"    # needed by Microsoft.Extensions.Logging.Abstractions
     "System.Threading.Channels"
     "System.Threading.Tasks.Extensions"
     "System.Buffers"
@@ -399,16 +395,12 @@ Install-Dependency -LocalPackage $packages -LocalPackageFolder ".\lib" -ExcludeD
 Fire up a query (needs a reachable PostgreSQL server — this just shows the pattern):
 
 ```PowerShell
-Import-Module ImportDependency
-Import-Dependency -LocalPackage ( $packages | ForEach-Object { if ( $_ -is [String] ) { $_ } else { $_.name } } | Select-Object -Unique ) -LocalPackageFolder ".\lib"
+Import-Module ImportDependency   # >= 0.4.21 for -RedirectAssemblies
 
-If ( $PSVersionTable.PSEdition -eq "Desktop" ) {
-    [AppDomain]::CurrentDomain.add_AssemblyResolve({
-        param($resolveSender, $resolveArgs)
-        $requestedName = ( [Reflection.AssemblyName]$resolveArgs.Name ).Name
-        [AppDomain]::CurrentDomain.GetAssemblies() | Where-Object { $_.GetName().Name -eq $requestedName } | Select-Object -First 1
-    })
-}
+# -RedirectAssemblies is required on Windows PowerShell here: Npgsql 8.0.9 references e.g. System.Memory
+# 4.0.1.2 and System.Text.Json 8.0.0.0, the installed packages ship newer assembly versions (see the
+# SQLite section above for why). Harmless on pwsh.
+Import-Dependency -LocalPackage ( $packages | ForEach-Object { if ( $_ -is [String] ) { $_ } else { $_.name } } | Select-Object -Unique ) -LocalPackageFolder ".\lib" -RedirectAssemblies
 
 $conn = New-Object Npgsql.NpgsqlConnection("Host=localhost;Port=5432;Database=mydb;Username=myuser;Password=mypassword")
 $conn.Open()
@@ -433,7 +425,7 @@ Package|Needed by|Pinned version
 `System.Buffers`|SQLite, Npgsql|`4.6.1`
 `System.Numerics.Vectors`|SQLite, Npgsql|`4.6.1`
 
-This matters, not just tidiness: `Import-Dependency`'s loader (`Select-CompatiblePackage`) picks exactly one installed version per package Id for the whole process. If DuckDB's `lib` folder pins `System.Memory` to `4.6.0` while an Npgsql install elsewhere in the same folder pins a different exact version, only one of them actually loads — and whichever DuckDB/Npgsql/SQLite build was compiled against the *other* one fails with a `FileNotFoundException` on Windows PowerShell (see the `AssemblyResolve` note above; pwsh isn't affected). Reusing one pin for a shared polyfill removes that conflict at the source instead of relying on `AssemblyResolve` to paper over it.
+This matters, not just tidiness: `Import-Dependency`'s loader (`Select-CompatiblePackage`) picks exactly one installed version per package Id for the whole process. If DuckDB's `lib` folder pins `System.Memory` to `4.6.0` while an Npgsql install elsewhere in the same folder pins a different exact version, only one of them actually loads — and whichever DuckDB/Npgsql/SQLite build was compiled against the *other* one fails with a `FileNotFoundException` on Windows PowerShell (unless `-RedirectAssemblies` is used, see the note in the SQLite section above; pwsh isn't affected). Reusing one pin for a shared polyfill removes that conflict at the source instead of relying on `-RedirectAssemblies` alone to paper over it.
 
 ```PowerShell
 $packages = [Array]@(
@@ -450,6 +442,7 @@ $packages = [Array]@(
     "DuckDB.NET.Data.Full"
 
     # Microsoft.Data.Sqlite
+    [PSCustomObject]@{ name = "Microsoft.Data.Sqlite.Core"; version = "10.0.10" }
     "Microsoft.Data.Sqlite.Core"
     "SQLitePCLRaw.core"
     "SQLitePCLRaw.provider.e_sqlite3"
@@ -465,11 +458,16 @@ $packages = [Array]@(
     "System.Collections.Immutable"
     "System.Diagnostics.DiagnosticSource"
     "System.Text.Json"
+    "System.Text.Encodings.Web"
+    "System.IO.Pipelines"
+    "Microsoft.Extensions.DependencyInjection.Abstractions"
     "System.Threading.Channels"
     "System.Threading.Tasks.Extensions"
 )
 Install-Dependency -LocalPackage $packages -LocalPackageFolder ".\lib" -ExcludeDependencies
 ```
+
+Load them with `Import-Dependency -LoadWholePackageFolder -LocalPackageFolder ".\lib" -RedirectAssemblies` (ImportDependency >= 0.4.21).
 
 Only installing two of the three (e.g. just DuckDB + SQLite, skipping Npgsql) works the same way — just drop the block you don't need and keep the shared-polyfill block, since whichever of DuckDB/SQLite/Npgsql you do keep still needs it.
 

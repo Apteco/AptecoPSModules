@@ -79,7 +79,16 @@ If ( $preCheckOs -eq "Windows" -and $preCheckisCore -eq $false ) {
 
     # Add all paths
     # Using $env:PSModulePath for only temporary override
-    $Env:PSModulePath = @( $modulePath | Sort-Object -unique ) -join ";"
+    # Keep the existing order (the first folder containing a module wins) and drop duplicates and any
+    # pwsh folder -- e.g. inherited when this Windows PowerShell was started from a pwsh window. Otherwise
+    # it autoloads pwsh's Microsoft.PowerShell.Security, which fails with "TypeData ... is already
+    # present" and breaks Get-ExecutionPolicy.
+    # Using $env:PSModulePath for only temporary override
+    $pwshModulePathPattern = '\\PowerShell\\[67][^\\]*\\Modules$|\\WindowsApps\\Microsoft\.PowerShell[^\\]*\\Modules$|\\Program Files( \(x86\))?\\PowerShell\\Modules$|\\Documents\\PowerShell\\Modules$'
+    $seenModulePath = [System.Collections.Generic.HashSet[String]]::new([System.StringComparer]::OrdinalIgnoreCase)
+    $Env:PSModulePath = @( $modulePath | ForEach-Object { "$( $_ )".Trim().TrimEnd("\") } | Where-Object {
+        $_ -ne "" -and $_ -notmatch $pwshModulePathPattern -and $seenModulePath.Add($_)
+    } ) -join ";"
 
 }
 
@@ -115,7 +124,9 @@ If ( $preCheckOs -eq "Windows" -and $preCheckisCore -eq $false ) {
     }
 
     # Using $env:Path for only temporary override
-    $Env:Path = @( $scriptPath | Sort-Object -unique ) -join ";"
+    # Keep the existing order (the first folder containing an executable wins), only drop duplicates
+    $seenScriptPath = [System.Collections.Generic.HashSet[String]]::new([System.StringComparer]::OrdinalIgnoreCase)
+    $Env:Path = @( $scriptPath | ForEach-Object { "$( $_ )".Trim() } | Where-Object { $_ -ne "" -and $seenScriptPath.Add($_.TrimEnd("\")) } ) -join ";"
 
 }
 
@@ -200,12 +211,25 @@ $Script:powerShellEdition = $PSVersionTable.PSEdition # Need to write that out b
 $Script:platform = $PSVersionTable.Platform
 $Script:is64BitOS = [System.Environment]::Is64BitOperatingSystem
 $Script:is64BitProcess = [System.Environment]::Is64BitProcess
-$Script:executionPolicy = [PSCustomObject]@{
-    "LocalMachine"  = Get-ExecutionPolicy -Scope LocalMachine
-    "MachinePolicy" = Get-ExecutionPolicy -Scope MachinePolicy
-    "Process"       = Get-ExecutionPolicy -Scope Process
-    "CurrentUser"   = Get-ExecutionPolicy -Scope CurrentUser
-    "UserPolicy"    = Get-ExecutionPolicy -Scope UserPolicy
+# Only informational, so it must never stop the module from loading. Get-ExecutionPolicy fails when
+# Microsoft.PowerShell.Security cannot be loaded, e.g. when Windows PowerShell picks up pwsh's copy of it.
+try {
+    $Script:executionPolicy = [PSCustomObject]@{
+        "LocalMachine"  = Get-ExecutionPolicy -Scope LocalMachine -ErrorAction Stop
+        "MachinePolicy" = Get-ExecutionPolicy -Scope MachinePolicy -ErrorAction Stop
+        "Process"       = Get-ExecutionPolicy -Scope Process -ErrorAction Stop
+        "CurrentUser"   = Get-ExecutionPolicy -Scope CurrentUser -ErrorAction Stop
+        "UserPolicy"    = Get-ExecutionPolicy -Scope UserPolicy -ErrorAction Stop
+    }
+} catch {
+    Write-Warning "Could not read the execution policy: $( $_.Exception.Message )"
+    $Script:executionPolicy = [PSCustomObject]@{
+        "LocalMachine"  = $null
+        "MachinePolicy" = $null
+        "Process"       = $null
+        "CurrentUser"   = $null
+        "UserPolicy"    = $null
+    }
 }
 
 
