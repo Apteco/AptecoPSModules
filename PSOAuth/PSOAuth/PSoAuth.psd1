@@ -5,7 +5,7 @@
 RootModule = 'PSOAuth.psm1'
 
 # Die Versionsnummer dieses Moduls
-ModuleVersion = '0.1.5'
+ModuleVersion = '0.1.6'
 
 # Unterstützte PSEditions
 # CompatiblePSEditions = @()
@@ -113,6 +113,10 @@ PrivateData = @{
 
         # 'ReleaseNotes' des Moduls
         ReleaseNotes = '
+0.1.6 PSModulePath and PATH are no longer sorted alphabetically on import (the existing order is kept, only
+      duplicates are dropped). pwsh now only adds its own $PSHOME\Modules instead of guessed
+      "...\powershell\7\Modules" folders that can belong to a second pwsh installation, and Windows
+      PowerShell drops pwsh module folders inherited from a pwsh parent process
 0.1.5 Replacing Import-Dependencies with a new module ImportDependency to handle dependencies better
 0.1.4 Enhancing some spellings
 0.1.3 Added a switch when setting the logfile if it should be overridden or not
