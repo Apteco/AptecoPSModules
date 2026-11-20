@@ -5,7 +5,7 @@
 RootModule = 'InstallDependency.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.3.13'
+ModuleVersion = '0.3.14'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -114,6 +114,29 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+0.3.14 Hardened dependency installation for pwsh on hosts where the only PackageManagement/PowerShellGet
+       reachable on PSModulePath is the Windows PowerShell inbox 1.0.0.1 build. Loading that .NET Framework
+       build in pwsh throws a TypeInitializationException in
+       Microsoft.PackageManagement.Internal.Utility.Plugin.DynamicType the moment a *-Package* cmdlet
+       touches it, which then cascades into "NuGet provider not found" and a PSGallery re-register prompt.
+       Install-Dependency now force-loads a modern build (PackageManagement >= 1.4.7 / PowerShellGet >= 2.0)
+       before the first package call and logs an actionable warning if none is available. Added -Scope
+       (CurrentUser when not elevated) to the PackageManagement/PowerShellGet self-update so it no longer
+       silently no-ops against the read-only C:\Program Files\WindowsApps\...\Modules, and the in-session
+       re-import now pins a minimum version so it cannot rebind to the 1.0.0.1 inbox build. Replaced the
+       blocking $Host.UI.PromptForChoice / Request-Choice / "exit 0" repository prompts with automatic
+       registration of the default PSGallery / public NuGet v2 feed and automatic source selection
+       (prefer PSGallery, else the first), so a non-interactive/service/CI run no longer hangs or kills
+       the host; module installs/updates now pass -Force so an untrusted repository does not prompt either.
+       The PackageManagement/PowerShellGet re-imports now use -Global -- imported from inside the module
+       function they were only visible to InstallDependency, so the internal
+       "PackageManagement\Get-Package" calls of PowerShellGet failed with "The module PackageManagement could not be
+       loaded". A Store/MSIX pwsh now always installs with -Scope CurrentUser (its AllUsers folder is
+       read-only even for admins). On Windows PowerShell the module no longer sorts PSModulePath and PATH
+       alphabetically (it keeps their order and only drops duplicates) and removes pwsh module folders
+       inherited from a pwsh parent process, which made Windows PowerShell load the pwsh
+       Microsoft.PowerShell.Security and fail with "TypeData ... is already present". Reading the
+       execution policy at import can no longer stop the module from loading.
 0.3.13 Added Grant-LogonAsBatchRight to grant an account the "Log on as a batch job" right, needed to run a
        scheduled task under a service account. Rescued from an old local-only script, previously duplicated
        across a couple of one-off deployment scripts

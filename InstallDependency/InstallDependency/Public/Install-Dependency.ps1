@@ -133,6 +133,33 @@ Function Install-Dependency {
         $isCore = $psEnv.IsCore
         Write-Log -Message "Using PowerShell version $( $psEnv.PSVersion ) and $( $psEnv.PSEdition ) edition"
 
+        # pwsh keeps the Windows PowerShell inbox module store (...\WindowsPowerShell\v1.0\Modules) on
+        # PSModulePath for compatibility. On some hosts that store still ships the .NET Framework builds
+        # of PackageManagement/PowerShellGet 1.0.0.1, which throw a TypeInitializationException in
+        # Microsoft.PackageManagement.Internal.Utility.Plugin.DynamicType the moment any *-Package*
+        # cmdlet touches them under pwsh (.NET 8+). Bind to a modern build (pwsh's own bundled one, or
+        # any installed >= 1.4.7 / >= 2.0) before the first Get-PackageSource in Process.
+        If ( $isCore -eq $true ) {
+            $modernPackageManagement = Get-Module -Name PackageManagement -ListAvailable |
+                Where-Object { $_.Version -ge [System.Version]"1.4.7" } | Sort-Object Version -Descending | Select-Object -First 1
+            $modernPowerShellGet = Get-Module -Name PowerShellGet -ListAvailable |
+                Where-Object { $_.Version -ge [System.Version]"2.0" } | Sort-Object Version -Descending | Select-Object -First 1
+            If ( $null -ne $modernPackageManagement -and $null -ne $modernPowerShellGet ) {
+                # Remove the (possibly stale/broken) copy loaded at session start, then re-import by
+                # name with a minimum version so resolution can never pick the 1.0.0.1 inbox build.
+                # -Global is essential: called from inside this module function, Import-Module would only
+                # load them into InstallDependency's own scope. PowerShellGet's internal
+                # "PackageManagement\Get-Package" calls then can't see that copy, try to load it again and
+                # fail with "The module 'PackageManagement' could not be loaded".
+                Get-Module -Name PackageManagement, PowerShellGet | Remove-Module -Force -ErrorAction SilentlyContinue
+                Import-Module -Name PackageManagement -MinimumVersion 1.4.7 -Force -Global -ErrorAction SilentlyContinue
+                Import-Module -Name PowerShellGet -MinimumVersion 2.0 -Force -Global -ErrorAction SilentlyContinue
+                Write-Log -Message "Using PackageManagement v$( (Get-Module PackageManagement).Version ) and PowerShellGet v$( (Get-Module PowerShellGet).Version )" -Severity VERBOSE
+            } else {
+                Write-Log -Message "This pwsh has no PackageManagement >= 1.4.7 / PowerShellGet >= 2.0 available -- only the Windows PowerShell inbox 1.0.0.1 builds, which cannot be loaded from pwsh. Install them once from Windows PowerShell 5.1 ('Install-Module PowerShellGet -Force -AllowClobber -Scope CurrentUser') or via 'Install-PSResource PowerShellGet', then re-run." -Severity WARNING
+            }
+        }
+
         # Operating system
         $os = $psEnv.OS
         Write-Log -Message "Using OS: $( $os )"
@@ -172,7 +199,10 @@ Function Install-Dependency {
         $powerShellSourceLocation = "https://www.powershellgallery.com/api/v2"
         $powerShellSourceProviderName = "PowerShellGet"
 
-        If ( $psEnv.IsElevated -eq $true ) {
+        # A Store/MSIX pwsh's AllUsers module folder (C:\Program Files\WindowsApps\...\Modules) is
+        # read-only even for administrators, so it always installs modules for the current user.
+        $isStorePwsh = $isCore -eq $true -and $PSHOME -like "*\WindowsApps\*"
+        If ( $psEnv.IsElevated -eq $true -and $isStorePwsh -eq $false ) {
             $psScope = "AllUsers"
         } else {
             $psScope = "CurrentUser"
@@ -208,13 +238,16 @@ Function Install-Dependency {
         If ( $psEnv.PackageManagement -eq "1.0.0.1" -or [String]::IsNullOrEmpty( $psEnv.PackageManagement ) ) {
             Write-Log "PackageManagement is outdated with v$( $psEnv.PackageManagement ). This is updating it now." -Severity WARNING
             try {
-                Install-Package -Name PackageManagement -ProviderName $powerShellSourceProviderName -Force -AllowClobber | Out-Null
+                # -Scope: without it Install-Package defaults to AllUsers, whose target for a Store/MSIX
+                # pwsh is the read-only C:\Program Files\WindowsApps\...\Modules -- a non-elevated run
+                # then silently installs nothing.
+                Install-Package -Name PackageManagement -ProviderName $powerShellSourceProviderName -Scope $psScope -Force -AllowClobber | Out-Null
                 # The installed binaries won't be used until re-imported: 'Import-Module -Force' merely stacks
                 # the new version alongside the old one still loaded in this process, and cmdlets keep resolving
-                # to the old module. Removing first, then a bare re-import (auto-picks the newest available
-                # version), is what actually swaps the active binaries in-session.
+                # to the old module. Removing first, then re-importing the modern build (never the 1.0.0.1
+                # inbox one), is what actually swaps the active binaries in-session.
                 Remove-Module -Name PackageManagement -Force -ErrorAction SilentlyContinue
-                Import-Module -Name PackageManagement -ErrorAction Stop
+                Import-Module -Name PackageManagement -MinimumVersion 1.4.7 -Global -ErrorAction Stop
                 Write-Log "PackageManagement re-imported as v$( (Get-Module PackageManagement).Version )" -Severity VERBOSE
             } catch {
                 Write-Log "Could not update PackageManagement: $( $_.Exception.Message )" -Severity WARNING
@@ -225,10 +258,10 @@ Function Install-Dependency {
         If ( $psEnv.PowerShellGet -eq "1.0.0.1" -or [String]::IsNullOrEmpty( $psEnv.PowerShellGet ) ) {
             Write-Log "PowerShellGet is outdated with v$( $psEnv.PowerShellGet ). This is updating it now." -Severity WARNING
             try {
-                Install-Package -Name PowerShellGet -ProviderName $powerShellSourceProviderName -Force -AllowClobber | Out-Null
+                Install-Package -Name PowerShellGet -ProviderName $powerShellSourceProviderName -Scope $psScope -Force -AllowClobber | Out-Null
                 # Same in-session reload issue as PackageManagement above.
                 Remove-Module -Name PowerShellGet -Force -ErrorAction SilentlyContinue
-                Import-Module -Name PowerShellGet -ErrorAction Stop
+                Import-Module -Name PowerShellGet -MinimumVersion 2.0 -Global -ErrorAction Stop
                 Write-Log "PowerShellGet re-imported as v$( (Get-Module PowerShellGet).Version )" -Severity VERBOSE
             } catch {
                 Write-Log "Could not update PowerShellGet: $( $_.Exception.Message )" -Severity WARNING
@@ -236,6 +269,8 @@ Function Install-Dependency {
         }
 
         If ( $Module.Count -gt 0 ) {
+
+            $psGetSource = $null
 
             try {
 
@@ -246,52 +281,58 @@ Function Install-Dependency {
                 If ( $powershellRepo.count -ge 1 ) {
                     Write-Log -Message "You have at minimum 1 $( $powerShellSourceProviderName ) repository. Good!"  -Severity VERBOSE
                 } elseif ( $powershellRepo.count -eq 0 ) {
-                    Write-Log -Message "You don't have $( $powerShellSourceProviderName ) as a module source, do you want to register it now?" -Severity WARNING
-                    $registerPsRepoDecision = $Host.UI.PromptForChoice("", "Register $( $powerShellSourceProviderName ) as repository?", @('&Yes'; '&No'), 1)
-                    If ( $registerPsRepoDecision -eq "0" ) {
-
-                        Register-PSRepository -Name $powerShellSourceName -SourceLocation $powerShellSourceLocation | Out-Null
-
-                        # Load sources again
-                        $powershellRepo = @( Get-PSRepository -ProviderName $powerShellSourceProviderName )
-
-                    } else {
-                        Write-Log "No package repository found! Please make sure to add a PowerShellGet repository to your machine!" -Severity ERROR
-                        exit 0
+                    # Auto-register the well-known PSGallery instead of prompting: a $Host.UI.PromptForChoice
+                    # here hangs any non-interactive/service/CI run, and the previous 'exit 0' on "No" would
+                    # terminate the whole host process. A caller that wants a different gallery can register
+                    # it before calling Install-Dependency.
+                    Write-Log -Message "No $( $powerShellSourceProviderName ) repository registered -- registering the default PSGallery now" -Severity WARNING
+                    try {
+                        Register-PSRepository -Default -ErrorAction Stop | Out-Null
+                    } catch {
+                        Register-PSRepository -Name $powerShellSourceName -SourceLocation $powerShellSourceLocation -InstallationPolicy Trusted -ErrorAction SilentlyContinue | Out-Null
                     }
+                    $powershellRepo = @( Get-PackageSource -ProviderName $powerShellSourceProviderName -ErrorAction SilentlyContinue )
+                    # A still-empty $powershellRepo falls through to the "no repository available" branch
+                    # below, which leaves $psGetSource $null and is turned into a terminating error after
+                    # the catch.
                 }
 
-                # Choose repository
-                If ( $powershellRepo.count -gt 1 ) {
+                # Choose repository. Prefer PSGallery when present, otherwise the first one -- a
+                # Request-Choice prompt here would hang non-interactive/service/CI runs.
+                If ( $powershellRepo.count -ge 1 ) {
 
-                    $psGetSources = $powershellRepo.Name
-                    $psGetSourceChoice = Request-Choice -title "Module Source" -message "Which $( $powerShellSourceProviderName ) repository do you want to use?" -choices $psGetSources
-                    $psGetSource = $psGetSources[$psGetSourceChoice -1]
-
-                } elseif ( $powershellRepo.count -eq 1 ) {
-
-                    $psGetSource = $powershellRepo[0]
+                    $psGetSource = $powershellRepo | Where-Object { $_.Name -eq $powerShellSourceName } | Select-Object -First 1
+                    If ( $null -eq $psGetSource ) {
+                        $psGetSource = $powershellRepo[0]
+                    }
+                    If ( $powershellRepo.count -gt 1 ) {
+                        Write-Log -Message "Multiple $( $powerShellSourceProviderName ) repositories found -- using '$( $psGetSource.Name )'" -Severity VERBOSE
+                    }
 
                 } else {
 
                     Write-Log -Message "There is no $( $powerShellSourceProviderName ) repository available"  -Severity WARNING
-                    Exit 0
+                    $psGetSource = $null
 
                 }
 
-                # Do you want to trust that source?
-                If ( $psGetSource.IsTrusted -eq $false ) {
-                    Write-Log -Message "Your source is not trusted. Do you want to trust it now?" -Severity WARNING
-                    $trustChoice = Request-Choice -title "Trust module Source" -message "Do you want to trust $( $psGetSource.Name )?" -choices @("Yes", "No")
-                    If ( $trustChoice -eq 1 ) {
-                        Set-PSRepository -Name $psGetSource.Name -InstallationPolicy Trusted | Out-Null
-                    }
+                # Not prompting to change the repository's trust setting -- that Request-Choice blocks
+                # non-interactive runs, and flipping a user's repo trust is a surprising side effect.
+                # The module installs below pass -Force so an untrusted PSGallery does not prompt either.
+                If ( $null -ne $psGetSource -and $psGetSource.IsTrusted -eq $false ) {
+                    Write-Log -Message "Repository '$( $psGetSource.Name )' is not marked trusted; installing with -Force so it does not prompt. Run 'Set-PSRepository -Name $( $psGetSource.Name ) -InstallationPolicy Trusted' to silence this." -Severity VERBOSE
                 }
 
             } catch {
 
                 Write-Log -Message "There is a problem with the repository check!" -Severity WARNING
 
+            }
+
+            # Outside the try so it actually stops the run (unlike the old 'exit 0', which killed the
+            # whole host process): if we still have no gallery, module installs below cannot work.
+            If ( $null -eq $psGetSource ) {
+                throw "No usable $( $powerShellSourceProviderName ) repository is available. Register one (e.g. 'Register-PSRepository -Default') and re-run Install-Dependency."
             }
 
         }
@@ -337,14 +378,16 @@ Function Install-Dependency {
 
                             If ( [version]( $mod.Version.ToString() -replace '[^0-9.]', '0' ) -gt [version]( $alreadyInstalledModule.Version -replace '[^0-9.]', '0' ) ) {
                                 Write-Log -Message "Module $( $mod.Name ) is installed with an older version $( $alreadyInstalledModule.Version ) than the available version $( $mod.Version )" -Severity VERBOSE
-                                Update-Module -Name $mod.Name | Out-Null
+                                Update-Module -Name $mod.Name -Force | Out-Null
                                 $Script:installCount_m += 1
                             } else {
                                 Write-Log -Message "No need to update $( $mod.Name )" -Severity VERBOSE
                             }
                         } else {
                             Write-Log -Message "Installing Module $( $mod.Name )" -Severity VERBOSE
-                            Install-Module -Name $mod.Name -Scope $psScope -AllowClobber | Out-Null
+                            # -Force so an untrusted PSGallery does not raise an interactive
+                            # "Are you sure you want to install from an untrusted repository?" prompt.
+                            Install-Module -Name $mod.Name -Scope $psScope -AllowClobber -Force | Out-Null
                             $Script:installCount_m += 1
                         }
 
@@ -371,6 +414,8 @@ Function Install-Dependency {
 
         If ( $GlobalPackage.Count -gt 0 -or $LocalPackage.Count -gt 0 ) {
 
+            $packageSource = $null
+
             try {
 
                 # Get NuGet sources
@@ -380,52 +425,50 @@ Function Install-Dependency {
                 If ( $sources.count -ge 1 ) {
                     Write-Log -Message "You have at minimum 1 $( $packageSourceProviderName ) repository. Good!" -Severity VERBOSE
                 } elseif ( $sources.count -eq 0 ) {
-                    Write-Log -Message "You don't have $( $packageSourceProviderName ) as a PackageSource, do you want to register it now?" -Severity WARNING
-                    $registerNugetDecision = $Host.UI.PromptForChoice("", "Register $( $packageSourceProviderName ) as repository?", @('&Yes'; '&No'), 1)
-                    If ( $registerNugetDecision -eq "0" ) {
-
-                        Register-PackageSource -Name $packageSourceName -Location $packageSourceLocation -ProviderName $packageSourceProviderName | Out-Null
-
-                        # Load sources again
-                        $sources = @( Get-PackageSource -ProviderName $packageSourceProviderName )
-
-                    } else {
-                        Write-Log "No package repository found! Please make sure to add a NuGet repository to your machine!" -Severity ERROR
-                        exit 0
-                    }
+                    # Auto-register the public NuGet v2 feed instead of prompting (a PromptForChoice hangs
+                    # non-interactive runs; the previous 'exit 0' on "No" terminated the whole host).
+                    Write-Log -Message "No $( $packageSourceProviderName ) package source registered -- registering $( $packageSourceName ) ($( $packageSourceLocation )) now" -Severity WARNING
+                    Register-PackageSource -Name $packageSourceName -Location $packageSourceLocation -ProviderName $packageSourceProviderName -Trusted -ErrorAction SilentlyContinue | Out-Null
+                    $sources = @( Get-PackageSource -ProviderName $packageSourceProviderName -ErrorAction SilentlyContinue )
+                    # A still-empty $sources falls through to the "no repository available" branch below,
+                    # which leaves $packageSource $null and is turned into a terminating error after the catch.
                 }
 
-                # Choose repository
-                If ( $sources.count -gt 1 ) {
+                # Choose repository. Prefer the feed this function registers ($packageSourceName),
+                # otherwise the first one -- a Request-Choice prompt here would hang headless runs.
+                If ( $sources.count -ge 1 ) {
 
-                    $packageSources = $sources.Name
-                    $packageSourceChoice = Request-Choice -title "PackageSource" -message "Which $( $packageSourceProviderName ) repository do you want to use?" -choices $packageSources
-                    $packageSource = $sources[$packageSourceChoice -1]
-
-                } elseif ( $sources.count -eq 1 ) {
-
-                    $packageSource = $sources[0]
+                    $packageSource = $sources | Where-Object { $_.Name -eq $packageSourceName } | Select-Object -First 1
+                    If ( $null -eq $packageSource ) {
+                        $packageSource = $sources[0]
+                    }
+                    If ( $sources.count -gt 1 ) {
+                        Write-Log -Message "Multiple $( $packageSourceProviderName ) sources found -- using '$( $packageSource.Name )'" -Severity VERBOSE
+                    }
 
                 } else {
 
                     Write-Log -Message "There is no $( $packageSourceProviderName ) repository available" -Severity WARNING
-                    Exit 0
+                    $packageSource = $null
 
                 }
 
-                # Do you want to trust that source?
-                If ( $packageSource.IsTrusted -eq $false ) {
-                    Write-Log -Message "Your source is not trusted. Do you want to trust it now?" -Severity WARNING
-                    $trustChoice = Request-Choice -title "Trust Package Source" -message "Do you want to trust $( $packageSource.Name )?" -choices @("Yes", "No")
-                    If ( $trustChoice -eq 1 ) {
-                        Set-PackageSource -Name $packageSource.Name -Trusted | Out-Null
-                    }
+                # Not prompting to change the source's trust setting -- Request-Choice blocks
+                # non-interactive runs. The package installs below already pass -Force.
+                If ( $null -ne $packageSource -and $packageSource.IsTrusted -eq $false ) {
+                    Write-Log -Message "Package source '$( $packageSource.Name )' is not marked trusted; installing with -Force so it does not prompt." -Severity VERBOSE
                 }
 
             } catch {
 
                 Write-Log -Message "There is a problem with the repository" -Severity WARNING
 
+            }
+
+            # Outside the try so it actually stops the run (unlike the old 'exit 0', which killed the
+            # whole host process): the package install loop below needs a resolved $packageSource.
+            If ( $null -eq $packageSource ) {
+                throw "No usable $( $packageSourceProviderName ) package source is available. Register one (e.g. 'Register-PackageSource -Name ""$( $packageSourceName )"" -Location ""$( $packageSourceLocation )"" -ProviderName $( $packageSourceProviderName )') and re-run Install-Dependency."
             }
 
         }

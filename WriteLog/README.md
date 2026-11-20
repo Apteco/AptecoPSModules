@@ -235,9 +235,12 @@ Import-Module -Name "InstallDependency"
 Import-Module -Name "ImportDependency"
 
 # Microsoft.Data.Sqlite.Core + the SQLitePCLRaw pieces (ADO.NET provider + its native SQLite
-# binary), plus the BCL polyfills SQLitePCLRaw's netstandard2.0 build needs on Windows PowerShell
+# binary), plus the BCL polyfills SQLitePCLRaw's netstandard2.0 build needs on Windows PowerShell.
+# Microsoft.Data.Sqlite.Core 11.x only ships net10.0, so Windows PowerShell gets a pinned 10.x next
+# to the unpinned latest for pwsh -- Import-Dependency loads only the one matching the running edition
 $sqlitePackages = @(
-    "Microsoft.Data.Sqlite.Core"
+    [PSCustomObject]@{ name = "Microsoft.Data.Sqlite.Core"; version = "10.0.10" }   # Windows PowerShell
+    "Microsoft.Data.Sqlite.Core"                                                      # pwsh: newest build
     "SQLitePCLRaw.core"
     "SQLitePCLRaw.provider.e_sqlite3"
     "SQLitePCLRaw.lib.e_sqlite3"
@@ -248,20 +251,15 @@ $sqlitePackages = @(
     "System.Runtime.CompilerServices.Unsafe"
 )
 
-Install-Dependency -LocalPackage $sqlitePackages -LocalPackageFolder ".\lib"
-Import-Dependency   -LocalPackage $sqlitePackages -LocalPackageFolder ".\lib"
-
-# Windows PowerShell (.NET Framework) does not unify differing exact assembly versions the way
-# pwsh does -- SQLitePCLRaw's provider and Microsoft.Data.Sqlite were each built against a
-# slightly different exact System.Memory version, so redirect any request to whichever copy is
-# already loaded. Not needed on pwsh, so only registered on Desktop.
-If ( $PSVersionTable.PSEdition -eq "Desktop" ) {
-    [AppDomain]::CurrentDomain.add_AssemblyResolve({
-        param($resolveSender, $resolveArgs)
-        $requestedName = ([Reflection.AssemblyName]$resolveArgs.Name).Name
-        [AppDomain]::CurrentDomain.GetAssemblies() | Where-Object { $_.GetName().Name -eq $requestedName } | Select-Object -First 1
-    })
-}
+# -ExcludeDependencies: the list above is complete, and resolving dependencies would pull a second,
+# older SQLitePCLRaw.core next to the current one via the 10.x pin
+Install-Dependency -LocalPackage $sqlitePackages -LocalPackageFolder ".\lib" -ExcludeDependencies
+# -RedirectAssemblies (ImportDependency >= 0.4.21): Windows PowerShell (.NET Framework) does not
+# unify differing exact assembly versions the way pwsh does -- SQLitePCLRaw's provider and
+# Microsoft.Data.Sqlite were each built against a slightly different exact System.Memory version,
+# so this registers a compiled handler that redirects any request to the already loaded copy.
+# Harmless on pwsh.
+Import-Dependency   -LocalPackage ( $sqlitePackages | ForEach-Object { if ( $_ -is [String] ) { $_ } else { $_.name } } | Select-Object -Unique ) -LocalPackageFolder ".\lib" -RedirectAssemblies
 
 [SQLitePCL.Batteries_V2]::Init()
 
