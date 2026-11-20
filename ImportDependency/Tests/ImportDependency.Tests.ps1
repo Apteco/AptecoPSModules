@@ -469,3 +469,92 @@ Describe "Select-CompatiblePackage" {
     }
 
 }
+
+
+# ---------------------------------------------------------------------------
+Describe "Register-AssemblyRedirect" {
+# ---------------------------------------------------------------------------
+
+    BeforeAll {
+        Register-AssemblyRedirect
+
+        # A tiny unsigned assembly in a flat folder, to test the folder lookup without loading it upfront
+        $script:redirectDir = Join-Path ([System.IO.Path]::GetTempPath()) "pester_redirect_$(Get-Random)"
+        New-Item -ItemType Directory -Path $script:redirectDir | Out-Null
+        # pwsh's Add-Type gives the assembly a random identity regardless of the file name, so rename the file
+        # to its real identity afterwards (that is what the folder lookup relies on)
+        $compiled = Join-Path $script:redirectDir "PesterRedirect$(Get-Random).tmp"
+        Add-Type -TypeDefinition "public class PesterRedirectMarker$(Get-Random) { }" -OutputAssembly $compiled -OutputType Library
+        $script:redirectAsmName = [System.Reflection.AssemblyName]::GetAssemblyName($compiled).Name
+        Move-Item -Path $compiled -Destination (Join-Path $script:redirectDir "$( $script:redirectAsmName ).dll")
+
+        # Same assembly again under a wrong file name -- must not be returned for a request of that file name
+        Copy-Item -Path (Join-Path $script:redirectDir "$( $script:redirectAsmName ).dll") -Destination (Join-Path $script:redirectDir "WrongFileName.dll")
+
+        # A native-looking (non .NET) file that must be ignored, like duckdb.dll in a flat folder
+        [System.IO.File]::WriteAllBytes((Join-Path $script:redirectDir "NotManaged.dll"), [byte[]](1..64))
+
+        Register-AssemblyRedirect -Path $script:redirectDir
+
+        $script:sma = [System.Management.Automation.PSObject].Assembly
+        $script:smaToken = ( $script:sma.GetName().GetPublicKeyToken() | ForEach-Object { $_.ToString("x2") } ) -join ""
+    }
+
+    AfterAll {
+        Remove-Item $script:redirectDir -Recurse -Force -ErrorAction SilentlyContinue
+    }
+
+    It "Compiles the resolver type and registers it" {
+        [ImportDependency.AssemblyRedirect]::IsRegistered | Should -Be $true
+    }
+
+    It "Can be called repeatedly without throwing and keeps folders unique" {
+        { Register-AssemblyRedirect -Path $script:redirectDir; Register-AssemblyRedirect } | Should -Not -Throw
+        @( [ImportDependency.AssemblyRedirect]::Folders | Where-Object { $_ -eq $script:redirectDir } ).Count | Should -Be 1
+    }
+
+    It "Warns and ignores a folder that does not exist" {
+        $missing = Join-Path ([System.IO.Path]::GetTempPath()) "no_redirect_$(Get-Random)"
+        Register-AssemblyRedirect -Path $missing -WarningVariable w -WarningAction SilentlyContinue
+        $w.Count | Should -BeGreaterThan 0
+        [ImportDependency.AssemblyRedirect]::Folders | Should -Not -Contain $missing
+    }
+
+    It "Redirects a request for a different version to the already loaded assembly" {
+        $result = [ImportDependency.AssemblyRedirect]::Resolve("System.Management.Automation, Version=99.0.0.0, Culture=neutral, PublicKeyToken=$( $script:smaToken )")
+        $result | Should -Be $script:sma
+    }
+
+    It "Does not redirect when the public key token differs" {
+        $result = [ImportDependency.AssemblyRedirect]::Resolve("System.Management.Automation, Version=99.0.0.0, Culture=neutral, PublicKeyToken=0000000000000000")
+        $result | Should -BeNullOrEmpty
+    }
+
+    It "Does not answer satellite resource requests" {
+        $result = [ImportDependency.AssemblyRedirect]::Resolve("System.Management.Automation.resources, Version=3.0.0.0, Culture=de-DE, PublicKeyToken=$( $script:smaToken )")
+        $result | Should -BeNullOrEmpty
+    }
+
+    It "Returns nothing for an unknown assembly" {
+        [ImportDependency.AssemblyRedirect]::Resolve("Does.Not.Exist$(Get-Random), Version=1.0.0.0") | Should -BeNullOrEmpty
+    }
+
+    It "Loads a not yet loaded assembly from a registered folder" {
+        $result = [ImportDependency.AssemblyRedirect]::Resolve("$( $script:redirectAsmName ), Version=9.9.9.9, Culture=neutral, PublicKeyToken=null")
+        $result | Should -Not -BeNullOrEmpty
+        $result.GetName().Name | Should -Be $script:redirectAsmName
+    }
+
+    It "Does not load a file whose assembly name differs from its file name" {
+        [ImportDependency.AssemblyRedirect]::Resolve("WrongFileName, Version=1.0.0.0") | Should -BeNullOrEmpty
+    }
+
+    It "Ignores a non .NET dll in a registered folder" {
+        [ImportDependency.AssemblyRedirect]::Resolve("NotManaged, Version=1.0.0.0") | Should -BeNullOrEmpty
+    }
+
+    It "Import-Dependency accepts -RedirectAssemblies without throwing" {
+        { Import-Dependency -RedirectAssemblies } | Should -Not -Throw
+    }
+
+}

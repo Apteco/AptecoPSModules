@@ -4,6 +4,27 @@ All notable changes to the `ImportDependency` module. The `.psd1`'s `ReleaseNote
 most recent entries (PowerShell Gallery caps that field at 10600 characters) — this file is the
 full history.
 
+## 0.4.21
+Added `Register-AssemblyRedirect` and `Import-Dependency -RedirectAssemblies`. Windows PowerShell
+(.NET Framework) has no app.config for `<bindingRedirect>`s, so packages built against slightly
+different versions of a shared assembly (e.g. Npgsql 8.0.9 references `System.Memory` 4.0.1.2,
+`System.Text.Json` 8.0.0.0, while the packages ship 4.0.2.0 and 8.0.0.5) fail at first use with a
+`FileNotFoundException`. The new function registers one compiled C# `AssemblyResolve` handler per
+process that answers with the highest already loaded assembly of the same name and public key token,
+or with `<Name>.dll` from optional flat folders. The previously documented PowerShell scriptblock
+handler crashed `powershell.exe` with a `StackOverflowException` on the Npgsql dependency set and
+cannot run on .NET thread-pool threads at all; the READMEs now use the new function instead.
+The package load progress bar is now also closed after loading, and reaches 100% on the last package.
+
+Fixed loading in Windows PowerShell when it inherited pwsh's module folders, e.g. when started from a
+pwsh window whose `PSModulePath` had been rebuilt. Windows PowerShell then autoloaded pwsh's
+`Microsoft.PowerShell.Security` 7.0.0.0, which fails with `TypeData "System.Security.AccessControl.ObjectSecurity":
+The member AuditToString is already present`, so `Get-ExecutionPolicy` (called at import) was not found.
+On Windows PowerShell the module now removes pwsh module folders from the process `PSModulePath`, and it
+keeps the existing order of `PSModulePath` and `PATH` (only dropping duplicates) instead of sorting them
+alphabetically. Reading the execution policy at import is wrapped in try/catch, so it can no longer stop
+the module from loading.
+
 ## 0.4.20
 Fixed ARM64 misdetection: when `RuntimeInformation.ProcessArchitecture` and the CIM fallback both
 come back empty (seen in Windows Sandbox), the last-resort `Is64BitOperatingSystem` check only sees

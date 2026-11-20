@@ -17,6 +17,8 @@ Function Import-Dependency {
         Import-Dependency -LocalPackage MimeKit, Mailkit
     .EXAMPLE
         Import-Dependency -LocalPackageFolder lib -LoadWholePackageFolder # the default is a lib subfolder, so that does not need to be used
+    .EXAMPLE
+        Import-Dependency -LocalPackage Npgsql, System.Memory, System.Text.Json -RedirectAssemblies # Windows PowerShell: tolerate differing assembly versions between packages
 
     .PARAMETER Module
         Array of modules to install on local machine via PowerShellGallery.
@@ -30,6 +32,10 @@ Function Import-Dependency {
         By default, the modules and scripts will be installed for all users. If you want to install them only for the current user, then set this parameter to $true.
     .PARAMETER SuppressWarnings
         Flag to log warnings, but not put redirect to the host
+    .PARAMETER RedirectAssemblies
+        Registers a process-wide assembly redirect (see Register-AssemblyRedirect) before loading the packages.
+        Needed on Windows PowerShell when packages were built against slightly different versions of a shared
+        assembly like System.Memory, otherwise the first use fails with a FileNotFoundException. Harmless on pwsh.
     .NOTES
         Created by : gitfvb
     .LINK
@@ -62,6 +68,9 @@ Function Import-Dependency {
 
         ,[Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()]
         [Switch]$KeepLogfile = $false           # Flag to log warnings, but not put redirect to the host
+
+        ,[Parameter(Mandatory=$false)][ValidateNotNullOrEmpty()]
+        [Switch]$RedirectAssemblies = $false    # Register an AssemblyResolve handler that tolerates differing assembly versions
 
     )
 
@@ -187,6 +196,17 @@ Function Import-Dependency {
         }
 
         Write-Log "[kernel32] loaded: $( $kernel32Loaded )"
+
+
+        #-----------------------------------------------
+        # REGISTER ASSEMBLY REDIRECT
+        #-----------------------------------------------
+
+        # Registered before loading, so it is already in place for anything resolved during the load itself
+        If ( $RedirectAssemblies -eq $true ) {
+            Register-AssemblyRedirect
+            Write-Log -Message "Registered assembly redirect for differing assembly versions"
+        }
 
 
         #-----------------------------------------------
@@ -431,11 +451,14 @@ Function Import-Dependency {
 
                 }
 
-                # Write progress
-                Write-Progress -Activity "Package load in progress" -Status "$( [math]::Round($i/$packagesToLoad.Count*100) )% Complete:" -PercentComplete ([math]::Round($i/$packagesToLoad.Count*100))
+                # Write progress (count first, so the last package reaches 100%)
                 $i += 1
+                Write-Progress -Activity "Package load in progress" -Status "$( [math]::Round($i/$packagesToLoad.Count*100) )% Complete:" -PercentComplete ([math]::Round($i/$packagesToLoad.Count*100))
 
             }
+
+            # Close the progress bar, otherwise it stays visible at the top/bottom of the console for the rest of the session
+            Write-Progress -Activity "Package load in progress" -Completed
 
         }
 

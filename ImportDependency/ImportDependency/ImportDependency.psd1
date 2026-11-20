@@ -5,7 +5,7 @@
 RootModule = 'ImportDependency.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.4.20'
+ModuleVersion = '0.4.21'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -79,6 +79,7 @@ FunctionsToExport = @(
     "Get-PythonPath"
     "Get-PwshPath"
     "Get-LocalPackage"
+    "Register-AssemblyRedirect"
 )
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
@@ -121,6 +122,15 @@ PrivateData = @{
         ReleaseNotes = '
 Full changelog: https://github.com/Apteco/AptecoPSModules/blob/main/ImportDependency/CHANGELOG.md
 
+0.4.21 Added Register-AssemblyRedirect and Import-Dependency -RedirectAssemblies: a compiled AssemblyResolve
+       handler so Windows PowerShell tolerates packages built against differing versions of a shared
+       assembly (e.g. System.Memory), replacing the scriptblock handler examples that could crash with a
+       StackOverflowException. Also closes the package load progress bar after loading.
+       Fixed: on Windows PowerShell the module no longer sorts PSModulePath and PATH alphabetically (it
+       keeps their order and only drops duplicates) and removes pwsh module folders inherited from a pwsh
+       parent process -- those made Windows PowerShell load the pwsh Microsoft.PowerShell.Security, failing
+       with "TypeData ... is already present" and breaking Get-ExecutionPolicy. Reading the execution
+       policy at import can no longer stop the module from loading
 0.4.20 Fixed ARM64 misdetection: when RuntimeInformation.ProcessArchitecture and the CIM fallback both
        come back empty (seen in Windows Sandbox), the last-resort Is64BitOperatingSystem check only sees
        32 vs 64-bit, not ARM64 vs x64, so ARM64 got misclassified as x64 and DuckDB loaded the wrong

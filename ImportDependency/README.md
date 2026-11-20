@@ -275,6 +275,29 @@ import-module importdependency -Argumentlist $true # The $true allows verbose ou
 import-dependency -LoadWholePackageFolder -LocalPackageFolder .\lib
 ```
 
+## Windows PowerShell fails with "Could not load file or assembly ... Version=..." although the DLL is loaded
+
+Windows PowerShell 5.1 (.NET Framework) only binds to the exact assembly version a package was built against. A .NET Framework application would fix that with `<bindingRedirect>`s in its `app.config`, but Windows PowerShell has no such file. So as soon as two packages were built against slightly different versions of a shared assembly, the first use fails with a `FileNotFoundException`, e.g. Npgsql 8.0.9:
+
+```
+Die Datei oder Assembly "System.Text.Json, Version=8.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51" ... wurde nicht gefunden.
+```
+
+even though `System.Text.Json` 8.0.0.5 is loaded. Since 0.4.21, use `-RedirectAssemblies`:
+
+```PowerShell
+Import-Dependency -LoadWholePackageFolder -LocalPackageFolder .\lib -RedirectAssemblies
+```
+
+This calls `Register-AssemblyRedirect` before loading, which registers one compiled `AssemblyResolve` handler per process. It answers such requests with the highest already loaded assembly of the same name and public key token. For a flat folder of DLLs that is not loaded via `Import-Dependency`, pass that folder, and missing assemblies are loaded from `<Name>.dll` in there:
+
+```PowerShell
+Register-AssemblyRedirect -Path ".\npgsql-8.0.9-net48"
+Get-ChildItem ".\npgsql-8.0.9-net48" -Filter *.dll | ForEach-Object { Add-Type -Path $_.FullName }
+```
+
+Calling it multiple times is safe, and it is harmless on pwsh, which unifies versions itself. Don't use a PowerShell scriptblock with `[AppDomain]::CurrentDomain.add_AssemblyResolve({ ... })` instead: it can re-enter itself and crash `powershell.exe` with a `StackOverflowException`, and it cannot run on the .NET thread-pool threads that libraries like Npgsql use for async I/O and connection pooling.
+
 
 # Contribution
 
