@@ -66,18 +66,31 @@ If ( [System.Environment]::GetEnvironmentVariables().keys -contains "ProgramW643
     $modulePath += "$( [System.Environment]::GetEnvironmentVariable("ProgramW6432") )\WindowsPowerShell\Modules"
 }
 
-# Add pwsh core path
+# Add pwsh's own module folder ($PSHOME\Modules -- for a Store/MSIX pwsh that is
+# C:\Program Files\WindowsApps\Microsoft.PowerShell_*\Modules). Only this one: guessing
+# "...\powershell\7\Modules" can point at a *different* pwsh installed side by side.
 If ( $isCore -eq $true ) {
-    If ( [System.Environment]::GetEnvironmentVariables().keys -contains "ProgramW6432" ) {
-        $modulePath += "$( [System.Environment]::GetEnvironmentVariable("ProgramW6432") )\powershell\7\Modules"
-    }
-    $modulePath += "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles") )\powershell\7\Modules"
-    $modulePath += "$( [System.Environment]::GetEnvironmentVariable("ProgramFiles(x86)") )\powershell\7\Modules"
+    $modulePath += "$( $PSHOME )\Modules"
 }
 
-# Add all paths
+# Keep the existing order (the first folder containing a module wins) and only drop duplicates and
+# the folders of another PowerShell: pwsh must not see the built-in modules of a second pwsh install,
+# and Windows PowerShell must not see any pwsh folder (e.g. inherited when it was started from a pwsh
+# window) -- otherwise it autoloads pwsh's Microsoft.PowerShell.Security, which fails with "TypeData
+# ... is already present" and breaks Get-ExecutionPolicy.
 # Using $env:PSModulePath for only temporary override
-$Env:PSModulePath = @( $modulePath | Sort-Object -unique ) -join ";"
+$pwshHomeModulePathPattern = '\\PowerShell\\[67][^\\]*\\Modules$|\\WindowsApps\\Microsoft\.PowerShell[^\\]*\\Modules$'
+$pwshSharedModulePathPattern = '\\Program Files( \(x86\))?\\PowerShell\\Modules$|\\Documents\\PowerShell\\Modules$'
+$ownPwshModulePath = "$( $PSHOME )\Modules"
+$seenModulePath = [System.Collections.Generic.HashSet[String]]::new([System.StringComparer]::OrdinalIgnoreCase)
+$Env:PSModulePath = @( $modulePath | ForEach-Object { "$( $_ )".Trim().TrimEnd("\") } | Where-Object {
+    $isForeignModulePath = If ( $isCore -eq $true ) {
+        $_ -match $pwshHomeModulePathPattern -and $_ -ne $ownPwshModulePath
+    } else {
+        $_ -match $pwshHomeModulePathPattern -or $_ -match $pwshSharedModulePathPattern
+    }
+    $_ -ne "" -and $isForeignModulePath -eq $false -and $seenModulePath.Add($_)
+} ) -join ";"
 
 
 #-----------------------------------------------
@@ -106,7 +119,9 @@ If ( $isCore -eq $true ) {
 }
 
 # Using $env:Path for only temporary override
-$Env:Path = @( $scriptPath | Sort-Object -unique ) -join ";"
+# Keep the existing order (the first folder containing an executable wins), only drop duplicates
+$seenScriptPath = [System.Collections.Generic.HashSet[String]]::new([System.StringComparer]::OrdinalIgnoreCase)
+$Env:Path = @( $scriptPath | ForEach-Object { "$( $_ )".Trim() } | Where-Object { $_ -ne "" -and $seenScriptPath.Add($_.TrimEnd("\")) } ) -join ";"
 
 
 #-----------------------------------------------
